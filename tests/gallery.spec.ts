@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 import path from 'node:path';
 
 const GALLERY = 'file://' + path.resolve('out/gallery.html');
-const IDS = ['components', 'contents', 'divider', 'lead2col', 'cards', 'zquote', 'halfbleed', 'strip', 'quote', 'inset'];
+const IDS = ['components', 'contents', 'divider', 'lead2col', 'cards', 'zquote', 'halfbleed', 'strip', 'quote', 'inset', 'draft'];
 
 for (const id of IDS) {
   test(`gallery: ${id}`, async ({ page }) => {

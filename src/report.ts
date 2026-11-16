@@ -33,9 +33,14 @@ export function plan(manifestPath = path.join(ROOT, 'content/report.yaml')): Pla
   const problems: Problem[] = [];
   const spreads: PlannedSpread[] = [];
   let index = 0;
-  const pagesOf = (i: number): [number, number] => [2 * i + 1, 2 * i + 2];
+  // first_page: page number of the contents spread, when pages made elsewhere (cover, acknowledgements) come first.
+  const first = Number(m.first_page ?? 1);
+  const pagesOf = (i: number): [number, number] => [first + 2 * i, first + 2 * i + 1];
   const contents = layoutById('contents');
   if (m.contents && contents) spreads.push({ file: 'contents (generated)', layout: contents, content: { layout: 'contents', section: 'Contents', title: m.title }, section: NO_SECTION, number: '', pages: pagesOf(index++), anchor: 'contents' });
+  // external: spreads made outside Report Studio (e.g. the executive summary in Canva) that sit after
+  // the contents. They take page numbers but are not rendered.
+  for (const ext of m.external_after_contents ?? []) index += Number(ext.spreads ?? 1);
   for (const group of m.sections ?? []) {
     const section = sectionByLabel(group.section);
     if (!section) { problems.push({ file: 'content/report.yaml', field: 'sections', message: `"${group.section}" is not a section in brand.json.` }); continue; }

@@ -8,7 +8,8 @@ import { layout as quote } from './quote.js';
 import { layout as inset } from './inset.js';
 import { layout as divider } from './divider.js';
 import { layout as contents } from './contents.js';
+import { layout as draft } from './draft.js';
 
-/** brand.json layout_library, then image_layouts, then the section divider and the generated contents. */
-export const layouts: Layout[] = [lead2col, cards, zquote, halfbleed, strip, quote, inset, divider, contents];
+/** brand.json layout_library, then image_layouts, then the section divider, the generated contents and the draft topic spread. */
+export const layouts: Layout[] = [lead2col, cards, zquote, halfbleed, strip, quote, inset, divider, contents, draft];
 export const layoutById = (id: string) => layouts.find((l) => l.id === id);

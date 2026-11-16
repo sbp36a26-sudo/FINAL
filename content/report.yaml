@@ -1,8 +1,20 @@
 # Spreads in reading order, grouped by section. File names refer to content/pages/.
-# The contents spread is generated (contents: true) and is always first.
+# Front matter (cover, acknowledgements, photo page: pages 1-3) and the executive summary live in Canva;
+# first_page and external_after_contents keep the page numbers right in the Canva file.
 title: "AI in European Hospitality: The Playbook for Hospitality Stakeholders"
 contents: true
+first_page: 4
+external_after_contents:
+  - {title: Executive summary, spreads: 1}
 sections:
+  - section: "1 About this report"
+    spreads:
+      - 1-0-divider.yaml
+      - 1-1-context-mission-and-our-client.yaml
+      - 1-2-what-ai-is-and-how-it-reached-hotels.yaml
+      - 1-3-industry-and-why-these-countries.yaml
+      - 1-4-methodology-and-sample.yaml
+      - 1-5-research-timeline.yaml
   - section: "2 Key findings"
     spreads:
       - 2-0-divider.yaml
@@ -10,3 +22,30 @@ sections:
       - 2-2-ai-mostly-assists.yaml
       - 2-3-sell-and-serve.yaml
       - 2-4-back-of-house.yaml
+      - 2-5-chains-independents-and-affiliated-hotel.yaml
+      - 2-6-luxury-midscale-and-budget-hotels.yaml
+      - 2-7-resources-and-readiness.yaml
+      - 2-8-governance-in-the-eu-switzerland-and-the.yaml
+      - 2-9-six-focus-countries.yaml
+  - section: "3 Opportunities and challenges"
+    spreads:
+      - 3-0-divider.yaml
+      - 3-1-short-term.yaml
+      - 3-2-mid-term.yaml
+      - 3-3-long-term.yaml
+      - 3-4-risks-what-has-failed.yaml
+  - section: "4 Recommendations"
+    spreads:
+      - 4-0-divider.yaml
+      - 4-1-objectives-and-prerequisites.yaml
+      - 4-2-adopt.yaml
+      - 4-3-resource.yaml
+      - 4-4-govern.yaml
+      - 4-5-scale.yaml
+      - 4-6-strategic-planning.yaml
+  - section: "5 Final words"
+    spreads:
+      - 5-0-divider.yaml
+      - 5-1-final-words.yaml
+      - 5-2-limitations.yaml
+      - 5-3-meet-the-team.yaml
