@@ -1,0 +1,9 @@
+# Spreads in reading order, grouped by section. File names refer to content/pages/.
+# The contents spread is generated (contents: true) and is always first.
+title: "AI in European Hospitality: The Playbook for Hospitality Stakeholders"
+contents: true
+sections:
+  - section: "2 Key findings"
+    spreads:
+      - 2-0-divider.yaml
+      - 2-1-using-ai-is-not-value.yaml

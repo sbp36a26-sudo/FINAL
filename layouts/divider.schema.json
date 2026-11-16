@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "layout",
+    "section",
+    "image"
+  ],
+  "properties": {
+    "layout": {
+      "type": "string"
+    },
+    "section": {
+      "type": "string"
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "src",
+        "credit"
+      ],
+      "properties": {
+        "src": {
+          "type": "string",
+          "minLength": 1
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 157
+        },
+        "credit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "x-measured": {
+    "on": "2026-11-16",
+    "method": "Largest amount of dummy text that renders without overflow, other fields at sample length (scripts/measure.ts)."
+  }
+}

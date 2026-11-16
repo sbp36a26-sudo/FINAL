@@ -1,0 +1,7 @@
+{
+  "type": "object",
+  "x-measured": {
+    "on": "2026-11-16",
+    "method": "Largest amount of dummy text that renders without overflow, other fields at sample length (scripts/measure.ts)."
+  }
+}

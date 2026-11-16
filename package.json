@@ -1,0 +1,36 @@
+{
+  "name": "report-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turns raw content into report spreads that follow the EHL SBP Group 36 / HFTP brand guidelines.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "tokens": "tsx scripts/build-tokens.ts",
+    "lint": "npm run tokens && tsx scripts/lint.ts",
+    "measure": "tsx scripts/measure.ts",
+    "build": "npm run tokens && tsx scripts/build.ts",
+    "page": "npm run tokens && tsx scripts/page.ts",
+    "gallery": "npm run tokens && tsx scripts/gallery.ts",
+    "test:visual": "npm run gallery && playwright test --trace off",
+    "test:visual:update": "npm run gallery && playwright test --update-snapshots --trace off",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "stylelint": "^16.26.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@fontsource/archivo": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.1",
+    "@playwright/test": "^1.63.0",
+    "ajv": "^8.20.0",
+    "image-size": "^1.2.1",
+    "playwright": "^1.63.0",
+    "yaml": "^2.9.1"
+  }
+}

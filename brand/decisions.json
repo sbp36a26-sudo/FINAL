@@ -1,0 +1,42 @@
+{
+  "_about": "Team rulings on conflicts inside brand.json (decided 2026-11-16). brand.json stays verbatim; build-tokens.ts applies these on top. Nothing here adds a new size, colour or spacing; each entry resolves a conflict or derives a value from brand.json.",
+  "notes_override_component_spec": {
+    "page_title": "Numbered chapter plus accent rule in section colour (notes.title).",
+    "subheading": "Vertical bar in section colour plus numbered capital label (caption size, tracked 0.12em, section colour) above an h2 (notes.sub).",
+    "key_figure_source": "Source and base sit small (caption size, muted) in the lower part of the tile. Numbered footnotes are kept for numbers in running text and charts (notes.source).",
+    "page_furniture": "Top tab and a vertical section strip on the outer edge, for navigation (notes.furn)."
+  },
+  "spacing": {
+    "block_gap": 32,
+    "block_gap_reason": "brand.json says 30, which is off the 4 px grid; the team ruled 32.",
+    "margin_inner": 96,
+    "margin_outer": 98,
+    "margin_reason": "794 px pages are not a multiple of 4. The grid is measured from the spine; inner margins stay 96 on both sides of the spine (notes.density) and the 2 px slack goes to the outer margins. Content width 600, columns 284.",
+    "margin_top": 96,
+    "content_height": 928,
+    "content_height_reason": "Vertical grid measured from the top edge: content runs 96 to 1024 (the last grid line inside the 96 px bottom margin); the 3 px slack goes to the bottom margin.",
+    "hairline": 1,
+    "hairline_reason": "Thinnest rule (tables, footnote separator, contents rows). The only rule weight below the 4 px unit; row heights compensate so blocks stay on the grid."
+  },
+  "typography": {
+    "line_height_px": {
+      "display": 80,
+      "key_figure": 64,
+      "h1": 40,
+      "lead": 32,
+      "h2": 24,
+      "body": 24,
+      "caption": 20
+    },
+    "line_height_reason": "Body 15 x 1.62 = 24.3 snapped to 24 (team ruling). Text roles (lead, caption) use 1.62 snapped to the nearest 4 px; display roles (display, key figure, h1, h2) use the smallest 4 px multiple of at least 1.1 x size."
+  },
+  "color": {
+    "darken_step": 0.1,
+    "darken_rule": "Each step multiplies R, G and B by 0.9. Applied for white text on section colour (brand.json) and, by team ruling, for section colour used as text on paper or on the 10% tile, until 4.5:1 is reached.",
+    "tile_tint": "10% section colour over paper.",
+    "rule_dark": "Chart 'rule-dark grey' = rule colour darkened by one 10% step.",
+    "white": "#FFFFFF"
+  },
+  "pdf": "One PDF page per spread (1588 x 1123 px). Page numbers count A4 pages: spread n holds pages 2n-1 and 2n.",
+  "toc": "A contents spread at the start of the report, and chapter contents in each section divider, all with real page numbers."
+}

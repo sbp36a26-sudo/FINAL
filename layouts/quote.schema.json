@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "layout",
+    "section",
+    "quote",
+    "image"
+  ],
+  "properties": {
+    "layout": {
+      "type": "string"
+    },
+    "section": {
+      "type": "string"
+    },
+    "quote": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^0-9]*$",
+      "x-patternMessage": "numbers are not allowed in a photo quote band (there is no room for a source note); use the zquote layout.",
+      "maxLength": 79
+    },
+    "attribution": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 250
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "src",
+        "credit"
+      ],
+      "properties": {
+        "src": {
+          "type": "string",
+          "minLength": 1
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 43
+        },
+        "credit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "quote_source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quote_base": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "x-measured": {
+    "on": "2026-11-16",
+    "method": "Largest amount of dummy text that renders without overflow, other fields at sample length (scripts/measure.ts)."
+  }
+}

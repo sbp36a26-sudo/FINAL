@@ -1,0 +1,32 @@
+layout: lead2col
+section: "2 Key findings"
+title: Using AI is not the same as getting value
+lead: 91% of hotel chains use AI, but only 28% have a senior-led, company-wide AI strategy and 13% report a measurable return.
+figures:
+  - {value: 91, unit: "%", label: of hotel chains use AI, source: "h2c (2026)", base: "122 responses from 113 chains; vendor-sponsored, unweighted"}
+  - {value: 28, unit: "%", label: "have a senior-led, company-wide AI strategy", source: "h2c (2026)", base: "122 responses from 113 chains; vendor-sponsored, unweighted"}
+  - {value: 13, unit: "%", label: report a measurable return, source: "h2c (2026)", base: "122 responses from 113 chains; vendor-sponsored, unweighted"}
+body:
+  - kicker: Adoption
+    heading: Use is almost universal
+    text: 91% of hotel chains use AI.
+  - kicker: Strategy
+    heading: Strategy lags behind use
+    text: Only 28% have a senior-led, company-wide AI strategy.
+  - kicker: Return
+    heading: Few can show a return
+    text: 13% report a measurable return.
+  - kicker: Barriers
+    heading: Independent hotels name three barriers
+    text: Lack of knowledge (39%), set-up cost (35%) and integration (34%) are the barriers independent hotels name most often.
+    source: Schegg (2025), HES-SO
+    base: ~1,485 hotels in AT, FR, DE, GR, IT, CH; 82% independent
+chart:
+  title: Top barriers named by independent hotels
+  unit: "%"
+  rows:
+    - {label: Lack of knowledge, value: 39}
+    - {label: Set-up cost, value: 35}
+    - {label: Integration, value: 34}
+  source: Schegg (2025), HES-SO
+  base: ~1,485 hotels in AT, FR, DE, GR, IT, CH; 82% independent

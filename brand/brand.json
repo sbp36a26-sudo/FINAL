@@ -1,0 +1,175 @@
+{
+  "project": "AI in European Hospitality: The Playbook for Hospitality Stakeholders (EHL SBP Group 36 for HFTP)",
+  "brief": {
+    "reader": "HFTP leadership and members",
+    "medium": "Both",
+    "tone": "Consultancy: crisp and factual",
+    "birds": "Drop it",
+    "logos": "Cover and back cover only"
+  },
+  "format": {
+    "spread_px": [
+      1588,
+      1123
+    ],
+    "page_px": [
+      794,
+      1123
+    ],
+    "page": "A4 portrait, read as two-page spreads",
+    "dpi_note": "96 px per inch; 1588 x 1123 px = two A4 pages side by side"
+  },
+  "typography": {
+    "display": {
+      "family": "Archivo",
+      "weight": 700
+    },
+    "body": {
+      "family": "Source Serif 4",
+      "weight": 400,
+      "bold": 700
+    },
+    "scale_px": {
+      "display": 72,
+      "key_figure": 58,
+      "h1": 34,
+      "lead": 21,
+      "h2": 19,
+      "body": 15,
+      "caption": 11.5
+    },
+    "line_height_body": 1.62,
+    "rules": [
+      "Only these sizes exist. No other font size may appear.",
+      "Max two families.",
+      "Sentence case everywhere except kickers and divider titles."
+    ]
+  },
+  "color": {
+    "ink": "#151A22",
+    "paper": "#FBFAF7",
+    "muted": "#66707F",
+    "rule": "#E3E1DA",
+    "primary": "#17304F",
+    "key_number_highlight": "section colour",
+    "section": {
+      "About this report": "#7A4E6E",
+      "Key findings": "#4E7A4A",
+      "Opportunities and challenges": "#B4553F",
+      "Recommendations": "#2F6DA3",
+      "Final words": "#B9852B"
+    },
+    "rules": [
+      "Section colour is used only for: kickers, rules and bars, key numbers, chart highlight, divider, page furniture.",
+      "Body text is always ink; secondary text is muted.",
+      "Text on a section colour is white and must pass WCAG AA (4.5:1); darken the colour by 10% steps until it passes."
+    ]
+  },
+  "spacing": {
+    "margin": 96,
+    "column_gutter": 32,
+    "block_gap": 30,
+    "baseline_px": 4,
+    "columns_per_page": 2,
+    "rules": [
+      "All positions and gaps are multiples of 4 px.",
+      "Content never enters the margins except full-bleed images and dividers."
+    ]
+  },
+  "components": {
+    "page_title": {
+      "id": "numbered",
+      "name": "Numbered chapter",
+      "spec": "Section number (e.g. 2.3) in section colour at display size beside the title; title in display font, ink colour, max 2 lines."
+    },
+    "subheading": {
+      "id": "kicker",
+      "name": "Kicker + heading",
+      "spec": "Subheading = small-caps kicker (caption size, tracked 0.12em, section colour) above an h2 in display font."
+    },
+    "key_figure": {
+      "id": "box",
+      "name": "Tinted tile",
+      "spec": "Key figure in a tile filled with 10% section colour, 16 px padding, 6 px radius; number in section colour."
+    },
+    "source": {
+      "id": "foot",
+      "name": "Numbered footnote",
+      "spec": "Superscript reference after the figure; source and base in numbered notes at the page foot."
+    },
+    "chart": {
+      "id": "hbar",
+      "name": "Labelled bars",
+      "spec": "Horizontal bars, direct value labels at bar end, highlight bar in section colour, others in rule-dark grey, no axis or grid."
+    },
+    "page_furniture": {
+      "id": "tab",
+      "name": "Top tab",
+      "spec": "Top-left tab in section colour with white section number and name (caption size, capitals)."
+    },
+    "section_divider": {
+      "id": "split",
+      "name": "Colour panel + photo",
+      "description": "Left page a solid section-colour panel with a big number and the chapter contents; right page the photo."
+    }
+  },
+  "layout_library": [
+    {
+      "id": "lead2col",
+      "name": "Lead + two columns + figures",
+      "description": "Left page: title, lead and two text columns. Right page: key figures and a chart."
+    },
+    {
+      "id": "cards",
+      "name": "Card grid",
+      "description": "Six cards in a grid: for use cases, departments or countries."
+    },
+    {
+      "id": "zquote",
+      "name": "Pull-quote spread",
+      "description": "Text with a large pull quote breaking across the spread."
+    }
+  ],
+  "image_layouts": [
+    {
+      "id": "halfbleed",
+      "name": "Half-spread photo",
+      "description": "One page is a full-bleed photo, the other carries the text."
+    },
+    {
+      "id": "strip",
+      "name": "Strip of three",
+      "description": "Three photos in a row with short captions. For cases or examples."
+    },
+    {
+      "id": "quote",
+      "name": "Photo + quote band",
+      "description": "A full-width photo with a coloured band holding a pull quote."
+    },
+    {
+      "id": "inset",
+      "name": "Inset in column",
+      "description": "A smaller photo inside the text column; text continues beside it."
+    }
+  ],
+  "sections": [
+    "1 About this report",
+    "2 Key findings",
+    "3 Opportunities and challenges",
+    "4 Recommendations",
+    "5 Final words"
+  ],
+  "content_rules": [
+    "Every number carries its source and its base (who was asked, how many, how weighted) right next to it, including headline tiles.",
+    "Wikipedia is never a source.",
+    "Each page tells one finding: the title states it, the page proves it.",
+    "No filler: if content does not fit the layout limits, cut it or split the page; never shrink type."
+  ],
+  "notes": {
+    "density": "keep margin left and right from center line",
+    "title": "keep acccent rule + numbered section",
+    "sub": "vertical bar + numbered capital label\n",
+    "source": "in text should be numbered and for figures, it should appear in the box small in the lower part of the box",
+    "furn": "can we make both of them at the same time? the vertical strip is useful for quick navigation inside the file"
+  }
+}
