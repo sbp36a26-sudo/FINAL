@@ -1,0 +1,36 @@
+layout: lead2col
+section: "2 Key findings"
+title: AI in hotels mostly assists staff
+lead: Of 91 AI use cases across 15 hotel departments, 44 assist staff, 35 automate a task from start to finish and only 12 add a capability hotels did not have before.
+lead_source: &cat_src "EHL SBP Group 36 (2026), Hotel AI use-case catalogue (D4, working version)"
+lead_base: &cat_base "91 use cases in 15 departments, team market scan, Nov 2026; company claims, not proof of use"
+figures:
+  - {value: 44, label: "use cases assist staff", source: *cat_src, base: *cat_base}
+  - {value: 35, label: "use cases automate a task", source: *cat_src, base: *cat_base}
+  - {value: 12, label: "use cases add something new", source: *cat_src, base: *cat_base}
+body:
+  - kicker: Automates
+    heading: AI does the task from start to finish
+    text: Staff handle the exceptions.
+  - kicker: Assists
+    heading: Staff still decide or deliver
+    text: AI drafts, recommends, forecasts or analyses; a person takes the decision or serves the guest.
+  - kicker: Adds new
+    heading: A task nobody did before
+    text: A task or capability that did not exist in the hotel before, or not at this scale.
+  - kicker: Not solved yet
+    heading: What no credible source shows
+    text: What no credible source shows AI doing in hotels, or what is still missing.
+  - kicker: Use levels
+    heading: How far each use case has come
+    text: "High: independent data show wide use, or it is standard in mainstream products. Medium: on sale with named hotel customers. Low: a few named hotels or pilots. Very low: prototypes or announcements."
+chart:
+  title: Use cases at Medium or High use, by area
+  unit: "%"
+  rows:
+    - {label: Commercial, value: 48}
+    - {label: Guest-facing, value: 41}
+    - {label: Administrative, value: 41}
+    - {label: Operational, value: 14, highlight: true}
+  source: *cat_src
+  base: *cat_base

@@ -1,0 +1,29 @@
+layout: cards
+section: "2 Key findings"
+title: AI is furthest along where hotels sell and serve
+lead: Revenue management, sales and marketing, and guest service are the only departments where hotel AI use is High. At the table, AI has barely arrived.
+cards:
+  - kicker: Commercial
+    title: Pricing is the most established use
+    text: Software forecasts demand and recommends or publishes room rates. The decisions around the rate stay with people.
+    figure: {value: 42, unit: "%", label: of AI-using hotels use AI for pricing, source: &s1 "Schegg (2025), HES-SO Valais-Wallis", base: &s1b "About 1,485 hotels in AT, FR, DE, GR, IT, CH, Jan–Apr 2025; shares are % of AI-using hotels"}
+  - kicker: Commercial
+    title: Reservations are language work AI handles on paper
+    text: Answering calls and emails, quoting prices and keying bookings. No credible source measures how much of this AI handles in a European hotel.
+    figure: {value: 0.58, label: "ILO exposure score of contact-centre clerks (scale 0–1)", source: "Gmyrek et al. (2025), ILO", base: "Share of an occupation's tasks generative AI could do, 0–1; global; potential, not observed use"}
+  - kicker: Commercial
+    title: Marketing is where hotels use AI most
+    text: Generative AI writes guest communication and marketing content. No source measures the time it saves per marketer.
+    figure: {value: 74, unit: "%", label: of AI-using hotels use generative AI for text, source: *s1, base: "About 1,485 hotels in AT, FR, DE, GR, IT, CH, Jan–Apr 2025; the report gives this share both of AI-using hotels and of all respondents"}
+  - kicker: Guest-facing
+    title: Transactions automate, the welcome stays human
+    text: Managers rate card payments closer to robots and greeting guests at reception clearly human. No source gives headcount before and after AI.
+    figure: {value: 2, unit: "%", label: of AI-using hotels use facial-recognition check-in, source: *s1, base: *s1b}
+  - kicker: Guest-facing
+    title: Reviews and chat are in daily use
+    text: Chat assistants, review analysis and in-stay recommendations. No independent source measures how many guest messages AI handles.
+    figure: {value: 44, unit: "%", label: of AI-using hotels analyse reviews with AI, source: *s1, base: *s1b}
+  - kicker: Guest-facing
+    title: Table service is barely exposed to AI
+    text: Taking orders, serving and advising guests is physical and social work. There is no independent figure for AI use in F&B service.
+    figure: {value: 4, unit: "%", label: of AI-using hotels use automatic menu generation, source: *s1, base: *s1b}
