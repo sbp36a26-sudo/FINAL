@@ -27,7 +27,6 @@
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
     <button type="button" data-tool="readiness" aria-pressed="false">Readiness Tool</button>
   </nav>
-  <a id="hubOpen" href="#" target="_blank" rel="noopener" hidden>Open in new tab</a>
 </div>
 <div class="hub-frame" id="hubFrame"></div>
 <script>
@@ -35,12 +34,11 @@
   var frames = {};
   var bar = document.getElementById('hubBar');
   var box = document.getElementById('hubFrame');
-  var open = document.getElementById('hubOpen');
   function show(tool) {
     bar.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tool === tool)); });
     Object.keys(frames).forEach(function (k) { frames[k].hidden = k !== tool; });
     if (tool === 'assessment') {
-      box.classList.remove('on'); document.body.classList.remove('hub-other'); open.hidden = true;
+      box.classList.remove('on'); document.body.classList.remove('hub-other');
     } else {
       if (!frames[tool]) {
         var f = document.createElement('iframe');
@@ -50,7 +48,6 @@
       window.scrollTo(0, 0);
       box.style.top = bar.offsetHeight + 'px';
       box.classList.add('on'); document.body.classList.add('hub-other');
-      open.href = tool + '/index.html'; open.hidden = false;
     }
     try { sessionStorage.setItem('hubTool', tool); } catch (e) {}
   }
