@@ -43,8 +43,16 @@
   nav a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
   .open { margin-left: auto; color: var(--muted); font-size: 13px; }
   .open a { color: inherit; }
-  main { flex: 1; position: relative; }
-  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+  .live {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between;
+    padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 14px;
+  }
+  .btn {
+    display: inline-block; padding: 7px 14px; border-radius: 6px; background: var(--accent);
+    color: var(--accent-ink); text-decoration: none; font-weight: 500; white-space: nowrap;
+  }
   .home { max-width: 860px; margin: 0 auto; padding: 32px 16px; }
   .home p.lead { color: var(--muted); margin-top: 0; }
   .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
@@ -78,7 +86,7 @@
     <div class="cards">
       <a class="card" href="#assessment">
         <h2>AI Assessment Tool</h2>
-        <p>Score each interviewed company on the 8 framework categories and get a LOW / MEDIUM / HIGH bucket.</p>
+        <p>Score each interviewed company on the 8 framework categories and get a LOW / MEDIUM / HIGH bucket. Interviews are scored in the live tool, linked from this tab.</p>
         <small>tools/assessment/</small>
       </a>
       <a class="card" href="#use-case-catalogue">
@@ -92,11 +100,12 @@
         <small>tools/readiness/</small>
       </a>
     </div>
-    <p class="note">The live AI Assessment Tool with the team's saved interviews is Alexis's separate artifact. In this hub it opens without storage, so it shows the interface but does not save interviews.</p>
+    <p class="note">The live AI Assessment Tool with the team's saved interviews is Alexis's separate artifact: <a href="https://claude.ai/artifact/1jvE6hjkHCWHwqzDiJr5au" target="_blank" rel="noopener">open it here</a>. The copy in this hub is for editing the design and logic and does not save interviews.</p>
   </div>
 </template>
 
 <script>
+  const LIVE_ASSESSMENT = "https://claude.ai/artifact/1jvE6hjkHCWHwqzDiJr5au";
   const TOOLS = {
     "assessment": "AI Assessment",
     "use-case-catalogue": "Use-Case Catalogue",
@@ -112,11 +121,20 @@
     });
     if (TOOLS[id]) {
       main.innerHTML = "";
+      if (id === "assessment") {
+        const bar = document.createElement("div");
+        bar.className = "live";
+        bar.innerHTML = '<span><strong>To score interviews, use the live tool.</strong> All team interviews are saved there. Below is the copy we edit, without saving.</span>' +
+          '<a class="btn" href="' + LIVE_ASSESSMENT + '" target="_blank" rel="noopener">Open live AI Assessment Tool ↗</a>';
+        main.appendChild(bar);
+      }
       const f = document.createElement("iframe");
       f.src = id + "/index.html";
       f.title = TOOLS[id];
       main.appendChild(f);
-      open.innerHTML = '<a href="' + id + '/index.html" target="_blank" rel="noopener">Open in new tab</a>';
+      open.innerHTML = id === "assessment"
+        ? '<a href="' + LIVE_ASSESSMENT + '" target="_blank" rel="noopener">Live tool ↗</a>'
+        : '<a href="' + id + '/index.html" target="_blank" rel="noopener">Open in new tab</a>';
     } else {
       main.innerHTML = document.getElementById("home-tpl").innerHTML;
       open.innerHTML = "";
