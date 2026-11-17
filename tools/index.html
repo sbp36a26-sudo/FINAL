@@ -1,147 +1,1756 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HFTP Tool Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f6f5f1; --surface: #ffffff; --ink: #1d1f22; --muted: #5d6168;
-    --line: #dcd9d1; --accent: #1f5f5b; --accent-ink: #ffffff;
+/* Layout idea: a consulting-grade working tool. Summary first (filters, tiles, maturity-vs-strategy map),
+   detail below (tables). The interview editor is a long form with a sticky score strip and a live result rail. */
+:root {
+  --bg: #f4f6f9; --surface: #ffffff; --surface-2: #f1f4f8; --surface-3: #e5eaf0;
+  --ink: #111826; --ink-2: #4a5465; --muted: #788294; --line: #e0e5ec; --line-2: #c9d0da;
+  --accent: #2a78d6; --accent-ink: #1c5cab; --accent-wash: rgba(42,120,214,.08); --accent-wash-2: rgba(42,120,214,.16);
+  --b-low: #86b6ef; --b-low-ink: #0b1a2e; --b-med: #2a78d6; --b-med-ink: #ffffff; --b-high: #104281; --b-high-ink: #ffffff;
+  --b-none: #dce1e8; --b-none-ink: #4a5465;
+  --ok: #0a7a0a; --ok-wash: rgba(12,163,12,.10); --warn: #855600; --warn-wash: rgba(250,178,25,.20); --crit: #bf2f2f; --crit-wash: rgba(208,59,59,.10);
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --r: 10px; --r-sm: 6px;
+  --shadow: 0 1px 2px rgba(17,24,38,.05), 0 2px 8px rgba(17,24,38,.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1015; --surface: #161a21; --surface-2: #1b2028; --surface-3: #262c36;
+    --ink: #eef1f5; --ink-2: #c3c9d3; --muted: #8b94a3; --line: #29303a; --line-2: #3a424e;
+    --accent: #3987e5; --accent-ink: #9ec5f4; --accent-wash: rgba(57,135,229,.12); --accent-wash-2: rgba(57,135,229,.24);
+    --b-low: #1c5cab; --b-low-ink: #ffffff; --b-med: #3987e5; --b-med-ink: #ffffff; --b-high: #9ec5f4; --b-high-ink: #0b1a2e;
+    --b-none: #39414c; --b-none-ink: #c3c9d3;
+    --ok: #4cc84c; --ok-wash: rgba(12,163,12,.18); --warn: #f2bf4f; --warn-wash: rgba(250,178,25,.16); --crit: #f08080; --crit-wash: rgba(208,59,59,.20);
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    color-scheme: dark;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #16181b; --surface: #1f2226; --ink: #ecebe7; --muted: #a3a7ad;
-      --line: #33373c; --accent: #6fb3ad; --accent-ink: #0f1112;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #16181b; --surface: #1f2226; --ink: #ecebe7; --muted: #a3a7ad;
-    --line: #33373c; --accent: #6fb3ad; --accent-ink: #0f1112;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 15px/1.45 "IBM Plex Sans", system-ui, sans-serif;
-    display: flex; flex-direction: column;
-  }
-  header {
-    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface);
-  }
-  header h1 { font-size: 15px; font-weight: 600; margin: 0; white-space: nowrap; }
-  header h1 span { color: var(--muted); font-weight: 400; }
-  nav { display: flex; gap: 4px; flex-wrap: wrap; }
-  nav a {
-    padding: 6px 12px; border-radius: 6px; color: var(--ink); text-decoration: none;
-    border: 1px solid transparent; font-weight: 500;
-  }
-  nav a:hover { border-color: var(--line); }
-  nav a[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
-  .open { margin-left: auto; color: var(--muted); font-size: 13px; }
-  .open a { color: inherit; }
-  main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-  iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-  .live {
-    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between;
-    padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 14px;
-  }
-  .btn {
-    display: inline-block; padding: 7px 14px; border-radius: 6px; background: var(--accent);
-    color: var(--accent-ink); text-decoration: none; font-weight: 500; white-space: nowrap;
-  }
-  .home { max-width: 860px; margin: 0 auto; padding: 32px 16px; }
-  .home p.lead { color: var(--muted); margin-top: 0; }
-  .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-  .card {
-    display: block; padding: 16px; border: 1px solid var(--line); border-radius: 10px;
-    background: var(--surface); color: inherit; text-decoration: none;
-  }
-  .card:hover { border-color: var(--accent); }
-  .card h2 { font-size: 16px; margin: 0 0 6px; }
-  .card p { margin: 0; color: var(--muted); font-size: 14px; }
-  .card small { display: block; margin-top: 10px; color: var(--muted); font-size: 12px; }
-  .note { margin-top: 24px; font-size: 13px; color: var(--muted); }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1015; --surface: #161a21; --surface-2: #1b2028; --surface-3: #262c36;
+  --ink: #eef1f5; --ink-2: #c3c9d3; --muted: #8b94a3; --line: #29303a; --line-2: #3a424e;
+  --accent: #3987e5; --accent-ink: #9ec5f4; --accent-wash: rgba(57,135,229,.12); --accent-wash-2: rgba(57,135,229,.24);
+  --b-low: #1c5cab; --b-low-ink: #ffffff; --b-med: #3987e5; --b-med-ink: #ffffff; --b-high: #9ec5f4; --b-high-ink: #0b1a2e;
+  --b-none: #39414c; --b-none-ink: #c3c9d3;
+  --ok: #4cc84c; --ok-wash: rgba(12,163,12,.18); --warn: #f2bf4f; --warn-wash: rgba(250,178,25,.16); --crit: #f08080; --crit-wash: rgba(208,59,59,.20);
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+h2 { font-size: 16px; font-weight: 600; }
+h3 { font-size: 14.5px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent-ink); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, td.n, .tab { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* top bar */
+.topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 20px; padding: 10px 24px;
+  background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.mark { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--b-high); color: var(--b-high-ink);
+  font-weight: 700; font-size: 12px; letter-spacing: .03em; }
+.brand b { display: block; font-size: 14px; }
+.brand small { display: block; font-size: 11.5px; color: var(--muted); }
+.nav { display: flex; gap: 4px; }
+.nav a { padding: 6px 12px; border-radius: 7px; text-decoration: none; color: var(--ink-2); font-weight: 500; }
+.nav a:hover { background: var(--surface-2); }
+.nav a.on { background: var(--accent-wash); color: var(--accent-ink); }
+.topbar .spacer { flex: 1; }
+.who { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 13px; }
+.who img { width: 24px; height: 24px; border-radius: 50%; }
+
+/* buttons & inputs */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-2);
+  background: var(--surface); font-weight: 500; cursor: pointer; white-space: nowrap; text-decoration: none; color: var(--ink); }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--crit); border-color: var(--crit); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12.5px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.link { background: none; border: 0; padding: 0; color: var(--accent-ink); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-size: 12.5px; }
+label.f { display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+input[type=text], input[type=date], input[type=url], input[type=number], input[type=search], select, textarea {
+  width: 100%; min-height: 34px; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 7px; background: var(--surface); }
+textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+input:disabled, select:disabled, textarea:disabled { background: var(--surface-2); color: var(--ink-2); }
+.counter { font-size: 11.5px; color: var(--muted); text-align: right; }
+.counter.full { color: var(--warn); }
+
+/* page */
+main { max-width: 1320px; margin: 0 auto; padding: 22px 24px 64px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.page-head p { color: var(--ink-2); margin-top: 4px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 0; flex-wrap: wrap; }
+.card-b { padding: 14px 16px 16px; }
+
+/* banners & toasts */
+#banners:empty { display: none; }
+#banners { max-width: 1320px; margin: 14px auto 0; padding: 0 24px; display: grid; gap: 8px; }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+.banner.warn { background: var(--warn-wash); border-color: transparent; }
+.banner.crit { background: var(--crit-wash); border-color: transparent; }
+.banner.info { background: var(--accent-wash); border-color: transparent; }
+.banner b { font-weight: 600; }
+.banner .grow { flex: 1; }
+#toasts { position: fixed; left: 20px; bottom: 20px; display: grid; gap: 8px; z-index: 60; }
+.toast { background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 8px; display: flex; gap: 12px; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.2); font-size: 13px; }
+.toast .link { color: inherit; }
+
+/* dialog */
+.scrim { position: fixed; inset: 0; background: rgba(9,12,18,.45); display: grid; place-items: center; z-index: 80; padding: 16px; }
+.dialog { width: min(520px, 100%); background: var(--surface); border-radius: 12px; padding: 20px; display: grid; gap: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dialog textarea { min-height: 200px; font-family: var(--mono); font-size: 12px; }
+
+/* pills & chips */
+.pill { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; min-width: 74px; height: 24px; padding: 0 10px; border-radius: 6px;
+  font-weight: 700; font-size: 11.5px; letter-spacing: .06em; }
+.pill.LOW { background: var(--b-low); color: var(--b-low-ink); }
+.pill.MEDIUM { background: var(--b-med); color: var(--b-med-ink); }
+.pill.HIGH { background: var(--b-high); color: var(--b-high-ink); }
+.pill.NONE { background: var(--b-none); color: var(--b-none-ink); font-weight: 600; letter-spacing: 0; }
+.pill.lg { height: 34px; min-width: 110px; font-size: 14px; border-radius: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 11.5px; font-weight: 500;
+  background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.chip.warn { background: var(--warn-wash); color: var(--warn); }
+.chip.ok { background: var(--ok-wash); color: var(--ok); }
+.chip.crit { background: var(--crit-wash); color: var(--crit); }
+.chip.info { background: var(--accent-wash); color: var(--accent-ink); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+
+/* overview */
+.filters { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(120px, 1fr)) minmax(130px, 1fr) minmax(130px, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 16px; }
+.filters label.f { font-size: 11.5px; }
+.chk { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); height: 34px; white-space: nowrap; }
+.tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile { padding: 14px 16px; }
+.tile .lbl { font-size: 12px; color: var(--ink-2); }
+.tile .val { font-size: 26px; font-weight: 600; margin-top: 2px; }
+.tile .sub { font-size: 12px; color: var(--muted); }
+.tile.mix { grid-column: span 2; }
+.mixbar { display: flex; gap: 2px; height: 8px; margin: 10px 0 8px; }
+.mixbar span { border-radius: 4px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px; }
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12); font-size: 12.5px; min-width: 160px; z-index: 5; }
+.tip b { font-size: 13.5px; }
+.tablewrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th { text-align: left; font-weight: 600; font-size: 12px; color: var(--ink-2); padding: 8px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+table.t th button { all: unset; cursor: pointer; }
+table.t th button:focus-visible { outline: 2px solid var(--accent); }
+table.t td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.t td.n, table.t th.n { text-align: right; font-variant-numeric: tabular-nums; }
+table.t tbody tr.click { cursor: pointer; }
+table.t tbody tr.click:hover { background: var(--surface-2); }
+table.t tr.archived td { color: var(--muted); }
+.cell-main { font-weight: 500; }
+.cell-sub { font-size: 12px; color: var(--muted); }
+.empty { text-align: center; padding: 48px 16px; display: grid; gap: 12px; justify-items: center; color: var(--ink-2); }
+
+/* editor */
+.strip { position: sticky; top: 51px; z-index: 20; display: flex; align-items: center; gap: 16px; padding: 10px 16px; margin: -6px 0 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); flex-wrap: wrap; }
+.strip .who-is { min-width: 180px; flex: 1; }
+.strip .who-is b { display: block; font-size: 15px; }
+.strip .bignum { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.strip .pillars { font-size: 12.5px; color: var(--ink-2); display: grid; }
+.save { font-size: 12.5px; color: var(--muted); min-width: 120px; display: inline-flex; align-items: center; gap: 6px; }
+.save.err { color: var(--crit); }
+.save.ok::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.save.pending::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.editor { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+.rail { position: sticky; top: 132px; display: grid; gap: 12px; }
+fieldset.plain { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 16px; }
+details.sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+details.sec > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+details.sec > summary::-webkit-details-marker { display: none; }
+details.sec > summary::before { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; flex: none; }
+details.sec[open] > summary::before { transform: rotate(45deg); }
+details.sec > summary .sum-r { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.sec-b { padding: 4px 18px 18px; display: grid; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.fields .w2 { grid-column: span 2; }
+.fields .w3 { grid-column: 1 / -1; }
+.cat { border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 12px; background: var(--surface); }
+.cat-h { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.cat-h .q { color: var(--ink-2); font-size: 13px; margin-top: 2px; }
+.badge { text-align: right; min-width: 72px; }
+.badge .v { font-size: 24px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.badge .s { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.badge.unset .v { color: var(--muted); }
+
+/* range slider */
+.range-wrap { padding: 2px 2px 0; }
+input[type=range].lvl { -webkit-appearance: none; appearance: none; width: 100%; height: 26px; background: transparent; margin: 0; cursor: pointer; display: block; }
+input[type=range].lvl::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--accent) 0 var(--fill, 0%), var(--surface-3) var(--fill, 0%) 100%); }
+input[type=range].lvl::-moz-range-track { height: 6px; border-radius: 3px; background: var(--surface-3); }
+input[type=range].lvl::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+input[type=range].lvl::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; margin-top: -7px;
+  background: var(--surface); border: 3px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+input[type=range].lvl::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); }
+input[type=range].lvl.unset::-webkit-slider-thumb { opacity: 0; }
+input[type=range].lvl.unset::-moz-range-thumb { opacity: 0; }
+input[type=range].lvl.unset::-moz-range-progress { background: transparent; }
+input[type=range].lvl:disabled { cursor: not-allowed; opacity: .7; }
+.ticks { display: flex; justify-content: space-between; padding: 0 2px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ticks span { width: 24px; text-align: center; }
+.ticks span:first-child { text-align: left; }
+.ticks span:last-child { text-align: right; }
+.unset-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+ol.levels { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+button.lv { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; padding: 7px 10px;
+  border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
+button.lv:hover { background: var(--surface-2); }
+button.lv:focus-visible { outline: 2px solid var(--accent); }
+button.lv.on { background: var(--accent-wash); border-color: var(--accent-wash-2); }
+button.lv:disabled { cursor: default; }
+.lv-score { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+button.lv.on .lv-score { color: var(--accent-ink); }
+.lv-name { display: block; font-weight: 500; }
+.lv-desc { display: block; font-size: 12.5px; color: var(--muted); }
+.rule { font-size: 12.5px; color: var(--ink-2); background: var(--surface-2); border-radius: 7px; padding: 8px 10px; }
+.note-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; padding: 2px; gap: 2px; background: var(--surface-2); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--ink-2); }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg button:disabled { cursor: not-allowed; }
+.calc { font-size: 13px; padding: 8px 10px; border-radius: 7px; background: var(--surface-2); }
+.calc.err { background: var(--crit-wash); color: var(--crit); }
+.dept { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.dept:last-child { border-bottom: 0; }
+.seg.d button.on.live { background: var(--accent); color: #fff; }
+.seg.d button.on.pilot { background: var(--accent-wash-2); color: var(--accent-ink); }
+.quote { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; }
+.find { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+/* result rail */
+.res .card-b { display: grid; gap: 14px; }
+.res-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.res-num { font-size: 44px; font-weight: 700; line-height: 1; }
+.res-num small { font-size: 15px; color: var(--muted); font-weight: 500; }
+.pbar { display: grid; gap: 4px; }
+.pbar .lab { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-2); }
+.pbar .lab b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.track { height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.reqs { display: grid; gap: 10px; }
+.req-g h4 { margin: 0 0 4px; font-size: 12px; color: var(--ink-2); }
+.req { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; font-size: 12.5px; align-items: start; padding: 2px 0; }
+.reason { font-size: 13px; line-height: 1.5; }
+details.calcd summary { cursor: pointer; font-size: 12.5px; color: var(--accent-ink); }
+details.calcd .lines { margin-top: 8px; display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* company & framework */
+.co-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+td.gap-hi { background: var(--warn-wash); }
+.fw-cat { display: grid; gap: 8px; }
+.fw-table td { vertical-align: top; }
+.fw-edit input[type=number] { max-width: 110px; }
+.fw-section { display: grid; gap: 10px; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 13px; }
+.kv dt { color: var(--ink-2); }
+.kv dd { margin: 0; }
+
+@media (max-width: 1180px) {
+  .editor { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; }
+  .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .filters .q { grid-column: 1 / -1; }
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid2, .co-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  main { padding: 16px 16px 48px; }
+  .topbar { padding: 10px 16px; gap: 10px; flex-wrap: wrap; }
+  .fields, .find { grid-template-columns: minmax(0, 1fr); }
+  .fields .w2 { grid-column: auto; }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quote { grid-template-columns: minmax(0, 1fr); }
+  .strip { top: 0; position: static; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>HFTP tools <span>· SBP Group 36</span></h1>
-  <nav id="nav">
-    <a href="#home">Home</a>
-    <a href="#assessment">AI Assessment</a>
-    <a href="#use-case-catalogue">Use-Case Catalogue</a>
-    <a href="#readiness">Readiness Tool</a>
+<!-- GENERATED by tools/build-hub.mjs: edit assessment/index.html or hub/hub-bar.html instead -->
+<!-- HFTP hub bar: injected at the top of the AI Assessment page by build-hub.mjs. -->
+<style>
+  .hub-bar {
+    display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap;
+    padding: 8px 16px; background: #1f3b3a; color: #f3f1ea;
+    font: 14px/1.4 "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .hub-bar strong { font-weight: 600; white-space: nowrap; }
+  .hub-bar strong span { font-weight: 400; opacity: .75; }
+  .hub-bar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .hub-bar button {
+    font: inherit; font-weight: 500; color: inherit; background: transparent;
+    border: 1px solid transparent; border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  }
+  .hub-bar button:hover { border-color: rgba(255,255,255,.35); }
+  .hub-bar button[aria-pressed="true"] { background: #f3f1ea; color: #1f3b3a; }
+  .hub-bar a { margin-left: auto; color: inherit; opacity: .8; font-size: 13px; }
+  .hub-frame { position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; background: #fff; display: none; }
+  .hub-frame.on { display: block; }
+  .hub-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  body.hub-other { overflow: hidden; }
+</style>
+<div class="hub-bar" id="hubBar">
+  <strong>HFTP tools <span>· SBP Group 36</span></strong>
+  <nav aria-label="Tools">
+    <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
+    <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
+    <button type="button" data-tool="readiness" aria-pressed="false">Readiness Tool</button>
   </nav>
-  <div class="open" id="open"></div>
-</header>
-<main id="main"></main>
-
-<template id="home-tpl">
-  <div class="home">
-    <p class="lead">The team's three working tools, kept as separate sections for now. Each one lives in its own folder under <code>tools/</code> and can be edited on its own.</p>
-    <div class="cards">
-      <a class="card" href="#assessment">
-        <h2>AI Assessment Tool</h2>
-        <p>Score each interviewed company on the 8 framework categories and get a LOW / MEDIUM / HIGH bucket. Interviews are scored in the live tool, linked from this tab.</p>
-        <small>tools/assessment/</small>
-      </a>
-      <a class="card" href="#use-case-catalogue">
-        <h2>Hotel AI Use-Case Catalogue</h2>
-        <p>D4: use cases by department, how AI handles each task, adoption levels, gaps and example vendors.</p>
-        <small>tools/use-case-catalogue/</small>
-      </a>
-      <a class="card" href="#readiness">
-        <h2>Hotel AI Readiness Tool</h2>
-        <p>D4 × D6: resources each use case needs and a readiness check (build foundations, pilot or scale).</p>
-        <small>tools/readiness/</small>
-      </a>
-    </div>
-    <p class="note">The live AI Assessment Tool with the team's saved interviews is Alexis's separate artifact: <a href="https://claude.ai/artifact/1jvE6hjkHCWHwqzDiJr5au" target="_blank" rel="noopener">open it here</a>. The copy in this hub is for editing the design and logic and does not save interviews.</p>
-  </div>
-</template>
-
+  <a id="hubOpen" href="#" target="_blank" rel="noopener" hidden>Open in new tab</a>
+</div>
+<div class="hub-frame" id="hubFrame"></div>
 <script>
-  const LIVE_ASSESSMENT = "https://claude.ai/artifact/1jvE6hjkHCWHwqzDiJr5au";
-  const TOOLS = {
-    "assessment": "AI Assessment",
-    "use-case-catalogue": "Use-Case Catalogue",
-    "readiness": "Readiness Tool"
-  };
-  function route() {
-    const id = location.hash.slice(1) || "home";
-    const main = document.getElementById("main");
-    const open = document.getElementById("open");
-    document.querySelectorAll("#nav a").forEach(a => {
-      if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "page");
-      else a.removeAttribute("aria-current");
-    });
-    if (TOOLS[id]) {
-      main.innerHTML = "";
-      if (id === "assessment") {
-        const bar = document.createElement("div");
-        bar.className = "live";
-        bar.innerHTML = '<span><strong>To score interviews, use the live tool.</strong> All team interviews are saved there. Below is the copy we edit, without saving.</span>' +
-          '<a class="btn" href="' + LIVE_ASSESSMENT + '" target="_blank" rel="noopener">Open live AI Assessment Tool ↗</a>';
-        main.appendChild(bar);
-      }
-      const f = document.createElement("iframe");
-      f.src = id + "/index.html";
-      f.title = TOOLS[id];
-      main.appendChild(f);
-      open.innerHTML = id === "assessment"
-        ? '<a href="' + LIVE_ASSESSMENT + '" target="_blank" rel="noopener">Live tool ↗</a>'
-        : '<a href="' + id + '/index.html" target="_blank" rel="noopener">Open in new tab</a>';
+(function () {
+  var frames = {};
+  var bar = document.getElementById('hubBar');
+  var box = document.getElementById('hubFrame');
+  var open = document.getElementById('hubOpen');
+  function show(tool) {
+    bar.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tool === tool)); });
+    Object.keys(frames).forEach(function (k) { frames[k].hidden = k !== tool; });
+    if (tool === 'assessment') {
+      box.classList.remove('on'); document.body.classList.remove('hub-other'); open.hidden = true;
     } else {
-      main.innerHTML = document.getElementById("home-tpl").innerHTML;
-      open.innerHTML = "";
+      if (!frames[tool]) {
+        var f = document.createElement('iframe');
+        f.src = tool + '/index.html'; f.title = tool;
+        frames[tool] = f; box.appendChild(f);
+      }
+      window.scrollTo(0, 0);
+      box.style.top = bar.offsetHeight + 'px';
+      box.classList.add('on'); document.body.classList.add('hub-other');
+      open.href = tool + '/index.html'; open.hidden = false;
+    }
+    try { sessionStorage.setItem('hubTool', tool); } catch (e) {}
+  }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tool]'); if (b) show(b.dataset.tool);
+  });
+  addEventListener('resize', function () { box.style.top = bar.offsetHeight + 'px'; });
+  var start = 'assessment';
+  try { start = sessionStorage.getItem('hubTool') || start; } catch (e) {}
+  show(start);
+})();
+</script>
+
+<header class="topbar">
+  <a class="brand" href="#overview"><span class="mark" aria-hidden="true">AI</span><span><b>AI Assessment Tool</b><small>HFTP SBP &middot; Group 36</small></span></a>
+  <nav class="nav" aria-label="Main">
+    <a href="#overview" id="nav-overview">Overview</a>
+    <a href="#framework" id="nav-framework">Framework</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="who" id="who"></span>
+  <a class="btn primary" href="#new" id="btnNew">New interview</a>
+</header>
+<div id="banners" aria-live="polite"></div>
+<main id="view"><div class="empty"><p>Loading assessments&hellip;</p></div></main>
+<div id="toasts" aria-live="polite"></div>
+
+<script src="assessment/engine.js"></script>
+<script src="assessment/report.js"></script>
+<script>
+(function () {
+  'use strict';
+  var E = window.AIEngine, RPT = window.AIReport;
+  var DEFAULT_FW = E.DEFAULT_FRAMEWORK;
+  var INDUSTRY = ['Hotel', 'F&B', 'Other'];
+  var OPTYPE = ['Chain', 'Independent', 'Affiliated'];
+  var OPMODEL = ['Owned & operated', 'Managed', 'Franchised', 'Mixed'];
+  var TIER = ['Luxury', 'Midscale', 'Budget', 'Mixed'];
+  var COUNTRIES = ['Austria', 'Belgium', 'Croatia', 'Czechia', 'Denmark', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Ireland', 'Italy',
+    'Netherlands', 'Norway', 'Poland', 'Portugal', 'Spain', 'Sweden', 'Switzerland', 'United Kingdom', 'Other (Europe)', 'Outside Europe'];
+  var LIMITS = { finding: 200, quote: 150, note: 140, transcript: 80000 };
+  var BUCKET_VAR = { LOW: '--b-low', MEDIUM: '--b-med', HIGH: '--b-high' };
+
+  var APP = {
+    db: null, user: null, downloads: null, mode: 'starting',
+    myId: null, myName: '', isOwner: false, canWrite: null, readOnly: false,
+    frameworks: {}, assessments: {}, loadedA: false, loadedF: false, slow: false,
+    session: rid(10), problems: {}, evalCache: new WeakMap(),
+    filters: { q: '', bucket: '', opType: '', tier: '', country: '', from: '', to: '', archived: false },
+    sortCo: { key: 'overall', dir: -1 }, sortIv: { key: 'date', dir: -1 }, chartInterviews: false,
+    prefill: null, fwEdit: null, fwView: null
+  };
+  var ED = null;
+
+  // ---------------- utilities ----------------
+  function rid(n) { var a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', s = ''; var buf = new Uint32Array(n); (window.crypto || window.msCrypto).getRandomValues(buf); for (var i = 0; i < n; i++) s += a[buf[i] % a.length]; return s; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function nowISO() { return new Date().toISOString(); }
+  function fmtDate(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1] : ''; }
+  function fmtDT(iso) { if (!iso) return ''; var d = new Date(iso); if (isNaN(d)) return ''; return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function fmtTime(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function savedLabel(d) {
+    if (!d || isNaN(d)) return 'Saved';
+    return 'Saved ' + (d.toDateString() === new Date().toDateString() ? fmtTime(d) : fmtDT(d.toISOString()));
+  }
+  function newId() {
+    var d = new Date(), base = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-', id;
+    do { id = base + rid(4); } while (APP.assessments[id]);
+    return id;
+  }
+  function companyKey(name) { return String(name || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+  function slugOf(key) { return (key.normalize ? key.normalize('NFD') : key).replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'company'; }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function deb(fn, ms) { var t; return function () { var a = arguments, self = this; clearTimeout(t); t = setTimeout(function () { fn.apply(self, a); }, ms); }; }
+
+  function h(tag, props) {
+    var el = document.createElement(tag);
+    if (props) Object.keys(props).forEach(function (k) {
+      var v = props[k];
+      if (v === null || v === undefined || v === false) return;
+      if (k === 'class') el.className = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k === 'html') el.innerHTML = v; // only ever used with static markup
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else if (k === 'value' || k === 'checked' || k === 'disabled' || k === 'selected' || k === 'readOnly') el[k] = v;
+      else if (k === 'style' && typeof v === 'object') Object.keys(v).forEach(function (s) { el.style.setProperty(s, v[s]); });
+      else el.setAttribute(k, v === true ? '' : v);
+    });
+    for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+  function add(el, c) {
+    if (c === null || c === undefined || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { add(el, x); }); return; }
+    el.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function sv(tag, attrs) {
+    var el = document.createElementNS(SVGNS, tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k]; if (v === null || v === undefined) return;
+      if (k === 'text') el.textContent = v;
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v);
+    });
+    for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+  function selectEl(id, options, value, onchange, placeholder) {
+    var s = h('select', { id: id, onchange: function () { onchange(s.value); } });
+    if (placeholder !== undefined) s.appendChild(h('option', { value: '', text: placeholder }));
+    options.forEach(function (o) {
+      var val = typeof o === 'string' ? o : o[0], lab = typeof o === 'string' ? o : o[1];
+      s.appendChild(h('option', { value: val, text: lab, selected: String(value) === String(val) }));
+    });
+    if (value && options.map(function (o) { return typeof o === 'string' ? o : o[0]; }).indexOf(value) < 0) s.appendChild(h('option', { value: value, text: value, selected: true }));
+    s.value = value === null || value === undefined ? '' : String(value);
+    return s;
+  }
+  function pill(bucket, cls) { return h('span', { class: 'pill ' + (bucket || 'NONE') + (cls ? ' ' + cls : ''), text: bucket || 'Not classified' }); }
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function toast(msg, action) {
+    var t = h('div', { class: 'toast', role: 'status' }, h('span', { text: msg }),
+      action ? h('button', { class: 'link', type: 'button', text: action.label, onclick: function () { action.onClick(); t.remove(); } }) : null);
+    document.getElementById('toasts').appendChild(t);
+    setTimeout(function () { t.remove(); }, action ? 8000 : 4000);
+  }
+  function dialog(opts) {
+    var prev = document.activeElement;
+    var scrim = h('div', { class: 'scrim', role: 'presentation' });
+    function close() { scrim.remove(); document.removeEventListener('keydown', onKey); if (prev && prev.focus) prev.focus(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    var box = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-t' },
+      h('h2', { id: 'dlg-t', text: opts.title }),
+      typeof opts.body === 'string' ? h('p', { text: opts.body }) : opts.body,
+      h('div', { class: 'actions' }, (opts.actions || [{ label: 'Close' }]).map(function (a) {
+        return h('button', { type: 'button', class: 'btn' + (a.primary ? ' primary' : '') + (a.danger ? ' danger' : ''), text: a.label,
+          onclick: function () { var keep = a.onClick && a.onClick(close) === false; if (!keep) close(); } });
+      })));
+    scrim.appendChild(box);
+    scrim.addEventListener('click', function (e) { if (e.target === scrim) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(scrim);
+    var f = box.querySelector('button.primary') || box.querySelector('button'); if (f) f.focus();
+    return close;
+  }
+
+  // ---------------- frameworks ----------------
+  function validFw(f) { return f && typeof f.version === 'number' && Array.isArray(f.categories) && f.categories.length && f.thresholds && f.requirements && Array.isArray(f.departments) && Array.isArray(f.spendingBands); }
+  function currentFw() {
+    var vs = Object.keys(APP.frameworks).map(Number).sort(function (a, b) { return b - a; });
+    return vs.length ? APP.frameworks[vs[0]] : DEFAULT_FW;
+  }
+  function fwFor(v) { v = Number(v) || 1; return APP.frameworks[v] || (v === 1 ? DEFAULT_FW : currentFw()); }
+  function evalA(a) {
+    var c = APP.evalCache.get(a);
+    if (c) return c;
+    var ev = E.evaluate(a, fwFor(a.frameworkVersion));
+    APP.evalCache.set(a, ev);
+    return ev;
+  }
+
+  // ---------------- platform ----------------
+  async function init() {
+    renderShell();
+    route();
+    if (!window.claude || typeof window.claude.use !== 'function') { APP.mode = 'nostore'; APP.loadedA = APP.loadedF = true; renderBanners(); route(); return; }
+    var slow = setTimeout(function () { APP.slow = true; renderBanners(); }, 10000);
+    var res = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
+    APP.db = res[0]; APP.user = res[1]; APP.downloads = res[2];
+    if (APP.user) {
+      try {
+        var me = await APP.user.me();
+        APP.myId = me.id; APP.myName = me.name || ''; APP.isOwner = !!me.isOwner;
+        var w = await APP.user.can('data.write');
+        APP.canWrite = w; if (w === false) APP.readOnly = true;
+        var who = document.getElementById('who'); who.textContent = '';
+        if (me.name) add(who, [h('img', { src: me.avatarUrl, alt: '', onerror: function (e) { e.target.remove(); } }), h('span', { text: me.name + (APP.isOwner ? ' (owner)' : '') })]);
+      } catch (e) { /* reads never reject; defensive only */ }
+    }
+    if (!APP.db) { clearTimeout(slow); APP.mode = 'nostore'; APP.loadedA = APP.loadedF = true; renderBanners(); route(); return; }
+    APP.mode = 'live';
+    APP.db.collection('frameworks').onSnapshot(function (snap) {
+      var fws = {};
+      snap.docs.forEach(function (d) { if (!d.exists) return; var f = d.data(); if (validFw(f)) fws[f.version] = f; });
+      APP.frameworks = fws; APP.loadedF = true; APP.evalCache = new WeakMap(); onData('fw');
+    }, function (e) { dbProblem(e); APP.loadedF = true; onData('fw'); });
+    APP.db.collection('assessments').onSnapshot(function (snap) {
+      var map = {};
+      snap.docs.forEach(function (d) { if (d.exists) { var n = normalizeA(d.data(), d.id); if (n) map[n.id] = n; } });
+      var prev = APP.assessments; APP.assessments = map; APP.loadedA = true;
+      if (!snap.metadata.fromCache) { clearTimeout(slow); APP.slow = false; }
+      onData('a', prev);
+    }, function (e) { clearTimeout(slow); dbProblem(e); APP.loadedA = true; onData('a'); });
+  }
+
+  // Shared data is untrusted: make sure every assessment has the shape the page expects.
+  function normalizeA(a, docId) {
+    if (!a || typeof a !== 'object') return null;
+    var ok = typeof a.id === 'string' && a.id === docId && a.info && typeof a.info === 'object' && a.scores && typeof a.scores === 'object' && a.findings && Array.isArray(a.quotes);
+    if (ok) return a;
+    return Object.assign({}, a, { id: docId, info: (a.info && typeof a.info === 'object') ? a.info : {}, scores: (a.scores && typeof a.scores === 'object') ? a.scores : {},
+      findings: (a.findings && typeof a.findings === 'object') ? a.findings : {}, quotes: Array.isArray(a.quotes) ? a.quotes : [] });
+  }
+  function dbProblem(e) {
+    var code = (e && e.code) || 'unavailable';
+    if (code === 'revoked' || code === 'not_granted' || code === 'capability_disabled' || code === 'capability_removed') { APP.problems.revoked = true; APP.readOnly = true; }
+    else if (code === 'quota_exceeded') APP.problems.quota = e.message || true;
+    else if (code === 'invalid_argument') { APP.problems.denied = true; APP.readOnly = true; }
+    else APP.problems.unavailable = true;
+    renderBanners();
+  }
+
+  function onData(kind, prev) {
+    renderBanners();
+    var r = parseRoute();
+    if (r.view === 'assessment') {
+      if (ED && ED.id === r.id && kind === 'a') { remoteCheck(); return; }
+      if (ED && ED.id === r.id && kind === 'fw') { ED.fw = fwFor(ED.a.frameworkVersion); refresh(); return; }
+      if (!ED || ED.id !== r.id) route();
+      return;
+    }
+    if (r.view === 'framework' && APP.fwEdit) return; // don't wipe an edit in progress
+    route();
+  }
+
+  // ---------------- banners ----------------
+  function renderBanners() {
+    var el = document.getElementById('banners'); el.textContent = '';
+    function b(kind, title, text, btn) { el.appendChild(h('div', { class: 'banner ' + kind }, h('div', { class: 'grow' }, h('b', { text: title }), text ? ' ' + text : ''), btn || null)); }
+    if (APP.mode === 'nostore') b('crit', 'Saving is not available here.', 'Open this tool on claude.ai while signed in to Claude. Anything you enter now is lost when you close the page.');
+    if (APP.problems.revoked) b('crit', 'Access changed.', 'This page can no longer read or save shared data. Reload the page or ask Alexis for access.');
+    else if (APP.readOnly && APP.mode === 'live') b('warn', 'You can view but not edit.', 'To score interviews, ask Alexis to invite you to this tool as an Editor.');
+    if (APP.problems.quota) b('crit', 'Storage is full.', 'New interviews cannot be saved. Export a backup and archive or delete old interviews.');
+    if (APP.problems.unavailable) b('warn', 'Connection problem.', 'Changes may not have been saved. They are kept in this browser and saved again on your next edit.');
+    if (APP.slow && !APP.loadedA) b('warn', 'Still loading.', 'The database has not answered yet; the data shown may be out of date.');
+  }
+
+  // ---------------- routing ----------------
+  function parseRoute() {
+    var hsh = (location.hash || '').replace(/^#/, '');
+    if (!hsh || hsh === 'overview') return { view: 'overview' };
+    if (hsh === 'framework') return { view: 'framework' };
+    if (hsh === 'new') return { view: 'new' };
+    if (hsh.indexOf('a-') === 0) return { view: 'assessment', id: hsh.slice(2).toUpperCase() };
+    if (hsh.indexOf('co-') === 0) return { view: 'company', slug: hsh.slice(3) };
+    return { view: 'overview' };
+  }
+  function setNav(v) {
+    ['overview', 'framework'].forEach(function (n) { document.getElementById('nav-' + n).classList.toggle('on', v === n); });
+  }
+  function route() {
+    var r = parseRoute();
+    if (ED && (r.view !== 'assessment' || r.id !== ED.id)) leaveEditor();
+    if (r.view !== 'framework') APP.fwEdit = null;
+    setNav(r.view === 'company' ? 'overview' : r.view);
+    if (r.view === 'new') { startNew(); return; }
+    var view = document.getElementById('view');
+    var node;
+    if (r.view === 'assessment') { renderEditor(r.id); return; }
+    if (r.view === 'framework') node = viewFramework();
+    else if (r.view === 'company') node = viewCompany(r.slug);
+    else node = viewOverview();
+    view.textContent = ''; view.appendChild(node);
+  }
+  window.addEventListener('hashchange', route);
+  function go(hash) { if (location.hash === hash) route(); else location.hash = hash; }
+  function renderShell() { renderBanners(); }
+
+  // ---------------- data shaping ----------------
+  function allAssessments() { return Object.keys(APP.assessments).map(function (k) { return APP.assessments[k]; }); }
+  function matchFilters(a, ev) {
+    var f = APP.filters, i = a.info || {};
+    if (!f.archived && a.archived) return false;
+    if (f.q) {
+      var hay = [i.company, i.interviewee, i.position, i.interviewer, a.id, i.country].join(' ').toLowerCase();
+      if (hay.indexOf(f.q.toLowerCase()) < 0) return false;
+    }
+    if (f.bucket) { var fb = ev.classification.final || 'NONE'; if (fb !== f.bucket) return false; }
+    if (f.opType && i.operatorType !== f.opType) return false;
+    if (f.tier && i.tier !== f.tier) return false;
+    if (f.country && i.country !== f.country) return false;
+    if (f.from && (!i.date || i.date < f.from)) return false;
+    if (f.to && (!i.date || i.date > f.to)) return false;
+    return true;
+  }
+  function filtered() {
+    return allAssessments().map(function (a) { return { a: a, ev: evalA(a) }; }).filter(function (x) { return matchFilters(x.a, x.ev); });
+  }
+  function companiesOf(items) {
+    var map = {}, fw = currentFw();
+    items.forEach(function (x) {
+      var k = companyKey(x.a.info && x.a.info.company); if (!k) k = '(no company name)';
+      (map[k] = map[k] || { key: k, items: [] }).items.push(x);
+    });
+    var used = {};
+    return Object.keys(map).map(function (k) {
+      var c = map[k];
+      c.items.sort(function (p, q) { return String((q.a.info || {}).date || '').localeCompare(String((p.a.info || {}).date || '')); });
+      var latest = c.items[0].a.info || {};
+      c.name = latest.company || '(no company name)';
+      c.info = latest;
+      c.ev = E.combine(c.items, fw);
+      var counts = {}; c.items.forEach(function (x) { var p = (x.a.info || {}).purpose1; if (p) counts[p] = (counts[p] || 0) + 1; });
+      c.purpose = Object.keys(counts).sort(function (p, q) { return counts[q] - counts[p]; })[0] || '';
+      var s = slugOf(k), n = 2, base = s; while (used[s]) s = base + '-' + (n++); used[s] = true; c.slug = s;
+      return c;
+    });
+  }
+  function allCompanies() { return companiesOf(allAssessments().filter(function (a) { return !a.archived; }).map(function (a) { return { a: a, ev: evalA(a) }; })); }
+  function labelOf(final, purpose) { return final ? final + (purpose ? ' – ' + purpose.toLowerCase() + (/driven$/i.test(purpose) ? '' : '-driven') : '') : 'Not classified'; }
+  function purposeText(p) { if (!p) return ''; return /driven$/i.test(p) ? p : p + '-driven'; }
+
+  // ---------------- overview ----------------
+  function viewOverview() {
+    var wrap = h('div');
+    var fw = currentFw();
+    var items = filtered();
+    var comps = companiesOf(items.filter(function (x) { return !x.a.archived; }));
+    var total = allAssessments().length;
+
+    wrap.appendChild(h('div', { class: 'page-head' },
+      h('div', null, h('h1', { text: 'Interview assessments' }),
+        h('p', { text: 'Every interview scored on AI Maturity and AI Strategy, then placed in a LOW, MEDIUM or HIGH bucket. Scoring framework v' + fw.version + '.' })),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn', type: 'button', text: 'Export CSV', title: 'Export the interviews shown below', onclick: function () { exportCSV(items); } }),
+        h('button', { class: 'btn', type: 'button', text: 'Back up (JSON)', title: 'Export everything for safekeeping', onclick: exportJSON }))));
+
+    if (!APP.loadedA) { wrap.appendChild(h('div', { class: 'card empty' }, h('p', { text: 'Loading assessments…' }))); return wrap; }
+    if (!total) {
+      wrap.appendChild(h('div', { class: 'card empty' },
+        h('h2', { text: 'No interviews scored yet' }),
+        h('p', { text: 'After each interview, open a new assessment, fill in the details and move the sliders. Scores, bucket and PDF are produced automatically.' }),
+        APP.readOnly || APP.mode !== 'live' ? null : h('a', { class: 'btn primary', href: '#new', text: 'Score your first interview' })));
+      return wrap;
+    }
+
+    // filters
+    var f = APP.filters, rerender = function () { route(); };
+    var q = h('input', { type: 'search', id: 'f-q', value: f.q, placeholder: 'Company, interviewee, interviewer, ID', oninput: deb(function () { f.q = q.value; rerender(); setTimeout(function () { var el = document.getElementById('f-q'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0); }, 250) });
+    function fsel(id, lab, key, opts, ph) { return h('label', { class: 'f', for: id }, lab, selectEl(id, opts, f[key], function (v) { f[key] = v; rerender(); }, ph)); }
+    var countries = Array.from(new Set(allAssessments().map(function (a) { return (a.info || {}).country; }).filter(Boolean))).sort();
+    wrap.appendChild(h('div', { class: 'filters', role: 'search' },
+      h('label', { class: 'f q', for: 'f-q' }, 'Search', q),
+      fsel('f-bucket', 'Bucket', 'bucket', [['LOW', 'LOW'], ['MEDIUM', 'MEDIUM'], ['HIGH', 'HIGH'], ['NONE', 'Not classified']], 'All buckets'),
+      fsel('f-op', 'Operator type', 'opType', OPTYPE, 'All types'),
+      fsel('f-tier', 'Market tier', 'tier', TIER, 'All tiers'),
+      fsel('f-country', 'Country', 'country', countries, 'All countries'),
+      h('label', { class: 'f', for: 'f-from' }, 'Interviewed from', h('input', { type: 'date', id: 'f-from', value: f.from, onchange: function (e) { f.from = e.target.value; rerender(); } })),
+      h('label', { class: 'f', for: 'f-to' }, 'to', h('input', { type: 'date', id: 'f-to', value: f.to, onchange: function (e) { f.to = e.target.value; rerender(); } })),
+      h('label', { class: 'chk', for: 'f-arch' }, h('input', { type: 'checkbox', id: 'f-arch', checked: f.archived, onchange: function (e) { f.archived = e.target.checked; rerender(); } }), 'Show archived')));
+
+    // tiles
+    var classified = comps.filter(function (c) { return c.ev.classification.final; });
+    var cnt = { LOW: 0, MEDIUM: 0, HIGH: 0 }; classified.forEach(function (c) { cnt[c.ev.classification.final]++; });
+    function avg(key) {
+      var vals = comps.map(function (c) { return key === 'overall' ? (c.ev.complete ? c.ev.overall : null) : c.ev.pillars[key].score; }).filter(function (v) { return v !== null; });
+      return vals.length ? E.round1(vals.reduce(function (s, v) { return s + v; }, 0) / vals.length) : null;
+    }
+    var activeIv = items.filter(function (x) { return !x.a.archived; }).length;
+    var mix = h('div', { class: 'mixbar', role: 'img', 'aria-label': 'LOW ' + cnt.LOW + ', MEDIUM ' + cnt.MEDIUM + ', HIGH ' + cnt.HIGH });
+    ['LOW', 'MEDIUM', 'HIGH'].forEach(function (b) { if (cnt[b]) mix.appendChild(h('span', { style: { flex: String(cnt[b]), background: 'var(' + BUCKET_VAR[b] + ')' } })); });
+    if (!classified.length) mix.appendChild(h('span', { style: { flex: '1', background: 'var(--surface-3)' } }));
+    wrap.appendChild(h('div', { class: 'tiles' },
+      tile('Companies', comps.length, activeIv + ' interview' + (activeIv === 1 ? '' : 's')),
+      h('div', { class: 'card tile mix' }, h('div', { class: 'lbl', text: 'Bucket mix (companies)' }), mix,
+        h('div', { class: 'legend' }, ['LOW', 'MEDIUM', 'HIGH'].map(function (b) { return h('span', null, h('i', { class: 'dot', style: { background: 'var(' + BUCKET_VAR[b] + ')' } }), b + ' ' + cnt[b]); }),
+          comps.length - classified.length ? h('span', null, h('i', { class: 'dot', style: { background: 'var(--b-none)' } }), 'Not classified ' + (comps.length - classified.length)) : null)),
+      tile('Avg AI Maturity', E.fmt1(avg('maturity')), 'out of 10'),
+      tile('Avg AI Strategy', E.fmt1(avg('strategy')), 'out of 10'),
+      tile('Avg overall', E.fmt1(avg('overall')), 'out of 10, complete companies only')));
+
+    // chart + companies
+    var grid = h('div', { class: 'grid2' });
+    grid.appendChild(chartCard(items, comps));
+    grid.appendChild(companiesCard(comps));
+    wrap.appendChild(grid);
+    wrap.appendChild(interviewsCard(items));
+    return wrap;
+  }
+  function tile(label, value, sub) {
+    return h('div', { class: 'card tile' }, h('div', { class: 'lbl', text: label }),
+      h('div', { class: 'val', text: value === null || value === undefined ? '–' : (typeof value === 'number' && value % 1 !== 0 ? E.fmt1(value) : String(value)) }),
+      h('div', { class: 'sub', text: sub || '' }));
+  }
+
+  function chartCard(items, comps) {
+    var useIv = APP.chartInterviews;
+    var pts = (useIv ? items.filter(function (x) { return !x.a.archived; }).map(function (x) {
+      return { label: (x.a.info.company || '?') + ' – ' + (x.a.info.interviewee || x.a.id), sub: x.a.info.position || '', ev: x.ev, href: '#a-' + x.a.id.toLowerCase(), n: 1 };
+    }) : comps.map(function (c) { return { label: c.name, sub: c.items.length + ' interview' + (c.items.length === 1 ? '' : 's'), ev: c.ev, href: '#co-' + c.slug, n: c.items.length }; }));
+    var plotted = pts.filter(function (p) { return p.ev.complete; });
+    var card = h('div', { class: 'card' });
+    card.appendChild(h('div', { class: 'card-h' },
+      h('div', null, h('h2', { text: 'AI Maturity vs AI Strategy' }), h('p', { class: 'small muted', text: 'One dot per ' + (useIv ? 'interview' : 'company') + '. Above the line: strategy ahead of practice. Below: practice ahead of strategy.' })),
+      h('div', { class: 'seg', role: 'group', 'aria-label': 'Plot by' },
+        h('button', { type: 'button', class: useIv ? '' : 'on', text: 'Companies', 'aria-pressed': String(!useIv), onclick: function () { APP.chartInterviews = false; route(); } }),
+        h('button', { type: 'button', class: useIv ? 'on' : '', text: 'Interviews', 'aria-pressed': String(useIv), onclick: function () { APP.chartInterviews = true; route(); } }))));
+    var body = h('div', { class: 'card-b' });
+    body.appendChild(h('div', { class: 'legend', style: { 'margin-bottom': '8px' } },
+      ['LOW', 'MEDIUM', 'HIGH'].map(function (b) { return h('span', null, h('i', { class: 'dot', style: { background: 'var(' + BUCKET_VAR[b] + ')' } }), b); }),
+      pts.length - plotted.length ? h('span', { class: 'muted', text: (pts.length - plotted.length) + ' not plotted (incomplete)' }) : null));
+    var W = 560, H = 400, ml = 46, mr = 14, mt = 12, mb = 42, pw = W - ml - mr, ph = H - mt - mb;
+    function X(v) { return ml + v / 10 * pw; }
+    function Y(v) { return mt + ph - v / 10 * ph; }
+    var svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Scatter plot of AI Maturity against AI Strategy, ' + plotted.length + ' points' });
+    var grid = cssVar('--line'), base = cssVar('--line-2'), muted = cssVar('--muted'), surf = cssVar('--surface');
+    [0, 2.5, 5, 7.5, 10].forEach(function (t) {
+      svg.appendChild(sv('line', { x1: X(t), x2: X(t), y1: mt, y2: mt + ph, stroke: t === 0 ? base : grid, 'stroke-width': 1 }));
+      svg.appendChild(sv('line', { x1: ml, x2: ml + pw, y1: Y(t), y2: Y(t), stroke: t === 0 ? base : grid, 'stroke-width': 1 }));
+      svg.appendChild(sv('text', { x: X(t), y: mt + ph + 16, 'text-anchor': 'middle', 'font-size': 11, fill: muted, text: E.fmtScore(t), style: 'font-variant-numeric: tabular-nums' }));
+      svg.appendChild(sv('text', { x: ml - 8, y: Y(t) + 4, 'text-anchor': 'end', 'font-size': 11, fill: muted, text: E.fmtScore(t) }));
+    });
+    svg.appendChild(sv('line', { x1: X(0), y1: Y(0), x2: X(10), y2: Y(10), stroke: base, 'stroke-width': 1 }));
+    svg.appendChild(sv('text', { x: X(0.3), y: Y(9.4), 'font-size': 11, fill: muted, text: 'Strategy ahead of practice' }));
+    svg.appendChild(sv('text', { x: X(9.7), y: Y(0.5), 'font-size': 11, fill: muted, 'text-anchor': 'end', text: 'Practice ahead of strategy' }));
+    svg.appendChild(sv('text', { x: ml + pw / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: cssVar('--ink-2'), text: 'AI Maturity' }));
+    svg.appendChild(sv('text', { x: 12, y: mt + ph / 2, 'text-anchor': 'middle', 'font-size': 12, fill: cssVar('--ink-2'), transform: 'rotate(-90 12 ' + (mt + ph / 2) + ')', text: 'AI Strategy' }));
+    var wrapC = h('div', { class: 'chart-wrap' });
+    var tip = h('div', { class: 'tip', hidden: true });
+    function showTip(p, cx, cy) {
+      tip.textContent = '';
+      add(tip, [h('div', null, h('b', { text: (p.ev.complete ? E.fmt1(p.ev.overall) : '–') + '  ' + (p.ev.classification.final || 'Not classified') })),
+        h('div', { text: p.label }), p.sub ? h('div', { class: 'muted small', text: p.sub }) : null,
+        h('div', { class: 'muted small', text: 'Maturity ' + E.fmt1(p.ev.pillars.maturity.score) + ' · Strategy ' + E.fmt1(p.ev.pillars.strategy.score) })]);
+      tip.hidden = false;
+      var r = svg.getBoundingClientRect(), sx = r.width / W;
+      var left = cx * sx + 14, top = cy * sx - 10;
+      if (left > r.width - 180) left = cx * sx - 190;
+      tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    }
+    var showLabels = plotted.length <= 12, placed = [], labelPos = [];
+    plotted.forEach(function (p) { var cx = X(p.ev.pillars.maturity.score), cy = Y(p.ev.pillars.strategy.score); placed.push({ x1: cx - 8, y1: cy - 8, x2: cx + 8, y2: cy + 8 }); });
+    plotted.forEach(function (p, idx) {
+      if (!showLabels) return;
+      var cx = X(p.ev.pillars.maturity.score), cy = Y(p.ev.pillars.strategy.score);
+      var text = p.label.length > 26 ? p.label.slice(0, 25) + '…' : p.label, w = text.length * 6.3;
+      var cands = [{ x: cx + 10, y: cy + 4, a: 'start', b: { x1: cx + 10, x2: cx + 10 + w, y1: cy - 7, y2: cy + 7 } },
+        { x: cx - 10, y: cy + 4, a: 'end', b: { x1: cx - 10 - w, x2: cx - 10, y1: cy - 7, y2: cy + 7 } },
+        { x: cx, y: cy - 12, a: 'middle', b: { x1: cx - w / 2, x2: cx + w / 2, y1: cy - 23, y2: cy - 9 } },
+        { x: cx, y: cy + 20, a: 'middle', b: { x1: cx - w / 2, x2: cx + w / 2, y1: cy + 9, y2: cy + 23 } }];
+      for (var k = 0; k < cands.length; k++) {
+        var bx = cands[k].b;
+        if (bx.x1 < ml || bx.x2 > ml + pw || bx.y1 < mt || bx.y2 > mt + ph) continue;
+        if (placed.some(function (q) { return !(bx.x2 < q.x1 || bx.x1 > q.x2 || bx.y2 < q.y1 || bx.y1 > q.y2); })) continue;
+        placed.push(bx); labelPos[idx] = { x: cands[k].x, y: cands[k].y, a: cands[k].a, text: text }; break;
+      }
+    });
+    plotted.forEach(function (p, idx) {
+      var cx = X(p.ev.pillars.maturity.score), cy = Y(p.ev.pillars.strategy.score);
+      var col = cssVar(BUCKET_VAR[p.ev.classification.final] || '--b-none');
+      var g = sv('g', { tabindex: 0, role: 'link', 'aria-label': p.label + ', maturity ' + E.fmt1(p.ev.pillars.maturity.score) + ', strategy ' + E.fmt1(p.ev.pillars.strategy.score) + ', ' + (p.ev.classification.final || 'not classified'), style: 'cursor:pointer;outline:none' });
+      g.appendChild(sv('circle', { cx: cx, cy: cy, r: 14, fill: 'transparent' }));
+      g.appendChild(sv('circle', { cx: cx, cy: cy, r: 6, fill: col, stroke: surf, 'stroke-width': 2 }));
+      if (labelPos[idx]) g.appendChild(sv('text', { x: labelPos[idx].x, y: labelPos[idx].y, 'text-anchor': labelPos[idx].a, 'font-size': 11, fill: cssVar('--ink-2'), text: labelPos[idx].text }));
+      g.addEventListener('pointerenter', function () { showTip(p, cx, cy); });
+      g.addEventListener('pointerleave', function () { tip.hidden = true; });
+      g.addEventListener('focus', function () { showTip(p, cx, cy); });
+      g.addEventListener('blur', function () { tip.hidden = true; });
+      g.addEventListener('click', function () { go(p.href); });
+      g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(p.href); } });
+      svg.appendChild(g);
+    });
+    add(wrapC, [svg, tip]);
+    body.appendChild(wrapC);
+    if (!plotted.length) body.appendChild(h('p', { class: 'small muted', text: 'Points appear once both pillars have at least ' + Math.min(currentFw().completenessMin, 4) + ' scored categories.' }));
+    card.appendChild(body);
+    return card;
+  }
+
+  function sortRows(rows, sort, getters) {
+    var g = getters[sort.key];
+    return rows.slice().sort(function (p, q) {
+      var a = g(p), b = g(q);
+      if (a === null || a === undefined || a === '') return 1;
+      if (b === null || b === undefined || b === '') return -1;
+      return (a < b ? -1 : a > b ? 1 : 0) * sort.dir;
+    });
+  }
+  function th(label, key, sort, cls, onSort) {
+    var on = sort.key === key;
+    return h('th', { class: cls || null, 'aria-sort': on ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none' },
+      h('button', { type: 'button', onclick: function () { if (on) sort.dir = -sort.dir; else { sort.key = key; sort.dir = cls === 'n' ? -1 : 1; } onSort(); } }, label + (on ? (sort.dir > 0 ? ' ↑' : ' ↓') : '')));
+  }
+  var BRANK = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+  function companiesCard(comps) {
+    var card = h('div', { class: 'card' });
+    card.appendChild(h('div', { class: 'card-h' }, h('div', null, h('h2', { text: 'Companies' }),
+      h('p', { class: 'small muted', text: 'Combined across each company’s interviews, scored with framework v' + currentFw().version + '.' }))));
+    var getters = { name: function (c) { return c.name.toLowerCase(); }, n: function (c) { return c.items.length; },
+      maturity: function (c) { return c.ev.pillars.maturity.score; }, strategy: function (c) { return c.ev.pillars.strategy.score; },
+      overall: function (c) { return c.ev.complete ? c.ev.overall : null; }, bucket: function (c) { return BRANK[c.ev.classification.final] || 0; } };
+    var rows = sortRows(comps, APP.sortCo, getters), re = function () { route(); };
+    var tbl = h('table', { class: 't' },
+      h('thead', null, h('tr', null, th('Company', 'name', APP.sortCo, '', re), th('Interviews', 'n', APP.sortCo, 'n', re), th('Maturity', 'maturity', APP.sortCo, 'n', re),
+        th('Strategy', 'strategy', APP.sortCo, 'n', re), th('Overall', 'overall', APP.sortCo, 'n', re), th('Bucket', 'bucket', APP.sortCo, '', re))),
+      h('tbody', null, rows.map(function (c) {
+        var tr = h('tr', { class: 'click', tabindex: 0, onclick: function () { go('#co-' + c.slug); }, onkeydown: function (e) { if (e.key === 'Enter') go('#co-' + c.slug); } },
+          h('td', null, h('div', { class: 'cell-main', text: c.name }), h('div', { class: 'cell-sub', text: [c.info.operatorType, c.info.tier, c.info.country].filter(Boolean).join(' · ') })),
+          h('td', { class: 'n', text: c.items.length }),
+          h('td', { class: 'n', text: E.fmt1(c.ev.pillars.maturity.score) }),
+          h('td', { class: 'n', text: E.fmt1(c.ev.pillars.strategy.score) }),
+          h('td', { class: 'n', text: c.ev.complete ? E.fmt1(c.ev.overall) : '–' }),
+          h('td', null, pill(c.ev.classification.final), c.purpose ? h('div', { class: 'cell-sub', text: purposeText(c.purpose) }) : null));
+        return tr;
+      })));
+    card.appendChild(h('div', { class: 'card-b tablewrap' }, rows.length ? tbl : h('p', { class: 'muted', text: 'No companies match the filters.' })));
+    return card;
+  }
+
+  function statusChips(a, ev) {
+    var out = [], cl = ev.classification, cur = currentFw().version;
+    if (a.archived) out.push(h('span', { class: 'chip', text: 'Archived' }));
+    if (!ev.complete) out.push(h('span', { class: 'chip warn', text: 'Incomplete' }));
+    else if (ev.partial) out.push(h('span', { class: 'chip', text: 'Partial' }));
+    if (cl.unverified) out.push(h('span', { class: 'chip warn', text: 'Unverified' }));
+    if (cl.downgraded) out.push(h('span', { class: 'chip info', text: 'Lowered from ' + cl.provisional }));
+    if ((a.frameworkVersion || 1) < cur) out.push(h('span', { class: 'chip', text: 'Scored with v' + (a.frameworkVersion || 1) }));
+    if (!out.length) out.push(h('span', { class: 'chip ok', text: 'Complete' }));
+    return out;
+  }
+
+  function interviewsCard(items) {
+    var card = h('div', { class: 'card' });
+    card.appendChild(h('div', { class: 'card-h' }, h('div', null, h('h2', { text: 'Interviews' }), h('p', { class: 'small muted', text: items.length + ' shown. Click a row to open, edit or download its PDF.' }))));
+    var getters = { date: function (x) { return x.a.info.date || ''; }, company: function (x) { return (x.a.info.company || '').toLowerCase(); },
+      interviewee: function (x) { return (x.a.info.interviewee || '').toLowerCase(); }, interviewer: function (x) { return (x.a.info.interviewer || '').toLowerCase(); },
+      maturity: function (x) { return x.ev.pillars.maturity.score; }, strategy: function (x) { return x.ev.pillars.strategy.score; },
+      overall: function (x) { return x.ev.complete ? x.ev.overall : null; }, bucket: function (x) { return BRANK[x.ev.classification.final] || 0; } };
+    var rows = sortRows(items, APP.sortIv, getters), re = function () { route(); };
+    var tbl = h('table', { class: 't' },
+      h('thead', null, h('tr', null, th('Date', 'date', APP.sortIv, '', re), th('Company', 'company', APP.sortIv, '', re), th('Interviewee', 'interviewee', APP.sortIv, '', re),
+        th('Interviewer', 'interviewer', APP.sortIv, '', re), th('Maturity', 'maturity', APP.sortIv, 'n', re), th('Strategy', 'strategy', APP.sortIv, 'n', re),
+        th('Overall', 'overall', APP.sortIv, 'n', re), th('Bucket', 'bucket', APP.sortIv, '', re), h('th', { text: 'Status' }))),
+      h('tbody', null, rows.map(function (x) {
+        var a = x.a, i = a.info || {}, href = '#a-' + a.id.toLowerCase();
+        return h('tr', { class: 'click' + (a.archived ? ' archived' : ''), tabindex: 0, onclick: function () { go(href); }, onkeydown: function (e) { if (e.key === 'Enter') go(href); } },
+          h('td', { class: 'tab', text: fmtDate(i.date) || '–' }),
+          h('td', null, h('div', { class: 'cell-main', text: i.company || '(no company)' }), h('div', { class: 'cell-sub mono', text: a.id })),
+          h('td', null, h('div', { text: i.interviewee || '–' }), h('div', { class: 'cell-sub', text: i.position || '' })),
+          h('td', { text: i.interviewer || '–' }),
+          h('td', { class: 'n', text: E.fmt1(x.ev.pillars.maturity.score) }),
+          h('td', { class: 'n', text: E.fmt1(x.ev.pillars.strategy.score) }),
+          h('td', { class: 'n', text: x.ev.complete ? E.fmt1(x.ev.overall) : '–' }),
+          h('td', null, pill(x.ev.classification.final)),
+          h('td', null, h('div', { class: 'row' }, statusChips(a, x.ev))));
+      })));
+    card.appendChild(h('div', { class: 'card-b tablewrap' }, rows.length ? tbl : h('p', { class: 'muted', text: 'No interviews match the filters.' })));
+    return card;
+  }
+
+  // ---------------- company view ----------------
+  function viewCompany(slug) {
+    var comps = allCompanies(), c = comps.filter(function (x) { return x.slug === slug; })[0];
+    var wrap = h('div');
+    if (!c) { wrap.appendChild(h('div', { class: 'card empty' }, h('h2', { text: APP.loadedA ? 'Company not found' : 'Loading…' }), h('a', { href: '#overview', text: 'Back to the overview' }))); return wrap; }
+    var fw = currentFw(), ev = c.ev, cl = ev.classification;
+    wrap.appendChild(h('div', { class: 'page-head' },
+      h('div', null, h('p', { class: 'small' }, h('a', { href: '#overview', text: 'Overview' }), ' / Company'),
+        h('h1', { text: c.name }),
+        h('p', { text: [c.info.industry, c.info.operatorType, c.info.operatingModel, c.info.tier, c.info.country, c.info.hotels ? c.info.hotels + ' hotels' : ''].filter(Boolean).join(' · ') || 'Segment not recorded' })),
+      APP.readOnly || APP.mode !== 'live' ? null : h('button', { class: 'btn primary', type: 'button', text: 'New interview for this company', onclick: function () {
+        var i = c.info; APP.prefill = { company: i.company, industry: i.industry, operatorType: i.operatorType, operatingModel: i.operatingModel, tier: i.tier, country: i.country, hotels: i.hotels, rooms: i.rooms };
+        go('#new');
+      } })));
+    var grid = h('div', { class: 'co-grid' });
+    var res = h('div', { class: 'card res' }, h('div', { class: 'card-h' }, h('h2', { text: 'Combined result' }), h('span', { class: 'chip', text: c.items.length + ' interview' + (c.items.length === 1 ? '' : 's') })),
+      h('div', { class: 'card-b' },
+        h('div', { class: 'res-top' }, h('div', { class: 'res-num num' }, ev.complete ? E.fmt1(ev.overall) : '–', h('small', { text: ' / 10' })), pill(cl.final, 'lg')),
+        c.purpose ? h('p', { class: 'muted', text: labelOf(cl.final, c.purpose) }) : null,
+        pbar('AI Maturity', ev.pillars.maturity), pbar('AI Strategy', ev.pillars.strategy),
+        h('p', { class: 'reason', text: cl.reason }),
+        h('p', { class: 'small muted', text: 'Each category is averaged across the interviews, then classified with the rules of framework v' + fw.version + '.' })));
+    grid.appendChild(res);
+
+    var cols = c.items;
+    var tbl = h('table', { class: 't' });
+    tbl.appendChild(h('thead', null, h('tr', null, h('th', { text: 'Category' }),
+      cols.map(function (x) { return h('th', { class: 'n' }, h('a', { href: '#a-' + x.a.id.toLowerCase(), text: x.a.info.interviewee || x.a.id }), h('div', { class: 'cell-sub', text: [x.a.info.position, fmtDate(x.a.info.date)].filter(Boolean).join(' · ') })); }),
+      h('th', { class: 'n', text: 'Combined' }), h('th', { class: 'n', text: 'Gap' }))));
+    var tb = h('tbody');
+    ['maturity', 'strategy'].forEach(function (p) {
+      tb.appendChild(h('tr', null, h('td', { colspan: String(cols.length + 3) }, h('b', { text: p === 'maturity' ? 'AI Maturity' : 'AI Strategy' }))));
+      fw.categories.filter(function (cat) { return cat.pillar === p; }).forEach(function (cat) {
+        var comb = ev.cats[cat.key] || {};
+        tb.appendChild(h('tr', null, h('td', { text: cat.name }),
+          cols.map(function (x) { var ci = x.ev.cats[cat.key]; return h('td', { class: 'n', text: ci && ci.assessed ? E.fmtScore(ci.score) : '–' }); }),
+          h('td', { class: 'n' }, h('b', { text: comb.assessed ? E.fmt1(comb.score) : '–' })),
+          h('td', { class: 'n' + (comb.gap >= 2.5 ? ' gap-hi' : ''), title: comb.gap >= 2.5 ? 'Interviewees disagree by 2.5 points or more' : null, text: comb.assessed && cols.length > 1 ? E.fmtScore(comb.gap) : '–' })));
+      });
+    });
+    tb.appendChild(h('tr', null, h('td', null, h('b', { text: 'Overall' })),
+      cols.map(function (x) { return h('td', { class: 'n' }, h('b', { text: x.ev.complete ? E.fmt1(x.ev.overall) : '–' }), h('div', null, pill(x.ev.classification.final))); }),
+      h('td', { class: 'n' }, h('b', { text: ev.complete ? E.fmt1(ev.overall) : '–' })), h('td')));
+    tbl.appendChild(tb);
+    grid.appendChild(h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('div', null, h('h2', { text: 'Scores by interview' }),
+      h('p', { class: 'small muted', text: 'Highlighted gaps show where interviewees (for example head office and a hotel) see AI differently.' }))),
+      h('div', { class: 'card-b tablewrap' }, tbl)));
+    wrap.appendChild(grid);
+    return wrap;
+  }
+  function pbar(label, p) {
+    return h('div', { class: 'pbar' }, h('div', { class: 'lab' }, h('span', null, label, h('span', { class: 'muted', text: '  ' + p.assessedCount + ' of ' + p.total })), h('b', { text: E.fmt1(p.score) })),
+      h('div', { class: 'track' }, h('i', { style: { width: (p.score === null ? 0 : p.score * 10) + '%' } })));
+  }
+
+  // ---------------- editor ----------------
+  function blankAssessment(prefill) {
+    var fw = currentFw();
+    return {
+      id: newId(), createdAt: nowISO(), createdBy: APP.myId, frameworkVersion: fw.version, archived: false,
+      info: Object.assign({ company: '', interviewee: '', position: '', date: today(), interviewer: APP.myName || '', industry: 'Hotel', operatorType: '', operatingModel: '',
+        tier: '', country: '', hotels: '', rooms: '', purpose1: '', purpose2: '', decisionMaker: '', notes: '' }, prefill || {}),
+      scores: {}, findings: { adoption: '', strengths: '', weaknesses: '', positioning: '', opportunities: '' },
+      quotes: [{ text: '', category: '' }, { text: '', category: '' }, { text: '', category: '' }],
+      transcriptMeta: null
+    };
+  }
+  function startNew() {
+    if (APP.readOnly || APP.mode !== 'live') {
+      var v = document.getElementById('view'); v.textContent = '';
+      v.appendChild(h('div', { class: 'card empty' }, h('h2', { text: 'You can’t add interviews here' }),
+        h('p', { text: APP.mode !== 'live' ? 'Open this tool on claude.ai while signed in, so interviews can be saved.' : 'Ask Alexis to invite you to this tool as an Editor.' }),
+        h('a', { href: '#overview', text: 'Back to the overview' })));
+      return;
+    }
+    var a = blankAssessment(APP.prefill); APP.prefill = null;
+    ED = makeED(a, false);
+    location.replace('#a-' + a.id.toLowerCase());
+  }
+  function makeED(a, persisted) {
+    var ed = { id: a.id, a: a, fw: fwFor(a.frameworkVersion), persisted: persisted, dirty: false, cards: {}, status: 'saved',
+      lastRemoteAt: a.updatedAt || null, savedAt: a.updatedAt ? new Date(a.updatedAt) : null, transcript: null, tSaver: null };
+    ed.saver = makeSaver(function () { return 'assessments/' + ed.id; }, function () { return contentKey(ed.a); }, function () { return docFor(ed); }, function (st, err, info) { setSaveStatus(ed, st, err, info); });
+    if (persisted) ed.saver.baseline(contentKey(a));
+    return ed;
+  }
+  function contentKey(a) { var c = clone(a); delete c.updatedAt; delete c.updatedBy; delete c.updatedSession; return JSON.stringify(c); }
+  function docFor(ed) {
+    var d = clone(ed.a);
+    d.updatedAt = nowISO(); d.updatedBy = APP.myId; d.updatedSession = APP.session;
+    ed.lastRemoteAt = d.updatedAt;
+    return d;
+  }
+  function makeSaver(pathFn, keyFn, docFn, statusFn) {
+    var timer = null, inflight = null, again = false, last = null, retried = false;
+    async function flush() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (inflight) { again = true; return inflight; }
+      var key = keyFn();
+      if (key === last) { statusFn('saved', null, 'insync'); return; }
+      if (APP.readOnly || !APP.db) { statusFn('blocked'); return; }
+      statusFn('saving');
+      inflight = (async function () {
+        try {
+          await APP.db.doc(pathFn()).set(docFn());
+          last = key; retried = false; statusFn('saved', null, 'wrote');
+        } catch (e) {
+          var code = (e && e.code) || 'unavailable';
+          if (code === 'unavailable' && !retried) { retried = true; await new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 1200); }); inflight = null; return flush(); }
+          dbProblem(e); statusFn('error', e);
+        } finally { inflight = null; }
+      })();
+      await inflight;
+      if (again) { again = false; return flush(); }
+    }
+    return {
+      schedule: function () { if (timer) clearTimeout(timer); timer = setTimeout(flush, 700); statusFn('pending'); },
+      flush: flush, baseline: function (k) { last = k; },
+      pending: function () { return !!timer || !!inflight || keyFn() !== last; }
+    };
+  }
+  // info: 'wrote' = a save just completed; 'insync' = nothing new to save; undefined = repaint only (no side effects)
+  function setSaveStatus(ed, st, err, info) {
+    ed.status = st;
+    if (info === 'wrote' || info === 'insync') { ed.dirty = false; clearDraft(ed.id); }
+    if (info === 'wrote') { ed.persisted = true; ed.savedAt = new Date(); }
+    var el = document.getElementById('save-state'); if (!el || ED !== ed) return;
+    el.className = 'save';
+    if (st === 'saved') { el.classList.add('ok'); el.textContent = ed.persisted ? savedLabel(ed.savedAt) : 'Not saved yet'; }
+    else if (st === 'pending' || st === 'saving') { el.classList.add('pending'); el.textContent = st === 'saving' ? 'Saving…' : 'Unsaved changes'; }
+    else if (st === 'blocked') { el.classList.add('err'); el.textContent = 'Read-only: not saved'; }
+    else { el.classList.add('err'); el.textContent = 'Not saved – kept in this browser'; }
+  }
+  function draftKey(id) { return 'aiat-draft-' + id; }
+  function saveDraft(ed) { try { localStorage.setItem(draftKey(ed.id), JSON.stringify({ at: Date.now(), a: ed.a })); } catch (e) { } }
+  function clearDraft(id) { try { localStorage.removeItem(draftKey(id)); } catch (e) { } }
+  function readDraft(id) { try { var s = localStorage.getItem(draftKey(id)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+
+  function leaveEditor() {
+    var ed = ED; ED = null;
+    if (ed) {
+      if (ed.persisted || ed.dirty) ed.saver.flush();
+      if (ed.tSaver && ed.tDirty) ed.tSaver.flush();
     }
   }
-  addEventListener("hashchange", route);
-  route();
+  window.addEventListener('beforeunload', function (e) { if (ED && ED.saver.pending() && (ED.persisted || ED.dirty)) { ED.saver.flush(); e.preventDefault(); e.returnValue = ''; } });
+
+  function change(mutator, opts) {
+    if (!ED || APP.readOnly) return;
+    mutator(ED.a);
+    ED.dirty = true;
+    saveDraft(ED);
+    refresh(opts && opts.skip);
+    ED.saver.schedule();
+  }
+
+  function renderEditor(id) {
+    var view = document.getElementById('view');
+    if (!ED || ED.id !== id) {
+      var src = APP.assessments[id];
+      if (!src) {
+        view.textContent = '';
+        view.appendChild(h('div', { class: 'card empty' }, h('h2', { text: APP.loadedA ? 'Interview not found' : 'Loading…' }),
+          APP.loadedA ? h('p', { text: 'It may have been deleted, or the link is wrong.' }) : null, h('a', { href: '#overview', text: 'Back to the overview' })));
+        return;
+      }
+      ED = makeED(clone(src), true);
+    }
+    var ed = ED, a = ed.a, fw = ed.fw, ro = APP.readOnly || APP.mode !== 'live';
+    view.textContent = '';
+    ed.cards = {};
+
+    // sticky score strip
+    var strip = h('div', { class: 'strip', id: 'strip' },
+      h('div', { class: 'who-is' }, h('b', { id: 'strip-co', text: a.info.company || 'New interview' }),
+        h('span', { class: 'small muted' }, h('span', { id: 'strip-iv', text: a.info.interviewee || 'Interviewee not entered' }), ' · ', h('span', { class: 'mono', text: a.id }))),
+      h('div', { class: 'row' }, h('span', { class: 'bignum', id: 'strip-num', text: '–' }), h('span', { id: 'strip-pill' })),
+      h('div', { class: 'pillars', id: 'strip-pillars' }),
+      h('span', { class: 'save', id: 'save-state', role: 'status' }),
+      h('button', { class: 'btn primary', type: 'button', text: 'Download PDF', onclick: downloadPDF }),
+      ro ? null : h('button', { class: 'btn ghost', type: 'button', text: a.archived ? 'Restore' : 'Archive', onclick: toggleArchive }));
+    view.appendChild(strip);
+    setSaveStatus(ed, ed.status);
+
+    var draft = readDraft(a.id);
+    if (draft && draft.a && !ro && contentKey(draft.a) !== contentKey(a) && (!a.updatedAt || draft.at > new Date(a.updatedAt).getTime())) {
+      view.appendChild(h('div', { class: 'banner warn', style: { 'margin-bottom': '14px' } },
+        h('div', { class: 'grow' }, h('b', { text: 'Unsaved changes found in this browser.' }), ' From ' + fmtDT(new Date(draft.at).toISOString()) + '.'),
+        h('button', { class: 'btn sm', type: 'button', text: 'Restore them', onclick: function () { ed.a = draft.a; ed.dirty = true; renderEditor(ed.id); ed.saver.schedule(); } }),
+        h('button', { class: 'btn sm ghost', type: 'button', text: 'Discard', onclick: function (e) { clearDraft(a.id); e.target.closest('.banner').remove(); } })));
+    }
+    var remoteBox = h('div', { id: 'remote-box' });
+    view.appendChild(remoteBox);
+    if (a.archived) view.appendChild(h('div', { class: 'banner info', style: { 'margin-bottom': '14px' } }, h('div', { class: 'grow' }, h('b', { text: 'This interview is archived.' }), ' It is hidden from the overview and the company results.'),
+      APP.isOwner ? h('button', { class: 'btn sm danger', type: 'button', text: 'Delete permanently', onclick: deleteForever }) : null));
+
+    var grid = h('div', { class: 'editor' });
+    var fs = h('fieldset', { class: 'plain', disabled: ro });
+    fs.appendChild(secInterview(a, fw));
+    fs.appendChild(secPillar('maturity', 'AI Maturity', 'What the company actually runs today.', fw));
+    fs.appendChild(secPillar('strategy', 'AI Strategy', 'How organised the company is around AI.', fw));
+    fs.appendChild(secFindings(a, fw));
+    fs.appendChild(secTranscript(a));
+    grid.appendChild(fs);
+    var rail = h('aside', { class: 'rail', 'aria-label': 'Result' }, h('div', { id: 'result' }));
+    grid.appendChild(rail);
+    view.appendChild(grid);
+    refresh();
+  }
+
+  function refresh(skip) {
+    if (!ED) return;
+    var ev = E.evaluate(ED.a, ED.fw), cl = ev.classification;
+    Object.keys(ED.cards).forEach(function (k) { if (k !== skip) ED.cards[k](ev); });
+    var num = document.getElementById('strip-num'); if (num) num.textContent = ev.complete ? E.fmt1(ev.overall) : '–';
+    var sp = document.getElementById('strip-pill'); if (sp) { sp.textContent = ''; sp.appendChild(pill(cl.final)); }
+    var spl = document.getElementById('strip-pillars'); if (spl) { spl.textContent = ''; add(spl, [h('span', { text: 'Maturity ' + E.fmt1(ev.pillars.maturity.score) }), h('span', { text: 'Strategy ' + E.fmt1(ev.pillars.strategy.score) })]); }
+    var co = document.getElementById('strip-co'); if (co) co.textContent = ED.a.info.company || 'New interview';
+    var iv = document.getElementById('strip-iv'); if (iv) iv.textContent = ED.a.info.interviewee || 'Interviewee not entered';
+    var r = document.getElementById('result'); if (r) { r.textContent = ''; r.appendChild(resultPanel(ev, ED.fw, ED.a)); }
+  }
+
+  function resultPanel(ev, fw, a) {
+    var cl = ev.classification, card = h('div', { class: 'card res' });
+    var body = h('div', { class: 'card-b' });
+    body.appendChild(h('div', { class: 'res-top' },
+      h('div', null, h('div', { class: 'small muted', text: 'Overall AI score' }), h('div', { class: 'res-num num' }, ev.complete ? E.fmt1(ev.overall) : '–', h('small', { text: ' / 10' }))),
+      h('div', { style: { 'text-align': 'right' } }, pill(cl.final, 'lg'), a.info.purpose1 ? h('div', { class: 'small muted', style: { 'margin-top': '6px' }, text: purposeText(a.info.purpose1) }) : null)));
+    if (cl.downgraded) body.appendChild(h('div', null, h('span', { class: 'chip info', text: 'Lowered from ' + cl.provisional + ' by the minimum requirements' })));
+    if (cl.unverified) body.appendChild(h('div', null, h('span', { class: 'chip warn', text: 'Unverified: some data was not disclosed' })));
+    body.appendChild(pbar('AI Maturity', ev.pillars.maturity));
+    body.appendChild(pbar('AI Strategy', ev.pillars.strategy));
+    body.appendChild(h('p', { class: 'reason', text: cl.reason }));
+    if (cl.trail && cl.trail.length) {
+      body.appendChild(h('div', { class: 'reqs' }, cl.trail.map(function (st) {
+        return h('div', { class: 'req-g' }, h('h4', { text: st.bucket + ' requirements' }), st.checks.map(function (ck) {
+          var word = ck.status === 'met' ? 'Met' : ck.status === 'not_met' ? 'Not met' : 'Not verified';
+          var cls = ck.status === 'met' ? 'ok' : ck.status === 'not_met' ? 'crit' : 'warn';
+          var act = ck.actual === null || ck.actual === undefined ? '' : ' (' + (ck.metric === 'spendPct' && typeof ck.actual === 'number' ? E.fmtPct(ck.actual) : (ck.metric === 'liveDepts' ? ck.actual : (typeof ck.actual === 'number' ? E.fmtScore(ck.actual) : String(ck.actual).replace(' (range given)', '')))) + ')';
+          return h('div', { class: 'req' }, h('span', null, h('span', { class: 'chip ' + cls, text: word })), h('span', { text: ck.label + act }));
+        }));
+      })));
+    } else if (cl.final === 'LOW') body.appendChild(h('p', { class: 'small muted', text: 'LOW has no minimum requirements.' }));
+    // how it was calculated
+    var wm = Number(fw.pillarWeights.maturity), ws = Number(fw.pillarWeights.strategy);
+    function pillarLine(p, name) {
+      var pl = ev.pillars[p];
+      if (!pl.parts.length) return name + ': no categories scored yet';
+      var eq = pl.parts.every(function (x) { return x.weight === pl.parts[0].weight; });
+      var terms = pl.parts.map(function (x) { return (eq ? '' : x.weight + '×') + E.fmtScore(x.score); });
+      return name + ' = ' + (eq ? '(' + terms.join(' + ') + ') ÷ ' + pl.parts.length : '(' + terms.join(' + ') + ') ÷ ' + pl.parts.reduce(function (s, x) { return s + x.weight; }, 0)) + ' = ' + E.fmt1(pl.score);
+    }
+    var lines = [pillarLine('maturity', 'Maturity'), pillarLine('strategy', 'Strategy')];
+    if (ev.overall !== null) lines.push('Overall = ' + E.round1(wm / (wm + ws) * 100) + '% × ' + E.fmt1(ev.pillars.maturity.score) + ' + ' + E.round1(ws / (wm + ws) * 100) + '% × ' + E.fmt1(ev.pillars.strategy.score) + ' = ' + E.fmt1(ev.overall) + (ev.complete ? '' : ' (not used: incomplete)'));
+    lines.push('Score ranges: LOW below ' + E.fmt1(fw.thresholds.medium) + ' · MEDIUM ' + E.fmt1(fw.thresholds.medium) + ' to ' + E.fmt1(fw.thresholds.high - 0.1) + ' · HIGH ' + E.fmt1(fw.thresholds.high) + ' and above');
+    lines.push('Unscored categories are left out, never counted as 0. Each pillar needs ' + Math.min(fw.completenessMin, 4) + ' of 4.');
+    var cd = h('details', { class: 'calcd', open: !!(ED && ED.calcOpen) }, h('summary', { text: 'How this was calculated' }), h('div', { class: 'lines' }, lines.map(function (l) { return h('div', { text: l }); })));
+    cd.addEventListener('toggle', function () { if (ED) ED.calcOpen = cd.open; });
+    body.appendChild(cd);
+    // framework version
+    var cur = currentFw();
+    var vrow = h('div', { class: 'small muted', text: 'Scored with framework v' + (a.frameworkVersion || 1) + (cur.version === (a.frameworkVersion || 1) ? ' (current).' : '.') });
+    body.appendChild(vrow);
+    if (cur.version > (a.frameworkVersion || 1)) {
+      var evc = E.evaluate(a, cur);
+      body.appendChild(h('div', { class: 'banner info' }, h('div', { class: 'grow small' }, 'Under the current framework v' + cur.version + ': ',
+        h('b', { text: (evc.complete ? E.fmt1(evc.overall) : '–') + ' · ' + (evc.classification.final || 'Not classified') })),
+        APP.readOnly ? null : h('button', { class: 'btn sm', type: 'button', text: 'Re-score with v' + cur.version, onclick: function () {
+          change(function (x) { x.frameworkVersion = cur.version; });
+          ED.fw = cur; renderEditor(ED.id); toast('Now scored with framework v' + cur.version + '.');
+        } })));
+    }
+    if (a.updatedAt) {
+      var meta = h('div', { class: 'small muted', text: 'Last saved ' + fmtDT(a.updatedAt) });
+      body.appendChild(meta);
+      if (APP.user && a.updatedBy) APP.user.profiles([a.updatedBy]).then(function (ps) { var n = ps[a.updatedBy] && ps[a.updatedBy].name; if (n) meta.textContent = 'Last saved ' + fmtDT(a.updatedAt) + ' by ' + n; });
+    }
+    body.appendChild(h('button', { class: 'btn primary', type: 'button', text: 'Download PDF report', onclick: downloadPDF }));
+    card.appendChild(body);
+    return card;
+  }
+
+  // ----- section: interview details
+  function secInterview(a, fw) {
+    var i = a.info;
+    function txt(id, label, key, opts) {
+      opts = opts || {};
+      var inp = h('input', { type: opts.type || 'text', id: id, value: i[key] || '', placeholder: opts.ph || null, list: opts.list || null, maxlength: opts.max || '160', inputmode: opts.inputmode || null,
+        oninput: function () { var v = inp.value; change(function (x) { x.info[key] = v; }); } });
+      return h('label', { class: 'f' + (opts.cls ? ' ' + opts.cls : ''), for: id }, label, inp);
+    }
+    function sel(id, label, key, options, ph) {
+      return h('label', { class: 'f', for: id }, label, selectEl(id, options, i[key] || '', function (v) { change(function (x) { x.info[key] = v; }); }, ph || 'Select…'));
+    }
+    var names = Array.from(new Set(allAssessments().map(function (x) { return (x.info || {}).company; }).filter(Boolean))).sort();
+    var dl = h('datalist', { id: 'dl-companies' }, names.map(function (n) { return h('option', { value: n }); }));
+    var sec = h('details', { class: 'sec', open: true },
+      h('summary', null, h('h2', { text: 'Interview details' }), h('span', { class: 'sum-r small muted', text: 'Assessment ID ' + a.id })),
+      h('div', { class: 'sec-b' }, dl,
+        h('div', { class: 'fields' },
+          txt('i-company', 'Company name', 'company', { list: 'dl-companies', cls: 'w2', ph: 'Start typing to reuse an existing company' }),
+          txt('i-date', 'Interview date', 'date', { type: 'date' }),
+          txt('i-interviewee', 'Interviewee name', 'interviewee'),
+          txt('i-position', 'Interviewee position', 'position', { ph: 'e.g. Group CIO, General Manager' }),
+          txt('i-interviewer', 'Interviewer', 'interviewer'),
+          sel('i-industry', 'Industry', 'industry', INDUSTRY),
+          sel('i-optype', 'Operator type', 'operatorType', OPTYPE),
+          sel('i-opmodel', 'Operating model', 'operatingModel', OPMODEL),
+          sel('i-tier', 'Market tier', 'tier', TIER),
+          sel('i-country', 'Country (HQ)', 'country', COUNTRIES),
+          h('div', { class: 'fields', style: { 'grid-template-columns': '1fr 1fr', gap: '12px' } },
+            txt('i-hotels', 'Hotels', 'hotels', { inputmode: 'numeric', max: '8' }), txt('i-rooms', 'Rooms', 'rooms', { inputmode: 'numeric', max: '8' })),
+          h('label', { class: 'f w3', for: 'i-notes' }, 'Additional notes',
+            h('textarea', { id: 'i-notes', value: i.notes || '', maxlength: '2000', oninput: function (e) { var v = e.target.value; change(function (x) { x.info.notes = v; }); } })))));
+    return sec;
+  }
+
+  // ----- section: pillar with category cards
+  function secPillar(pillar, title, sub, fw) {
+    var cats = fw.categories.filter(function (c) { return c.pillar === pillar; });
+    var sumR = h('span', { class: 'sum-r small muted', id: 'sum-' + pillar });
+    var sec = h('details', { class: 'sec', open: true }, h('summary', null, h('div', null, h('h2', { text: title }), h('p', { class: 'small muted', text: sub })), sumR),
+      h('div', { class: 'sec-b' }, cats.map(function (c) { return categoryCard(c, fw); })));
+    ED.cards['__sum_' + pillar] = function (ev) {
+      var p = ev.pillars[pillar]; sumR.textContent = p.assessedCount + ' of ' + p.total + ' scored · ' + title.replace('AI ', '') + ' ' + E.fmt1(p.score);
+    };
+    return sec;
+  }
+
+  function categoryCard(c, fw) {
+    var a = ED.a;
+    var badgeV = h('div', { class: 'v', text: '–' }), badgeS = h('div', { class: 's', text: 'Not scored' });
+    var badge = h('div', { class: 'badge unset' }, badgeV, badgeS);
+    var card = h('section', { class: 'cat', id: 'cat-' + c.key, 'aria-labelledby': 'cat-t-' + c.key },
+      h('div', { class: 'cat-h' }, h('div', null, h('h3', { id: 'cat-t-' + c.key, text: c.name }), h('p', { class: 'q', text: c.question || '' })), badge));
+    var body;
+    if (c.type === 'levels') body = levelsBody(c);
+    else if (c.type === 'spending') body = spendingBody(c, fw);
+    else body = spanBody(c, fw);
+    add(card, body.nodes);
+    if (c.rule) card.appendChild(h('p', { class: 'rule', text: c.rule }));
+    if (c.key === 'decision') {
+      card.appendChild(h('label', { class: 'f', for: 'i-decider' }, 'Who decides on AI (recorded as a label, not scored)',
+        selectEl('i-decider', fw.decisionMakers || DEFAULT_FW.decisionMakers, a.info.decisionMaker || '', function (v) { change(function (x) { x.info.decisionMaker = v; }); }, 'Select…')));
+    }
+    var note = h('input', { type: 'text', id: 'note-' + c.key, maxlength: String(LIMITS.note), value: (a.scores[c.key] && a.scores[c.key].note) || '', placeholder: 'Why this score (one line; useful evidence for the team)',
+      oninput: function () { var v = note.value; change(function (x) { x.scores[c.key] = Object.assign({}, x.scores[c.key], { note: v }); }, { skip: c.key }); } });
+    var clear = h('button', { type: 'button', class: 'link', text: 'Clear score', onclick: function () {
+      change(function (x) { var keep = (x.scores[c.key] || {}).note; x.scores[c.key] = keep ? { note: keep } : {}; });
+      body.sync();
+    } });
+    card.appendChild(h('div', { class: 'note-row' }, h('label', { class: 'sr', for: 'note-' + c.key, text: c.name + ' note' }), note, clear));
+    ED.cards[c.key] = function (ev) {
+      var ci = ev.cats[c.key];
+      badge.classList.toggle('unset', !ci.assessed);
+      badgeV.textContent = ci.assessed ? E.fmtScore(ci.score) : '–';
+      badgeS.textContent = ci.assessed ? 'out of 10' : 'Not scored';
+      if (body.update) body.update(ci);
+    };
+    return card;
+  }
+
+  function setScore(key, patch) { change(function (x) { x.scores[key] = Object.assign({}, x.scores[key], patch); }); }
+
+  function levelsBody(c) {
+    var key = c.key;
+    function raw() { return ED.a.scores[key] || {}; }
+    var range = h('input', { type: 'range', min: '0', max: '4', step: '1', class: 'lvl unset', id: 'rng-' + key, 'aria-label': c.name + ' level' });
+    var hint = h('div', { class: 'unset-hint', text: 'Not scored yet. Drag the slider or pick a level below.' });
+    var btns = [];
+    var list = h('ol', { class: 'levels', 'aria-label': c.name + ' levels' }, c.levels.map(function (lv, i) {
+      var b = h('button', { type: 'button', class: 'lv', 'aria-pressed': 'false', onclick: function () { pick(i); } },
+        h('span', { class: 'lv-score', text: E.fmtScore(E.LEVEL_SCORES[i]) }),
+        h('span', null, h('span', { class: 'lv-name', text: lv.name }), h('span', { class: 'lv-desc', text: lv.desc })));
+      btns.push(b);
+      return h('li', null, b);
+    }));
+    function pick(i) { if (APP.readOnly) return; setScore(key, { level: i }); sync(); }
+    function sync() {
+      var r = raw(), set = typeof r.level === 'number';
+      range.classList.toggle('unset', !set);
+      range.value = set ? r.level : 2;
+      range.style.setProperty('--fill', set ? (r.level * 25) + '%' : '0%');
+      range.setAttribute('aria-valuetext', set ? E.fmtScore(E.LEVEL_SCORES[r.level]) + ': ' + c.levels[r.level].name : 'Not scored');
+      hint.hidden = set;
+      btns.forEach(function (b, i) { var on = set && r.level === i; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    }
+    range.addEventListener('input', function () { pick(+range.value); });
+    range.addEventListener('pointerup', function () { if (range.classList.contains('unset')) pick(+range.value); });
+    range.addEventListener('keydown', function (e) { if (range.classList.contains('unset') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(+range.value); } });
+    sync();
+    return {
+      nodes: [h('div', { class: 'range-wrap' }, range, h('div', { class: 'ticks', 'aria-hidden': 'true' }, E.LEVEL_SCORES.map(function (s) { return h('span', { text: E.fmtScore(s) }); })), hint), list],
+      sync: sync
+    };
+  }
+
+  function spendingBody(c, fw) {
+    var key = 'spending';
+    function raw() { return ED.a.scores[key] || {}; }
+    var bands = E.sortedBands(fw);
+    var modes = [['amounts', 'Amounts'], ['percent', 'Percentage'], ['range', 'Range only'], ['none', 'No AI spending']];
+    var seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'How the spending was given' });
+    var modeBtns = modes.map(function (m) {
+      var b = h('button', { type: 'button', text: m[1], onclick: function () { setScore(key, { mode: m[0] }); paint(); } });
+      seg.appendChild(b); return [m[0], b];
+    });
+    var it = h('input', { type: 'text', id: 'sp-it', inputmode: 'decimal', value: raw().itBudget || '', placeholder: 'e.g. 1 200 000', oninput: function () { var v = it.value; setScore(key, { itBudget: v }); } });
+    var ai = h('input', { type: 'text', id: 'sp-ai', inputmode: 'decimal', value: raw().aiSpend || '', placeholder: 'e.g. 90 000', oninput: function () { var v = ai.value; setScore(key, { aiSpend: v }); } });
+    var pc = h('input', { type: 'text', id: 'sp-pct', inputmode: 'decimal', value: raw().percent === undefined ? '' : raw().percent, placeholder: 'e.g. 8', oninput: function () { var v = pc.value; setScore(key, { percent: v }); } });
+    var amounts = h('div', { class: 'fields', style: { 'grid-template-columns': '1fr 1fr' } },
+      h('label', { class: 'f', for: 'sp-it' }, 'Total annual IT budget', it), h('label', { class: 'f', for: 'sp-ai' }, 'Annual AI spending (same currency)', ai));
+    var pct = h('div', { class: 'fields', style: { 'grid-template-columns': '1fr 2fr' } }, h('label', { class: 'f', for: 'sp-pct' }, 'Share of IT budget on AI (%)', pc));
+    var calc = h('div', { class: 'calc', role: 'status' });
+    var bandBtns = [];
+    var zeroRow = h('button', { type: 'button', class: 'lv', onclick: function () { setScore(key, { mode: 'none' }); paint(); } },
+      h('span', { class: 'lv-score', text: E.fmtScore(fw.zeroSpendScore || 0) }), h('span', null, h('span', { class: 'lv-name', text: '0% (no AI spending)' })));
+    var list = h('ol', { class: 'levels', 'aria-label': 'Spending bands' }, h('li', null, zeroRow), bands.map(function (b) {
+      var btn = h('button', { type: 'button', class: 'lv', onclick: function () { if (raw().mode === 'range') { setScore(key, { range: b.key }); paint(); } } },
+        h('span', { class: 'lv-score', text: E.fmtScore(b.score) }), h('span', null, h('span', { class: 'lv-name', text: E.bandLabel(b, bands) })));
+      bandBtns.push([b, btn]);
+      return h('li', null, btn);
+    }));
+    var paidWrap = h('div', { class: 'row small' }, h('span', { class: 'muted', text: 'Paid from:' }), [['it', 'IT budget'], ['dept', 'Department budgets'], ['brand', 'Brand or technology fees']].map(function (p) {
+      var cb = h('input', { type: 'checkbox', id: 'paid-' + p[0], checked: (raw().paidFrom || []).indexOf(p[0]) >= 0, onchange: function () {
+        var cur = (raw().paidFrom || []).filter(function (x) { return x !== p[0]; }); if (cb.checked) cur.push(p[0]); setScore(key, { paidFrom: cur });
+      } });
+      return h('label', { class: 'chk', for: 'paid-' + p[0], style: { height: 'auto' } }, cb, p[1]);
+    }));
+    var rangeNote = h('p', { class: 'small muted', text: 'Pick the band the interviewee gave. The requirements use its lower end.' });
+    function paint() {
+      var r = raw(), m = r.mode || '';
+      modeBtns.forEach(function (x) { x[1].classList.toggle('on', x[0] === m); x[1].setAttribute('aria-pressed', x[0] === m ? 'true' : 'false'); });
+      amounts.hidden = m !== 'amounts'; pct.hidden = m !== 'percent'; rangeNote.hidden = m !== 'range';
+      var info = E.spendingInfo(r, fw);
+      calc.classList.toggle('err', !!info.error);
+      calc.hidden = !m;
+      if (info.error) calc.textContent = info.error;
+      else if (info.assessed) calc.textContent = (info.exact ? '= ' + E.fmtPct(info.pct) + ' of IT budget' : 'Range: ' + E.bandLabel(info.band, bands)) + '  →  score ' + E.fmtScore(info.score) + (info.warning ? '. ' + info.warning : '');
+      else calc.textContent = m === 'range' ? 'Pick a band below.' : '';
+      var activeKey = info.assessed ? (info.band ? info.band.key : (info.pct === 0 ? '__zero' : null)) : null;
+      zeroRow.classList.toggle('on', activeKey === '__zero');
+      bandBtns.forEach(function (x) { x[1].classList.toggle('on', activeKey === x[0].key); x[1].disabled = m !== 'range'; });
+      zeroRow.disabled = false;
+    }
+    paint();
+    return { nodes: [h('div', null, h('div', { class: 'small muted', style: { 'margin-bottom': '6px' }, text: 'Count AI spending from every budget (IT, departments, brand or technology fees).' }), seg), amounts, pct, calc, rangeNote, list, paidWrap],
+      sync: function () { it.value = raw().itBudget || ''; ai.value = raw().aiSpend || ''; pc.value = raw().percent === undefined ? '' : raw().percent; paint(); }, update: function () { paint(); } };
+  }
+
+  function spanBody(c, fw) {
+    var key = 'span';
+    function raw() { return ED.a.scores[key] || {}; }
+    var seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'How departments are recorded' });
+    var mBtns = [['list', 'Department list'], ['manual', 'Type totals']].map(function (m) {
+      var b = h('button', { type: 'button', text: m[1], onclick: function () { setScore(key, { mode: m[0] }); paint(); } }); seg.appendChild(b); return [m[0], b];
+    });
+    var states = [['live', 'Live'], ['pilot', 'Pilot'], ['none', 'None'], ['na', 'N/A']];
+    var rows = fw.departments.map(function (d) {
+      var g = h('div', { class: 'seg d', role: 'group', 'aria-label': d.name });
+      var bs = states.map(function (s) {
+        var b = h('button', { type: 'button', class: s[0], text: s[1], onclick: function () {
+          var dep = Object.assign({}, raw().depts || {}); dep[d.key] = s[0]; setScore(key, { mode: 'list', depts: dep }); paint();
+        } }); g.appendChild(b); return [s[0], b];
+      });
+      return { d: d, bs: bs, el: h('div', { class: 'dept' }, h('span', { text: d.name }), g) };
+    });
+    var rest = h('button', { type: 'button', class: 'btn sm', text: 'Mark the rest as None', onclick: function () {
+      var dep = Object.assign({}, raw().depts || {}); fw.departments.forEach(function (d) { if (!dep[d.key]) dep[d.key] = 'none'; }); setScore(key, { mode: 'list', depts: dep }); paint();
+    } });
+    var listBox = h('div', null, rows.map(function (r) { return r.el; }), h('div', { class: 'row', style: { 'margin-top': '8px' } }, rest));
+    function num(id, label, k) {
+      var inp = h('input', { type: 'number', id: id, min: '0', step: '1', value: raw()[k] === undefined ? '' : raw()[k], oninput: function () { var v = inp.value; var p = {}; p[k] = v; setScore(key, p); } });
+      return h('label', { class: 'f', for: id }, label, inp);
+    }
+    var manual = h('div', { class: 'fields' }, num('sp-total', 'Departments the company has', 'total'), num('sp-live', 'Departments with AI live', 'live'), num('sp-pilot', 'Departments piloting AI', 'pilot'));
+    var calc = h('div', { class: 'calc', role: 'status' });
+    function paint() {
+      var r = raw(), m = r.mode || '';
+      mBtns.forEach(function (x) { x[1].classList.toggle('on', x[0] === m || (!m && x[0] === 'list')); });
+      listBox.hidden = m === 'manual'; manual.hidden = m !== 'manual';
+      rows.forEach(function (row) { var v = (r.depts || {})[row.d.key]; row.bs.forEach(function (x) { x[1].classList.toggle('on', x[0] === v); x[1].setAttribute('aria-pressed', x[0] === v ? 'true' : 'false'); }); });
+      var info = E.spanInfo(r.mode ? r : { mode: 'list', depts: {} }, fw);
+      calc.classList.toggle('err', !!info.error && !!r.mode && !(info.unset > 0));
+      var pw = typeof fw.pilotWeight === 'number' ? fw.pilotWeight : 0.5;
+      if (info.assessed) calc.textContent = 'Live ' + info.live + ' · Pilot ' + info.pilot + ' · of ' + info.total + ' departments  →  (' + info.live + ' + ' + pw + ' × ' + info.pilot + ') ÷ ' + info.total + ' × 10 = ' + E.fmtScore(info.score);
+      else calc.textContent = info.error || 'Mark each department as live, pilot, none or not applicable.';
+    }
+    paint();
+    return { nodes: [seg, listBox, manual, calc, h('p', { class: 'rule', text: 'Requirements count live departments only. For hotel groups, a department is live only if the AI is standard across the group; a trial in one hotel counts as a pilot.' })],
+      sync: function () { paint(); }, update: function () { paint(); } };
+  }
+
+  // ----- section: findings
+  function secFindings(a, fw) {
+    function area(id, label, key) {
+      var cnt = h('div', { class: 'counter' });
+      var ta = h('textarea', { id: id, maxlength: String(LIMITS.finding), value: a.findings[key] || '', rows: '3', oninput: function () { var v = ta.value; upd(); change(function (x) { x.findings[key] = v; }); } });
+      function upd() { cnt.textContent = ta.value.length + ' / ' + LIMITS.finding; cnt.classList.toggle('full', ta.value.length >= LIMITS.finding); }
+      upd();
+      return h('label', { class: 'f', for: id }, label, ta, cnt);
+    }
+    var purposes = fw.purposes || DEFAULT_FW.purposes;
+    var catOpts = fw.categories.map(function (c) { return [c.key, c.name]; });
+    var quotes = (a.quotes && a.quotes.length ? a.quotes : []).slice(0, 3);
+    while (quotes.length < 3) quotes.push({ text: '', category: '' });
+    var qRows = quotes.map(function (q, idx) {
+      var cnt = h('div', { class: 'counter' });
+      var inp = h('input', { type: 'text', id: 'q-' + idx, maxlength: String(LIMITS.quote), value: q.text || '', placeholder: 'Short quote from the interview', oninput: function () { var v = inp.value; upd(); change(function (x) { ensureQuotes(x); x.quotes[idx].text = v; }); } });
+      function upd() { cnt.textContent = inp.value.length + ' / ' + LIMITS.quote; }
+      upd();
+      return h('div', null, h('div', { class: 'quote' }, h('label', { class: 'sr', for: 'q-' + idx, text: 'Quote ' + (idx + 1) }), inp,
+        selectEl('qc-' + idx, catOpts, q.category || '', function (v) { change(function (x) { ensureQuotes(x); x.quotes[idx].category = v; }); }, 'Category (optional)')), cnt);
+    });
+    return h('details', { class: 'sec', open: true },
+      h('summary', null, h('div', null, h('h2', { text: 'Purpose and key findings' }), h('p', { class: 'small muted', text: 'Written by the interviewer. Printed on the PDF report; limits keep it to one page.' }))),
+      h('div', { class: 'sec-b' },
+        h('div', { class: 'fields' },
+          h('label', { class: 'f', for: 'i-p1' }, 'Main purpose of AI (label, not scored)', selectEl('i-p1', purposes, a.info.purpose1 || '', function (v) { change(function (x) { x.info.purpose1 = v; }); }, 'Select…')),
+          h('label', { class: 'f', for: 'i-p2' }, 'Second purpose (optional)', selectEl('i-p2', purposes, a.info.purpose2 || '', function (v) { change(function (x) { x.info.purpose2 = v; }); }, 'None'))),
+        h('div', { class: 'find' },
+          area('f-adoption', 'Current AI adoption', 'adoption'), area('f-positioning', 'Strategic positioning', 'positioning'),
+          area('f-strengths', 'Key strengths', 'strengths'), area('f-opportunities', 'Potential opportunities', 'opportunities'),
+          area('f-weaknesses', 'Main weaknesses', 'weaknesses')),
+        h('div', { class: 'f' }, h('span', { class: 'small', style: { 'font-weight': '500', color: 'var(--ink-2)' }, text: 'Evidence quotes (up to three)' }), qRows)));
+  }
+  function ensureQuotes(x) { if (!Array.isArray(x.quotes)) x.quotes = []; while (x.quotes.length < 3) x.quotes.push({ text: '', category: '' }); }
+
+  // ----- section: transcript
+  function secTranscript(a) {
+    var ed = ED;
+    var ta = h('textarea', { id: 't-text', rows: '8', placeholder: 'Paste the anonymised transcript here, or upload a TXT, DOCX or PDF file.', maxlength: String(LIMITS.transcript) });
+    var anon = h('input', { type: 'checkbox', id: 't-anon' });
+    var link = h('input', { type: 'url', id: 't-link', placeholder: 'Link to the original in the EHL OneDrive (optional)' });
+    var status = h('div', { class: 'small muted', role: 'status' });
+    var file = h('input', { type: 'file', id: 't-file', accept: '.txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    var loaded = false;
+    function tDoc() { return { text: ta.value, anonymised: anon.checked, link: link.value, filename: (ed.transcript && ed.transcript.filename) || '', updatedAt: nowISO(), updatedBy: APP.myId }; }
+    ed.tSaver = makeSaver(function () { return 'transcripts/' + ed.id; }, function () { return JSON.stringify([ta.value, anon.checked, link.value]); }, tDoc, function (st) {
+      if (st === 'saved') status.textContent = ta.value ? 'Transcript saved (' + ta.value.length.toLocaleString('en') + ' characters).' : 'Saved.';
+      else if (st === 'saving') status.textContent = 'Saving transcript…';
+      else if (st === 'error') status.textContent = 'Transcript not saved.';
+    });
+    function changed() {
+      if (!loaded || APP.readOnly) return;
+      if (ta.value && !anon.checked) { status.textContent = 'Not saved: tick the box to confirm names and personal details are removed.'; return; }
+      ed.transcript = tDoc(); ed.tDirty = true;
+      change(function (x) { x.transcriptMeta = ta.value ? { chars: ta.value.length, anonymised: anon.checked, link: link.value, filename: ed.transcript.filename || '' } : (link.value ? { chars: 0, link: link.value } : null); });
+      ed.tSaver.schedule();
+    }
+    ta.addEventListener('input', changed); anon.addEventListener('change', changed); link.addEventListener('input', changed);
+    file.addEventListener('change', async function () {
+      var f = file.files && file.files[0]; if (!f) return;
+      if (f.size > 20 * 1024 * 1024) { status.textContent = 'That file is over 20 MB. Paste the text instead.'; return; }
+      status.textContent = 'Reading ' + f.name + '…';
+      try {
+        var text = await readFileText(f);
+        text = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        if (text.length > LIMITS.transcript) { text = text.slice(0, LIMITS.transcript); status.textContent = 'Transcript shortened to ' + LIMITS.transcript.toLocaleString('en') + ' characters.'; }
+        else status.textContent = 'Read ' + text.length.toLocaleString('en') + ' characters from ' + f.name + '. Check it is anonymised, then tick the box.';
+        if (!text) status.textContent = 'No text found in ' + f.name + '. Scanned PDFs cannot be read; paste the text instead.';
+        ta.value = text; ed.transcript = Object.assign(tDoc(), { filename: f.name });
+        anon.checked = false; changed();
+      } catch (e) { status.textContent = 'Could not read ' + f.name + '. Paste the text instead.'; }
+      file.value = '';
+    });
+    var sec = h('details', { class: 'sec', open: !!(a.transcriptMeta && (a.transcriptMeta.chars || a.transcriptMeta.link)) },
+      h('summary', null, h('div', null, h('h2', { text: 'Interview transcript (optional)' }), h('p', { class: 'small muted', text: 'Kept with this interview for reference. No AI analysis; scores are always set by the interviewer.' })),
+        h('span', { class: 'sum-r' }, a.transcriptMeta && a.transcriptMeta.chars ? h('span', { class: 'chip', text: 'Attached' }) : null)),
+      h('div', { class: 'sec-b' },
+        h('div', { class: 'banner warn' }, h('div', { class: 'grow small' }, h('b', { text: 'Anonymise first.' }), ' The Project Plan requires personal data from interviews to be removed before it is stored with AI tools. Replace names with roles (e.g. “GM”).')),
+        h('label', { class: 'f', for: 't-file' }, 'Upload a transcript (TXT, DOCX or PDF)', file),
+        h('label', { class: 'f', for: 't-text' }, 'Transcript text', ta),
+        h('label', { class: 'chk', for: 't-anon', style: { height: 'auto' } }, anon, 'I confirm names and personal details are removed'),
+        h('label', { class: 'f', for: 't-link' }, 'Original file', link), status));
+    function load() {
+      if (!APP.db || !ed.persisted) { loaded = true; return; }
+      status.textContent = 'Loading transcript…';
+      APP.db.doc('transcripts/' + ed.id).get().then(function (snap) {
+        if (ED !== ed) return;
+        if (snap.exists) { var d = snap.data(); ta.value = d.text || ''; anon.checked = !!d.anonymised; link.value = d.link || ''; ed.transcript = clone(d); ed.tSaver.baseline(JSON.stringify([ta.value, anon.checked, link.value])); status.textContent = d.text ? 'Transcript loaded.' : ''; }
+        else { status.textContent = ''; ed.tSaver.baseline(JSON.stringify(['', false, ''])); }
+        loaded = true;
+      }).catch(function () { status.textContent = 'Could not load the transcript.'; loaded = true; });
+    }
+    load();
+    return sec;
+  }
+
+  var libs = {};
+  function loadScript(src) {
+    if (libs[src]) return libs[src];
+    libs[src] = new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { delete libs[src]; rej(new Error('load ' + src)); }; document.head.appendChild(s); });
+    return libs[src];
+  }
+  async function readFileText(f) {
+    var name = f.name.toLowerCase();
+    if (name.endsWith('.txt') || f.type === 'text/plain') return await f.text();
+    if (name.endsWith('.docx')) {
+      await loadScript('assessment/lib/mammoth.browser.min.js');
+      var r = await window.mammoth.extractRawText({ arrayBuffer: await f.arrayBuffer() });
+      return r.value || '';
+    }
+    if (name.endsWith('.pdf')) {
+      await loadScript('assessment/lib/pdf.min.js');
+      var lib = window.pdfjsLib;
+      lib.GlobalWorkerOptions.workerSrc = new URL('assessment/lib/pdf.worker.min.js', location.href).href;
+      var pdf = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+      var out = [];
+      for (var p = 1; p <= pdf.numPages; p++) {
+        var page = await pdf.getPage(p), tc = await page.getTextContent();
+        var line = '', lines = [], lastY = null;
+        tc.items.forEach(function (it) { var y = it.transform ? it.transform[5] : null; if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) { lines.push(line); line = ''; } line += it.str + (it.hasEOL ? '\n' : ''); lastY = y; });
+        lines.push(line); out.push(lines.join('\n'));
+      }
+      return out.join('\n\n');
+    }
+    throw new Error('unsupported');
+  }
+
+  // ----- remote changes, archive, delete
+  function remoteCheck() {
+    if (!ED) return;
+    var remote = APP.assessments[ED.id];
+    var box = document.getElementById('remote-box');
+    if (!remote) {
+      if (ED.persisted && box) { box.textContent = ''; box.appendChild(h('div', { class: 'banner crit', style: { 'margin-bottom': '14px' } }, h('div', { class: 'grow' }, h('b', { text: 'This interview was deleted by someone else.' }), ' Your copy is still on screen but can’t be saved here.'))); }
+      return;
+    }
+    if (!remote.updatedAt || remote.updatedSession === APP.session || remote.updatedAt === ED.lastRemoteAt) return;
+    if (ED.lastRemoteAt && remote.updatedAt < ED.lastRemoteAt) return;
+    ED.lastRemoteAt = remote.updatedAt;
+    if (!ED.dirty && !ED.saver.pending()) {
+      ED.a = clone(remote); ED.fw = fwFor(ED.a.frameworkVersion); ED.saver.baseline(contentKey(ED.a));
+      ED.persisted = true; ED.savedAt = new Date(remote.updatedAt);
+      renderEditor(ED.id);
+      toast('Updated with changes saved by a teammate.');
+      return;
+    }
+    if (box) {
+      box.textContent = '';
+      box.appendChild(h('div', { class: 'banner warn', style: { 'margin-bottom': '14px' } },
+        h('div', { class: 'grow' }, h('b', { text: 'A teammate saved changes to this interview at ' + fmtDT(remote.updatedAt).slice(11) + '.' }), ' Your next save replaces theirs. Load their version to see it instead.'),
+        h('button', { class: 'btn sm', type: 'button', text: 'Load their version', onclick: function () { ED.a = clone(APP.assessments[ED.id]); ED.fw = fwFor(ED.a.frameworkVersion); ED.dirty = false; ED.saver.baseline(contentKey(ED.a)); ED.persisted = true; ED.savedAt = ED.a.updatedAt ? new Date(ED.a.updatedAt) : null; clearDraft(ED.id); renderEditor(ED.id); } })));
+    }
+  }
+  function toggleArchive() {
+    if (!ED) return;
+    var arch = !ED.a.archived, id = ED.id;
+    change(function (x) { x.archived = arch; });
+    ED.saver.flush().then(function () {
+      if (arch) { go('#overview'); toast('Interview archived.', { label: 'Undo', onClick: function () { var a = clone(APP.assessments[id]); if (!a) return; a.archived = false; a.updatedAt = nowISO(); a.updatedBy = APP.myId; a.updatedSession = APP.session; APP.db.doc('assessments/' + id).set(a).catch(dbProblem); } }); }
+      else { renderEditor(id); toast('Interview restored.'); }
+    });
+  }
+  function deleteForever() {
+    if (!ED || !APP.isOwner) return;
+    var id = ED.id, name = ED.a.info.company || id;
+    dialog({ title: 'Delete this interview permanently?', body: 'The assessment for ' + name + ' (' + id + ') and its transcript will be removed for everyone. This cannot be undone. Export a backup first if you might need it.',
+      actions: [{ label: 'Cancel' }, { label: 'Delete permanently', danger: true, onClick: function () {
+        var ed = ED; ED = null; if (ed) { ed.saver = { flush: function () { return Promise.resolve(); }, pending: function () { return false; } }; }
+        Promise.all([APP.db.doc('assessments/' + id).delete(), APP.db.doc('transcripts/' + id).delete()]).then(function () { clearDraft(id); go('#overview'); toast('Interview deleted.'); }).catch(dbProblem);
+      } }] });
+  }
+
+  // ---------------- PDF & exports ----------------
+  async function downloadPDF() {
+    if (!ED) return;
+    var ed = ED;
+    if (ed.persisted || ed.dirty) await ed.saver.flush();
+    try { await loadScript('assessment/lib/jspdf.umd.min.js'); }
+    catch (e) { toast('The PDF library could not be loaded. Check your connection and try again.'); return; }
+    var ev = E.evaluate(ed.a, ed.fw);
+    var doc = RPT.build(window.jspdf.jsPDF, { engine: E, assessment: ed.a, ev: ev, framework: ed.fw, generatedAt: new Date() });
+    var name = RPT.fileName(ed.a);
+    await saveFile(name, doc.output('blob'), 'PDF report');
+  }
+  async function saveFile(filename, data, what) {
+    if (APP.downloads) {
+      try { await APP.downloads.save({ filename: filename, data: data }); toast(what + ' saved.'); return; }
+      catch (e) {
+        var code = e && e.code;
+        if (code === 'declined') return;
+        if (code === 'rate_limited') { toast('A download prompt is already open.'); return; }
+        if (code !== 'unavailable' && code !== 'not_granted' && code !== 'capability_disabled' && code !== 'capability_removed') { toast('The ' + what + ' could not be saved (' + (code || 'error') + ').'); return; }
+      }
+    }
+    if (typeof data === 'string') {
+      var ta = h('textarea', { readOnly: true, value: data });
+      dialog({ title: 'Copy the ' + what, body: h('div', null, h('p', { class: 'small', text: 'Downloads are not available in this view. Copy the text and paste it into a file.' }), ta),
+        actions: [{ label: 'Close' }, { label: 'Copy', primary: true, onClick: function () { navigator.clipboard.writeText(data).then(function () { toast('Copied.'); }, function () { ta.select(); }); return false; } }] });
+    } else toast('Downloads are not available in this view. Open the tool on claude.ai to download the ' + what + '.');
+  }
+  function evalRow(a) {
+    var ev = evalA(a), i = a.info || {}, sc = ev.cats, fw = fwFor(a.frameworkVersion);
+    var row = [a.id, i.company, i.interviewee, i.position, i.date, i.interviewer, i.industry, i.operatorType, i.operatingModel, i.tier, i.country, i.hotels, i.rooms,
+      i.purpose1, i.purpose2, i.decisionMaker, a.frameworkVersion || 1];
+    var keys = ['tech', 'spending', 'span', 'depth', 'decision', 'budgeting', 'training', 'data'];
+    keys.forEach(function (k) { row.push(sc[k] && sc[k].assessed ? sc[k].score : ''); });
+    row.push(sc.spending && sc.spending.assessed ? (sc.spending.exact ? sc.spending.pct : String(sc.spending.label || '').replace(' (range given)', '')) : '');
+    row.push(sc.span && sc.span.assessed ? sc.span.live : '', sc.span && sc.span.assessed ? sc.span.pilot : '', sc.span && sc.span.assessed ? sc.span.total : '');
+    row.push(ev.pillars.maturity.score === null ? '' : ev.pillars.maturity.score, ev.pillars.strategy.score === null ? '' : ev.pillars.strategy.score,
+      ev.complete ? ev.overall : '', ev.classification.provisional || '', ev.classification.final || '', ev.classification.status, a.archived ? 'yes' : 'no', fmtDT(a.updatedAt));
+    void fw;
+    return row;
+  }
+  function exportCSV(items) {
+    var head = ['ID', 'Company', 'Interviewee', 'Position', 'Interview date', 'Interviewer', 'Industry', 'Operator type', 'Operating model', 'Market tier', 'Country', 'Hotels', 'Rooms',
+      'Main purpose', 'Second purpose', 'Who decides', 'Framework version', 'Tech foundation', 'AI spending', 'Span across departments', 'Depth', 'Decision-making', 'Budgeting',
+      'People training', 'Data & measurement', 'AI share of IT budget', 'Departments live', 'Departments pilot', 'Departments total', 'AI Maturity', 'AI Strategy', 'Overall',
+      'Score range bucket', 'Final bucket', 'Status', 'Archived', 'Last saved'];
+    var lines = [head].concat(items.map(function (x) { return evalRow(x.a); })).map(function (r) { return r.map(E.csvCell).join(';'); });
+    saveFile('ai-assessments_' + today() + '.csv', '﻿' + lines.join('\r\n'), 'CSV export');
+  }
+  function exportJSON() {
+    var data = { exportedAt: nowISO(), app: 'AI Assessment Tool', note: 'Transcripts are not included.', frameworks: Object.keys(APP.frameworks).map(function (k) { return APP.frameworks[k]; }),
+      defaultFramework: DEFAULT_FW, assessments: allAssessments() };
+    saveFile('ai-assessments-backup_' + today() + '.json', JSON.stringify(data, null, 2), 'backup');
+  }
+
+  // ---------------- framework view ----------------
+  function viewFramework() {
+    var cur = currentFw();
+    var versions = Object.keys(APP.frameworks).map(Number).sort(function (a, b) { return b - a; });
+    if (!versions.length) versions = [1];
+    var shown = APP.fwEdit ? APP.fwEdit : fwFor(APP.fwView || cur.version);
+    var editing = !!APP.fwEdit;
+    var wrap = h('div');
+    wrap.appendChild(h('div', { class: 'page-head' },
+      h('div', null, h('h1', { text: editing ? 'Edit framework (becomes v' + (cur.version + 1) + ')' : 'Scoring framework v' + shown.version + (shown.version === cur.version ? ' (current)' : '') }),
+        h('p', { text: editing ? 'Saving creates a new version. Interviews already scored keep their version until someone re-scores them.' : (shown.note || '') })),
+      h('div', { class: 'row' },
+        editing ? null : h('label', { class: 'f', for: 'fw-ver' }, 'Version', selectEl('fw-ver', versions.map(function (v) { return [String(v), 'v' + v + (v === cur.version ? ' (current)' : '')]; }), String(shown.version), function (v) { APP.fwView = Number(v); route(); })),
+        !editing && APP.isOwner && APP.mode === 'live' ? h('button', { class: 'btn primary', type: 'button', text: 'Edit framework', onclick: function () { APP.fwEdit = clone(cur); route(); } }) : null,
+        editing ? h('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: function () { APP.fwEdit = null; route(); } }) : null)));
+    if (!APP.isOwner && APP.mode === 'live') wrap.appendChild(h('p', { class: 'small muted', style: { 'margin-bottom': '12px' }, text: 'Only the tool’s owner (Alexis) can change the framework.' }));
+    wrap.appendChild(editing ? fwEditor(APP.fwEdit, cur) : fwReadOnly(shown));
+    if (!editing) {
+      var hist = h('table', { class: 't' }, h('thead', null, h('tr', null, h('th', { text: 'Version' }), h('th', { text: 'Saved' }), h('th', { text: 'Note' }), h('th', { class: 'n', text: 'Interviews' }))),
+        h('tbody', null, versions.map(function (v) {
+          var f = fwFor(v), n = allAssessments().filter(function (a) { return (a.frameworkVersion || 1) === v; }).length;
+          return h('tr', null, h('td', { text: 'v' + v + (v === cur.version ? ' (current)' : '') }), h('td', { text: f.createdAt ? fmtDT(f.createdAt) : 'Built in' }), h('td', { text: f.note || '' }), h('td', { class: 'n', text: n }));
+        })));
+      wrap.appendChild(h('div', { class: 'card', style: { 'margin-top': '16px' } }, h('div', { class: 'card-h' }, h('h2', { text: 'Version history' })), h('div', { class: 'card-b tablewrap' }, hist)));
+    }
+    return wrap;
+  }
+  function fwReadOnly(fw) {
+    var box = h('div', { style: { display: 'grid', gap: '16px' } });
+    var bands = E.sortedBands(fw);
+    var reqRows = ['high', 'medium'].map(function (b) {
+      var r = fw.requirements[b] || {};
+      var list = E.REQ_METRICS.filter(function (m) { return E.hasReq(r[m]); }).map(function (m) { return E.reqLabel(m, r[m]); });
+      return h('tr', null, h('td', null, pill(b.toUpperCase())), h('td', { class: 'n', text: b === 'high' ? E.fmt1(fw.thresholds.high) + ' and above' : E.fmt1(fw.thresholds.medium) + ' to ' + E.fmt1(fw.thresholds.high - 0.1) }), h('td', { text: list.join(' · ') || 'None' }));
+    });
+    reqRows.push(h('tr', null, h('td', null, pill('LOW')), h('td', { class: 'n', text: 'Below ' + E.fmt1(fw.thresholds.medium) }), h('td', { text: 'None' })));
+    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('h2', { text: 'Buckets' })), h('div', { class: 'card-b' },
+      h('p', { class: 'small', style: { 'margin-bottom': '10px' }, text: 'A company gets the highest bucket whose score range it reaches and whose minimum requirements it meets. Undisclosed values block HIGH and mark MEDIUM as unverified.' }),
+      h('div', { class: 'tablewrap' }, h('table', { class: 't' }, h('thead', null, h('tr', null, h('th', { text: 'Bucket' }), h('th', { class: 'n', text: 'Overall score' }), h('th', { text: 'Minimum requirements' }))), h('tbody', null, reqRows))),
+      h('dl', { class: 'kv', style: { 'margin-top': '12px' } },
+        h('dt', { text: 'Pillar weights' }), h('dd', { text: 'Maturity ' + fw.pillarWeights.maturity + '% · Strategy ' + fw.pillarWeights.strategy + '%' }),
+        h('dt', { text: 'Completeness' }), h('dd', { text: 'Each pillar needs ' + fw.completenessMin + ' of its 4 categories scored' }),
+        h('dt', { text: 'Spending bands' }), h('dd', { text: '0% → ' + E.fmtScore(fw.zeroSpendScore || 0) + ' · ' + bands.map(function (b) { return E.bandLabel(b, bands) + ' → ' + E.fmtScore(b.score); }).join(' · ') }),
+        h('dt', { text: 'Departments' }), h('dd', { text: fw.departments.map(function (d) { return d.name; }).join(' · ') + ' (pilot counts ' + fw.pilotWeight + ')' }),
+        h('dt', { text: 'Purposes' }), h('dd', { text: (fw.purposes || []).join(' · ') })))));
+    ['maturity', 'strategy'].forEach(function (p) {
+      var card = h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('h2', { text: p === 'maturity' ? 'AI Maturity' : 'AI Strategy' })));
+      var b = h('div', { class: 'card-b', style: { display: 'grid', gap: '14px' } });
+      fw.categories.filter(function (c) { return c.pillar === p; }).forEach(function (c) {
+        var inner;
+        if (c.type === 'levels') inner = h('table', { class: 't fw-table' }, h('tbody', null, c.levels.map(function (lv, i) { return h('tr', null, h('td', { class: 'n', style: { width: '56px' } }, h('b', { text: E.fmtScore(E.LEVEL_SCORES[i]) })), h('td', null, h('div', { class: 'cell-main', text: lv.name }), h('div', { class: 'cell-sub', text: lv.desc }))); })));
+        else if (c.type === 'spending') inner = h('p', { class: 'small', text: 'Number input: AI spending ÷ IT budget × 100, converted with the spending bands above. A range can be entered when that is all the interviewee gives.' });
+        else inner = h('p', { class: 'small', text: '(live + ' + fw.pilotWeight + ' × pilot) ÷ departments the company has × 10, from the department checklist.' });
+        b.appendChild(h('div', { class: 'fw-cat' }, h('div', { class: 'row' }, h('h3', { text: c.name }), h('span', { class: 'chip', text: 'weight ' + c.weight })), c.rule ? h('p', { class: 'small muted', text: c.rule }) : null, h('div', { class: 'tablewrap' }, inner)));
+      });
+      card.appendChild(b); box.appendChild(card);
+    });
+    return box;
+  }
+  function fwEditor(fw, cur) {
+    var box = h('div', { class: 'fw-edit', style: { display: 'grid', gap: '16px' } });
+    function numIn(id, val, onset, step) { var i = h('input', { type: 'number', id: id, step: step || 'any', value: val === null || val === undefined ? '' : val, oninput: function () { onset(i.value === '' ? null : Number(i.value)); } }); return i; }
+    var errs = h('div', { class: 'banner crit', hidden: true });
+    box.appendChild(errs);
+    // weights & thresholds
+    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('h2', { text: 'Weights, thresholds and requirements' })), h('div', { class: 'card-b', style: { display: 'grid', gap: '14px' } },
+      h('div', { class: 'row' },
+        h('label', { class: 'f', for: 'fw-wm' }, 'Maturity weight (%)', numIn('fw-wm', fw.pillarWeights.maturity, function (v) { fw.pillarWeights.maturity = v; })),
+        h('label', { class: 'f', for: 'fw-ws' }, 'Strategy weight (%)', numIn('fw-ws', fw.pillarWeights.strategy, function (v) { fw.pillarWeights.strategy = v; })),
+        h('label', { class: 'f', for: 'fw-tm' }, 'MEDIUM from', numIn('fw-tm', fw.thresholds.medium, function (v) { fw.thresholds.medium = v; }, '0.1')),
+        h('label', { class: 'f', for: 'fw-th' }, 'HIGH from', numIn('fw-th', fw.thresholds.high, function (v) { fw.thresholds.high = v; }, '0.1')),
+        h('label', { class: 'f', for: 'fw-cm' }, 'Categories needed per pillar', numIn('fw-cm', fw.completenessMin, function (v) { fw.completenessMin = v; }, '1')),
+        h('label', { class: 'f', for: 'fw-pw' }, 'Pilot counts as', numIn('fw-pw', fw.pilotWeight, function (v) { fw.pilotWeight = v; }, '0.1'))),
+      h('div', { class: 'tablewrap' }, h('table', { class: 't' }, h('thead', null, h('tr', null, h('th', { text: 'Minimum requirement (leave empty for none)' }), h('th', { text: 'HIGH' }), h('th', { text: 'MEDIUM' }))),
+        h('tbody', null, [['liveDepts', 'Departments with AI live (at least)'], ['spendPct', 'AI share of IT budget, % (at least)'], ['depth', 'Depth score (at least)'], ['strategy', 'Strategy score (at least)'], ['maturity', 'Maturity score (at least)']].map(function (m) {
+          return h('tr', null, h('td', { text: m[1] }), ['high', 'medium'].map(function (b) { return h('td', null, numIn('fw-r-' + b + '-' + m[0], fw.requirements[b][m[0]], function (v) { fw.requirements[b][m[0]] = v; })); }));
+        })))),
+      h('div', null, h('h3', { text: 'Spending bands' }), h('p', { class: 'small muted', text: 'Lower limit of each band in % of IT budget (each band runs up to the next one). Exactly 0% scores 0.' }),
+        h('div', { class: 'row', style: { 'margin-top': '6px' } }, E.sortedBands(fw).map(function (b, i, arr) {
+          return h('label', { class: 'f', for: 'fw-b-' + b.key }, 'Score ' + E.fmtScore(b.score) + ' from', i === 0 ? h('input', { type: 'text', id: 'fw-b-' + b.key, value: 'above 0%', disabled: true }) :
+            numIn('fw-b-' + b.key, b.min, function (v) { b.min = v; arr[i - 1].max = v; }, '0.5'));
+        }))))));
+    // categories
+    fw.categories.forEach(function (c) {
+      var card = h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('h2', { text: c.name }), h('label', { class: 'f', for: 'fw-w-' + c.key }, 'Weight', numIn('fw-w-' + c.key, c.weight, function (v) { c.weight = v; }))));
+      var b = h('div', { class: 'card-b', style: { display: 'grid', gap: '8px' } });
+      if (c.type === 'levels') c.levels.forEach(function (lv, i) {
+        b.appendChild(h('div', { class: 'quote', style: { 'grid-template-columns': '56px minmax(0,1fr) minmax(0,2fr)' } }, h('b', { text: E.fmtScore(E.LEVEL_SCORES[i]), style: { 'padding-top': '6px' } }),
+          h('input', { type: 'text', 'aria-label': c.name + ' level ' + E.LEVEL_SCORES[i] + ' name', value: lv.name, oninput: function (e) { lv.name = e.target.value; } }),
+          h('input', { type: 'text', 'aria-label': c.name + ' level ' + E.LEVEL_SCORES[i] + ' explanation', value: lv.desc, oninput: function (e) { lv.desc = e.target.value; } })));
+      });
+      else b.appendChild(h('p', { class: 'small muted', text: c.type === 'spending' ? 'Calculated from the spending bands above.' : 'Calculated from the department list below.' }));
+      card.appendChild(b); box.appendChild(card);
+    });
+    // lists
+    var deps = h('textarea', { id: 'fw-deps', rows: '6', value: fw.departments.map(function (d) { return d.name; }).join('\n') });
+    var purp = h('textarea', { id: 'fw-purp', rows: '4', value: (fw.purposes || []).join('\n') });
+    var decs = h('textarea', { id: 'fw-decs', rows: '4', value: (fw.decisionMakers || []).join('\n') });
+    var note = h('input', { type: 'text', id: 'fw-note', placeholder: 'What changed and why (required)', maxlength: '200' });
+    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'card-h' }, h('h2', { text: 'Lists' })), h('div', { class: 'card-b fields' },
+      h('label', { class: 'f', for: 'fw-deps' }, 'Departments (one per line)', deps), h('label', { class: 'f', for: 'fw-purp' }, 'Purposes', purp), h('label', { class: 'f', for: 'fw-decs' }, 'Who decides options', decs))));
+    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'card-b row' }, h('label', { class: 'f', for: 'fw-note', style: { flex: '1' } }, 'Version note', note),
+      h('button', { class: 'btn primary', type: 'button', text: 'Save as v' + (cur.version + 1), style: { 'align-self': 'end' }, onclick: function () {
+        var oldDeps = {}; fw.departments.forEach(function (d) { oldDeps[d.name.trim().toLowerCase()] = d.key; });
+        fw.departments = deps.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean).map(function (n) { return { key: oldDeps[n.toLowerCase()] || ('d' + rid(6).toLowerCase()), name: n }; });
+        fw.purposes = purp.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+        fw.decisionMakers = decs.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+        var list = E.validateFramework(fw);
+        if (!note.value.trim()) list.push('Add a version note.');
+        if (list.length) { errs.hidden = false; errs.textContent = ''; add(errs, h('div', null, h('b', { text: 'Not saved. ' }), list.join(' '))); errs.scrollIntoView({ block: 'center' }); return; }
+        var nv = clone(fw); nv.version = cur.version + 1; nv.note = note.value.trim(); nv.createdAt = nowISO(); nv.createdBy = APP.myId;
+        APP.db.doc('frameworks/v' + nv.version).set(nv).then(function () { APP.fwEdit = null; APP.fwView = null; toast('Framework v' + nv.version + ' saved. New interviews use it.'); route(); })
+          .catch(function (e) { errs.hidden = false; errs.textContent = 'Not saved: only the owner can change the framework (' + ((e && e.code) || 'error') + ').'; });
+      } }))));
+    return box;
+  }
+
+  init();
+})();
 </script>
 </body>
 </html>

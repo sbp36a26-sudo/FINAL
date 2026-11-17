@@ -1,0 +1,65 @@
+<!-- HFTP hub bar: injected at the top of the AI Assessment page by build-hub.mjs. -->
+<style>
+  .hub-bar {
+    display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap;
+    padding: 8px 16px; background: #1f3b3a; color: #f3f1ea;
+    font: 14px/1.4 "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .hub-bar strong { font-weight: 600; white-space: nowrap; }
+  .hub-bar strong span { font-weight: 400; opacity: .75; }
+  .hub-bar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .hub-bar button {
+    font: inherit; font-weight: 500; color: inherit; background: transparent;
+    border: 1px solid transparent; border-radius: 6px; padding: 5px 12px; cursor: pointer;
+  }
+  .hub-bar button:hover { border-color: rgba(255,255,255,.35); }
+  .hub-bar button[aria-pressed="true"] { background: #f3f1ea; color: #1f3b3a; }
+  .hub-bar a { margin-left: auto; color: inherit; opacity: .8; font-size: 13px; }
+  .hub-frame { position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; background: #fff; display: none; }
+  .hub-frame.on { display: block; }
+  .hub-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  body.hub-other { overflow: hidden; }
+</style>
+<div class="hub-bar" id="hubBar">
+  <strong>HFTP tools <span>· SBP Group 36</span></strong>
+  <nav aria-label="Tools">
+    <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
+    <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
+    <button type="button" data-tool="readiness" aria-pressed="false">Readiness Tool</button>
+  </nav>
+  <a id="hubOpen" href="#" target="_blank" rel="noopener" hidden>Open in new tab</a>
+</div>
+<div class="hub-frame" id="hubFrame"></div>
+<script>
+(function () {
+  var frames = {};
+  var bar = document.getElementById('hubBar');
+  var box = document.getElementById('hubFrame');
+  var open = document.getElementById('hubOpen');
+  function show(tool) {
+    bar.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tool === tool)); });
+    Object.keys(frames).forEach(function (k) { frames[k].hidden = k !== tool; });
+    if (tool === 'assessment') {
+      box.classList.remove('on'); document.body.classList.remove('hub-other'); open.hidden = true;
+    } else {
+      if (!frames[tool]) {
+        var f = document.createElement('iframe');
+        f.src = tool + '/index.html'; f.title = tool;
+        frames[tool] = f; box.appendChild(f);
+      }
+      window.scrollTo(0, 0);
+      box.style.top = bar.offsetHeight + 'px';
+      box.classList.add('on'); document.body.classList.add('hub-other');
+      open.href = tool + '/index.html'; open.hidden = false;
+    }
+    try { sessionStorage.setItem('hubTool', tool); } catch (e) {}
+  }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tool]'); if (b) show(b.dataset.tool);
+  });
+  addEventListener('resize', function () { box.style.top = bar.offsetHeight + 'px'; });
+  var start = 'assessment';
+  try { start = sessionStorage.getItem('hubTool') || start; } catch (e) {}
+  show(start);
+})();
+</script>
