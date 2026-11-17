@@ -333,6 +333,7 @@ td.gap-hi { background: var(--warn-wash); }
     <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
     <button type="button" data-tool="readiness" aria-pressed="false">Readiness Tool</button>
+    <button type="button" data-tool="register" aria-pressed="false">AI Register</button>
   </nav>
 </div>
 <div class="hub-frame" id="hubFrame"></div>
@@ -360,6 +361,24 @@ td.gap-hi { background: var(--warn-wash); }
   }
   bar.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-tool]'); if (b) show(b.dataset.tool);
+  });
+  // Download bridge: a tool in a tab cannot save files itself inside claude.ai, so it asks this page to do it.
+  var dl = null, dlKnown = null;
+  function downloads() {
+    if (!dlKnown) dlKnown = (window.claude && typeof window.claude.use === 'function' ? window.claude.use('downloads') : Promise.resolve(null)).then(function (d) { dl = d || null; }, function () { dl = null; });
+    return dlKnown;
+  }
+  addEventListener('message', function (e) {
+    var m = e.data;
+    if (e.origin !== location.origin || !m || typeof m !== 'object' || !m.hub) return;
+    var own = Object.keys(frames).some(function (k) { return frames[k].contentWindow === e.source; });
+    if (!own) return;
+    if (m.hub === 'ping') downloads().then(function () { e.source.postMessage({ hub: 'pong', downloads: !!dl }, location.origin); });
+    else if (m.hub === 'download') downloads().then(function () {
+      if (!dl) throw { code: 'unavailable' };
+      return dl.save({ filename: String(m.filename), data: m.data });
+    }).then(function () { e.source.postMessage({ hub: 'download-result', id: m.id, ok: true }, location.origin); },
+            function (err) { e.source.postMessage({ hub: 'download-result', id: m.id, ok: false, code: (err && err.code) || 'unavailable' }, location.origin); });
   });
   addEventListener('resize', function () { box.style.top = bar.offsetHeight + 'px'; });
   var start = 'assessment';

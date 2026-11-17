@@ -1,0 +1,780 @@
+/* Hotel AI Register: page code (state, views, exports). All legal wording comes from the embedded data. */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function data(id) { return JSON.parse($(id).textContent); }
+  var REF = data('d-ref'), LAB = data('d-labels'), RADAR = data('d-radar'), CAT = data('d-cat'), NAT = data('d-national');
+  var L = window.RegLogic;
+  var USES = {}; LAB.uses.forEach(function (u) { USES[u.id] = u; });
+  var DEPTS = {}; CAT.depts.forEach(function (d) { DEPTS[d.id] = d; });
+  var COUNTRY = {}; REF.countries.forEach(function (c) { COUNTRY[c[0]] = c[1]; });
+  var KEY = 'hftp-ai-register-v1';
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var LABEL_ORDER = ['prohibited', 'high', 'highif', 'transparency', 'transif', 'minimal', 'outside', 'notai', 'open'];
+  var TODAY = isoDay(new Date());
+
+  // ---------- small helpers ----------
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+  function isoDay(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function fmtDate(iso) { if (!iso) return ''; var p = iso.split('-'); return (+p[2]) + ' ' + MONTHS[+p[1] - 1] + ' ' + p[0]; }
+  function daysUntil(iso) { var a = iso.split('-'), b = TODAY.split('-'); return Math.round((Date.UTC(+a[0], +a[1] - 1, +a[2]) - Date.UTC(+b[0], +b[1] - 1, +b[2])) / 86400000); }
+  function away(iso) { var d = daysUntil(iso); return d > 0 ? d + ' day' + (d === 1 ? '' : 's') + ' away' : ''; }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function regNo(t) { return 'R-' + pad(t.no || 0); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  function opt(v, label, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(label) + '</option>'; }
+  function chip(label, big) { var d = REF.labels[label] || REF.labels.open; return '<span class="lb lb-' + label + (big ? ' big' : '') + '">' + esc(d.name) + '</span>'; }
+  function kindChip(it) {
+    var k = REF.kinds[it.kind] || { name: it.kind };
+    return '<span class="kd kd-' + esc(it.kind) + '">' + esc(k.name) + (it.kind === 'law' && it.tag ? ' · ' + esc(it.tag) : '') + '</span>';
+  }
+  function basisName(b) { return (REF.basis[b] || { name: '' }).name; }
+
+  // ---------- state ----------
+  var mem = { ok: true };
+  var ui = { tab: 'register', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
+  var state;
+
+  function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null }; }
+  function newTool(s, useId) {
+    var u = USES[useId] || USES.custom;
+    return { id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), no: ++s.seq, useId: u.id, name: u.triage ? '' : u.name.replace(/\s*\(.*$/, ''),
+             vendor: '', dept: u.dept || '', where: '', origin: 'vendor', decided: '', owner: '', since: '', notes: '', answers: {}, done: {}, vq: {}, notAI: '', createdAt: new Date().toISOString() };
+  }
+  function normalise(o) {
+    var s = blank(), k;
+    s.example = !!o.example; s.seq = +o.seq || 0; s.updatedAt = o.updatedAt || null; s.checks = o.checks && typeof o.checks === 'object' ? o.checks : {};
+    for (k in s.hotel) if (o.hotel && o.hotel[k] != null) s.hotel[k] = o.hotel[k];
+    if (!Array.isArray(s.hotel.outlets)) s.hotel.outlets = [];
+    (o.tools || []).forEach(function (t) {
+      if (!t || typeof t !== 'object') return;
+      var n = newTool({ seq: 0 }, USES[t.useId] ? t.useId : 'custom');
+      for (k in n) if (t[k] != null && k !== 'useId') n[k] = t[k];
+      ['answers', 'done', 'vq'].forEach(function (f) { if (!n[f] || typeof n[f] !== 'object') n[f] = {}; });
+      if (!n.no) n.no = ++s.seq; else if (n.no > s.seq) s.seq = n.no;
+      s.tools.push(n);
+    });
+    return s;
+  }
+  function load() {
+    try { var raw = window.localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && o.v === 1 && Array.isArray(o.tools)) return normalise(o); } }
+    catch (e) { mem.ok = false; }
+    return null;
+  }
+  var saveTimer = null;
+  function persist() {
+    clearTimeout(saveTimer);
+    state.updatedAt = new Date().toISOString();
+    try { window.localStorage.setItem(KEY, JSON.stringify(state)); mem.ok = true; } catch (e) { mem.ok = false; }
+    paintSaved();
+  }
+  function persistSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); }
+
+  function example() {
+    var s = blank(); s.example = true;
+    s.hotel = { name: 'Seeblick Hotel (fictional example)', country: 'DE', model: 'managed', group: 'yes', reps: 'yes', outlets: ['restaurant', 'bar', 'kitchen', 'banqueting'], keeper: 'General manager' };
+    function add(useId, name, o) { var t = newTool(s, useId), k; t.name = name; for (k in o) t[k] = o[k]; s.tools.push(t); }
+    add('gx-2', 'Guest chat on the website and WhatsApp', { vendor: 'Example vendor A', owner: 'Front office manager', where: 'Front office', answers: { card_data: 'no' }, done: { C1: 1, L1: 1 }, vq: { 1: 1, 2: 1, 3: 1, 4: 1, 6: 1 } });
+    add('res-1', 'Phone agent for reservation calls', { vendor: 'Example vendor B', owner: 'Reservations manager', answers: { emo_guest: 'no', voiceprint: 'no', card_data: 'yes' }, done: { C1: 1 } });
+    add('rm-2', 'Revenue management system', { vendor: 'Example vendor C', owner: 'Revenue manager', decided: 'brand', answers: { exploit_price: 'no', personal_price: 'no', competitor_data: 'unsure' }, done: { L1: 1 } });
+    add('hr-1', 'Rota and shift planning', { vendor: 'Example vendor D', owner: 'HR manager', answers: { rank_staff: 'yes', hours_leave: 'no' } });
+    add('hr-2', 'Recruiting and CV screening', { vendor: 'Example vendor E', owner: 'HR manager', decided: 'brand', answers: { emo_staff: 'no' }, done: { GA1: 1 } });
+    add('hk-6', 'Housekeeping room assignment', { vendor: 'Example vendor F', origin: 'bundled' });
+    add('res-8', 'Call scoring for the reservations team', { vendor: 'Example vendor B', owner: 'Reservations manager', origin: 'update', answers: { emo_staff: 'yes' } });
+    add('kc-1', 'Food-waste camera in the main kitchen', { vendor: 'Example vendor G', owner: 'Executive chef', where: 'Kitchen', answers: { judge_staff: 'no' }, done: { LB1: 1, GD1: 1, L1: 1 } });
+    add('fb-6', 'Table-booking phone agent for the restaurant', { vendor: 'Example vendor H', owner: 'F&B manager', where: 'Restaurant', answers: { card_data: 'no' } });
+    add('gm-2', 'General AI assistant used by staff', { origin: 'shadow', answers: { paste_data: 'yes' } });
+    add('sm-4', 'AI images for marketing', { vendor: 'Example agency', owner: 'Marketing manager', answers: { ai_image: 'no' } });
+    return s;
+  }
+
+  function toolById(id) { for (var i = 0; i < state.tools.length; i++) if (state.tools[i].id === id) return state.tools[i]; return null; }
+  function ctx(t) { var u = USES[t.useId] || USES.custom, c = L.classify(u, t, REF); return { t: t, u: u, c: c, items: L.items(u, t, state.hotel, REF, c) }; }
+  function isNow(it) { return !it.when || it.when <= TODAY; }
+  function nonEU() { return state.hotel.country === 'CH' || state.hotel.country === 'GB'; }
+
+  // ---------- header bits ----------
+  function paintSaved() {
+    var el = $('saved'); if (!el) return;
+    if (!mem.ok) { el.className = 'bad'; el.textContent = 'Not saved: this browser blocks storage. Download a backup to keep your work.'; return; }
+    el.className = '';
+    var t = state.updatedAt ? new Date(state.updatedAt) : null;
+    el.textContent = 'Saved in this browser only' + (t ? ' · ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) : '') + '. Download a backup to keep or share it.';
+  }
+  var toastTimer = null;
+  function toast(msg) { var el = $('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, 4200); }
+
+  // ---------- view: register list ----------
+  function summary(rows) {
+    var by = {}, now = 0, later = {}, open = 0;
+    rows.forEach(function (x) {
+      by[x.c.label] = (by[x.c.label] || 0) + 1;
+      if (x.c.openHard.length) open++;
+      x.items.forEach(function (it) { if (it.done) return; if (isNow(it)) now++; else later[it.when] = (later[it.when] || 0) + 1; });
+    });
+    return { by: by, now: now, later: later, open: open };
+  }
+  function summaryText(s) {
+    var parts = [plural(s.now, 'item') + ' to check now'];
+    Object.keys(s.later).sort().forEach(function (d) { parts.push(s.later[d] + ' before ' + fmtDate(d) + ' (' + away(d) + ')'); });
+    if (s.open) parts.push(plural(s.open, 'tool') + ' with open questions');
+    return parts.join(' · ');
+  }
+  function hotelLine() {
+    var H = state.hotel, bits = [];
+    if (H.country) bits.push(COUNTRY[H.country] || H.country);
+    REF.operatingModels.forEach(function (m) { if (m.id === H.model) bits.push(m.name); });
+    if (H.outlets.length) bits.push(H.outlets.map(function (o) { var n = o; REF.outlets.forEach(function (d) { if (d.id === o) n = d.name; }); return n; }).join(', '));
+    return bits.join(' · ');
+  }
+  function exampleNote() {
+    if (!state.example) return '';
+    if (ui.confirm && ui.confirm.kind === 'own') return confirmBox('own', 'Remove the example hotel and start with an empty register?', 'Start empty');
+    return '<div class="note"><p><strong>This is an example.</strong> Seeblick Hotel is fictional and its tools are made up, so you can see how the register works. Nothing here describes a real hotel or vendor.</p>' +
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="start-own">Start my own register</button></div></div>';
+  }
+  function reachNote() {
+    if (!nonEU()) return '';
+    return '<div class="note warn"><p>' + esc(REF.countryChecks[state.hotel.country].reach) + '</p></div>';
+  }
+  function confirmBox(kind, text, yes) {
+    if (!ui.confirm || ui.confirm.kind !== kind) return '';
+    return '<div class="note stop" id="confirm"><p>' + esc(text) + '</p><div class="btnrow"><button type="button" class="btn warn" data-act="confirm-yes" id="confirm-yes">' + esc(yes) + '</button><button type="button" class="btn" data-act="confirm-no">Cancel</button></div></div>';
+  }
+  function copyBox() {
+    if (!ui.copy) return '';
+    return '<div class="panel copybox"><div class="ph"><h3>' + esc(ui.copy.title) + '</h3><button type="button" class="btn sm" data-act="copy-close">Close</button></div><p class="meta">Select all of the text and copy it.</p><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea></div>';
+  }
+  function exportBar() {
+    return '<div class="btnrow"><button type="button" class="btn" data-act="export" data-kind="pdf">Summary (PDF)</button><button type="button" class="btn" data-act="export" data-kind="csv">Table (CSV)</button><button type="button" class="btn" data-act="export" data-kind="json">Backup</button></div>';
+  }
+
+  function vList() {
+    var H = state.hotel, rows = state.tools.map(ctx), s = summary(rows), h = '';
+    h += exampleNote();
+    if (!rows.length) {
+      h += '<section class="panel empty"><h2>Start your register</h2><ol class="steps">' +
+        '<li><strong>Describe your hotel.</strong> Country and operating model decide which national rules and contract notes you see.</li>' +
+        '<li><strong>Add the AI tools you use.</strong> Pick each one from 91 hotel use cases in 15 departments, or describe your own.</li>' +
+        '<li><strong>Work through the items to check.</strong> Each tool gets its label, what to check and by when, and a named person.</li></ol>' +
+        '<div class="btnrow"><button type="button" class="btn primary" data-act="add">Add your first tool</button><button type="button" class="btn" data-act="tab" data-tab="hotel">Describe your hotel</button><button type="button" class="btn" data-act="example">Load the example hotel</button></div>' +
+        confirmBox('example', 'Replace the current register with the fictional example hotel?', 'Load the example') + '</section>';
+      return h;
+    }
+    h += '<section class="band"><div class="who"><h2>' + esc(H.name || 'Your hotel') + '</h2><p class="meta">' +
+      (hotelLine() ? esc(hotelLine()) + ' · ' : 'Country and operating model not set · ') + '<button type="button" class="linkbtn" data-act="tab" data-tab="hotel">' + (hotelLine() ? 'Edit' : 'Describe your hotel') + '</button></p></div>' +
+      '<div class="counts" role="group" aria-label="Filter by label">';
+    LABEL_ORDER.forEach(function (lb) {
+      if (!s.by[lb]) return;
+      h += '<button type="button" class="lb lb-' + lb + '" data-act="flt" data-label="' + lb + '" aria-pressed="' + (ui.fLabel === lb) + '">' + esc(REF.labels[lb].name) + '<span class="n">' + s.by[lb] + '</span></button>';
+    });
+    h += '</div></section>';
+    h += reachNote();
+    h += '<p class="sub"><strong>' + plural(rows.length, 'tool') + '.</strong> ' + esc(summaryText(s)) + '.</p>';
+    h += '<div class="bar"><button type="button" class="btn primary" data-act="add">Add a tool</button>' +
+      '<label class="grow"><span class="sr">Search the register</span><input type="search" id="q-list" data-q="list" placeholder="Search by tool, vendor or person" value="' + esc(ui.q) + '"></label>' + exportBar() + '</div>';
+    h += copyBox();
+    var q = ui.q.trim().toLowerCase();
+    var shown = rows.filter(function (x) {
+      if (ui.fLabel && x.c.label !== ui.fLabel) return false;
+      if (!q) return true;
+      return [x.t.name, x.u.name, x.t.vendor, x.t.owner, x.t.where, (DEPTS[x.t.dept] || {}).name].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    h += '<section class="panel flush"><div class="row head" aria-hidden="true"><div>Tool</div><div>Label</div><div>Your role</div><div>Responsible</div><div>To check</div></div><ul class="rows">';
+    shown.forEach(function (x) { h += listRow(x); });
+    h += '</ul>';
+    if (!shown.length) h += '<p class="meta" style="padding:16px 18px">No tool matches. <button type="button" class="linkbtn" data-act="clear-flt">Show all tools</button></p>';
+    h += '</section>';
+    if (ui.fLabel || q) h += '<p class="meta">Showing ' + shown.length + ' of ' + rows.length + '. <button type="button" class="linkbtn" data-act="clear-flt">Show all tools</button></p>';
+    return h;
+  }
+  function labelCell(x) {
+    var c = x.c, h = chip(c.label);
+    if (c.alsoTransparency) h += chip('transparency');
+    if (c.canProhibit) h += '<span class="flagc">Can become prohibited</span>';
+    if (x.u.provisional) h += '<span class="kd kd-practice">Provisional</span>';
+    return h;
+  }
+  function listRow(x) {
+    var t = x.t, open = x.items.filter(function (i) { return !i.done; }), now = open.filter(isNow).length;
+    var todo = open.length ? plural(open.length, 'item') + ' open' + (now ? ', ' + now + ' now' : '') : 'All checked';
+    if (x.c.openHard.length) todo += ' · ' + plural(x.c.openHard.length, 'question') + ' open';
+    var sub = [];
+    if (DEPTS[t.dept]) sub.push(DEPTS[t.dept].name);
+    if (t.vendor) sub.push(t.vendor);
+    return '<li class="row"><div class="c-tool"><span class="no">' + regNo(t) + '</span><button type="button" class="linkbtn name" data-act="open" data-id="' + esc(t.id) + '">' + esc(t.name || 'Unnamed tool') + '</button><span class="meta">' + esc(sub.join(' · ')) + '</span></div>' +
+      '<div class="c-label">' + labelCell(x) + '</div>' +
+      '<div data-l="Your role">' + (x.c.label === 'notai' ? '<span class="meta">n/a</span>' : x.c.role === 'maker' ? 'Maker' : 'User') + '</div>' +
+      '<div data-l="Responsible">' + (t.owner ? esc(t.owner) : '<span class="miss">Not named</span>') + '</div>' +
+      '<div data-l="To check">' + esc(todo) + '</div></li>';
+  }
+
+  // ---------- view: add a tool ----------
+  function vPick() {
+    var q = ui.pickQ.trim().toLowerCase(), have = {};
+    state.tools.forEach(function (t) { have[t.useId] = true; });
+    function match(u) {
+      if (u.picker === false) return false;
+      if (ui.pickDept && u.dept !== ui.pickDept) return false;
+      if (!q) return true;
+      var cu = CAT.uses[u.id] || {};
+      return [u.name, u.kw || '', cu.task || '', (DEPTS[u.dept] || {}).name || ''].join(' ').toLowerCase().indexOf(q) >= 0;
+    }
+    function row(u) {
+      var cu = CAT.uses[u.id] || {}, c = L.classify(u, {}, REF);
+      return '<button type="button" class="pick" data-act="pick" data-id="' + esc(u.id) + '"><span class="pn">' + esc(u.name) + '</span>' +
+        '<span class="pr">' + chip(c.label) + (have[u.id] ? '<span class="meta">In your register</span>' : '') + '</span>' +
+        '<span class="meta">' + esc(cu.task || u.why || '') + (cu.use ? ' · Use in hotels: ' + esc(cu.use.toLowerCase()) : '') + '</span></button>';
+    }
+    var h = '<p><button type="button" class="linkbtn" data-act="back">← Back to the register</button></p>' +
+      '<div class="band"><div class="who"><h2>Add a tool</h2><p class="sub">Pick the closest match. You can rename it afterwards, and the questions on the next page settle its label.</p></div>' +
+      '<button type="button" class="btn" data-act="pick" data-id="custom">My tool is not in the list</button></div>' +
+      '<div class="bar"><label class="grow"><span class="sr">Search use cases</span><input type="search" id="q-pick" data-q="pick" placeholder="Search, for example chatbot, rota, camera, pricing, ChatGPT" value="' + esc(ui.pickQ) + '"></label>' +
+      '<label><span class="sr">Department</span><select id="pick-dept" data-pick="dept">' + opt('', 'All departments', ui.pickDept) + CAT.depts.map(function (d) { return opt(d.id, d.name, ui.pickDept); }).join('') + '</select></label></div>';
+    var any = false, body = '';
+    CAT.depts.forEach(function (d) {
+      var us = LAB.uses.filter(function (u) { return u.n && u.dept === d.id && match(u); });
+      if (!us.length) return;
+      any = true;
+      body += '<div class="pickg"><h3>' + esc(d.name) + '</h3>' + us.map(row).join('') + '</div>';
+    });
+    var ex = LAB.uses.filter(function (u) { return u.provisional && match(u); });
+    if (ex.length) {
+      any = true;
+      body += '<div class="pickg"><h3>Also seen in the market, not yet in the catalogue</h3><p class="meta" style="padding:0 18px 10px">Found by desk research on 17 Nov 2026 in vendor material and trade press. Their labels are provisional and not yet reviewed by the team.</p>' + ex.map(row).join('') + '</div>';
+    }
+    if (!any) body = '<p class="meta" style="padding:18px">Nothing matches. Try another word, or use "My tool is not in the list".</p>';
+    return h + '<section class="panel flush">' + body + '</section>';
+  }
+
+  // ---------- view: one tool ----------
+  function dateLine(c) {
+    var D = REF.dates;
+    if (c.label === 'prohibited') return 'Banned since ' + fmtDate(D.bans);
+    if (c.label === 'high') { var d = c.onlyProduct ? D.products : D.highrisk; return daysUntil(d) > 0 ? 'Duties apply from ' + fmtDate(d) + ' (' + away(d) + ')' : 'Duties apply since ' + fmtDate(d); }
+    if (c.label === 'highif') return 'If it is high-risk, duties apply from ' + fmtDate(D.highrisk);
+    if (c.label === 'transparency') return 'Applies since ' + fmtDate(D.transparency);
+    return '';
+  }
+  function roleText(x) {
+    var c = x.c, t = x.t, h = '';
+    if (c.label === 'notai') return '';
+    if (c.role === 'maker') {
+      var r = REF.makerRoutes[c.route] || {};
+      h += '<p><strong>Your role: maker</strong> (the law says "provider"). ' + esc(r.name ? r.name + ': ' : '') + esc(r.text || '') + (c.highUnder ? ' The maker rules for high-risk tools apply from ' + fmtDate(REF.dates.highrisk) + '.' : '') + '</p>';
+    } else {
+      h += '<p><strong>Your role: user</strong> (the law says "deployer"). The tool\'s maker carries most of the duties.</p>';
+      if (c.routePending) h += '<p class="meta">If this tool turns out to be high-risk: ' + esc(REF.makerRoutes[c.routePending].text) + '</p>';
+    }
+    if (t.decided === 'brand' && (state.hotel.model === 'managed' || state.hotel.model === 'franchised')) {
+      h += '<p class="meta">Head office or the brand chose this tool. Where brand standards impose a tool and its settings, the brand may share the user\'s duties (our reading; the contracts decide in practice).</p>';
+    }
+    return h;
+  }
+  function radios(name, cur, attr) {
+    return '<div class="opts">' + [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Not sure']].map(function (o) {
+      return '<label class="opt' + (cur === o[0] ? ' on' : '') + '"><input type="radio" name="' + name + '" id="' + name + '-' + o[0] + '" value="' + o[0] + '" ' + attr + (cur === o[0] ? ' checked' : '') + '>' + o[1] + '</label>';
+    }).join('') + '</div>';
+  }
+  function effectText(d) {
+    if (d.yes === 'prohibited') return 'Yes makes it prohibited';
+    if (d.yes === 'high') return 'Yes makes it high-risk';
+    if (d.yes === 'transparency') return 'Yes adds a transparency duty';
+    return 'Does not change the label';
+  }
+  function questions(x) {
+    var t = x.t, u = x.u, h = '';
+    (u.switches || []).forEach(function (s) {
+      var d = REF.switches[s.id]; if (!d) return;
+      h += '<fieldset class="qa"><legend>' + esc(d.q) + '</legend>' + radios('sw-' + s.id, t.answers[s.id] || '', 'data-sw="' + esc(s.id) + '"') +
+        (d.help ? '<p class="meta">' + esc(d.help) + '</p>' : '') +
+        '<p class="qmeta"><span>' + esc(effectText(d)) + '</span>' + (d.prov ? '<span class="cite">' + esc(d.prov) + '</span>' : '') + (d.yes ? '<span>' + esc(basisName(d.basis)) + '</span>' : '') +
+        (s.src === 'research' ? '<span class="kd kd-practice">Added from desk research, pending team review</span>' : '') + '</p></fieldset>';
+    });
+    if (u.base !== 'notai') {
+      h += '<fieldset class="qa"><legend>Does the tool follow only rules written by people, with nothing learned from data?</legend>' + radios('notai', t.notAI || '', 'data-notai="1"') +
+        '<p class="meta">' + (u.mayNotBeAI ? 'Tools of this kind are often not AI. ' : '') + 'Software that runs only on hand-written rules, fixed thresholds or simple averages is not an AI system. Ask the vendor how the tool works before treating it as AI; a vendor\'s letter alone does not bind an authority.</p>' +
+        '<p class="qmeta"><span>Yes means the AI Act does not apply</span><span class="cite">Art. 3(1)</span><span>' + esc(basisName('guidance')) + '</span></p></fieldset>';
+    }
+    return h;
+  }
+  function itemRow(it, id, attrs) {
+    var since = it.since && it.since <= TODAY ? 'since ' + fmtDate(it.since) : '';
+    return '<div class="item' + (it.done ? ' done' : '') + '"><input type="checkbox" id="' + id + '" ' + attrs + (it.done ? ' checked' : '') + (it.auto ? ' disabled' : '') + ' aria-labelledby="' + id + '-t">' +
+      '<div class="itx"><span class="itt" id="' + id + '-t">' + esc(it.text) + '</span>' +
+      '<span class="itm">' + kindChip(it) + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + (it.ref ? '<span class="cite">' + esc(it.ref) + '</span>' : '') + (since ? '<span>' + since + '</span>' : '') + '</span>' +
+      (it.note ? '<span class="itn">' + esc(it.note) + '</span>' : '') +
+      (it.auto === 'owner' ? '<span class="itn">Ticks itself when you name a responsible person.</span>' : it.auto === 'vendor' ? '<span class="itn">Ticks itself when every vendor question below is ticked.</span>' : '') +
+      '</div></div>';
+  }
+  function groupItems(list) {
+    var groups = [], cur = null;
+    list.forEach(function (it) {
+      var key = isNow(it) ? 'now' : it.when;
+      if (!cur || cur.key !== key) { cur = { key: key, items: [] }; groups.push(cur); }
+      cur.items.push(it);
+    });
+    return groups;
+  }
+  function groupTitle(key) { return key === 'now' ? 'Now' : 'Before ' + fmtDate(key) + ' <span class="meta">' + esc(away(key)) + '</span>'; }
+
+  function vTool(t) {
+    var x = ctx(t), u = x.u, c = x.c, lab = REF.labels[c.label] || REF.labels.open;
+    var h = '<p><button type="button" class="linkbtn" data-act="back">← Back to the register</button></p>';
+    h += '<div class="thead"><div class="t1"><span class="no">' + regNo(t) + '</span><label class="grow" style="flex:1"><span class="sr">Tool name</span><input type="text" class="title" id="f-name" data-f="name" value="' + esc(t.name) + '" placeholder="Name this tool"></label></div>' +
+      '<p class="meta">' + esc(u.triage ? 'A tool that is not in the list' : u.name) + (DEPTS[u.dept] ? ' · ' + esc(DEPTS[u.dept].name) : '') + '</p></div>';
+    h += '<div class="detail"><div>';
+
+    // label
+    h += '<section class="panel"><h4>Label under the EU AI Act</h4><div class="lbrow">' + chip(c.label, true) + (c.alsoTransparency ? chip('transparency', true) : '') + (dateLine(c) ? '<span class="meta">' + esc(dateLine(c)) + '</span>' : '') + '</div>';
+    h += '<p>' + esc(lab.short) + '</p>';
+    if (c.label !== 'notai' && u.why) h += '<p>' + esc(u.why) + '</p>';
+    else if (c.label === 'minimal' && !u.why) h += '<p>The briefing booklet does not name this use; everything it does not list is minimal.</p>';
+    if (c.label === 'notai' && u.base === 'notai') h += '<p>' + esc(u.why) + '</p>';
+    if (c.reasons.filter(function (r) { return r.effect; }).length) {
+      h += '<ul class="reasons">' + c.reasons.filter(function (r) { return r.effect; }).map(function (r) {
+        return '<li>' + esc(r.text) + ' <span class="cite">' + esc(r.prov) + '</span> <span class="meta">' + esc(basisName(r.basis)) + (r.research ? ' · added from desk research, pending team review' : '') + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    if (c.canProhibit) h += '<p class="flagc" style="white-space:normal">One open question below could make this tool prohibited. Answer it first.</p>';
+    if (c.openHard.length && c.label !== 'notai') h += '<p class="meta">' + plural(c.openHard.length, 'question is', 'questions are') + ' open. "Not sure" keeps the label open: ask the vendor.</p>';
+    if (c.alsoTransparency) h += '<p class="meta">The transparency duty applies as well, whatever the answers.</p>';
+    if (u.provisional) h += '<p class="meta"><span class="kd kd-practice">Provisional</span> This use is not in the team\'s catalogue of 91. It was found in vendor material and trade press on 17 Nov 2026; the label is not yet reviewed by the team.</p>';
+    h += '<p class="meta">Rests on: ' + esc(basisName(u.basis)) + (u.prov ? ' <span class="cite">' + esc(u.prov) + '</span>' : '') + (u.booklet ? ' · Booklet ' + esc(u.booklet) : '') + '</p>';
+    h += roleText(x);
+    if (nonEU()) h += '<p class="meta">' + esc(REF.countryChecks[state.hotel.country].reach) + '</p>';
+    h += '</section>';
+
+    // questions
+    h += '<section class="panel"><div class="ph"><h3>Questions that decide the label</h3><span class="meta">Ask the vendor if you are not sure</span></div><div>' + questions(x) + '</div></section>';
+
+    // items
+    var done = x.items.filter(function (i) { return i.done; }).length;
+    h += '<section class="panel"><div class="ph"><h3>What to check</h3><span class="meta">' + done + ' of ' + x.items.length + ' done</span></div>';
+    groupItems(x.items).forEach(function (g) {
+      h += '<div class="grp"><h3>' + groupTitle(g.key) + '</h3>' + g.items.map(function (it) { return itemRow(it, 'it-' + it.id, 'data-item="' + esc(it.id) + '" data-tool="' + esc(t.id) + '"'); }).join('') + '</div>';
+    });
+    h += '</section>';
+
+    // vendor questions
+    var vqs = L.vendorQuestions(u, c, REF);
+    h += '<section class="panel"><div class="ph"><h3>Questions for the vendor</h3><span class="meta">Tick each one once the answer is in the contract</span></div><div>';
+    vqs.forEach(function (q) {
+      h += '<div class="item' + (t.vq[q.id] ? ' done' : '') + '"><input type="checkbox" id="vq-' + q.id + '" data-vq="' + q.id + '"' + (t.vq[q.id] ? ' checked' : '') + ' aria-labelledby="vq-' + q.id + '-t"><div class="itx"><span class="itt" id="vq-' + q.id + '-t">' + esc(q.q) + '</span></div></div>';
+    });
+    h += '</div><p class="meta">From the briefing booklet, section A3. For a fuller list, the AI Hospitality Alliance\'s industry framework has a 14-question vendor questionnaire.</p></section>';
+
+    h += '</div><div>';
+
+    // record
+    h += '<section class="panel"><h3>Register entry</h3>' +
+      '<label class="fld"><span>Responsible person</span><input type="text" id="f-owner" data-f="owner" value="' + esc(t.owner) + '" placeholder="Name or role"></label>' +
+      '<label class="fld"><span>Vendor</span><input type="text" id="f-vendor" data-f="vendor" value="' + esc(t.vendor) + '"></label>' +
+      '<label class="fld"><span>Department</span><select id="f-dept" data-f="dept">' + opt('', 'Choose', t.dept) + CAT.depts.map(function (d) { return opt(d.id, d.name, t.dept); }).join('') + '</select></label>' +
+      '<label class="fld"><span>Where in the hotel</span><input type="text" id="f-where" data-f="where" value="' + esc(t.where) + '" placeholder="For example restaurant and bar"></label>' +
+      '<label class="fld"><span>How the hotel got it</span><select id="f-origin" data-f="origin">' + REF.origins.map(function (o) { return opt(o.id, o.name, t.origin || 'vendor'); }).join('') + '</select></label>' +
+      '<label class="fld"><span>Who decided to use it</span><select id="f-decided" data-f="decided">' + opt('', 'Choose', t.decided) + REF.deciders.map(function (o) { return opt(o.id, o.name, t.decided); }).join('') + '</select></label>' +
+      '<label class="fld"><span>In use since</span><input type="text" id="f-since" data-f="since" value="' + esc(t.since) + '" placeholder="For example March 2025"></label>' +
+      '<label class="fld"><span>Notes</span><textarea id="f-notes" data-f="notes">' + esc(t.notes) + '</textarea></label></section>';
+
+    // watch list hits
+    var hits = RADAR.entries.filter(function (e) { return L.radarHitsTool(e, u, c, REF); });
+    if (hits.length) {
+      h += '<section class="panel"><div class="ph"><h3>On the watch list</h3><button type="button" class="linkbtn" data-act="tab" data-tab="watch">See all</button></div><p class="meta">Changes that may affect this tool.</p><ul class="reasons">' +
+        hits.map(function (e) { return '<li>' + esc(e.title) + ' <span class="meta">' + esc(e.when) + '</span></li>'; }).join('') + '</ul></section>';
+    }
+
+    h += '<section class="panel"><h3>Remove</h3>' + (ui.confirm && ui.confirm.kind === 'delete' ? confirmBox('delete', 'Delete "' + (t.name || 'this tool') + '" from the register? This cannot be undone.', 'Delete tool') : '<div><button type="button" class="btn warn" data-act="del">Delete this tool</button></div>') + '</section>';
+    h += '</div></div>';
+    return h;
+  }
+
+  // ---------- view: to do ----------
+  function vTodo() {
+    var rows = state.tools.map(ctx), h = exampleNote();
+    h += '<section class="panel"><div class="ph"><h2>Five things to do now</h2><span class="meta">From the briefing booklet</span></div><div>';
+    REF.hotelChecks.forEach(function (hc) {
+      var auto = hc.auto === 'tools', done = auto ? state.tools.length > 0 : !!state.checks[hc.id];
+      h += itemRow({ id: hc.id, text: hc.text, kind: hc.kind, who: hc.who, note: hc.note + (auto ? ' ' + plural(state.tools.length, 'tool') + ' listed so far.' : ''), done: done, auto: null }, 'hc-' + hc.id, 'data-hc="' + esc(hc.id) + '"' + (auto ? ' disabled' : ''));
+    });
+    var reps = state.hotel.reps === 'yes';
+    h += '</div><p class="meta"><span class="kd kd-law">Other law · Labour</span> Before introducing any tool that schedules, scores or watches staff, involve the works council or staff representatives where you have them.' + (reps ? ' Your hotel has staff representatives.' : '') +
+      (REF.labourNotes[state.hotel.country] ? ' ' + esc(REF.labourNotes[state.hotel.country]) : '') + '</p></section>';
+    if (nonEU()) {
+      var cc = REF.countryChecks[state.hotel.country];
+      h += '<section class="panel"><h2>What applies in ' + esc(COUNTRY[state.hotel.country]) + '</h2><p class="sub">' + esc(cc.reach) + '</p><div>';
+      cc.items.forEach(function (ci) { h += itemRow({ id: ci.id, text: ci.text, kind: 'law', tag: 'National', who: ci.who, done: !!state.checks[ci.id] }, 'hc-' + ci.id, 'data-hc="' + esc(ci.id) + '"'); });
+      h += '</div></section>';
+    }
+    var all = [];
+    rows.forEach(function (x) { x.items.forEach(function (it) { if (ui.showDone || !it.done) all.push({ x: x, it: it }); }); });
+    h += '<section class="panel"><div class="ph"><h2>By tool</h2><label class="checks"><input type="checkbox" id="show-done" data-showdone="1"' + (ui.showDone ? ' checked' : '') + '> <span>Show completed items</span></label></div>';
+    if (!rows.length) h += '<p class="meta">No tools yet. <button type="button" class="linkbtn" data-act="add">Add a tool</button></p>';
+    else if (!all.length) h += '<p class="meta">Nothing open. Every item is ticked.</p>';
+    var keys = {};
+    all.forEach(function (a) { var k = isNow(a.it) ? 'now' : a.it.when; (keys[k] = keys[k] || []).push(a); });
+    Object.keys(keys).sort(function (a, b) { return a === 'now' ? -1 : b === 'now' ? 1 : a < b ? -1 : 1; }).forEach(function (k) {
+      h += '<div class="grp"><h3>' + groupTitle(k) + ' <span class="meta">' + plural(keys[k].filter(function (a) { return !a.it.done; }).length, 'open item') + '</span></h3>';
+      var last = null;
+      keys[k].forEach(function (a) {
+        if (last !== a.x.t.id) {
+          last = a.x.t.id;
+          h += '<div class="toolh"><span class="no">' + regNo(a.x.t) + '</span><button type="button" class="linkbtn" data-act="open" data-id="' + esc(a.x.t.id) + '"><strong>' + esc(a.x.t.name || 'Unnamed tool') + '</strong></button>' + chip(a.x.c.label) + (a.x.t.owner ? '<span class="meta">' + esc(a.x.t.owner) + '</span>' : '<span class="meta miss">No responsible person</span>') + '</div>';
+        }
+        h += itemRow(a.it, 'td-' + a.x.t.id + '-' + a.it.id, 'data-item="' + esc(a.it.id) + '" data-tool="' + esc(a.x.t.id) + '"');
+      });
+      h += '</div>';
+    });
+    h += '</section>';
+    return h;
+  }
+
+  // ---------- view: your hotel ----------
+  function vHotel() {
+    var H = state.hotel, h = exampleNote();
+    h += '<section class="panel"><h2>Your hotel</h2><p class="sub">These answers decide which country notes and contract notes the register shows. They stay in this browser.</p><div class="formgrid">' +
+      '<label class="fld"><span>Hotel or group name</span><input type="text" id="h-name" data-h="name" value="' + esc(H.name) + '"></label>' +
+      '<label class="fld"><span>Country</span><select id="h-country" data-h="country">' + opt('', 'Choose', H.country) + REF.countries.map(function (c) { return opt(c[0], c[1], H.country); }).join('') + '</select></label>' +
+      '<label class="fld"><span>Operating model</span><select id="h-model" data-h="model">' + opt('', 'Choose', H.model) + REF.operatingModels.map(function (m) { return opt(m.id, m.name, H.model); }).join('') + '</select></label>' +
+      '<label class="fld"><span>Part of a group or brand</span><select id="h-group" data-h="group">' + opt('', 'Choose', H.group) + opt('yes', 'Yes', H.group) + opt('no', 'No, independent', H.group) + '</select></label>' +
+      '<label class="fld"><span>Works council or staff representatives</span><select id="h-reps" data-h="reps">' + opt('', 'Choose', H.reps) + opt('yes', 'Yes', H.reps) + opt('no', 'No', H.reps) + opt('unsure', 'Not sure', H.reps) + '</select></label>' +
+      '<label class="fld"><span>Who keeps this register</span><input type="text" id="h-keeper" data-h="keeper" value="' + esc(H.keeper) + '" placeholder="Name or role"></label></div>' +
+      '<div class="fld"><span>Food, beverage and other outlets inside the hotel</span><div class="checks">' + REF.outlets.map(function (o) {
+        return '<label><input type="checkbox" id="o-' + o.id + '" data-outlet="' + o.id + '"' + (H.outlets.indexOf(o.id) >= 0 ? ' checked' : '') + '> <span>' + esc(o.name) + '</span></label>';
+      }).join('') + '</div></div></section>';
+
+    var model = null; REF.operatingModels.forEach(function (m) { if (m.id === H.model) model = m; });
+    h += '<div class="detail"><div>';
+    h += '<section class="panel"><h3>Who is usually the user of your AI tools</h3>';
+    if (model) {
+      h += '<dl class="kv"><dt>Set-up</dt><dd>' + esc(model.name) + '</dd><dt>Usually the user</dt><dd>' + esc(model.user) + '</dd>' + (model.watch ? '<dt>Watch</dt><dd>' + esc(model.watch) + '</dd>' : '') + '</dl>';
+    } else h += '<p class="meta">Choose an operating model above.</p>';
+    h += '<p class="meta">The user\'s duties fall on whoever decides to use a tool and how it is used, not on whoever owns the building or pays the invoice. The law gives no answer for each hotel set-up; this is our reading, and the contracts decide in practice. Duties towards staff (consultation, data protection) fall on the company that employs them, which may differ from the AI Act user.</p></section>';
+
+    var nat = NAT[H.country];
+    h += '<section class="panel"><h3>Who would contact you</h3>';
+    if (!H.country) h += '<p class="meta">Choose a country above.</p>';
+    else if (nat) {
+      h += '<dl class="kv"><dt>AI Act authority</dt><dd>' + esc(nat.aiActAuthority) + '</dd><dt>Status</dt><dd>' + esc(nat.designationStatus) + '</dd><dt>Labour rules</dt><dd>' + esc(nat.labourRules) + '</dd>' + (nat.hotelNote ? '<dt>For hotels</dt><dd>' + esc(nat.hotelNote) + '</dd>' : '') + '</dl>' +
+        '<p class="meta">From the project\'s national research (' + esc(NAT._researchedOn ? fmtDate(NAT._researchedOn) : 'November 2026') + '). Check the status before relying on it.</p>';
+    } else {
+      h += '<p>Each EU country designates its own authorities to supervise the AI Act; data protection authorities stay in charge of the GDPR.</p><p class="meta">The project has researched Germany, France, Spain, Sweden, Switzerland and the United Kingdom so far. ' + esc(COUNTRY[H.country]) + ' is not yet covered.</p>';
+    }
+    h += '</section></div><div>';
+    h += '<section class="panel"><h3>Does the EU AI Act reach you</h3>';
+    if (!H.country) h += '<p class="meta">Choose a country above.</p>';
+    else if (nonEU()) h += '<p>' + esc(REF.countryChecks[H.country].reach) + '</p>';
+    else h += '<p>Yes. Your hotel is in the EU, so the Act applies to the AI tools it uses, whatever its size. The Act has no special rules for hotels: a tool counts as high-risk because of what it does, not because a hotel uses it.</p>';
+    h += '</section>';
+    if (H.reps === 'yes' || REF.labourNotes[H.country]) {
+      h += '<section class="panel"><h3>Staff representatives</h3><p>Before introducing any tool that schedules, scores or watches staff, involve the works council or staff representatives where you have them.</p>' + (REF.labourNotes[H.country] ? '<p class="meta">' + esc(REF.labourNotes[H.country]) + '</p>' : '') + '</section>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  // ---------- view: watch list ----------
+  function vWatch() {
+    var rows = state.tools.map(ctx), h = '';
+    var es = RADAR.entries.slice().sort(function (a, b) {
+      function grp(e) { return e.date && e.date < TODAY && e.status === 'dated' ? 2 : e.date ? 0 : 1; }
+      var ga = grp(a), gb = grp(b);
+      if (ga !== gb) return ga - gb;
+      if (a.date && b.date) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      return 0;
+    });
+    h += '<div class="band"><div class="who"><h2>What is still moving</h2><p class="sub">Rules and guidance that may change what the register tells you. Each entry names its source and the tools in your register it touches.</p></div>' +
+      '<p class="meta">Last checked ' + fmtDate(RADAR.meta.lastChecked) + '</p></div>';
+    h += '<section class="panel flush">';
+    es.forEach(function (e) {
+      var passed = e.status === 'dated' && e.date && e.date < TODAY;
+      var st = passed ? 'Passed' : e.status === 'dated' ? 'Date set' : e.status === 'expected' ? 'Expected' : e.status === 'proposal' ? 'Proposal' : 'Pending';
+      var hits = rows.filter(function (x) { return L.radarHitsTool(e, x.u, x.c, REF); });
+      var hotelHit = L.radarHitsHotel(e, state.hotel);
+      h += '<article class="wcard"><div class="wl"><span class="st st-' + (passed ? 'passed' : e.status) + '">' + st + '</span><strong>' + esc(e.when) + '</strong>' + (e.date && !passed && daysUntil(e.date) > 0 && e.status === 'dated' ? '<span class="meta">' + esc(away(e.date)) + '</span>' : '') + '</div>' +
+        '<div class="wr"><h3>' + esc(e.title) + '</h3><p>' + esc(e.what) + '</p><p><strong>Why it matters:</strong> ' + esc(e.why) + '</p>' +
+        '<p class="meta">Who should watch: ' + esc(e.who) + '</p>';
+      if (hits.length) {
+        h += '<p class="meta">In your register: ' + hits.slice(0, 8).map(function (x) { return '<button type="button" class="linkbtn" data-act="open" data-id="' + esc(x.t.id) + '">' + esc(x.t.name || regNo(x.t)) + '</button>'; }).join(', ') + (hits.length > 8 ? ' and ' + (hits.length - 8) + ' more' : '') + '</p>';
+      } else if (hotelHit) h += '<p class="meta">Applies to hotels in ' + esc(COUNTRY[state.hotel.country]) + '.</p>';
+      h += '<p class="meta">Source: ' + esc(e.source) + ' · ' + (e.basis === 'law' ? 'law text' : 'project material') + '</p></div></article>';
+    });
+    h += '</section><p class="meta">' + esc('Kept by: ' + RADAR.meta.maintainer + '.') + ' This is a dated list, not a live news feed: an entry is added only after it is checked at its source.</p>';
+    return h;
+  }
+
+  // ---------- view: how it works ----------
+  function vHow() {
+    var h = '';
+    h += '<section class="panel"><h2>How the register works</h2><ol class="steps">' +
+      '<li><strong>Each tool starts from a hotel use case.</strong> The list holds the 91 use cases of the project\'s Hotel AI Use-Case Catalogue, plus 17 uses found in the market that the catalogue does not have yet.</li>' +
+      '<li><strong>Each use case carries a label.</strong> The labels are the five of the briefing booklet: prohibited, high-risk, high-risk if…, transparency and minimal, plus "outside the high-risk list" and "not an AI system".</li>' +
+      '<li><strong>Your answers settle the label.</strong> For many tools one feature or one use decides. "Not sure" keeps the label open.</li>' +
+      '<li><strong>The label, your role and your country produce the items to check.</strong> Each item says who should do it, by when, and what it rests on.</li></ol></section>';
+    h += '<div class="detail"><div><section class="panel"><h3>What each item is</h3><dl class="kv">' + Object.keys(REF.kinds).map(function (k) { return '<dt><span class="kd kd-' + k + '">' + esc(REF.kinds[k].name) + '</span></dt><dd>' + esc(REF.kinds[k].desc) + '</dd>'; }).join('') + '</dl></section>' +
+      '<section class="panel"><h3>What a label rests on</h3><dl class="kv">' + Object.keys(REF.basis).map(function (k) { return '<dt>' + esc(REF.basis[k].name) + '</dt><dd>' + esc(REF.basis[k].desc) + '</dd>'; }).join('') + '</dl></section></div>' +
+      '<div><section class="panel"><h3>Limits</h3><ul class="reasons">' +
+      '<li>It is a prototype. The labels and wording are waiting for review by the project team.</li>' +
+      '<li>It is not legal advice and gives no verdict that a hotel complies.</li>' +
+      '<li>Several labels rest on the Commission\'s draft guidelines of 19 May 2026 and may change.</li>' +
+      '<li>It covers the EU AI Act and points to other laws. It does not replace a data protection or labour law review.</li>' +
+      '<li>Your entries are saved in this browser only. Clearing site data removes them, so download a backup.</li></ul></section>' +
+      '<section class="panel"><h3>Backup and reset</h3><div class="btnrow"><button type="button" class="btn" data-act="export" data-kind="json">Download a backup</button><label class="btn" for="f-import">Restore from a backup</label><input type="file" id="f-import" class="sr" accept=".json,application/json">' +
+      '<button type="button" class="btn" data-act="example">Load the example hotel</button><button type="button" class="btn warn" data-act="reset">Clear everything</button></div>' +
+      confirmBox('reset', 'Clear the whole register in this browser? This cannot be undone.', 'Clear everything') +
+      confirmBox('example', 'Replace the current register with the fictional example hotel?', 'Load the example') +
+      confirmBox('import', ui.pending ? 'Replace the current register with the backup (' + plural(ui.pending.tools.length, 'tool') + ')?' : '', 'Restore backup') + '</section></div></div>';
+
+    // label table
+    var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n; });
+    function cnt(k) { return rows.filter(function (u) { return u.a6.indexOf(k) >= 0; }).length; }
+    h += '<section class="panel"><div class="ph"><h2>The label of every use case</h2><span class="meta">For review by the project team</span></div>' +
+      '<p class="sub">The briefing booklet counts ' + T.high + ' high-risk uses, ' + T.highif + ' that are high-risk depending on set-up, ' + T.transp + ' with a transparency duty and ' + T.prohib + ' that one feature can make prohibited (booklet page A6, own classification of the 91 uses). This file gives ' + cnt('high') + ', ' + cnt('highif') + ', ' + cnt('transp') + ' and ' + cnt('prohib') + '.</p>';
+    function table(us) {
+      return '<div class="tblw"><table><thead><tr><th>No.</th><th>Use case</th><th>Label before answers</th><th>Deciding questions</th><th>Rests on</th><th>Booklet</th><th>Review note</th></tr></thead><tbody>' + us.map(function (u) {
+        var c = L.classify(u, {}, REF);
+        return '<tr><td class="num">' + (u.n || esc(u.id)) + '</td><td>' + esc(u.name) + '</td><td>' + chip(c.label) + (c.alsoTransparency ? ' ' + chip('transparency') : '') + (c.canProhibit ? ' <span class="flagc">Can become prohibited</span>' : '') + '</td><td class="num">' + (u.switches.length || '') + '</td><td>' + esc(basisName(u.basis)) + '</td><td>' + esc(u.booklet) + '</td><td>' + esc(u.review || '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    }
+    CAT.depts.forEach(function (d) {
+      var us = rows.filter(function (u) { return u.dept === d.id; });
+      h += '<details><summary>' + esc(d.name) + ' <span class="meta">' + plural(us.length, 'use') + '</span></summary>' + table(us) + '</details>';
+    });
+    var ex = LAB.uses.filter(function (u) { return u.provisional; });
+    h += '<details><summary>Seen in the market, not yet in the catalogue <span class="meta">' + plural(ex.length, 'use') + ', provisional</span></summary>' + table(ex) + '</details></section>';
+
+    h += '<section class="panel"><h3>Sources</h3><ul class="reasons">' + REF.meta.sources.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' +
+      '<p class="meta">Legal basis: ' + esc(REF.meta.legalBasis) + '. Law as of ' + fmtDate(REF.meta.lawAsOf) + '. Data version ' + esc(REF.meta.version) + '.</p></section>';
+    return h;
+  }
+
+  // ---------- render ----------
+  function render(keep) {
+    var act = document.activeElement, fid = keep && act && act.id ? act.id : null, sel = null;
+    if (fid) { try { if (act.selectionStart != null) sel = [act.selectionStart, act.selectionEnd]; } catch (e) { sel = null; } }
+    var html, t = ui.view === 'tool' ? toolById(ui.toolId) : null;
+    if (ui.tab === 'register') html = ui.view === 'pick' ? vPick() : t ? vTool(t) : vList();
+    else if (ui.tab === 'todo') html = vTodo();
+    else if (ui.tab === 'hotel') html = vHotel();
+    else if (ui.tab === 'watch') html = vWatch();
+    else html = vHow();
+    $('view').innerHTML = html;
+    ['register', 'todo', 'hotel', 'watch', 'how'].forEach(function (k) { if (ui.tab === k) $('tab-' + k).setAttribute('aria-current', 'page'); else $('tab-' + k).removeAttribute('aria-current'); });
+    paintSaved();
+    if (fid) { var el = $(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text field */ } } } }
+  }
+  function go(tab, view, id) {
+    ui.tab = tab; ui.view = view || 'list'; ui.toolId = id || null; ui.confirm = null; ui.copy = null;
+    render(false);
+    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
+    $('view').focus({ preventScroll: true });
+  }
+
+  // ---------- exports ----------
+  var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {}, direct: null };
+  function initHost() {
+    if (window.claude && typeof window.claude.use === 'function') {
+      window.claude.use('downloads').then(function (d) { host.direct = d || null; }).catch(function () { host.direct = null; });
+    }
+    if (host.state !== 'pending') return;
+    window.addEventListener('message', function (e) {
+      if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
+      var m = e.data;
+      if (m.hub === 'pong') { host.state = m.downloads ? 'yes' : 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); }
+      else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
+    });
+    try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { host.state = 'no'; }
+    setTimeout(function () { if (host.state === 'pending') { host.state = 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); } }, 12000);
+  }
+  function whenHostKnown(fn) { if (host.state === 'pending') host.waiters.push(fn); else fn(); }
+  function saveFile(name, content, mime) {
+    function viaLink() {
+      try {
+        var blob = content instanceof Blob ? content : new Blob([content], { type: mime });
+        var url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        toast('Download started: ' + name);
+      } catch (e) { toast('This browser could not save the file.'); }
+    }
+    function fail(code) { toast(code === 'declined' ? 'Download cancelled.' : 'The file could not be saved here.'); }
+    if (host.direct) { host.direct.save({ filename: name, data: content }).then(function () { toast('Saved ' + name); }).catch(function (e) { fail(e && e.code); }); return; }
+    whenHostKnown(function () {
+      if (host.state !== 'yes') { viaLink(); return; }
+      var id = 'd' + (++host.seq);
+      host.calls[id] = function (m) { if (m.ok) toast('Saved ' + name); else fail(m.code); };
+      window.parent.postMessage({ hub: 'download', id: id, filename: name, data: content }, window.location.origin);
+    });
+  }
+  function csvCell(v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function buildCsv() {
+    var head = ['No.', 'Tool', 'Use case', 'Department', 'Where', 'Vendor', 'Label', 'Also transparency', 'Open questions', 'Your role', 'Responsible', 'How the hotel got it', 'In use since', 'Items open now', 'Items open later', 'Items done', 'Notes'];
+    var lines = [head].concat(state.tools.map(function (t) {
+      var x = ctx(t), open = x.items.filter(function (i) { return !i.done; }), origin = '';
+      REF.origins.forEach(function (o) { if (o.id === (t.origin || 'vendor')) origin = o.name; });
+      return [regNo(t), t.name, x.u.triage ? '' : x.u.name, (DEPTS[t.dept] || {}).name || '', t.where, t.vendor, REF.labels[x.c.label].name, x.c.alsoTransparency ? 'yes' : '', x.c.openHard.length,
+        x.c.label === 'notai' ? '' : x.c.role === 'maker' ? 'Maker' : 'User', t.owner, origin, t.since, open.filter(isNow).length, open.length - open.filter(isNow).length, x.items.length - open.length, t.notes];
+    }));
+    return lines.map(function (r) { return r.map(csvCell).join(';'); }).join('\r\n');
+  }
+  function loadScript(src) {
+    return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { s.remove(); rej(new Error('load ' + src)); }; document.head.appendChild(s); });
+  }
+  function getJsPDF() {
+    if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+    return loadScript('../assessment/lib/jspdf.umd.min.js').catch(function () { return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }).then(function () { return window.jspdf.jsPDF; });
+  }
+  function pdfSafe(s) {
+    return String(s == null ? '' : s).replace(/…/g, '...').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/€/g, 'EUR ').replace(/№/g, 'No.').replace(/[^\x00-\xFF]/g, '');
+  }
+  function makePdf() {
+    return getJsPDF().then(function (JsPDF) {
+      var doc = new JsPDF({ unit: 'mm', format: 'a4' }), W = 210, H = 297, M = 14, y = 19;
+      var rows = state.tools.map(ctx), s = summary(rows);
+      function need(h) { if (y + h > H - 18) { doc.addPage(); y = 19; return true; } return false; }
+      function font(style, size, grey) { doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(grey || 20); }
+      font('bold', 17); doc.text('Hotel AI register', M, y);
+      font('normal', 9, 100); doc.text(pdfSafe('Printed ' + fmtDate(TODAY)), W - M, y, { align: 'right' });
+      y += 7; font('bold', 11); doc.text(pdfSafe(state.hotel.name || 'Hotel not named'), M, y);
+      y += 5; font('normal', 9, 100); doc.text(pdfSafe(hotelLine() || 'Country and operating model not set'), M, y);
+      y += 6; font('normal', 9.5);
+      var counts = LABEL_ORDER.filter(function (l) { return s.by[l]; }).map(function (l) { return s.by[l] + ' ' + REF.labels[l].name.toLowerCase(); }).join(', ');
+      doc.splitTextToSize(pdfSafe(plural(rows.length, 'tool') + ': ' + counts + '. ' + summaryText(s) + '.'), W - 2 * M).forEach(function (ln) { doc.text(ln, M, y); y += 4.6; });
+      y += 3;
+      var cols = [['No.', 12], ['Tool', 58], ['Label', 34], ['Role', 14], ['Responsible', 32], ['To check', 32]];
+      function header() {
+        font('bold', 8, 110); var x = M;
+        cols.forEach(function (c) { doc.text(c[0].toUpperCase(), x, y); x += c[1]; });
+        y += 2; doc.setDrawColor(170); doc.setLineWidth(0.2); doc.line(M, y, W - M, y); y += 4.5;
+      }
+      header();
+      rows.forEach(function (x) {
+        var t = x.t, open = x.items.filter(function (i) { return !i.done; }), now = open.filter(isNow).length;
+        var cells = [regNo(t), (t.name || 'Unnamed tool') + (t.vendor ? '\n' + t.vendor : ''), REF.labels[x.c.label].name + (x.c.alsoTransparency ? '\n+ Transparency' : '') + (x.c.openHard.length ? '\n' + plural(x.c.openHard.length, 'question') + ' open' : ''),
+          x.c.label === 'notai' ? '-' : x.c.role === 'maker' ? 'Maker' : 'User', t.owner || 'Not named', open.length ? open.length + ' open' + (now ? ', ' + now + ' now' : '') : 'All checked'];
+        font('normal', 9);
+        var lines = cells.map(function (c, i) { return doc.splitTextToSize(pdfSafe(c), cols[i][1] - 2.5); });
+        var hgt = Math.max.apply(null, lines.map(function (l) { return l.length; })) * 4.1 + 3;
+        if (need(hgt)) header();
+        var xx = M;
+        lines.forEach(function (l, i) { font(i === 1 ? 'bold' : 'normal', 9, i === 0 ? 110 : 20); doc.text(l, xx, y); xx += cols[i][1]; });
+        y += hgt - 2; doc.setDrawColor(225); doc.line(M, y - 1.2, W - M, y - 1.2); y += 2;
+      });
+      y += 4; need(14); font('bold', 12); doc.text('To check now', M, y); y += 6;
+      var anyOpen = false;
+      rows.forEach(function (x) {
+        var open = x.items.filter(function (i) { return !i.done && isNow(i); });
+        if (!open.length) return;
+        anyOpen = true; need(10); font('bold', 9.5); doc.text(pdfSafe(regNo(x.t) + '  ' + (x.t.name || 'Unnamed tool') + (x.t.owner ? '  (' + x.t.owner + ')' : '')), M, y); y += 4.6;
+        open.forEach(function (it) {
+          font('normal', 9);
+          var ls = doc.splitTextToSize(pdfSafe('- ' + it.text + ' [' + REF.kinds[it.kind].name + (it.tag ? ', ' + it.tag : '') + (it.ref ? '; ' + it.ref : '') + ']'), W - 2 * M - 4);
+          need(ls.length * 4.1 + 1); doc.text(ls, M + 3, y); y += ls.length * 4.1 + 0.8;
+        });
+        y += 2;
+      });
+      if (!anyOpen) { font('normal', 9.5); doc.text('Nothing open.', M, y); }
+      var n = doc.getNumberOfPages();
+      for (var i = 1; i <= n; i++) {
+        doc.setPage(i); font('normal', 7.5, 120);
+        doc.text(pdfSafe('Hotel AI Register (prototype), EHL SBP Group 36 for HFTP. Items to check, not a compliance verdict. Not legal advice. Law as of ' + fmtDate(REF.meta.lawAsOf) + '.'), M, H - 9);
+        doc.text('Page ' + i + ' of ' + n, W - M, H - 9, { align: 'right' });
+      }
+      return doc.output('blob');
+    });
+  }
+  function doExport(kind) {
+    var stamp = TODAY;
+    if (kind === 'csv') saveFile('hotel-ai-register_' + stamp + '.csv', '﻿' + buildCsv(), 'text/csv;charset=utf-8');
+    else if (kind === 'json') saveFile('hotel-ai-register-backup_' + stamp + '.json', JSON.stringify(state, null, 2), 'application/json');
+    else if (kind === 'pdf') { toast('Preparing the PDF…'); makePdf().then(function (blob) { saveFile('hotel-ai-register_' + stamp + '.pdf', blob, 'application/pdf'); }).catch(function () { toast('The PDF could not be made here. Use the CSV table instead.'); }); }
+  }
+
+  // ---------- events ----------
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!b) return;
+    var a = b.getAttribute('data-act'), id = b.getAttribute('data-id'), t;
+    if (a === 'tab') go(b.getAttribute('data-tab'));
+    else if (a === 'add') { ui.pickQ = ''; ui.pickDept = ''; go('register', 'pick'); }
+    else if (a === 'back') go('register', 'list');
+    else if (a === 'open') go('register', 'tool', id);
+    else if (a === 'pick') {
+      if (state.example && !state.tools.length) state.example = false;
+      t = newTool(state, id); state.tools.push(t); persist(); go('register', 'tool', t.id);
+      toast('Added to the register as ' + regNo(t) + '. Answer the questions to settle its label.');
+      var nm = $('f-name'); if (nm && !t.name) nm.focus();
+    }
+    else if (a === 'flt') { var lb = b.getAttribute('data-label'); ui.fLabel = ui.fLabel === lb ? '' : lb; render(false); }
+    else if (a === 'clear-flt') { ui.fLabel = ''; ui.q = ''; render(false); }
+    else if (a === 'export') doExport(b.getAttribute('data-kind'));
+    else if (a === 'copy-close') { ui.copy = null; render(false); }
+    else if (a === 'del') { ui.confirm = { kind: 'delete', id: ui.toolId }; render(false); focusConfirm(); }
+    else if (a === 'reset') { ui.confirm = { kind: 'reset' }; render(false); focusConfirm(); }
+    else if (a === 'start-own') { ui.confirm = { kind: 'own' }; render(false); focusConfirm(); }
+    else if (a === 'example') {
+      if (state.tools.length && !state.example) { ui.confirm = { kind: 'example' }; render(false); focusConfirm(); }
+      else { state = example(); persist(); go('register', 'list'); }
+    }
+    else if (a === 'confirm-no') { ui.confirm = null; ui.pending = null; render(false); }
+    else if (a === 'confirm-yes' && ui.confirm) {
+      var k = ui.confirm.kind;
+      if (k === 'delete') { state.tools = state.tools.filter(function (x) { return x.id !== ui.confirm.id; }); persist(); go('register', 'list'); toast('Tool deleted.'); }
+      else if (k === 'reset') { state = blank(); persist(); go('register', 'list'); toast('Register cleared.'); }
+      else if (k === 'example') { state = example(); persist(); go('register', 'list'); }
+      else if (k === 'own') { state = blank(); persist(); go('register', 'list'); toast('Empty register ready. You can load the example again under How it works.'); }
+      else if (k === 'import' && ui.pending) { state = ui.pending; ui.pending = null; persist(); go('register', 'list'); toast('Backup restored.'); }
+    }
+  });
+  function focusConfirm() { var el = $('confirm-yes'); if (el) { el.focus(); try { el.scrollIntoView({ block: 'center' }); } catch (e) { /* ignore */ } } }
+
+  document.addEventListener('input', function (e) {
+    var el = e.target, t;
+    if (el.getAttribute('data-q') === 'list') { ui.q = el.value; render(true); return; }
+    if (el.getAttribute('data-q') === 'pick') { ui.pickQ = el.value; render(true); return; }
+    if (el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+    if (el.hasAttribute('data-f')) { t = toolById(ui.toolId); if (t) { t[el.getAttribute('data-f')] = el.value; persistSoon(); } }
+    else if (el.hasAttribute('data-h')) { state.hotel[el.getAttribute('data-h')] = el.value; persistSoon(); }
+  });
+  document.addEventListener('change', function (e) {
+    var el = e.target, t = toolById(ui.toolId), tt;
+    if (el.hasAttribute('data-sw') && t) { t.answers[el.getAttribute('data-sw')] = el.value; persist(); render(true); }
+    else if (el.hasAttribute('data-notai') && t) { t.notAI = el.value; persist(); render(true); }
+    else if (el.hasAttribute('data-item')) {
+      tt = toolById(el.getAttribute('data-tool'));
+      if (tt) { if (el.checked) tt.done[el.getAttribute('data-item')] = TODAY; else delete tt.done[el.getAttribute('data-item')]; persist(); render(true); }
+    }
+    else if (el.hasAttribute('data-vq') && t) { if (el.checked) t.vq[el.getAttribute('data-vq')] = TODAY; else delete t.vq[el.getAttribute('data-vq')]; persist(); render(true); }
+    else if (el.hasAttribute('data-hc')) { if (el.checked) state.checks[el.getAttribute('data-hc')] = TODAY; else delete state.checks[el.getAttribute('data-hc')]; persist(); render(true); }
+    else if (el.hasAttribute('data-showdone')) { ui.showDone = el.checked; render(true); }
+    else if (el.hasAttribute('data-pick')) { ui.pickDept = el.value; render(true); }
+    else if (el.hasAttribute('data-outlet')) {
+      var o = el.getAttribute('data-outlet'), i = state.hotel.outlets.indexOf(o);
+      if (el.checked && i < 0) state.hotel.outlets.push(o); else if (!el.checked && i >= 0) state.hotel.outlets.splice(i, 1);
+      persist();
+    }
+    else if (el.hasAttribute('data-f') && t) { t[el.getAttribute('data-f')] = el.value; persist(); if (el.tagName === 'SELECT') render(true); else if (el.getAttribute('data-f') === 'owner') setTimeout(function () { render(true); }, 0); }
+    else if (el.hasAttribute('data-h')) { state.hotel[el.getAttribute('data-h')] = el.value; persist(); if (el.tagName === 'SELECT') render(true); }
+    else if (el.id === 'f-import' && el.files && el.files[0]) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        try {
+          var o = JSON.parse(String(fr.result));
+          if (!o || o.v !== 1 || !Array.isArray(o.tools)) throw new Error('shape');
+          ui.pending = normalise(o); ui.confirm = { kind: 'import' }; render(false); focusConfirm();
+        } catch (err) { toast('That file is not a register backup. Choose a file made with "Backup".'); }
+      };
+      fr.onerror = function () { toast('The file could not be read.'); };
+      fr.readAsText(el.files[0]);
+    }
+  });
+
+  // ---------- start ----------
+  state = load();
+  if (!state) { state = example(); try { window.localStorage.setItem(KEY + '-probe', '1'); window.localStorage.removeItem(KEY + '-probe'); } catch (e) { mem.ok = false; } }
+  $('asof').textContent = fmtDate(REF.meta.preparedOn);
+  $('footlaw').textContent = 'Legal basis: ' + REF.meta.legalBasis + '. Law as of ' + fmtDate(REF.meta.lawAsOf) + '. Prepared by EHL Hospitality Business School students for HFTP.';
+  initHost();
+  render(false);
+  window.HotelAIRegister = { state: function () { return state; }, csv: buildCsv, pdf: makePdf };
+})();

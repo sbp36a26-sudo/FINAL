@@ -209,4 +209,6 @@ To investigate how European hotels and F&B operators plan to adopt, resource, go
 | D8–D10 | Not yet started |
 | Interviews | Six guides done; Accor (Nicolas Maynard) on 19 Nov 2026, profile ready, quote permission open |
 | Final report layout | Canva ("HFTP Final report"), bird theme, Claude Code layout tool planned |
+| Hotel AI Register | Prototype built 17 Nov 2026 in `tools/register/` (hub tab "AI Register"); label file awaits D7 sign-off; design and legal research in `reports/` |
+| Tools hub | https://claude.ai/artifact/MWMGc2VKc6zniRn8um27eH: AI Assessment, Use-Case Catalogue, Readiness Tool, AI Register |
 | Review agents | Source auditor, alignment checker, repetition editor running weekday mornings |

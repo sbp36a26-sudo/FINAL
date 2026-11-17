@@ -7,6 +7,7 @@ The team's working tools, one folder each. They are kept separate for now and ma
 | AI Assessment Tool | `assessment/` | Interview scoring on the 8 framework categories, LOW / MEDIUM / HIGH bucket. See `assessment/README.md`. |
 | Hotel AI Use-Case Catalogue | `use-case-catalogue/` | D4: use cases by department, adoption, gaps, example vendors. |
 | Hotel AI Readiness Tool | `readiness/` | D4 × D6: resources per use case and the readiness check. `text-outline.md` is a plain-text outline of the page. |
+| Hotel AI Register (prototype) | `register/` | D7: a hotel's list of its AI tools with labels, items to check, watch list and exports. See `register/README.md`. |
 
 `index.html` is the published hub page. It is GENERATED: it is the AI Assessment Tool with the hub bar (`hub/hub-bar.html`) on top, and the other two tools open as tabs. The Assessment Tool has to be the main page because saving only works on an artifact's main page. After editing `assessment/index.html` or `hub/hub-bar.html`, run `node tools/build-hub.mjs`.
 
