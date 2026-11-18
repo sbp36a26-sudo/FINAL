@@ -156,7 +156,7 @@
       "src": "Booklet B3, C1"
     },
     "sensitive_traits": {
-      "q": "Does it infer sensitive traits, such as ethnicity, religion or sexual orientation, from how people look?",
+      "q": "Does it infer sensitive traits, such as race, political opinions, trade union membership, religion or sexual orientation, from people's face, fingerprints or other biometric data?",
       "yes": "prohibited",
       "prov": "Art. 5(1)(g)",
       "basis": "law",
@@ -164,11 +164,11 @@
       "src": "Booklet C5"
     },
     "exploit_price": {
-      "q": "Is pricing or selling designed to deceive or manipulate guests, or to exploit their age, disability or financial situation, in a way that causes significant harm?",
+      "q": "Is pricing or selling designed to deceive or manipulate guests, or to exploit their age, disability or a specific social or economic situation, in a way that causes significant harm?",
       "yes": "prohibited",
       "prov": "Art. 5(1)(a), (b)",
       "basis": "law",
-      "reason": "It is designed to exploit a guest's age, disability or financial situation and cause significant harm.",
+      "reason": "It is designed to exploit a guest's age, disability or a specific social or economic situation and cause significant harm.",
       "help": "Demand-based pricing and honest upselling are not affected. \"The guest cannot compare prices\" is not a vulnerability under the Act; consumer law covers that.",
       "src": "Booklet C3"
     },
@@ -189,8 +189,8 @@
         "labour",
         "dpia"
       ],
-      "prov": "Annex III 4(b)",
-      "basis": "draft",
+      "prov": "Annex III 4(b) (\"monitor and evaluate the performance and behaviour\")",
+      "basis": "law",
       "reason": "It ranks, scores or reports on individual staff.",
       "help": "Allocating work only by room status or stated availability does not count (draft guidance). A manager signing off does not take the tool out of high-risk. Switching the feature off does not change the label if the vendor still describes the tool as monitoring staff: ask for a version whose stated purpose excludes it.",
       "src": "Booklet A2, C1, C2"
@@ -229,8 +229,8 @@
         "labour",
         "dpia"
       ],
-      "prov": "Annex III 4(b)",
-      "basis": "draft",
+      "prov": "Annex III 4(b) (\"monitor and evaluate the performance and behaviour\")",
+      "basis": "law",
       "reason": "Its footage, logs or alerts are used to judge individual staff.",
       "help": "Reporting results to the team as a whole, not by person, keeps it minimal. Keeping data only for the shift is a data protection measure; it does not change the label.",
       "src": "Booklet C2, C4, C6"
@@ -387,7 +387,8 @@
       "yes": "high",
       "area": "credit",
       "packs": [
-        "gdpr-auto"
+        "gdpr-auto",
+        "fria"
       ],
       "prov": "Annex III 5(b)",
       "basis": "law",
@@ -539,6 +540,19 @@
       "reason": "It assesses learners in education or vocational training.",
       "help": "Whether an in-company academy counts as a vocational training institution is not settled.",
       "src": "Deep-dive research, 17 Nov 2026"
+    },
+    "age_core": {
+      "q": "Is the age estimate more than a purely ancillary part of the sale, for example are results stored, reused or used to treat people differently?",
+      "yes": "high",
+      "area": "biometric",
+      "packs": [
+        "dpia"
+      ],
+      "prov": "Annex III 1(b); recital 16",
+      "basis": "reading",
+      "reason": "The age estimate is used beyond the sale it supports.",
+      "help": "Our reading, contested: age is a protected ground under EU equality law, so sorting people by age may count as categorisation by a protected attribute (Annex III 1(b)). A feature that is purely ancillary to another commercial service is not biometric categorisation at all (recital 16).",
+      "src": "Review 19 Nov 2026"
     }
   },
   "items": [
@@ -694,6 +708,47 @@
       "src": "Text check 17 Nov 2026"
     },
     {
+      "id": "H9",
+      "pack": "hr-user",
+      "role": "user",
+      "when": "highrisk",
+      "kind": "duty",
+      "who": "Department head",
+      "ref": "AI Act Art. 26(4)",
+      "text": "Check whether the data you feed the tool is relevant and sufficiently representative for its purpose, to the extent you control that input data."
+    },
+    {
+      "id": "H10",
+      "pack": "hr-user",
+      "role": "user",
+      "when": "highrisk",
+      "kind": "duty",
+      "who": "General manager",
+      "ref": "AI Act Art. 26(5)",
+      "text": "Check whether someone monitors how the tool works against its instructions for use, and knows to inform the maker first, then the authority, immediately after a serious incident."
+    },
+    {
+      "id": "H11",
+      "pack": "hr-user",
+      "role": "user",
+      "when": "highrisk",
+      "kind": "duty",
+      "who": "Data protection contact",
+      "ref": "AI Act Art. 26(9); GDPR Art. 35",
+      "text": "Check whether the data protection impact assessment uses the information the maker supplies with the tool (its instructions and documentation)."
+    },
+    {
+      "id": "FR1",
+      "pack": "fria",
+      "role": "user",
+      "when": "highrisk",
+      "kind": "duty",
+      "who": "General manager, with the data protection contact",
+      "ref": "AI Act Art. 27(1), 27(4) as amended",
+      "text": "Check whether a fundamental rights impact assessment has been done before first use: the tool scores the creditworthiness of individuals (Annex III 5(b)).",
+      "note": "It may cross-refer to the data protection impact assessment instead of repeating it (Art. 27(4) as amended by Regulation (EU) 2026/1744)."
+    },
+    {
       "id": "H8",
       "pack": "hr-user",
       "role": "user",
@@ -713,7 +768,7 @@
       "who": "Purchasing or IT",
       "text": "Check with the vendor whether the tool is a legacy tool or will be CE-marked and registered by 2 Dec 2027, and ask to be told before an update changes that.",
       "ref": "Vendor question 5",
-      "note": "Not a legal duty on a private hotel, but you need the answer. A tool already in use before 2 Dec 2027 stays outside these duties, for the vendor and for your hotel, until its design changes significantly. That later purchases of the same model are covered rests on a recital only, and cloud tools that keep updating are unlikely to keep this status.",
+      "note": "Not a legal duty on a private hotel, but you need the answer. A high-risk tool placed on the market or put into service before 2 Dec 2027 falls under these duties only after a significant change in its design (Art. 111(2) as amended); under the Omnibus recitals, later units of the same type and model share that status. Cloud tools that keep updating are unlikely to keep it.",
       "src": "Booklet A3, A5, B1",
       "vendorOnly": true
     },
@@ -789,8 +844,8 @@
       "when": "now",
       "kind": "duty",
       "who": "Head office (CIO)",
-      "text": "Check whether the output of any image or text generator the group builds or adapts carries a machine-readable AI mark. Generators placed on the market before 2 Aug 2026 must comply by 2 Dec 2026.",
-      "ref": "AI Act Art. 50(2), Art. 111(4)",
+      "text": "Check whether the text, images, audio or video that your group's own tool generates carry a machine-readable AI mark (since 2 Aug 2026). Tools already on the market before 2 Aug 2026 have until 2 Dec 2026.",
+      "ref": "AI Act Art. 50(2), Art. 111(4) as amended",
       "src": "Booklet B2"
     },
     {
@@ -1019,10 +1074,10 @@
   "labourNotes": {
     "DE": "Germany: the works council co-decides on tools able to monitor staff, and a rollout that skips this step can be stopped.",
     "FR": "France: consult the staff committee (CSE) in firms of 50 or more. Approving a chatbot staff already use also counts as introducing it.",
-    "ES": "Spain: every employer using algorithms on staff must also inform each worker individually.",
+    "ES": "Spain: the works council has the right to be told the parameters, rules and instructions of algorithms or AI that affect working conditions (Workers' Statute Art. 64.4(d)); individual workers also have GDPR information rights.",
     "SE": "Sweden: negotiate with the union before an important change to working conditions.",
-    "CH": "Switzerland: systems meant to monitor staff behaviour are banned. Proportionate performance monitoring is allowed with staff involved in planning it.",
-    "GB": "United Kingdom: human involvement counts only if a trained person with authority reviews each decision; spot checks are not enough (regulator's draft guidance)."
+    "CH": "Switzerland: systems meant to monitor staff behaviour are banned (Ordinance 3 to the Labour Act, Art. 26). Other proportionate monitoring is allowed, with staff involved in planning it (Federal Supreme Court, BGE 130 II 425; to verify).",
+    "GB": "United Kingdom: human involvement counts only if a trained person with authority reviews each decision; spot checks are not enough (regulator's draft guidance). [To verify: ICO guidance status.]"
   },
   "vendorQuestions": [
     {
@@ -1212,7 +1267,7 @@
       "kind": "practice",
       "who": "Department heads, with IT or purchasing",
       "text": "Check with the vendors of rota, housekeeping, call-centre and camera tools whether they rank individual staff, read emotions or recognise people by face or voice. Switch off what you do not need.",
-      "note": "Reading staff emotions has been banned since 2 Feb 2025. Ranking staff and recognising people at a distance become high-risk on 2 Dec 2027."
+      "note": "Reading staff emotions has been banned since 2 Feb 2025. Ranking staff and recognising people at a distance become high-risk on 2 Dec 2027. A tool already on the market before 2 Dec 2027 may be a legacy tool: the high-risk duties then apply only after a significant design change (Art. 111(2) as amended). Ask the vendor."
     },
     {
       "id": "S4",
@@ -1275,6 +1330,18 @@
           "text": "Show the total price upfront and never publish AI-written reviews as genuine."
         }
       ]
+    },
+    "NO": {
+      "reach": "An EEA country: the GDPR applies. The AI Act applies once it is incorporated into the EEA Agreement; check the current status (to verify). AI Act items below are shown for reference.",
+      "items": []
+    },
+    "IS": {
+      "reach": "An EEA country: the GDPR applies. The AI Act applies once it is incorporated into the EEA Agreement; check the current status (to verify). AI Act items below are shown for reference.",
+      "items": []
+    },
+    "LI": {
+      "reach": "An EEA country: the GDPR applies. The AI Act applies once it is incorporated into the EEA Agreement; check the current status (to verify). AI Act items below are shown for reference.",
+      "items": []
     }
   },
   "countries": [
@@ -1385,6 +1452,18 @@
     [
       "SE",
       "Sweden"
+    ],
+    [
+      "NO",
+      "Norway"
+    ],
+    [
+      "IS",
+      "Iceland"
+    ],
+    [
+      "LI",
+      "Liechtenstein"
     ],
     [
       "CH",

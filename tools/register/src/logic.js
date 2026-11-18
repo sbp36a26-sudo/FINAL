@@ -85,7 +85,7 @@
       if (c.areas.product && c.role !== 'maker') addPacks(c, ['product']);
     }
     /* Rule 5: a repurposed general tool (e.g. a chatbot used to rank CVs) does not bring product liability or the QMS standard. */
-    if (c.role === 'maker') { if (c.route !== 'repurpose') addPacks(c, ['liability']); if (use.gen) addPacks(c, ['gen']); }
+    if (c.role === 'maker') { if (c.route !== 'repurpose') addPacks(c, ['liability']); if (use.gen || c.packs.chat) addPacks(c, ['gen']); }
 
     c.onlyProduct = !!c.areas.product && Object.keys(c.areas).length === 1;
     if (label === 'prohibited') c.dateKey = 'bans';
@@ -216,7 +216,14 @@
     return !!(a.countries && hotel && a.countries.indexOf(hotel.country) >= 0);
   }
 
-  var api = { RANK: RANK, classify: classify, items: items, vendorQuestions: vendorQuestions, vendorDone: vendorDone,
+  /* Art. 111(2) as amended: a high-risk tool already in use before the high-risk date may be a legacy tool. */
+  function maybeLegacy(tool, c, ref) {
+    var since = String((tool || {}).since || '');
+    if (!/^\d{4}-\d{2}/.test(since)) return false;
+    return (c.label === 'high' || c.highUnder) && since < ref.dates.highrisk;
+  }
+
+  var api = { RANK: RANK, maybeLegacy: maybeLegacy, classify: classify, items: items, vendorQuestions: vendorQuestions, vendorDone: vendorDone,
               restsOn: restsOn, labelBasis: labelBasis, radarHitsTool: radarHitsTool, radarHitsHotel: radarHitsHotel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RegLogic = api;

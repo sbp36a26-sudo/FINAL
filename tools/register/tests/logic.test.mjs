@@ -44,7 +44,7 @@ eq(rows.filter(u => u.staff).length, T.staff, 'booklet A6: staff exposures');
 const hard = (u, eff) => u.switches.some(s => !s.soft && ref.switches[s.id] && ref.switches[s.id].yes === eff);
 ok(rows.every(u => u.a6.includes('high') === (u.base === 'high')), 'a6 high = base high');
 ok(rows.filter(u => !u.diff).every(u => u.a6.includes('highif') === (u.base !== 'high' && hard(u, 'high'))), 'a6 highif = a hard question can make it high-risk (rows that follow the booklet)');
-ok(rows.every(u => u.a6.includes('transp') === (!!u.chat || hard(u, 'transparency'))), 'a6 transp = talks to people or a hard transparency question');
+ok(rows.filter(u => !u.diff).every(u => u.a6.includes('transp') === (!!u.chat || hard(u, 'transparency'))), 'a6 transp = talks to people or a hard transparency question (rows that follow the booklet)');
 ok(rows.filter(u => !u.diff).every(u => u.a6.includes('prohib') === hard(u, 'prohibited')), 'a6 prohib = a hard question can make it prohibited (rows that follow the booklet)');
 ok(rows.filter(u => u.diff).every(u => u.diff.booklet && u.diff.law), 'every row that differs from the booklet says how');
 ok(labels.uses.every(u => u.switches.every(s => ref.switches[s.id])), 'every question id exists in reference.json');
@@ -68,7 +68,7 @@ eq(cls('hr-2').labelUnder, 'high', 'recruiting is high-risk underneath');
 eq(cls('hr-2').label, 'banif', 'recruiting shows "Could be banned" while the staff-emotion question is open (precedence rule 1)');
 eq(cls('hr-2', { answers: { emo_staff: 'no' } }).label, 'high', 'recruiting is high-risk once the ban question is answered no');
 ok(cls('hr-2').canProhibit, 'recruiting: open emotion question can make it prohibited');
-ok(cls('hr-2').alsoTransparency, 'recruiting: the hiring chatbot must also say it is AI');
+ok(cls('hr-2', { answers: { c_chat: 'yes' } }).alsoTransparency && !cls('hr-2', { answers: { c_chat: 'no' } }).alsoTransparency, 'recruiting: a hiring chatbot must also say it is AI; screening without chat need not (c_chat question)');
 eq(cls('hr-2', { answers: { emo_staff: 'yes' } }).label, 'prohibited', 'recruiting that reads candidates\' emotions is prohibited');
 eq(cls('hr-5').label, 'high', 'seasonal staff matching is high-risk');
 eq(cls('res-8').labelUnder, 'high', 'call scoring is high-risk underneath');
@@ -114,7 +114,8 @@ ok(Object.entries(labels.meta.moved).every(([o, n]) => !labels.uses.some(u => u.
 ok(extra.every(u => u.review && u.why && u.dept), 'every market use is marked provisional with a reason');
 eq(cls('hr-2', { answers: { emo_staff: 'no' } }).label, 'high', 'AI recruiting, incl. AI video interviews, is high-risk');
 eq(cls('hk-6').label, 'highif', 'cleaning workload incl. per-attendant reports: open question');
-eq(cls('m-12').label, 'transparency', 'facial age estimation: notice duty');
+eq(cls('m-12').label, 'highif', 'facial age estimation: "High-risk if" while the contested age question is open (our reading)');
+eq(cls('m-12', { answers: { age_core: 'no' } }).label, 'minimal', 'facial age estimation, purely ancillary: minimal, notice kept');
 ok(cls('m-12').packs.notice && !cls('m-12').packs.chat, 'facial age estimation: notice to people exposed, not a chatbot notice');
 const mini = cls('m-17');
 ok(mini.label === 'notai' && !mini.packs.literacy, 'sensor minibar is not an AI system');
@@ -212,6 +213,18 @@ ok(rb.from === 'answer' && rb.basis === ref.switches.rank_staff.basis, '"rests o
 eq(L.labelBasis(U('rm-1'), cls('rm-1'), ref).from, 'default', '"rests on" falls back to the use case default');
 ok(!/VIP guests is allowed/.test(JSON.stringify(ref)), 'no "recognising VIP guests is allowed"');
 ok(ref.items.every(i => !/All checked/.test(i.text)), 'no "All checked" wording in items');
+
+// ---- phase 2: legal content ----
+const credit = L.items(U('custom'), { answers: { c_credit: 'yes' } }, hotelDE, ref).map(i => i.id);
+ok(credit.includes('FR1'), 'creditworthiness scoring adds the fundamental rights impact assessment (Art. 27)');
+ok(['H9', 'H10', 'H11'].every(i => itemIds('hr-2', { answers: { emo_staff: 'no' } }).includes(i)), 'high-risk user duties include Art. 26(4), 26(5) and 26(9)');
+ok(itemIds('gx-2', { origin: 'built', answers: { card_data: 'no' } }).includes('G1'), 'group-built chatbot: Art. 50(2) marking of generated text');
+ok(L.maybeLegacy({ since: '2026-03-01' }, cls('hr-2', { answers: { emo_staff: 'no' } }), ref) && !L.maybeLegacy({ since: '2028-01-01' }, cls('hr-2', { answers: { emo_staff: 'no' } }), ref), 'legacy note for high-risk tools in use before 2 Dec 2027');
+ok(/specific social or economic situation/.test(ref.switches.exploit_price.q) && /political opinions/.test(ref.switches.sensitive_traits.q), 'Art. 5 wording: economic situation; political opinions');
+ok(ref.switches.rank_staff.basis === 'law' && U('me-5').basis === 'reading', 'bases: staff ranking is law text; predictive maintenance is our reading');
+ok(['social_score', 'crime_profile', 'face_enrol', 'exploit_price'].every(id => U('custom').switches.some(s => s.id === id)), 'custom tool triage asks the ban questions');
+ok(!radar.entries.some(e => e.id === 'w-ai-at-work'), 'unsourced watch entry removed');
+ok(radar.entries.filter(e => e.status !== 'proposal').every(e => (e.links && e.links.length) || e.verify || e.countries || (e.affects && e.affects.countries)), 'watch entries carry a source link or a "to verify" mark');
 
 console.log((fail ? 'FAILED' : 'ok') + ': ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -19,3 +19,21 @@ Brief: `claude_code_prompt.md` (merged review of 19 Nov 2026); review notes in `
 - **Switzerland and UK:** reach text now says a stand-alone hotel is probably not covered for on-site use but can be under Art. 2(1)(c); AI Act items show "For reference (EU)"; GDPR references show revFADP / UK GDPR; new Swiss item CH4 (revFADP Art. 21).
 - **CSV:** cells starting with = + - @ are escaped.
 - **Not verified (TODO-VERIFY):** the reference of the final Art. 50 guidelines. The booklet cites C(2026) 7702 final of 5 Nov 2026; other sources give OJ C/2026/6005 of 12 Nov 2026. EUR-Lex could not be read from the build environment, so both are shown.
+
+## Phase 2 (19 Nov 2026): legal content
+
+Every article below was checked against the two regulation PDFs in `tools/ai-act-explorer/` (Reg. 2024/1689 and Reg. 2026/1744).
+
+- **New items:** FR1 fundamental rights impact assessment when a tool scores creditworthiness (Art. 27(1); may cross-refer to the DPIA, Art. 27(4) as amended); H9 input data (Art. 26(4)); H10 monitoring and serious-incident reporting (Art. 26(5)); H11 using the maker's information for the DPIA (Art. 26(9)).
+- **Art. 50(2) marking** now also applies to a group's own chatbot (text generation), not only image and text generators; G1 reworded with the Art. 111(4) deadline.
+- **"In use since" is a date.** A high-risk tool in use before 2 Dec 2027 shows "May be a legacy tool" at the top (Art. 111(2) as amended); the same caveat added to H7, S3 and the watch entry for 2 Dec 2027.
+- **Chat is a question, not assumed,** for AI recruiting (hr-2) and the booking-engine assistant (res-4): `c_chat`. res-4 now opens as minimal.
+- **Custom tool triage** also asks social scoring, crime prediction, sensitive traits, face databases, exploitative pricing, biometric sorting, auto-replies and the academy question.
+- **Question wording:** exploitative pricing now says "a specific social or economic situation" (Art. 5(1)(b)); sensitive traits now list race, political opinions, trade union membership, religion and sexual orientation, inferred from biometric data (Art. 5(1)(g)).
+- **Bases:** staff ranking and judging rest on the law text (Annex III 4(b) "monitor and evaluate the performance and behaviour"); predictive maintenance (me-5, me-6) on the team's reading.
+- **Facial age estimation (m-12):** now "High-risk if…" with an "ancillary or not" question, marked our reading and contested; "age is not a sensitive attribute" removed (recital 16; Annex III 1(b)).
+- **ESG (lg-1):** the published-claims question is now firm; marked as differing from the booklet. sm-1 cites the final Art. 50 guidelines (reference to verify).
+- **National notes:** Spain (works council right, Workers' Statute Art. 64.4(d)); Switzerland (OLL 3 Art. 26; BGE 130 II 425, to verify); UK note marked to verify. Norway, Iceland and Liechtenstein added as EEA countries with a reach note (AI Act incorporation into the EEA Agreement to verify).
+- **Watch list:** source links on every entry; Latombe v Commission (C-703/25 P) restored; DFA wording fixed (fake scarcity claims, personalised prices aimed at minors or vulnerable consumers; COM(2026) 1100); QANDA/26/2408 and French bill no. 2518 added as "to verify" (only the review cites them); GDPR entry linked to the data-protection items; Swiss date marked estimated; new "Published" entry for the final Art. 50 guidelines (reference to verify); the entry on a possible EU law on AI at work removed (no source for the European Parliament resolution); "Germany has done so" removed from the product-liability entry (no source).
+- **Removed:** "the AI Hospitality Alliance's framework has a 14-question vendor questionnaire" (not verified).
+- **Not done:** the Paris Court of Appeal ruling of 21 May 2026 (RG 25/13232) named in the review; nothing in the project files says what it concerns, so no entry was written. Listed for the D7 owner.

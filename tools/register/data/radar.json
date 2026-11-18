@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastChecked": "2026-11-17",
+    "lastChecked": "2026-11-19",
     "maintainer": "EHL SBP Group 36 until hand-over; after that the list needs a named owner at HFTP",
     "note": "A dated, sourced change log, not a news feed. Add an entry only after checking it at the source. 'affects' links each entry to tools in a register: basis (labels resting on that kind of source), uses (use-case ids), depts, labels, packs, roles, countries or all."
   },
@@ -20,7 +20,37 @@
         ]
       },
       "source": "European Commission, draft guidelines on the classification of high-risk AI systems (19 May 2026) and consultation page; booklet, What is still moving",
-      "basis": "team"
+      "basis": "team",
+      "links": [
+        {
+          "t": "AI Act Art. 6(5) (Commission guidelines on high-risk classification)",
+          "u": "http://data.europa.eu/eli/reg/2024/1689/oj"
+        }
+      ]
+    },
+    {
+      "id": "w-art50-guidelines",
+      "title": "Final Commission guidelines on transparency (Art. 50)",
+      "when": "Published November 2026",
+      "date": "2026-11-12",
+      "status": "done",
+      "what": "The Commission's final guidelines on the Art. 50 transparency duties (chatbots, AI-made content, emotion recognition) are published. The register's transparency labels follow them.",
+      "verify": true,
+      "links": [
+        {
+          "t": "OJ C/2026/6005 (to verify)",
+          "u": "https://eur-lex.europa.eu/eli/C/2026/6005/oj"
+        }
+      ],
+      "affects": {
+        "basis": [
+          "guidance"
+        ]
+      },
+      "source": "Reference to verify: the booklet cites C(2026) 7702 final of 5 Nov 2026; other sources give OJ C/2026/6005 of 12 Nov 2026",
+      "why": "They are the Commission’s reading of when chatbots, voice agents and AI-made content must be disclosed, and which tools do not have to announce themselves (for example translation).",
+      "who": "General manager, marketing",
+      "basis": "guidance"
     },
     {
       "id": "w-newbans",
@@ -38,7 +68,13 @@
         ]
       },
       "source": "Regulation (EU) 2026/1744, Art. 5(1)(ba) and (bb), Art. 113",
-      "basis": "law"
+      "basis": "law",
+      "links": [
+        {
+          "t": "Regulation (EU) 2026/1744",
+          "u": "http://data.europa.eu/eli/reg/2026/1744/oj"
+        }
+      ]
     },
     {
       "id": "w-marking",
@@ -60,7 +96,13 @@
         "and": true
       },
       "source": "Regulation (EU) 2026/1744, Art. 111(4); booklet B2",
-      "basis": "law"
+      "basis": "law",
+      "links": [
+        {
+          "t": "Regulation (EU) 2026/1744, Art. 111(4)",
+          "u": "http://data.europa.eu/eli/reg/2026/1744/oj"
+        }
+      ]
     },
     {
       "id": "w-liability",
@@ -68,7 +110,7 @@
       "when": "9 Dec 2026",
       "date": "2026-12-09",
       "title": "New product liability rules apply",
-      "what": "AI that a group builds for its own use and puts into use after 9 Dec 2026 counts as a product it manufactures. EU countries must bring the rules into national law; Germany has done so.",
+      "what": "AI that a group builds for its own use and puts into use after 9 Dec 2026 counts as a product it manufactures. EU countries must bring the rules into national law by that date.",
       "why": "A group that builds its own tools answers for defects without proof of fault, and courts can order it to disclose design records. Hotels that only use vendor tools are not manufacturers.",
       "who": "CIO, owners",
       "affects": {
@@ -77,7 +119,13 @@
         ]
       },
       "source": "Product Liability Directive (EU) 2024/2853; booklet A3, A8",
-      "basis": "team"
+      "basis": "team",
+      "links": [
+        {
+          "t": "Directive (EU) 2024/2853",
+          "u": "http://data.europa.eu/eli/dir/2024/2853/oj"
+        }
+      ]
     },
     {
       "id": "w-value-chain",
@@ -97,7 +145,13 @@
         ]
       },
       "source": "Project data file (ai-act-data.json), open items; desk research 17 Nov 2026",
-      "basis": "team"
+      "basis": "team",
+      "links": [
+        {
+          "t": "AI Act Art. 25",
+          "u": "http://data.europa.eu/eli/reg/2024/1689/oj"
+        }
+      ]
     },
     {
       "id": "w-annex1-relief",
@@ -119,7 +173,13 @@
         ]
       },
       "source": "Regulation (EU) 2026/1744, Art. 2(13); project revision list of 10 Nov 2026",
-      "basis": "law"
+      "basis": "law",
+      "links": [
+        {
+          "t": "Regulation (EU) 2026/1744",
+          "u": "http://data.europa.eu/eli/reg/2026/1744/oj"
+        }
+      ]
     },
     {
       "id": "w-highrisk-start",
@@ -127,7 +187,7 @@
       "when": "2 Dec 2027",
       "date": "2027-12-02",
       "title": "High-risk rules start for staff tools and biometrics",
-      "what": "From this date the duties for high-risk AI apply to recruiting, staff ranking and monitoring tools and to biometric tools.",
+      "what": "From this date the duties for high-risk AI apply to recruiting, staff ranking and monitoring tools and to biometric tools. A tool already on the market before that date may be a legacy tool: the duties then apply only after a significant design change (Art. 111(2) as amended). Ask the vendor.",
       "why": "Vendors must have CE-marked and registered their tools; hotels must use them under trained human oversight, keep logs and inform staff.",
       "who": "General managers, HR, owners",
       "affects": {
@@ -137,7 +197,13 @@
         ]
       },
       "source": "AI Act Art. 113 as amended by Regulation (EU) 2026/1744",
-      "basis": "law"
+      "basis": "law",
+      "links": [
+        {
+          "t": "AI Act Art. 113 as amended",
+          "u": "http://data.europa.eu/eli/reg/2026/1744/oj"
+        }
+      ]
     },
     {
       "id": "w-cra",
@@ -154,7 +220,13 @@
         ]
       },
       "source": "Regulation (EU) 2024/2847 (Cyber Resilience Act); booklet A5, C4",
-      "basis": "team"
+      "basis": "team",
+      "links": [
+        {
+          "t": "Regulation (EU) 2024/2847",
+          "u": "http://data.europa.eu/eli/reg/2024/2847/oj"
+        }
+      ]
     },
     {
       "id": "w-products-start",
@@ -171,22 +243,34 @@
         ]
       },
       "source": "AI Act Art. 113 as amended by Regulation (EU) 2026/1744",
-      "basis": "law"
+      "basis": "law",
+      "links": [
+        {
+          "t": "AI Act Art. 113 as amended",
+          "u": "http://data.europa.eu/eli/reg/2026/1744/oj"
+        }
+      ]
     },
     {
       "id": "w-dpf",
       "status": "pending",
       "when": "Court case pending",
       "date": null,
-      "title": "Challenge to the EU–US Data Privacy Framework",
+      "title": "Challenge to the EU–US Data Privacy Framework (Latombe v Commission, C-703/25 P)",
       "what": "The framework that lets guest data go to US providers is valid but under challenge at the EU Court of Justice.",
       "why": "If it falls, guest data sent to US-hosted AI tools needs another legal basis, and tools without EU hosting may need replacing. Know where each vendor stores data before any ruling.",
       "who": "CIO, owners",
       "affects": {
         "all": true
       },
-      "source": "Booklet B1, What is still moving",
-      "basis": "team"
+      "source": "Court of Justice, case C-703/25 P (appeal pending, no hearing date as of 10 Nov 2026); project data file ai-act-data.json",
+      "basis": "team",
+      "links": [
+        {
+          "t": "Court of Justice case C-703/25 P",
+          "u": "https://curia.europa.eu/juris/liste.jsf?num=C-703/25"
+        }
+      ]
     },
     {
       "id": "w-dfa",
@@ -194,7 +278,7 @@
       "when": "Proposal, not law",
       "date": null,
       "title": "Digital Fairness Act proposal",
-      "what": "The Commission's proposal would ban persistent scarcity prompts during booking and profiling-based prices likely to harm guests known to be minors or vulnerable. It would apply 12 months after it becomes law.",
+      "what": "The Commission's proposal (COM(2026) 1100, 11 Nov 2026) would ban fake scarcity claims during booking and personalised prices aimed at consumers known to be minors or vulnerable. It would apply 12 months after it becomes law.",
       "why": "It would add rules for pricing, upselling and booking-engine tools on top of today's consumer law.",
       "who": "Commercial",
       "affects": {
@@ -206,23 +290,14 @@
           "fb-4"
         ]
       },
-      "source": "Booklet C3, What is still moving",
-      "basis": "team"
-    },
-    {
-      "id": "w-ai-at-work",
-      "status": "proposal",
-      "when": "Requested, no proposal yet",
-      "date": null,
-      "title": "A possible EU law on AI at work",
-      "what": "The European Parliament has asked the Commission for rules on algorithmic management of workers.",
-      "why": "It would add duties for tools that assign, schedule, monitor or evaluate staff.",
-      "who": "HR, owners",
-      "affects": {
-        "staff": true
-      },
-      "source": "Booklet, What is still moving",
-      "basis": "team"
+      "source": "COM(2026) 1100 (project files); Commission Q&A QANDA/26/2408 (reference from the review of 19 Nov 2026, to verify); booklet C3",
+      "basis": "team",
+      "links": [
+        {
+          "t": "Proposal COM(2026) 1100 on EUR-Lex (link to verify)",
+          "u": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:52026PC1100"
+        }
+      ]
     },
     {
       "id": "w-gdpr",
@@ -233,9 +308,22 @@
       "what": "The Commission has proposed changes to data protection law, including on using personal data for AI.",
       "why": "It could change what vendors may do with guest and staff data.",
       "who": "CIO, data protection officers",
-      "affects": {},
-      "source": "Booklet, What is still moving",
-      "basis": "team"
+      "affects": {
+        "packs": [
+          "dpia",
+          "gdpr-auto",
+          "gdpr-profiling",
+          "gdpr-biometric",
+          "gdpr-health",
+          "gdpr-timeclock",
+          "gdpr-id",
+          "gdpr-marketing",
+          "shadow"
+        ]
+      },
+      "source": "Booklet, What is still moving (proposal reference to add)",
+      "basis": "team",
+      "verify": true
     },
     {
       "id": "w-national",
@@ -254,13 +342,19 @@
           "SE"
         ]
       },
-      "source": "Project data file (ai-act-data.json), national layer, researched November 2026",
-      "basis": "team"
+      "source": "Project data file ai-act-data.json, national layer (researched Nov 2026); France: bill no. 2518 (reference from the review of 19 Nov 2026, to verify)",
+      "basis": "team",
+      "links": [
+        {
+          "t": "AI Act Art. 70 (national authorities)",
+          "u": "http://data.europa.eu/eli/reg/2024/1689/oj"
+        }
+      ]
     },
     {
       "id": "w-swiss",
       "status": "expected",
-      "when": "Consultation planned for spring 2027",
+      "when": "Consultation planned for spring 2027 (estimated)",
       "date": "2027-04-01",
       "title": "Swiss AI bill",
       "what": "The Federal Council plans to open consultation on an AI bill in spring 2027.",
@@ -271,7 +365,7 @@
           "CH"
         ]
       },
-      "source": "Booklet D1, What is still moving",
+      "source": "Federal Council announcement of 28 Oct 2026 (project files); date estimated",
       "basis": "team"
     },
     {
@@ -289,7 +383,8 @@
         ]
       },
       "source": "Booklet D2, What is still moving",
-      "basis": "team"
+      "basis": "team",
+      "verify": true
     }
   ]
 }
