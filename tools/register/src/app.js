@@ -45,15 +45,15 @@
   var ui = { reviewer: (function () { try { return window.localStorage.getItem(REVIEWER_KEY) === '1'; } catch (e) { return false; } })(), whoFilter: '', tab: 'how', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
   var state;
 
-  function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null }; }
+  function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', size: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null, seenOn: '' }; }
   function newTool(s, useId) {
     var u = USES[useId] || USES.custom;
     return { id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), no: ++s.seq, useId: u.id, name: u.triage ? '' : u.name.replace(/\s*\(.*$/, ''),
-             vendor: '', dept: u.dept || '', where: '', origin: 'vendor', decided: '', owner: '', since: '', notes: '', answers: {}, done: {}, vq: {}, notAI: '', createdAt: new Date().toISOString() };
+             vendor: '', dept: u.dept || '', where: '', origin: 'vendor', decided: '', owner: '', since: '', notes: '', answers: {}, done: {}, vq: {}, notAI: '', notAIConfirmed: '', createdAt: new Date().toISOString() };
   }
   function normalise(o) {
     var s = blank(), k;
-    s.example = !!o.example; s.seq = +o.seq || 0; s.updatedAt = o.updatedAt || null; s.checks = o.checks && typeof o.checks === 'object' ? o.checks : {};
+    s.example = !!o.example; s.seq = +o.seq || 0; s.updatedAt = o.updatedAt || null; s.seenOn = typeof o.seenOn === 'string' ? o.seenOn : ''; s.checks = o.checks && typeof o.checks === 'object' ? o.checks : {};
     for (k in s.hotel) if (o.hotel && o.hotel[k] != null) s.hotel[k] = o.hotel[k];
     if (!Array.isArray(s.hotel.outlets)) s.hotel.outlets = [];
     (o.tools || []).forEach(function (t) {
@@ -73,9 +73,30 @@
     return null;
   }
   var saveTimer = null;
+  /* One hotel profile shared with the Readiness check in this browser (key hftp-hotel-profile-v1).
+     The register keeps country as a code and the operating model; the readiness check derives its own "how the hotel is run". */
+  var PROFILE = 'hftp-hotel-profile-v1';
+  function readProfile() { try { return JSON.parse(window.localStorage.getItem(PROFILE) || 'null'); } catch (e) { return null; } }
+  function writeProfile() {
+    var H = state.hotel; if (state.example) return;
+    var p = readProfile() || {};
+    ['name', 'country', 'model', 'group', 'reps', 'size'].forEach(function (k) { if (H[k] != null) p[k] = H[k]; });
+    p.type = H.model === 'managed' || H.model === 'franchised' ? 'managed' : H.group === 'yes' ? 'group' : H.model ? 'independent' : p.type || '';
+    p.updatedAt = new Date().toISOString(); p.from = 'register';
+    try { window.localStorage.setItem(PROFILE, JSON.stringify(p)); } catch (e) { /* ignore */ }
+  }
+  function adoptProfile(s) {
+    var p = readProfile(); if (!p || s.example) return false;
+    var H = s.hotel, took = false;
+    ['name', 'country', 'model', 'group', 'reps', 'size'].forEach(function (k) { if (!H[k] && p[k]) { H[k] = p[k]; took = true; } });
+    if (!H.model && p.type === 'managed') { H.model = 'managed'; took = true; }
+    if (!H.group && p.type === 'group') { H.group = 'yes'; took = true; }
+    return took;
+  }
   function persist() {
     clearTimeout(saveTimer);
     state.updatedAt = new Date().toISOString();
+    writeProfile();
     try { window.localStorage.setItem(KEY, JSON.stringify(state)); mem.ok = true; } catch (e) { mem.ok = false; }
     paintSaved();
   }
@@ -172,7 +193,7 @@
   }
 
   function vList() {
-    var H = state.hotel, rows = state.tools.map(ctx), s = summary(rows), h = '';
+    var H = state.hotel, rows = state.tools.map(ctx), s = summary(rows), h = sinceBox();
     h += exampleNote();
     if (!rows.length) {
       h += '<section class="panel empty"><h2>Start your register</h2><ol class="steps">' +
@@ -366,7 +387,8 @@
     var x = ctx(t), u = x.u, c = x.c, lab = REF.labels[c.label] || REF.labels.open;
     var h = '<p><button type="button" class="linkbtn" data-act="back">← Back to the register</button></p>';
     h += '<div class="thead"><div class="t1"><span class="no">' + regNo(t) + '</span><label class="grow" style="flex:1"><span class="sr">Tool name</span><input type="text" class="title" id="f-name" data-f="name" value="' + esc(t.name) + '" placeholder="Name this tool"></label></div>' +
-      '<p class="meta">' + esc(u.triage ? 'A tool that is not in the list' : u.name) + (DEPTS[u.dept] ? ' · ' + esc(DEPTS[u.dept].name) : '') + '</p></div>';
+      '<p class="meta">' + esc(u.triage ? 'A tool that is not in the list' : u.name) + (DEPTS[u.dept] ? ' · ' + esc(DEPTS[u.dept].name) : '') + '</p>' +
+      (u.n ? '<p><button type="button" class="linkbtn" data-act="to-readiness" data-id="' + esc(t.id) + '">Check whether the hotel is ready for this tool (Readiness check) →</button></p>' : '') + '</div>';
     h += '<div class="detail"><div>';
 
     // label
@@ -446,7 +468,7 @@
 
   // ---------- view: to do ----------
   function vTodo() {
-    var rows = state.tools.map(ctx), h = exampleNote();
+    var rows = state.tools.map(ctx), h = sinceBox() + exampleNote();
     h += '<section class="panel"><div class="ph"><h2>Five things to do now</h2><span class="meta">From the briefing booklet</span></div><div>';
     REF.hotelChecks.forEach(function (hc) {
       var auto = hc.auto === 'tools', done = auto ? state.tools.length > 0 : !!state.checks[hc.id];
@@ -520,6 +542,7 @@
       '<label class="fld"><span>Country</span><select id="h-country" data-h="country">' + opt('', 'Choose', H.country) + REF.countries.map(function (c) { return opt(c[0], c[1], H.country); }).join('') + '</select></label>' +
       '<label class="fld"><span>Operating model</span><select id="h-model" data-h="model">' + opt('', 'Choose', H.model) + REF.operatingModels.map(function (m) { return opt(m.id, m.name, H.model); }).join('') + '</select></label>' +
       '<label class="fld"><span>Part of a group or brand</span><select id="h-group" data-h="group">' + opt('', 'Choose', H.group) + opt('yes', 'Yes', H.group) + opt('no', 'No, independent', H.group) + '</select></label>' +
+      '<label class="fld"><span>Rooms</span><select id="h-size" data-h="size">' + opt('', 'Choose', H.size) + [['s', 'Under 50'], ['m', '50 to 149'], ['l', '150 to 299'], ['xl', '300 or more']].map(function (o) { return opt(o[0], o[1], H.size); }).join('') + '</select></label>' +
       '<label class="fld"><span>Works council or staff representatives</span><select id="h-reps" data-h="reps">' + opt('', 'Choose', H.reps) + opt('yes', 'Yes', H.reps) + opt('no', 'No', H.reps) + opt('unsure', 'Not sure', H.reps) + '</select></label>' +
       '<label class="fld"><span>Who keeps this register</span><input type="text" id="h-keeper" data-h="keeper" value="' + esc(H.keeper) + '" placeholder="Name or role"></label></div>' +
       '<div class="fld"><span>Food, beverage and other outlets inside the hotel</span><div class="checks">' + REF.outlets.map(function (o) {
@@ -843,6 +866,12 @@
     else if (a === 'clear-flt') { ui.fLabel = ''; ui.q = ''; render(false); }
     else if (a === 'export') doExport(b.getAttribute('data-kind'));
     else if (a === 'copy-close') { ui.copy = null; render(false); }
+    else if (a === 'seen') { state.seenOn = TODAY; persist(); render(false); }
+    else if (a === 'to-readiness') {
+      var tr = toolById(id), hash = 'use=' + (tr ? tr.useId : '');
+      if (window.parent !== window) { try { window.parent.postMessage({ hub: 'open', tool: 'readiness-check', hash: hash }, window.location.origin); } catch (e3) { /* ignore */ } }
+      else window.location.href = '../readiness-check/index.html#' + hash;
+    }
     else if (a === 'vmail') {
       var vn = b.getAttribute('data-vendor'), xs;
       if (vn) { xs = state.tools.map(ctx).filter(function (x) { return ((x.t.vendor || '').trim() || 'Vendor not named: ' + (x.t.name || regNo(x.t))) === vn; }); }
@@ -920,9 +949,40 @@
 
   // ---------- start ----------
   state = load();
+  /* "Since you last opened this register": watch-list entries added since, and dates that have passed. */
+  function sinceLast() {
+    var last = state.seenOn; if (!last || last >= TODAY) return null;
+    var added = RADAR.entries.filter(function (e) { return e.added && e.added > last && e.added <= TODAY; });
+    var passed = Object.keys(REF.dates).filter(function (k) { var d = REF.dates[k]; return d > last && d <= TODAY; }).map(function (k) { return REF.dates[k]; });
+    var newly = 0;
+    state.tools.forEach(function (t) { ctx(t).items.forEach(function (it) { if (!it.done && it.when && it.when > last && it.when <= TODAY) newly++; }); });
+    if (!added.length && !passed.length && !newly) return null;
+    return { last: last, added: added, passed: passed.filter(function (d, i, a) { return a.indexOf(d) === i; }).sort(), newly: newly };
+  }
+  function sinceBox() {
+    var s2 = sinceLast(); if (!s2) return '';
+    var bits = [];
+    if (s2.added.length) bits.push(plural(s2.added.length, 'new watch-list entry', 'new watch-list entries') + ': ' + s2.added.map(function (e) { return e.title; }).join('; '));
+    if (s2.passed.length) bits.push('date' + (s2.passed.length > 1 ? 's' : '') + ' passed: ' + s2.passed.map(fmtDate).join(', '));
+    if (s2.newly) bits.push(plural(s2.newly, 'item') + ' now apply');
+    return '<div class="note warn"><p><strong>Since you last opened this register (' + esc(fmtDate(s2.last)) + '):</strong> ' + esc(bits.join(' · ')) + '.</p><button type="button" class="btn sm" data-act="seen">Mark as seen</button></div>';
+  }
   if (!state) { state = example(); try { window.localStorage.setItem(KEY + '-probe', '1'); window.localStorage.removeItem(KEY + '-probe'); } catch (e) { mem.ok = false; } }
   $('asof').textContent = fmtDate(REF.meta.preparedOn);
   $('footlaw').textContent = 'Legal basis: ' + REF.meta.legalBasis + '. Law as of ' + fmtDate(REF.meta.lawAsOf) + '. Prepared by EHL Hospitality Business School students for HFTP.';
+  if (adoptProfile(state)) persist();
+  if (!state.seenOn) { state.seenOn = TODAY; persist(); }
+  /* Coming from the Readiness check: #add=<use id>&name=<tool name> adds the tool (once) and opens it. */
+  function fromHash() {
+    var m = /(?:^|[#&])add=([a-z]+-\d+)(?:&name=([^&]*))?/.exec(location.hash || ''); if (!m || !USES[m[1]]) return;
+    var t = state.tools.filter(function (x) { return x.useId === m[1]; })[0];
+    if (!t) { if (state.example) { state = blank(); adoptProfile(state); } t = newTool(state, m[1]); if (m[2]) t.name = decodeURIComponent(m[2]); state.tools.push(t); persist(); }
+    ui.tab = 'register'; ui.view = 'tool'; ui.toolId = t.id;
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+    return true;
+  }
+  fromHash();
+  window.addEventListener('hashchange', function () { if (fromHash()) render(false); });
   initHost();
   render(false);
   window.HotelAIRegister = { state: function () { return state; }, csv: buildCsv, pdf: makePdf };

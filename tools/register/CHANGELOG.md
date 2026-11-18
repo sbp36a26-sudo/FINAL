@@ -55,3 +55,10 @@ Every article below was checked against the two regulation PDFs in `tools/ai-act
 - **Privacy notice and terms of use** in How it works: all data stays in the browser, no accounts, no tracking; provided as is, not legal advice, no liability.
 - **Phone:** citations wrap, so the To do tab no longer overflows at 390 px.
 - **Kept on purpose:** the `window.claude` and postMessage code. It is what lets the page save files inside the claude.ai hub, and it is inert from file:// (comment in `src/app.js`).
+
+## Phase 4 (19 Nov 2026): link with the hub
+
+- **One hotel profile** (`hftp-hotel-profile-v1` in the browser) shared by the register and the Readiness check: name, country, operating model, group, staff representatives and size (new "Rooms" field). Each tool fills empty fields from it and writes its changes back. The example hotel is never written to it.
+- **Links both ways.** A register tool page has "Check whether the hotel is ready for this tool"; a readiness result has "Add to the AI Register" (adds the tool once and opens it). Inside the hub the tabs switch; outside it the pages link directly.
+- **Since you last opened this register:** new watch-list entries (`added` date), dates that have passed and items that now apply, with "Mark as seen".
+- **Fix:** the "vendor confirmed in writing" tick and the new fields were dropped when a saved register was reloaded.

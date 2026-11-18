@@ -42,6 +42,7 @@
 (function () {
   var frames = {};
   var SRC = { 'readiness-check': 'readiness-check/index.html', team: 'readiness-check/team.html' };
+  var SRC_OK = { 'readiness-check': 1, register: 1 }, SRC_NEXT = {};
   var bar = document.getElementById('hubBar');
   var box = document.getElementById('hubFrame');
   function show(tool) {
@@ -53,7 +54,7 @@
       if (frames[tool] && tool === 'team') { try { frames[tool].contentWindow.location.reload(); } catch (e) { /* ignore */ } }
       if (!frames[tool]) {
         var f = document.createElement('iframe');
-        f.src = SRC[tool] || (tool + '/index.html'); f.title = tool;
+        f.src = SRC_NEXT[tool] || SRC[tool] || (tool + '/index.html'); f.title = tool; delete SRC_NEXT[tool];
         frames[tool] = f; box.appendChild(f);
       }
       window.scrollTo(0, 0);
@@ -117,6 +118,11 @@
         });
       }).catch(function (err) { reply({ ok: false, code: (err && err.code) || 'unavailable' }); });
       return;
+    }
+    if (m.hub === 'open' && SRC_OK[m.tool]) {
+      var path = (SRC[m.tool] || (m.tool + '/index.html')) + (m.hash ? '#' + String(m.hash).replace(/[^\w=&%.\-]/g, '') : '');
+      if (frames[m.tool]) { frames[m.tool].src = path; } else { SRC_NEXT[m.tool] = path; }
+      show(m.tool); return;
     }
     if (m.hub === 'ping') downloads().then(function () { e.source.postMessage({ hub: 'pong', downloads: !!dl }, location.origin); });
     else if (m.hub === 'download') downloads().then(function () {

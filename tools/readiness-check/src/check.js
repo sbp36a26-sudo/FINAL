@@ -28,9 +28,27 @@
   var mine = lget(MY, {});
   var st = mine[lget(CUR, '')] ? Object.assign(blank(), mine[lget(CUR, '')]) : blank();
   if (st.step !== 'start' && !M.UI[st.useId]) st.step = 'start';
+  /* Shared hotel profile (key hftp-hotel-profile-v1), also used by the AI Register in this browser. */
+  var PROFILE = 'hftp-hotel-profile-v1';
+  var CC = { AT: 'Austria', BE: 'Belgium', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', FI: 'Finland', FR: 'France', DE: 'Germany', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland', PT: 'Portugal', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom' };
+  function readProfile() { return lget(PROFILE, null); }
+  function adoptProfile() {
+    var p = readProfile(), H = st.hotel; if (!p) return;
+    if (!H.name && p.name) H.name = p.name;
+    if (!H.country && p.country) H.country = CC[p.country] || 'Other';
+    if (!H.type && p.type) H.type = p.type;
+  }
+  function writeProfile() {
+    var p = readProfile() || {}, H = st.hotel, code = '';
+    Object.keys(CC).forEach(function (k) { if (CC[k] === H.country) code = k; });
+    if (H.name) p.name = H.name; if (code) p.country = code; if (H.type) p.type = H.type;
+    p.updatedAt = new Date().toISOString(); p.from = 'readiness';
+    lset(PROFILE, p);
+  }
   function keep() {
     st.updated = new Date().toISOString();
     if (st.useId) { var r = Object.assign({}, st); delete r.q; delete r.dept; mine[st.id] = r; lset(MY, mine); }
+    if (st.hotel.name || st.hotel.country || st.hotel.type) writeProfile();
     lset(CUR, st.useId ? st.id : '');
   }
   function ev() { return L.evaluate(M, M.UI[st.useId], st.hotel, st.A, st.P, st.Who, st.stage); }
@@ -270,7 +288,7 @@
       '<p><span class="chip big c-' + lv.chip + '">' + esc(lv.name) + '</span></p>' +
       '<p class="tally">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves met · ' + e.counts.known + ' of ' + e.counts.asked + ' questions answered · ' + plural(e.actions.length, 'open item') + '</p>' +
       '<div class="sumtext">' + L.summary(e, st.stage).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>' +
-      '<div class="btnrow"><button type="button" class="btn primary" data-act="pdf">Download report (PDF)</button><button type="button" class="btn" data-act="file">Save as file</button><button type="button" class="btn" data-act="review">Update open items</button></div></section>';
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="pdf">Download report (PDF)</button><button type="button" class="btn" data-act="file">Save as file</button><button type="button" class="btn" data-act="review">Update open items</button><button type="button" class="btn" data-act="to-register">Add to the AI Register</button></div></section>';
     h += sinceBanner();
     h += mustCards(e);
     h += actionPlan(e);
@@ -485,6 +503,11 @@
     else if (a === 'copy-vendor') copy('Questions about ' + M.UI[st.useId].name + ':\n\n' + L.vendorQs(M, M.UI[st.useId], ev()).map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions');
     else if (a === 'copy-owner') copy(ownerText(), 'Note');
     else if (a === 'file') saveRecord();
+    else if (a === 'to-register') {
+      var hh = 'add=' + st.useId + '&name=' + encodeURIComponent(M.UI[st.useId].name.replace(/\s*\(.*$/, ''));
+      if (window.parent !== window) { try { window.parent.postMessage({ hub: 'open', tool: 'register', hash: hh }, location.origin); } catch (e2) { /* ignore */ } }
+      else location.href = '../register/index.html#' + hh;
+    }
     else if (a === 'pdf') { toast('Preparing the report…'); makePdf().then(function (blob) { saveFile('AI-readiness-check_' + fileBase() + '.pdf', blob); }).catch(function () { toast('The PDF could not be made here. Use “Copy a note for the owner” instead.'); }); }
     else if (a === 'share') { S.save(st.id, shareDoc()).then(function (m) { st.sharedAt = new Date().toISOString(); keep(); render(); toast(m === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).'); }, function () { toast('Sharing is not available here. Save the file and send it instead.'); }); }
     else if (a === 'unshare') { S.remove(st.id).then(function () { st.sharedAt = null; keep(); render(); toast('Shared copy withdrawn.'); }, function () { toast('Could not withdraw here. Ask the team to delete it.'); }); }
@@ -510,7 +533,17 @@
   });
 
   S.ready();
-  try { history.replaceState({ rc: st.step }, ''); } catch (e) { /* ignore */ }
+  adoptProfile();
+  /* Coming from the AI Register: #use=<use id> starts a check for that tool. */
+  function fromHash() {
+    var m = /(?:^|[#&])use=([a-z]+-\d+)/.exec(location.hash || ''); if (!m || !M.UI[m[1]]) return;
+    if (st.useId !== m[1]) { var h0 = st.hotel; st = blank(); st.hotel = h0; adoptProfile(); st.useId = m[1]; }
+    st.step = 'start'; keep();
+    return true;
+  }
+  fromHash();
+  window.addEventListener('hashchange', function () { if (fromHash()) { try { history.replaceState({ rc: st.step }, '', location.pathname); } catch (e) { /* ignore */ } render(); } });
+  try { history.replaceState({ rc: st.step }, '', location.pathname); } catch (e) { /* ignore */ }
   if (st.step === 'result') takeSnap();
   render();
   window.ReadinessCheck = { state: function () { return st; }, model: M };
