@@ -87,7 +87,8 @@ textarea{min-height:64px;resize:vertical}
 .opt.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
 .opt:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .opt input{position:absolute;opacity:0;width:1px;height:1px}
-.proof{display:flex;flex-direction:column;gap:4px}
+.proof{display:flex;flex-direction:column;gap:5px;border-left:3px solid var(--accent);padding:4px 0 4px 12px;margin-top:2px}
+.proof label{font-size:0.875rem}
 .proof input{font-size:0.875rem}
 .warnline{font-size:0.8125rem;color:var(--lo)}
 .result-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
@@ -238,6 +239,19 @@ details[open] > summary{margin-bottom:8px}
   };
   var LOW = 0.40, HIGH = 0.75;
 
+  /* What to type as evidence for each must-have: a plain ask and a filled-in example. */
+  var EVIDENCE = {
+    P1: { ask: 'Who is it, what is their role, and how much time do they have for it?', ex: 'Maria Rossi, revenue manager, 4 hours a week, written in her job description' },
+    F1: { ask: 'Where is the budget written down, and roughly how much is it for the year?', ex: 'Line in the 2027 budget: about EUR 6,000 for subscription, set-up and training' },
+    F2: { ask: 'Which number will you use to judge the tool, and what is it today?', ex: 'Average reply time to guest emails: 9 hours (measured in October)' },
+    T1: { ask: 'How do you know the tool can exchange data with your systems?', ex: 'Vendor confirmed two-way link with our PMS; tested at a reference hotel' },
+    D5: { ask: 'Which agreement covers the data, and does it say who owns it?', ex: 'Data processing agreement signed 3 Oct; data stays ours and can be exported' },
+    O1: { ask: 'Who approved the plan, and when?', ex: 'One-page plan approved by the owner on 12 Nov' },
+    P5: { ask: 'Who can override or stop the tool, and how?', ex: 'Front-office manager can switch off auto-replies in the admin screen' },
+    G2: { ask: 'When was the risk review (including a data protection impact assessment) done, and by whom?', ex: 'DPIA completed by our data protection officer on 5 Nov' },
+    XG: { ask: 'When were staff representatives informed, or do you have none?', ex: 'Works council informed on 20 Oct; minutes on file' }
+  };
+
   /* Questions added on 18 Nov 2026 from the research (not in the D6 checklist). */
   var EXTRA = {
     X1: { a: 'pe', q: 'Have the staff who will use it seen it, and do they expect it to help their work?', proof: 'Who saw a demo or trial, and what they said',
@@ -365,7 +379,7 @@ details[open] > summary{margin-bottom:8px}
     return out;
   }
 
-  var api = { AK: AK, POINTS: POINTS, ANSWER: ANSWER, LEVELS: LEVELS, LOW: LOW, HIGH: HIGH, EXTRA: EXTRA, model: model, selectQuestions: selectQuestions, evaluate: evaluate, gaps: gaps };
+  var api = { EVIDENCE: EVIDENCE, AK: AK, POINTS: POINTS, ANSWER: ANSWER, LEVELS: LEVELS, LOW: LOW, HIGH: HIGH, EXTRA: EXTRA, model: model, selectQuestions: selectQuestions, evaluate: evaluate, gaps: gaps };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RCLogic = api;
 })(typeof self !== 'undefined' ? self : (typeof globalThis !== 'undefined' ? globalThis : this));
@@ -441,8 +455,11 @@ details[open] > summary{margin-bottom:8px}
         '<div class="btnrow">' + (q.gate ? '<span class="chip c-must">Must-have</span>' : '') + (q.src === 'research' ? '<span class="chip c-new">New question</span>' : '') + '</div>' +
         '<div class="opts" role="radiogroup">' + opts.map(function (o) { return '<label class="opt' + (cur === o[0] ? ' on' : '') + '"><input type="radio" name="' + name + '" id="' + name + '-' + o[0] + '" value="' + o[0] + '" data-q="' + q.code + '"' + (cur === o[0] ? ' checked' : '') + '>' + o[1] + '</label>'; }).join('') + '</div>';
       if (q.gate && cur === 'y') {
-        h += '<label class="proof"><span class="meta">What can you show? A must-have only counts as met with a short note.</span><input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" placeholder="' + esc(q.proof || 'For example a document, a name or a date') + '"></label>';
-        h += '<p class="warnline"' + (String(st.P[q.code] || '').trim() ? ' hidden' : '') + '>Without a note, this Yes counts as Partly and the must-have is not met.</p>';
+        var ev = L.EVIDENCE[q.code] || { ask: 'What could you show if someone asked? For example a name, a document or a date.', ex: q.proof || '' };
+        h += '<div class="proof"><label for="pf-' + q.code + '"><strong>Confirm your Yes in one line.</strong> ' + esc(ev.ask) + '</label>' +
+          '<input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" placeholder="Type your answer here">' +
+          (ev.ex ? '<span class="meta">Example: ' + esc(ev.ex) + '</span>' : '') + '</div>';
+        h += '<p class="warnline"' + (String(st.P[q.code] || '').trim() ? ' hidden' : '') + '>Needed for a must-have: until you add this line, your Yes counts as Partly.</p>';
       }
       if (q.note) h += '<p class="meta">' + esc(q.note) + '</p>';
       h += '</fieldset>';

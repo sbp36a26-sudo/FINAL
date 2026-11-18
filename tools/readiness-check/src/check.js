@@ -67,8 +67,11 @@
         '<div class="btnrow">' + (q.gate ? '<span class="chip c-must">Must-have</span>' : '') + (q.src === 'research' ? '<span class="chip c-new">New question</span>' : '') + '</div>' +
         '<div class="opts" role="radiogroup">' + opts.map(function (o) { return '<label class="opt' + (cur === o[0] ? ' on' : '') + '"><input type="radio" name="' + name + '" id="' + name + '-' + o[0] + '" value="' + o[0] + '" data-q="' + q.code + '"' + (cur === o[0] ? ' checked' : '') + '>' + o[1] + '</label>'; }).join('') + '</div>';
       if (q.gate && cur === 'y') {
-        h += '<label class="proof"><span class="meta">What can you show? A must-have only counts as met with a short note.</span><input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" placeholder="' + esc(q.proof || 'For example a document, a name or a date') + '"></label>';
-        h += '<p class="warnline"' + (String(st.P[q.code] || '').trim() ? ' hidden' : '') + '>Without a note, this Yes counts as Partly and the must-have is not met.</p>';
+        var ev = L.EVIDENCE[q.code] || { ask: 'What could you show if someone asked? For example a name, a document or a date.', ex: q.proof || '' };
+        h += '<div class="proof"><label for="pf-' + q.code + '"><strong>Confirm your Yes in one line.</strong> ' + esc(ev.ask) + '</label>' +
+          '<input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" placeholder="Type your answer here">' +
+          (ev.ex ? '<span class="meta">Example: ' + esc(ev.ex) + '</span>' : '') + '</div>';
+        h += '<p class="warnline"' + (String(st.P[q.code] || '').trim() ? ' hidden' : '') + '>Needed for a must-have: until you add this line, your Yes counts as Partly.</p>';
       }
       if (q.note) h += '<p class="meta">' + esc(q.note) + '</p>';
       h += '</fieldset>';

@@ -15,6 +15,19 @@
   };
   var LOW = 0.40, HIGH = 0.75;
 
+  /* What to type as evidence for each must-have: a plain ask and a filled-in example. */
+  var EVIDENCE = {
+    P1: { ask: 'Who is it, what is their role, and how much time do they have for it?', ex: 'Maria Rossi, revenue manager, 4 hours a week, written in her job description' },
+    F1: { ask: 'Where is the budget written down, and roughly how much is it for the year?', ex: 'Line in the 2027 budget: about EUR 6,000 for subscription, set-up and training' },
+    F2: { ask: 'Which number will you use to judge the tool, and what is it today?', ex: 'Average reply time to guest emails: 9 hours (measured in October)' },
+    T1: { ask: 'How do you know the tool can exchange data with your systems?', ex: 'Vendor confirmed two-way link with our PMS; tested at a reference hotel' },
+    D5: { ask: 'Which agreement covers the data, and does it say who owns it?', ex: 'Data processing agreement signed 3 Oct; data stays ours and can be exported' },
+    O1: { ask: 'Who approved the plan, and when?', ex: 'One-page plan approved by the owner on 12 Nov' },
+    P5: { ask: 'Who can override or stop the tool, and how?', ex: 'Front-office manager can switch off auto-replies in the admin screen' },
+    G2: { ask: 'When was the risk review (including a data protection impact assessment) done, and by whom?', ex: 'DPIA completed by our data protection officer on 5 Nov' },
+    XG: { ask: 'When were staff representatives informed, or do you have none?', ex: 'Works council informed on 20 Oct; minutes on file' }
+  };
+
   /* Questions added on 18 Nov 2026 from the research (not in the D6 checklist). */
   var EXTRA = {
     X1: { a: 'pe', q: 'Have the staff who will use it seen it, and do they expect it to help their work?', proof: 'Who saw a demo or trial, and what they said',
@@ -142,7 +155,7 @@
     return out;
   }
 
-  var api = { AK: AK, POINTS: POINTS, ANSWER: ANSWER, LEVELS: LEVELS, LOW: LOW, HIGH: HIGH, EXTRA: EXTRA, model: model, selectQuestions: selectQuestions, evaluate: evaluate, gaps: gaps };
+  var api = { EVIDENCE: EVIDENCE, AK: AK, POINTS: POINTS, ANSWER: ANSWER, LEVELS: LEVELS, LOW: LOW, HIGH: HIGH, EXTRA: EXTRA, model: model, selectQuestions: selectQuestions, evaluate: evaluate, gaps: gaps };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RCLogic = api;
 })(typeof self !== 'undefined' ? self : (typeof globalThis !== 'undefined' ? globalThis : this));
