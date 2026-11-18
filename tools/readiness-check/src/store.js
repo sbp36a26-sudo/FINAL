@@ -29,7 +29,7 @@
     return new Promise(function (res) {
       waiters.push(res);
       if (waiters.length > 1) return;
-      ask('list').then(function () { mode = 'shared'; }, function () { mode = 'local'; }).then(function () { waiters.splice(0).forEach(function (f) { f(mode); }); });
+      ask('probe').then(function () { mode = 'shared'; }, function () { mode = 'local'; }).then(function () { waiters.splice(0).forEach(function (f) { f(mode); }); });
     });
   }
   var api = {

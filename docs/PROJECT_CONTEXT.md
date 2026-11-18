@@ -210,6 +210,6 @@ To investigate how European hotels and F&B operators plan to adopt, resource, go
 | Interviews | Six guides done; Accor (Nicolas Maynard) on 19 Nov 2026, profile ready, quote permission open |
 | Final report layout | Canva ("HFTP Final report"), bird theme, Claude Code layout tool planned |
 | Hotel AI Register | Prototype built 17 Nov 2026 in `tools/register/` (hub tab "AI Register"); label file awaits D7 sign-off; design and legal research in `reports/` |
-| Readiness check | Built 18 Nov 2026 in `tools/readiness-check/`: hub tab "Readiness check" plus red "Team: readiness results"; rules v2 from `reports/Hotel AI readiness check design.md` |
+| Readiness check | v3 built 19 Nov 2026 in `tools/readiness-check/` (hub tab "Readiness check"; red "Team: readiness results" for Editors only): preparation list by person, verdict without a 0–100 score, action plan, vendor questions, provisional legal flag, return visits ("since last time", update open items), file save/open, opt-in sharing. Research: `reports/Readiness check retention and trust.md`. Open: data notice placeholders (controller, deletion date, contact), D7 sign-off of legal wording |
 | Tools hub | https://claude.ai/artifact/MWMGc2VKc6zniRn8um27eH: AI Assessment, Use-Case Catalogue, Readiness check, AI Register, Team: readiness results |
 | Review agents | Source auditor, alignment checker, repetition editor running weekday mornings |

@@ -1,77 +1,83 @@
-/* Team view: each client's readiness check and the full working-out. */
+/* Team view (v3): the copies hotels chose to share, each recomputed with the current rules, with the full working-out.
+   Only Editors of the hub can open this tab; the hub bar refuses list and delete for anyone else. */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var D = JSON.parse($('d-data').textContent), L = window.RCLogic, S = window.RCStore, M = L.model(D);
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var TYPES = { independent: 'Independent hotel', group: 'Part of a group, run by the group', managed: 'Managed or franchised' };
-  var subs = [], sel = null, confirmDel = false, loading = true, err = '';
+  var TYPES = { independent: 'Independent hotel', group: 'Part of a group', managed: 'Managed or franchised' };
+  var ROLES = { gm: 'General manager', owner: 'Owner or asset manager', dept: 'Head of a department', it: 'IT or CIO', fin: 'Finance', other: 'Other' };
+  var subs = [], old = 0, sel = null, confirmDel = false, loading = true, err = '';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmt(iso) { if (!iso) return ''; var d = new Date(iso); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function pct(v) { return v == null ? '–' : Math.round(v * 100) + '%'; }
   var toastT;
   function toast(m) { var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 4000); }
+  function title(s) { return s.named && s.hotelName ? s.hotelName : 'Anonymous · ' + (ROLES[s.role] || 'role not given') + ', ' + (TYPES[s.type] || 'type not given') + (s.country ? ', ' + s.country : ''); }
 
   function load() {
     loading = true; err = ''; render();
     S.list().then(function (docs) {
-      subs = docs.filter(function (d) { return d && d.useId && M.UI[d.useId]; }).sort(function (a, b) { return String(b.submittedAt).localeCompare(String(a.submittedAt)); });
+      old = docs.filter(function (d) { return d && d.v !== 3; }).length;
+      subs = docs.filter(function (d) { return d && d.v === 3 && M.UI[d.useId]; }).sort(function (a, b) { return String(b.sharedAt).localeCompare(String(a.sharedAt)); });
       if (!sel || !subs.some(function (s) { return s._id === sel; })) sel = subs.length ? subs[0]._id : null;
       loading = false; render();
-    }, function () { loading = false; err = 'The saved checks could not be loaded. Try Refresh list.'; render(); });
+    }, function (e) { loading = false; err = e && e.code === 'not_allowed' ? 'Only Editors of the hub can see shared checks.' : 'The shared checks could not be loaded. Try Refresh list.'; render(); });
   }
 
   function flowCard() {
     return '<section class="panel"><h3>Where the data goes</h3><div class="flow">' +
-      '<div><b>1 · Client</b><span>Hotel name, how it is run, country, chosen AI tool.</span></div>' +
-      '<div><b>2 · Use case</b><span>From the 91-use catalogue: its type of tool (A1–A9), effort and risk add-ons (D6 data).</span></div>' +
-      '<div><b>3 · Questions</b><span>Must-haves, questions to check first, those every tool of the type needs, add-on questions, resource needs, and 3 added on 18 Nov.</span></div>' +
-      '<div><b>4 · Points</b><span>Yes 2 · Partly 1 · No or Not sure 0 · Does not apply leaves it out. A must-have Yes without proof counts as Partly.</span></div>' +
-      '<div><b>5 · Areas</b><span>Points ÷ maximum in each of the six areas.</span></div>' +
-      '<div><b>6 · Verdict and score</b><span>Any must-have not met or an area below 40%: foundations (score capped at 39). Any area below 75%: pilot (capped at 74). Otherwise scale. Score = average of the areas, then the cap.</span></div>' +
-      '<div><b>7 · Saved</b><span>To the hub\'s shared database when the client sees the result; listed here.</span></div>' +
-      '</div><p class="meta">Full framework, building blocks, companies and sources: <a href="../readiness/index.html">open the research tool</a>. Research behind the changes: reports/Hotel AI readiness check design.md.</p></section>';
+      '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, tool, stage. Hotel name only if they tick it.</span></div>' +
+      '<div><b>2 · Questions</b><span>Must-haves, check-first, building-block and add-on questions, tick lists of what the tool needs, plus X1, X2a/b, XG, XL.</span></div>' +
+      '<div><b>3 · Points</b><span>Yes 2 · Partly 1 · No 0. “Don\'t know yet” and “Doesn\'t apply” are left out. A must-have Yes needs a proof line of a few words.</span></div>' +
+      '<div><b>4 · Verdict</b><span>Known must-have not met, or an area below 40% (≥2 answers): Not ready yet. Must-have or area unknown: Not enough information yet. Else: Ready to pilot. No 0–100 score.</span></div>' +
+      '<div><b>5 · Kept</b><span>In the hotel\'s browser and file. A copy reaches this page only if they press “Share a copy”.</span></div>' +
+      '</div><p class="meta">Rules ' + esc(L.RULES) + '. Research behind them: reports/Readiness check retention and trust.md. Full D6 framework: <a href="../readiness/index.html">open the research tool</a>.</p></section>';
   }
 
   function listPanel() {
-    var h = '<section class="panel" style="padding:0;gap:0;overflow:hidden"><div style="padding:14px 14px 10px"><h3>Client checks</h3><p class="meta">' +
-      (loading ? 'Loading…' : subs.length + ' saved' + (S.mode() === 'local' ? ' in this browser only (not inside the hub on claude.ai)' : '')) + '</p></div>';
+    var h = '<section class="panel" style="padding:0;gap:0;overflow:hidden"><div style="padding:14px 14px 10px"><h3>Shared checks</h3><p class="meta">' +
+      (loading ? 'Loading…' : subs.length + ' shared' + (S.mode() === 'local' ? ' (this browser only: open the hub on claude.ai for the real list)' : '') + (old ? ' · ' + old + ' in the old v2 format not shown' : '')) + '</p></div>';
     if (err) h += '<p class="warnline" style="padding:0 14px 12px">' + esc(err) + '</p>';
-    if (!loading && !subs.length) h += '<p class="meta" style="padding:0 14px 14px">No checks yet. Complete one in the "Readiness check" tab and it appears here.</p>';
+    if (!loading && !subs.length && !err) h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
     subs.forEach(function (s) {
-      var lv = L.LEVELS[s.level] ? s.level : 'found';
-      h += '<button type="button" class="sub-row" data-act="sel" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(s.hotel && s.hotel.name || 'Unnamed hotel') + '</strong><span class="meta">' + esc(s.useName) + '</span><span class="btnrow"><span class="chip c-' + lv + '">' + esc(L.LEVELS[lv].name) + '</span><span class="mono">' + esc(s.score) + '/100</span><span class="meta">' + esc(fmt(s.submittedAt)) + '</span></span></button>';
+      var lv = L.LEVELS[s.level] || L.LEVELS.open;
+      h += '<button type="button" class="sub-row" data-act="sel" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">' + esc(s.useName) + '</span><span class="btnrow"><span class="chip c-' + lv.chip + '">' + esc(lv.name) + '</span><span class="meta">' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + '</span></span></button>';
     });
     return h + '</section>';
   }
 
+  function ansText(q, A) {
+    if (q.list) return q.items.map(function (t, i) { var v = A[q.code + '#' + i]; return t + ': ' + ({ y: 'in place', n: 'not yet', k: "don't know", na: "doesn't apply" }[v] || 'not answered'); }).join(' · ');
+    return L.ANSWER[A[q.code]] || (A[q.code] === 'y2' ? 'All-in-one system' : 'Not answered');
+  }
+
   function detail(s) {
-    var x = M.UI[s.useId], hotel = s.hotel || {}, ev = L.evaluate(M, x, hotel, s.answers || {}, s.proofs || {});
-    var h = '<section class="panel"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(hotel.name || 'Unnamed hotel') + '</h2><p class="meta">' + esc([hotel.person, TYPES[hotel.type], hotel.country].filter(Boolean).join(' · ')) + '</p></div>' +
-      '<div class="btnrow"><span class="chip c-' + ev.level + '" style="font-size:0.875rem">' + esc(L.LEVELS[ev.level].name) + '</span><span class="score" style="font-size:2rem">' + ev.score + '<small>/100</small></span></div></div>' +
-      '<p><strong>' + esc(x.name) + '</strong> <span class="meta">' + esc(x.deptName) + ' · ' + esc(x.arch ? x.arch + ' ' + M.ARCH[x.arch].s : 'no type') + ' · ' + esc(x.int) + ' effort' + (x.add.length ? ' · add-ons: ' + x.add.map(function (k) { return M.ADD[k].tag; }).join(', ') : '') + '</span></p>' +
-      '<p class="meta">Submitted ' + esc(fmt(s.submittedAt)) + (s.updatedAt && s.updatedAt !== s.submittedAt ? ' · last changed ' + esc(fmt(s.updatedAt)) : '') + ' · rules ' + esc(s.rules || '') + '</p>' +
-      (s.score !== ev.score || s.level !== ev.level ? '<p class="warnline">Saved result was ' + esc(s.score) + ' (' + esc(L.LEVELS[s.level] ? L.LEVELS[s.level].name : s.level) + '); with the current rules it is ' + ev.score + ' (' + esc(L.LEVELS[ev.level].name) + ').</p>' : '') +
+    var x = M.UI[s.useId], A = s.answers || {}, P = s.named && s.proofs ? s.proofs : Object.keys(s.proofGiven || {}).reduce(function (o, k) { o[k] = 'proof line given (text not shared)'; return o; }, {}), e = L.evaluate(M, x, { type: s.type, country: s.country }, A, P, s.who || {}, s.stage), lv = L.LEVELS[e.level];
+    var h = '<section class="panel"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc([ROLES[s.role], TYPES[s.type], s.country, L.STAGES[s.stage] && L.STAGES[s.stage].name].filter(Boolean).join(' · ')) + '</p></div>' +
+      '<span class="chip big c-' + lv.chip + '">' + esc(lv.name) + '</span></div>' +
+      '<p><strong>' + esc(x.name) + '</strong> <span class="meta">' + esc(x.deptName) + ' · ' + esc(x.arch ? x.arch + ' ' + M.ARCH[x.arch].s : 'no type') + ' · ' + esc(x.int) + ' effort' + (x.add.length ? ' · add-ons: ' + x.add.map(function (k) { return M.ADD[k].tag; }).join(', ') : '') + (x.label ? ' · register label: ' + esc((M.REG.labels[x.label.base] || {}).name || x.label.base) : '') + '</span></p>' +
+      '<p class="tally">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves met · ' + e.counts.known + ' of ' + e.counts.asked + ' answered · ' + e.actions.length + ' open items</p>' +
+      '<p class="meta">Shared ' + esc(fmt(s.sharedAt)) + ' · rules ' + esc(s.rules || '') + (s.named ? ' · name and proof lines shared' : ' · anonymous, no proof lines') + '</p>' +
+      (s.level !== e.level ? '<p class="warnline">Verdict when shared: ' + esc((L.LEVELS[s.level] || {}).name || s.level) + '; with the current rules: ' + esc(lv.name) + '.</p>' : '') +
+      ((s.snaps || []).length > 1 ? '<p class="meta">Their history: ' + s.snaps.map(function (h2) { return esc(fmt(h2.at).split(',')[0]) + ' ' + esc((L.LEVELS[h2.level] || {}).name || h2.level) + ' (' + h2.met + ' met, ' + h2.open + ' open)'; }).join(' → ') + '</p>' : '') +
       '</section>';
-
-    h += '<section class="panel"><h3>Working out, step by step</h3><ol class="steps">' + ev.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></section>';
-
-    h += '<section class="panel"><h3>Must-haves</h3><div class="tblw"><table><thead><tr><th>Code</th><th>Question</th><th>Answer</th><th>Proof given</th><th>Met?</th></tr></thead><tbody>' +
-      ev.gates.map(function (g) {
-        return '<tr><td class="mono">' + esc(g.q.code) + '</td><td>' + esc(g.q.q) + (g.q.note ? '<br><span class="meta">' + esc(g.q.note) + '</span>' : '') + '</td><td>' + esc(L.ANSWER[g.ans] || 'Not answered') + '</td><td>' + esc((s.proofs || {})[g.q.code] || '') + '</td><td>' + (g.met ? 'Yes' : '<strong>No</strong>' + (g.flag ? '<br><span class="meta">' + esc(g.flag) + '</span>' : '')) + '</td></tr>';
-      }).join('') + '</tbody></table></div></section>';
-
+    h += '<section class="panel"><h3>Working out, step by step</h3><ol class="steps">' + e.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol></section>';
+    h += '<section class="panel"><h3>Must-haves</h3><div class="tblw"><table><thead><tr><th>Code</th><th>Question</th><th>Answer</th><th>Proof</th><th>Status</th></tr></thead><tbody>' +
+      e.gates.map(function (g) { return '<tr><td class="mono">' + esc(g.q.code) + '</td><td>' + esc(g.q.q) + '</td><td>' + esc(ansText(g.q, A)) + (A[g.q.code] === 'k' ? '<br><span class="meta">Ask: ' + esc(L.WHO[(s.who || {})[g.q.code] || g.q.who]) + '</span>' : '') + '</td><td>' + (s.named ? esc(P[g.q.code] || '') : '<span class="meta">' + (P[g.q.code] ? 'given, text not shared' : 'none') + '</span>') + '</td><td>' + (g.met ? 'Met' : g.known ? '<strong>Not met</strong>' + (g.s.flag ? '<br><span class="meta">' + esc(g.s.flag) + '</span>' : '') : 'Not known') + '</td></tr>'; }).join('') +
+      '</tbody></table></div></section>';
     h += '<section class="panel"><h3>Every answer and its points</h3><div class="tblw"><table><thead><tr><th>Code</th><th>Question</th><th>Why it was asked</th><th>Answer</th><th style="text-align:right">Points</th></tr></thead><tbody>';
     L.AK.forEach(function (a) {
-      var r = ev.area[a];
-      h += '<tr class="areahead"><td colspan="4">' + esc(r.name) + '</td><td class="num">' + r.pts + ' / ' + r.max + ' = ' + pct(r.pct) + '</td></tr>';
+      var r = e.area[a]; if (!r.asked) return;
+      h += '<tr class="areahead"><td colspan="4">' + esc(r.name) + ' <span class="meta">(' + r.known + ' of ' + r.asked + ' answered)</span></td><td class="num">' + (r.max ? r.pts + ' / ' + r.max + ' = ' + pct(r.pct) : 'not known') + '</td></tr>';
       r.items.forEach(function (it) {
-        h += '<tr><td class="mono">' + esc(it.q.code) + (it.q.gate ? '<br><span class="chip c-must">Must</span>' : '') + '</td><td>' + esc(it.q.q) + ((s.proofs || {})[it.q.code] ? '<br><span class="meta">Proof: ' + esc(s.proofs[it.q.code]) + '</span>' : '') + '</td><td class="meta">' + esc((it.q.reasons || []).join('; ')) + '</td><td>' + esc(L.ANSWER[it.ans] || 'Not answered') + (it.flag ? '<br><span class="warnline">' + esc(it.flag) + '</span>' : '') + '</td><td class="num">' + (it.ans === 'na' ? 'left out' : it.pts + ' / 2') + '</td></tr>';
+        var q = it.q;
+        h += '<tr><td class="mono">' + esc(q.code) + (q.gate ? '<br><span class="chip c-must">Must</span>' : '') + '</td><td>' + esc(q.q) + (q.list ? '<br><span class="meta">' + esc(q.items.join(' · ')) + '</span>' : '') + '</td><td class="meta">' + esc((q.reasons || []).join('; ')) + '</td><td>' + esc(ansText(q, A)) + (it.s.flag ? '<br><span class="warnline">' + esc(it.s.flag) + '</span>' : '') + '</td><td class="num">' + (it.s.pts == null ? 'left out' : it.s.pts + ' / 2') + '</td></tr>';
       });
     });
     h += '</tbody></table></div></section>';
-
-    h += '<section class="panel"><h3>Delete</h3>' + (confirmDel ? '<p>Delete this check for ' + esc(hotel.name) + '? This cannot be undone.</p><div class="btnrow"><button type="button" class="btn warn" data-act="del-yes" id="del-yes">Delete check</button><button type="button" class="btn" data-act="del-no">Cancel</button></div>' : '<div><button type="button" class="btn warn" data-act="del">Delete this check</button></div>') + '</section>';
+    h += '<section class="panel"><h3>Their action plan</h3><ol class="steps">' + e.actions.map(function (a) { return '<li>' + esc(a.text) + ' <span class="meta">(' + esc(a.group) + ', ' + esc(L.WHO[a.who]) + ')</span></li>'; }).join('') + '</ol></section>';
+    h += '<section class="panel"><h3>Delete</h3>' + (confirmDel ? '<p>Delete this shared copy? The hotel keeps its own copy. This cannot be undone.</p><div class="btnrow"><button type="button" class="btn warn" data-act="del-yes" id="del-yes">Delete copy</button><button type="button" class="btn" data-act="del-no">Cancel</button></div>' : '<div><button type="button" class="btn warn" data-act="del">Delete this shared copy</button></div>') + '</section>';
     return h;
   }
 
@@ -87,7 +93,7 @@
     else if (a === 'sel') { sel = b.getAttribute('data-id'); confirmDel = false; render(); }
     else if (a === 'del') { confirmDel = true; render(); var y = $('del-yes'); if (y) y.focus(); }
     else if (a === 'del-no') { confirmDel = false; render(); }
-    else if (a === 'del-yes') { S.remove(sel).then(function () { confirmDel = false; sel = null; toast('Check deleted.'); load(); }, function () { toast('The check could not be deleted.'); }); }
+    else if (a === 'del-yes') { S.remove(sel).then(function () { confirmDel = false; sel = null; toast('Shared copy deleted.'); load(); }, function () { toast('The copy could not be deleted.'); }); }
   });
   load();
   window.ReadinessTeam = { subs: function () { return subs; } };
