@@ -1,0 +1,150 @@
+<title>AI Register Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single-column review memo; scores up top, then findings by severity, then the build order and sign-offs. */
+:root{
+  --bg:#F3F4F1; --panel:#FFFFFF; --ink:#16191E; --ink2:#454A53; --ink3:#5F646C; --line:#DADCD5;
+  --accent:#1F5C4F; --accent-soft:#E2EEEA; --bad:#A3392A; --bad-s:#F7E2DE; --mid:#7A5600; --mid-s:#F7EDD4; --good:#1F6B43; --good-s:#E0EFE6;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121518; --panel:#1A1E22; --ink:#E9EBEE; --ink2:#B4B9C0; --ink3:#8D939B; --line:#2E343A;
+  --accent:#7CC4B1; --accent-soft:#1B2E29; --bad:#F08A7A; --bad-s:#3A2320; --mid:#E3B34B; --mid-s:#372C14; --good:#6CC892; --good-s:#1B3326; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121518; --panel:#1A1E22; --ink:#E9EBEE; --ink2:#B4B9C0; --ink3:#8D939B; --line:#2E343A;
+  --accent:#7CC4B1; --accent-soft:#1B2E29; --bad:#F08A7A; --bad-s:#3A2320; --mid:#E3B34B; --mid-s:#372C14; --good:#6CC892; --good-s:#1B3326; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:1rem/1.55 var(--body)}
+.wrap{max-width:860px;margin:0 auto;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+h1{font:700 2.25rem/1.08 var(--display);margin:0;text-wrap:balance}
+h2{font:600 1.375rem/1.2 var(--display);margin:0;text-wrap:balance}
+h3{font-size:1rem;margin:0}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 .75rem/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.meta{font-size:.875rem;color:var(--ink3)}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.score{border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:4px;background:var(--panel)}
+.score b{font:700 2rem/1 var(--display);font-variant-numeric:tabular-nums}
+.score b small{font-size:1rem;color:var(--ink3);font-weight:500}
+.score span{font-size:.875rem;color:var(--ink2)}
+ul,ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+li{max-width:70ch}
+.tag{display:inline-block;font:600 .75rem/1.5 var(--body);padding:1px 8px;border-radius:4px;margin-right:6px;white-space:nowrap}
+.t-bad{background:var(--bad-s);color:var(--bad)} .t-mid{background:var(--mid-s);color:var(--mid)} .t-good{background:var(--good-s);color:var(--good)}
+.lead{background:var(--accent-soft);border-color:transparent}
+.lead p{font-size:1.0625rem}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th,td{text-align:left;padding:8px 10px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);border-top:0}
+code{font:400 .8125rem var(--mono)}
+footer{font-size:.8125rem;color:var(--ink3);display:flex;flex-direction:column;gap:4px}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <p class="eyebrow">EHL SBP Group 36 for HFTP · Hotel AI Register · review of 19 Nov 2026</p>
+    <h1>AI Register review</h1>
+    <p class="meta">Two researchers, three consultant trials (independent GM in Barcelona, 30-hotel group CIO, EU tech lawyer) and three critics (sceptic, hotel operator's advocate, legal auditor). Trials are simulated users: reliable for bugs and legal checks, weak evidence for what real hoteliers want. Outside sources were seen in search summaries only.</p>
+  </header>
+
+  <section class="lead">
+    <h2>Verdict</h2>
+    <p>Worth keeping. The legal content is better than the software: the labels for 109 tools are the real asset, most are right and every deadline date checks out. But five logic errors drop or flip legal duties, so it should not be shown outside the team until they are fixed. For now it is a companion to the D7 governance briefing and a tool for the team, not a product for HFTP members.</p>
+  </section>
+
+  <div class="scores">
+    <div class="score"><b>6<small>/10</small></b><span>Usefulness, independent GM (Barcelona, 48 rooms)</span></div>
+    <div class="score"><b>6<small>/10</small></b><span>Overall, group CIO (30 hotels); 3/10 for running a group</span></div>
+    <div class="score"><b>4<small>/10</small></b><span>Safe to publish, EU tech lawyer</span></div>
+  </div>
+
+  <section>
+    <h2>What holds</h2>
+    <ul>
+      <li><span class="tag t-good">Dates</span>All seven deadline dates match the amended AI Act (Regulation 2026/1744, repo copy).</li>
+      <li><span class="tag t-good">Labels</span>Banned staff emotion reading, high-risk CV screening with the hotel's user duties, the chatbot notice on the vendor, and an in-house model making the group its maker.</li>
+      <li><span class="tag t-good">Value</span>The GM found the staff ChatGPT rule, the Spanish labour notes and the emotion ban the most useful items.</li>
+      <li><span class="tag t-good">Gap</span>No comparable tool was found that combines a hotel catalogue, hotel roles and a free price (search summaries only).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Logic errors</h2>
+    <p class="meta">All five reproduced in the code by the legal auditor. None is caught by the 99 existing tests.</p>
+    <ol>
+      <li><span class="tag t-bad">Duties lost</span>A group that builds, rebrands or changes a high-risk tool loses all its duties as a user of that tool.</li>
+      <li><span class="tag t-bad">Ban erased</span>Answering "follows rules only" turns a tool with a ban answer into "Not an AI system".</li>
+      <li><span class="tag t-bad">False comfort</span>CCTV with ban questions still open shows "Minimal" (and says "one open question" when two are open).</li>
+      <li><span class="tag t-bad">No warning</span>On guest screening, unanswered ban questions never warn that the tool could be banned.</li>
+      <li><span class="tag t-mid">Silent</span>"Not sure" answers add nothing to the to-do list.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Legal content</h2>
+    <ul>
+      <li><span class="tag t-bad">Reach</span>Swiss and UK hotels are told a stand-alone hotel is not covered; the Act also reaches AI whose output is used in the EU (Art. 2(1)(c)).</li>
+      <li><span class="tag t-bad">Missing</span>Fundamental-rights impact assessment for credit scoring (Art. 27); incident reporting and other user duties (Art. 26(4), (5), (9)); marking AI-made content for a group's own chatbot (Art. 50(2), from 2 Dec 2026).</li>
+      <li><span class="tag t-mid">Misleading</span>"Recognising VIP guests is allowed": GDPR Art. 9 almost always blocks face recognition.</li>
+      <li><span class="tag t-mid">Overstated</span>Spanish labour note (the right belongs to the works council), biometric time clocks, PCI DSS tagged as law, facial age estimation shown as settled.</li>
+      <li><span class="tag t-mid">Sources</span>Watch list entries have no primary-source links; two case or proposal numbers dropped; one claim unsourced.</li>
+      <li><span class="tag t-mid">Wording</span>"All checked" in exports reads like proof of compliance; command-style items read like legal advice; no privacy notice or terms of use.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Using it</h2>
+    <ul>
+      <li>12 of the GM's 17 "do now" items are the same two lines repeated for every tool.</li>
+      <li>The rule that tools in use before 2 Dec 2027 escape the high-risk duties is buried in the last item.</li>
+      <li>Roles assume a chain ("head office", CIO); "differs from the booklet" boxes make the tool look like it argues with itself.</li>
+      <li>Search misses everyday words ("channel manager", "smart alerts"); Back leaves the tool; the PDF drops letters like "Ł" and omits the open questions.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Where the critics landed</h2>
+    <ul>
+      <li><b>Its job now:</b> a companion to D7 and a tool the team uses with interviewees, not a product for HFTP members. The label table should also become a page in the final report.</li>
+      <li><b>Not now:</b> group mode for 30 hotels, alerts, assignable to-dos, cost and contract fields, accounts.</li>
+      <li><b>Before any interviewee sees it:</b> fix the five logic errors with tests, the Swiss/UK wording, the face-recognition text and "All checked", and add a "student prototype, not reviewed by a lawyer" banner. Accor builds AI in-house and would hit error 1.</li>
+      <li><b>Next:</b> a de-duplicated to-do list (hotel, vendor, tool), the legacy rule first, and one hotel profile shared with the readiness check.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Proposed build order</h2>
+    <ol>
+      <li>Banner: student prototype, not reviewed by a lawyer, not legal advice.</li>
+      <li>Fix the five logic errors, with precedence rules as tests: an open ban question beats any lower label; "not AI" cannot override an open ban or high-risk question; maker status adds duties and never removes user duties; "Not sure" always adds an item.</li>
+      <li>Swiss/UK reach wording, face-recognition text, remove "All checked", items worded as "Check whether… Why… Who can confirm".</li>
+      <li>Add the missing duties: Art. 27, Art. 26(4)/(5)/(9), Art. 50(2) for own tools.</li>
+      <li>De-duplicated to-do list, with the legacy rule shown first on high-risk tools.</li>
+      <li>Correct the national notes, the PCI DSS tag and facial age estimation; source links on the watch list.</li>
+      <li>Small fixes: search synonyms, Back button, PDF letters and open questions, phone overflow.</li>
+      <li>Link with the readiness check through one hotel profile.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Sign-offs</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>What</th><th>Who</th></tr></thead>
+      <tbody>
+        <tr><td>Labels resting on draft guidance or the team's own reading; the note on tools in use before Dec 2027; Swiss and UK wording</td><td>D7 owner</td></tr>
+        <tr><td>National labour and data protection notes</td><td>A qualified lawyer, or leave them out</td></tr>
+        <tr><td>HFTP's name, terms of use, privacy notice</td><td>Coach and HFTP</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>
+    <p>Full notes in the team repository: <code>reports/AI register review.md</code> and <code>research_notes/AI register review/</code>.</p>
+    <p>Review only. Not legal advice. Edits to the register are deferred.</p>
+  </footer>
+</div>
