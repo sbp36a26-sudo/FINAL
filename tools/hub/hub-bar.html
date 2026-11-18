@@ -20,6 +20,10 @@
   .hub-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
   body.hub-other { overflow: hidden; }
   .hub-bar button:active { transform: translateY(1px); }
+  .hub-bar nav { flex: 1; }
+  .hub-bar button.team { margin-left: auto; background: #b42318; color: #fff; border-color: #b42318; }
+  .hub-bar button.team:hover { border-color: #fff; }
+  .hub-bar button.team[aria-pressed="true"] { background: #fff; color: #b42318; border-color: #b42318; box-shadow: inset 0 0 0 2px #b42318; }
   @media (pointer: coarse) { .hub-bar button { min-height: 44px; } }
 </style>
 <div class="hub-bar" id="hubBar">
@@ -27,14 +31,16 @@
   <nav aria-label="Tools">
     <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
-    <button type="button" data-tool="readiness" aria-pressed="false">Readiness Tool</button>
+    <button type="button" data-tool="readiness-check" aria-pressed="false">Readiness check</button>
     <button type="button" data-tool="register" aria-pressed="false">AI Register</button>
+    <button type="button" data-tool="team" class="team" aria-pressed="false" title="Team only: each client's readiness check and how the score was worked out">Team: readiness results</button>
   </nav>
 </div>
 <div class="hub-frame" id="hubFrame"></div>
 <script>
 (function () {
   var frames = {};
+  var SRC = { 'readiness-check': 'readiness-check/index.html', team: 'readiness-check/team.html' };
   var bar = document.getElementById('hubBar');
   var box = document.getElementById('hubFrame');
   function show(tool) {
@@ -43,9 +49,10 @@
     if (tool === 'assessment') {
       box.classList.remove('on'); document.body.classList.remove('hub-other');
     } else {
+      if (frames[tool] && tool === 'team') { try { frames[tool].contentWindow.location.reload(); } catch (e) { /* ignore */ } }
       if (!frames[tool]) {
         var f = document.createElement('iframe');
-        f.src = tool + '/index.html'; f.title = tool;
+        f.src = SRC[tool] || (tool + '/index.html'); f.title = tool;
         frames[tool] = f; box.appendChild(f);
       }
       window.scrollTo(0, 0);
@@ -59,6 +66,8 @@
   });
   // Download bridge: a tool in a tab cannot save files itself inside claude.ai, so it asks this page to do it.
   var dl = null, dlKnown = null;
+  var dbP = null;
+  function dbNs() { if (!dbP) dbP = (window.claude && typeof window.claude.use === 'function' ? window.claude.use('db') : Promise.resolve(null)).catch(function () { return null; }); return dbP; }
   function downloads() {
     if (!dlKnown) dlKnown = (window.claude && typeof window.claude.use === 'function' ? window.claude.use('downloads') : Promise.resolve(null)).then(function (d) { dl = d || null; }, function () { dl = null; });
     return dlKnown;
@@ -68,6 +77,19 @@
     if (e.origin !== location.origin || !m || typeof m !== 'object' || !m.hub) return;
     var own = Object.keys(frames).some(function (k) { return frames[k].contentWindow === e.source; });
     if (!own) return;
+    if (m.hub === 'db') {
+      var reply = function (o) { o.hub = 'db-result'; o.id = m.id; e.source.postMessage(o, location.origin); };
+      if (!/^readiness$/.test(String(m.col))) { reply({ ok: false, code: 'bad_request' }); return; }
+      dbNs().then(function (db) {
+        if (!db) throw { code: 'unavailable' };
+        var col = db.collection(m.col);
+        if (m.op === 'list') return col.get().then(function (snap) { reply({ ok: true, docs: snap.docs.filter(function (d) { return d.exists; }).map(function (d) { return Object.assign({ _id: d.id }, d.data()); }) }); });
+        if (m.op === 'set') return col.doc(String(m.doc)).set(m.data).then(function () { reply({ ok: true }); });
+        if (m.op === 'delete') return col.doc(String(m.doc)).delete().then(function () { reply({ ok: true }); });
+        throw { code: 'bad_request' };
+      }).catch(function (err) { reply({ ok: false, code: (err && err.code) || 'unavailable' }); });
+      return;
+    }
     if (m.hub === 'ping') downloads().then(function () { e.source.postMessage({ hub: 'pong', downloads: !!dl }, location.origin); });
     else if (m.hub === 'download') downloads().then(function () {
       if (!dl) throw { code: 'unavailable' };

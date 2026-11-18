@@ -24,3 +24,5 @@ Then open http://127.0.0.1:8765.
 - Each tool is a single self-contained HTML file. Edit `index.html` in its folder.
 - The AI Assessment Tool saves interviews only on claude.ai (hub artifact https://claude.ai/artifact/MWMGc2VKc6zniRn8um27eH). Opened locally it shows a "Saving is not available" banner and keeps nothing.
 - The live claude.ai copies are not updated automatically from this repo. Republish a tool after changing it here.
+
+| Readiness check + Team results | `readiness-check/` | Guided client check and the red team-only results view. See `readiness-check/README.md`. |
