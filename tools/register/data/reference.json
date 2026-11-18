@@ -77,7 +77,7 @@
   "basis": {
     "law": {
       "name": "Law text",
-      "desc": "Stated in the AI Act as amended in July 2026."
+      "desc": "Written in the AI Act as amended in July 2026, or a direct application of an article to the hotel use."
     },
     "guidance": {
       "name": "Commission guidance",
@@ -89,11 +89,11 @@
     },
     "reading": {
       "name": "Our reading",
-      "desc": "The project team's interpretation for hotels. Not tested by a regulator or court."
+      "desc": "The project team’s interpretation where neither the law nor Commission guidance gives the answer. Not tested by a regulator or court."
     },
     "default": {
-      "name": "Not listed",
-      "desc": "Not named in the briefing booklet or the research; nothing in the AI Act puts it in a higher category."
+      "name": "Law text: not listed",
+      "desc": "Not on the AI Act’s list of prohibited or high-risk uses, and no transparency duty applies. Only AI literacy applies."
     }
   },
   "kinds": {
@@ -153,7 +153,7 @@
       "q": "Is pricing or selling designed to deceive or manipulate guests, or to exploit their age, disability or financial situation, in a way that causes significant harm?",
       "yes": "prohibited",
       "prov": "Art. 5(1)(a), (b)",
-      "basis": "reading",
+      "basis": "law",
       "reason": "It is designed to exploit a guest's age, disability or financial situation and cause significant harm.",
       "help": "Demand-based pricing and honest upselling are not affected. \"The guest cannot compare prices\" is not a vulnerability under the Act; consumer law covers that.",
       "src": "Booklet C3"
@@ -162,7 +162,7 @@
       "q": "Does it score guests using data from unrelated contexts, such as social media or other operators, and lead to refusing them or treating them worse?",
       "yes": "prohibited",
       "prov": "Art. 5(1)(c)",
-      "basis": "reading",
+      "basis": "law",
       "reason": "It scores people on data from unrelated contexts and leads to unfavourable treatment.",
       "help": "A plain do-not-rent list kept by hand is not AI. Disproportionate treatment can be caught even within one property.",
       "src": "Desk research, 17 Nov 2026"
@@ -315,7 +315,7 @@
         "dpia"
       ],
       "prov": "Annex III 1(c); Art. 3(39)",
-      "basis": "reading",
+      "basis": "law",
       "reason": "It infers aggression or intentions from people's gestures, face or voice.",
       "help": "Detecting an object, such as a weapon, does not count. Merely detecting a raised voice is not emotion recognition.",
       "src": "Desk research, 17 Nov 2026"
@@ -327,7 +327,7 @@
         "notice"
       ],
       "prov": "Art. 50(3)",
-      "basis": "reading",
+      "basis": "law",
       "reason": "It sorts people into categories from their biometric data, so the people exposed must be told.",
       "src": "Desk research, 17 Nov 2026"
     },
