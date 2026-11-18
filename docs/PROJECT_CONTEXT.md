@@ -202,7 +202,7 @@ To investigate how European hotels and F&B operators plan to adopt, resource, go
 |---|---|
 | D1 Landscape / report intro | Sections 1, 3, 4, 5 drafted; section 2 (AI history) in progress; visual pages and country scorecard done |
 | D2 Segmentation, D3 Market tiers | Depend on interviews (not yet started as docs) |
-| D4 Use-case catalogue | Research record, evidence pack, vendor map, market overview done; 154 provisional use-case codes awaiting team review |
+| D4 Use-case catalogue | Research record, evidence pack, vendor map, market overview done; 154 provisional use-case codes awaiting team review. Hub catalogue now 95 uses (19 Nov 2026): 4 added from the AI Register market research (guest risk screening, avatar receptionist, biometric staff clocks, robotic cooking) and 5 rows extended, all sources opened and checked (`research_notes/AI register review/catalogue_additions_source_check.md`); booklet numbers 1–91 unchanged, new rows 92–95 |
 | D5 Decision framework | Not yet started as a doc |
 | D6 Readiness | Research record v1 + D4×D6 readiness tool |
 | D7 Governance | Booklet outline v3 + reviews; format = one booklet, EU first, then CH and UK |

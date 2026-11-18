@@ -27,10 +27,12 @@ const ids = list => list.map(i => i.id);
 // ---- data integrity ----
 const catUses = [];
 cat.depts.forEach(d => d.uses.forEach((u, i) => catUses.push({ id: d.id + '-' + (i + 1), name: u.n })));
-eq(catUses.length, 91, 'catalogue has 91 uses');
-const rows = labels.uses.filter(u => u.n);
+eq(catUses.length, 95, 'catalogue has 95 uses (91 in the booklet + 4 added 19 Nov 2026)');
+const catRows = labels.uses.filter(u => u.n);
+const rows = labels.uses.filter(u => u.n && u.n <= 91); // the booklet's 91; rows 92+ were added after it
 eq(rows.length, 91, 'label file has 91 catalogue rows');
-ok(catUses.every((u, i) => rows[i] && rows[i].id === u.id && rows[i].name === u.name), 'label ids and names match the catalogue order (ids are frozen)');
+ok(catUses.every((u, i) => catRows[i] && catRows[i].id === u.id && catRows[i].name === u.name), 'label ids and names match the catalogue order (ids are frozen)');
+ok(catRows.every(u => (u.n <= 91) === !/^(fo-6|fo-7|hr-6|kc-6)$/.test(u.id)), 'booklet numbers 1-91 unchanged; new rows numbered 92-95');
 const a6 = k => rows.filter(u => u.a6.includes(k)).length;
 const T = labels.meta.bookletTotals;
 eq(a6('high'), T.high, 'booklet A6: high-risk uses');
@@ -104,15 +106,17 @@ ok(notai.label === 'notai' && !notai.packs.literacy && !notai.packs['hr-user'] &
 
 // ---- uses found in the market, not in the catalogue ----
 const extra = labels.uses.filter(u => u.provisional);
-eq(extra.length, 17, '17 market uses added from desk research');
+eq(extra.length, 7, '7 market uses stay outside the catalogue (10 moved into it on 19 Nov 2026)');
+eq(labels.uses.filter(u => u.n > 91).map(u => u.id).join(), 'fo-6,fo-7,kc-6,hr-6', 'four market uses added to the catalogue as rows 92-95');
+ok(Object.entries(labels.meta.moved).every(([o, n]) => !labels.uses.some(u => u.id === o) && labels.uses.some(u => u.id === n)), 'every moved market row points to a catalogue row');
 ok(extra.every(u => u.review && u.why && u.dept), 'every market use is marked provisional with a reason');
-eq(cls('m-4').label, 'high', 'AI video interviews are high-risk');
-eq(cls('m-6').label, 'highif', 'per-attendant dashboards: open question');
+eq(cls('hr-2').label, 'high', 'AI recruiting, incl. AI video interviews, is high-risk');
+eq(cls('hk-6').label, 'highif', 'cleaning workload incl. per-attendant reports: open question');
 eq(cls('m-12').label, 'transparency', 'facial age estimation: notice duty');
 ok(cls('m-12').packs.notice && !cls('m-12').packs.chat, 'facial age estimation: notice to people exposed, not a chatbot notice');
 const mini = cls('m-17');
 ok(mini.label === 'notai' && !mini.packs.literacy, 'sensor minibar is not an AI system');
-eq(cls('m-1', { answers: { social_score: 'yes' } }).label, 'prohibited', 'guest scoring from unrelated contexts is prohibited');
+eq(cls('fo-6', { answers: { social_score: 'yes' } }).label, 'prohibited', 'guest scoring from unrelated contexts is prohibited');
 eq(cls('m-13', { answers: { bio_categorise: 'yes' } }).label, 'transparency', 'spa skin analysis: notice duty');
 
 // ---- role ----
@@ -161,7 +165,7 @@ eq(cls('hr-4', { answers: { rank_staff: 'yes' } }).label, 'high', 'attrition sco
 eq(cls('hr-3', { answers: { rank_staff: 'yes', career_decide: 'no', coach_emo: 'no' } }).label, 'high', 'training scores reported to managers are high-risk');
 ok(cls('it-2').canProhibit, 'IT service desk: staff emotion question can make it prohibited');
 eq(cls('it-4', { answers: { face_enrol: 'yes' } }).label, 'prohibited', 'face database from CCTV footage is prohibited');
-eq(cls('m-1', { answers: { crime_profile: 'yes' } }).label, 'prohibited', 'predicting offences from a guest profile is prohibited');
+eq(cls('fo-6', { answers: { crime_profile: 'yes' } }).label, 'prohibited', 'predicting offences from a guest profile is prohibited');
 eq(cls('rm-7', { answers: { exploit_price: 'yes' } }).label, 'prohibited', 'manipulative upselling causing significant harm is prohibited');
 const itG = L.items(U('gx-2'), {}, hotelDE, ref).find(i => i.id === 'C1');
 ok(itG.kind === 'maker' && /maker/.test(itG.note), 'vendor chatbot notice is the maker\'s duty, the hotel checks');

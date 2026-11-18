@@ -52,6 +52,7 @@
     if (!Array.isArray(s.hotel.outlets)) s.hotel.outlets = [];
     (o.tools || []).forEach(function (t) {
       if (!t || typeof t !== 'object') return;
+      var mv = (LAB.meta.moved || {})[t.useId]; if (mv && !USES[t.useId]) t.useId = mv;
       var n = newTool({ seq: 0 }, USES[t.useId] ? t.useId : 'custom');
       for (k in n) if (t[k] != null && k !== 'useId') n[k] = t[k];
       ['answers', 'done', 'vq'].forEach(function (f) { if (!n[f] || typeof n[f] !== 'object') n[f] = {}; });
@@ -159,7 +160,7 @@
     if (!rows.length) {
       h += '<section class="panel empty"><h2>Start your register</h2><ol class="steps">' +
         '<li><strong>Describe your hotel.</strong> Country and operating model decide which national rules and contract notes you see.</li>' +
-        '<li><strong>Add the AI tools you use.</strong> Pick each one from 91 hotel use cases in 15 departments, or describe your own.</li>' +
+        '<li><strong>Add the AI tools you use.</strong> Pick each one from 95 hotel use cases in 15 departments, or describe your own.</li>' +
         '<li><strong>Work through the items to check.</strong> Each tool gets its label, what to check and by when, and a named person.</li></ol>' +
         '<div class="btnrow"><button type="button" class="btn primary" data-act="add">Add your first tool</button><button type="button" class="btn" data-act="tab" data-tab="hotel">Describe your hotel</button><button type="button" class="btn" data-act="example">Load the example hotel</button></div>' +
         confirmBox('example', 'Replace the current register with the fictional example hotel?', 'Load the example') + '</section>';
@@ -344,7 +345,7 @@
     if (c.canProhibit) h += '<p class="flagc" style="white-space:normal">One open question below could make this tool prohibited. Answer it first.</p>';
     if (c.openHard.length && c.label !== 'notai') h += '<p class="meta">' + plural(c.openHard.length, 'question is', 'questions are') + ' open. "Not sure" keeps the label open: ask the vendor.</p>';
     if (c.alsoTransparency) h += '<p class="meta">The transparency duty applies as well, whatever the answers.</p>';
-    if (u.provisional) h += '<p class="meta"><span class="kd kd-practice">Provisional</span> This use is not in the team\'s catalogue of 91. It was found in vendor material and trade press on 17 Nov 2026; the label is not yet reviewed by the team.</p>';
+    if (u.provisional) h += '<p class="meta"><span class="kd kd-practice">Provisional</span> This use is not in the team\'s catalogue of 95. It was found in vendor material and trade press on 17 Nov 2026; the label is not yet reviewed by the team.</p>';
     h += diffBox(u.diff);
     h += '<p class="meta">Rests on: ' + esc(basisName(u.basis)) + (u.prov ? ' <span class="cite">' + esc(u.prov) + '</span>' : '') + (u.booklet ? ' · Booklet ' + esc(u.booklet) : '') + '</p>';
     h += roleText(x);
@@ -513,7 +514,7 @@
   function vHow() {
     var h = '';
     h += '<section class="panel"><h2>How the register works</h2><p class="sub">Three steps: describe your hotel, add the AI tools it uses, then work through what to check. An example hotel is loaded so you can look around first.</p><ol class="steps">' +
-      '<li><strong>Each tool starts from a hotel use case.</strong> The list holds the 91 use cases of the project\'s Hotel AI Use-Case Catalogue, plus 17 uses found in the market that the catalogue does not have yet.</li>' +
+      '<li><strong>Each tool starts from a hotel use case.</strong> The list holds the 95 use cases of the project\'s Hotel AI Use-Case Catalogue, plus 7 uses found in the market that the catalogue does not have yet.</li>' +
       '<li><strong>Each use case carries a label under the AI Act text.</strong> The labels are prohibited, high-risk, high-risk if…, transparency and minimal, plus "outside the high-risk list" and "not an AI system". They start from the briefing booklet; where a check of the law on 17 Nov 2026 found the booklet says more or less than the law, the register follows the law and shows the booklet\'s wording next to it.</li>' +
       '<li><strong>Your answers settle the label.</strong> For many tools one feature or one use decides. "Not sure" keeps the label open.</li>' +
       '<li><strong>The label, your role and your country produce the items to check.</strong> Each item says who should do it, by when, and what it rests on.</li></ol>' +
@@ -534,7 +535,7 @@
       confirmBox('import', ui.pending ? 'Replace the current register with the backup (' + plural(ui.pending.tools.length, 'tool') + ')?' : '', 'Restore backup') + '</section></div></div>';
 
     // label table
-    var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n; });
+    var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n && u.n <= 91; });
     function regCount(k) {
       return rows.filter(function (u) {
         var c = L.classify(u, {}, REF);
@@ -556,6 +557,8 @@
       var us = rows.filter(function (u) { return u.dept === d.id; });
       h += '<details><summary>' + esc(d.name) + ' <span class="meta">' + plural(us.length, 'use') + '</span></summary>' + table(us) + '</details>';
     });
+    var added = LAB.uses.filter(function (u) { return u.n > 91; });
+    if (added.length) h += '<details><summary>Added to the catalogue after the booklet <span class="meta">' + plural(added.length, 'use') + ', 19 Nov 2026, not yet reviewed</span></summary>' + table(added) + '</details>';
     var ex = LAB.uses.filter(function (u) { return u.provisional; });
     h += '<details><summary>Seen in the market, not yet in the catalogue <span class="meta">' + plural(ex.length, 'use') + ', provisional</span></summary>' + table(ex) + '</details></section>';
 
