@@ -150,7 +150,7 @@
     return '<div class="panel copybox"><div class="ph"><h3>' + esc(ui.copy.title) + '</h3><button type="button" class="btn sm" data-act="copy-close">Close</button></div><p class="meta">Select all of the text and copy it.</p><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea></div>';
   }
   function exportBar() {
-    return '<div class="btnrow"><button type="button" class="btn" data-act="export" data-kind="pdf">Summary (PDF)</button><button type="button" class="btn" data-act="export" data-kind="csv">Table (CSV)</button><button type="button" class="btn" data-act="export" data-kind="json">Backup</button></div>';
+    return '<div class="btnrow" role="group" aria-label="Download"><button type="button" class="btn" data-act="export" data-kind="pdf">Download PDF</button><button type="button" class="btn" data-act="export" data-kind="csv">Download CSV</button><button type="button" class="btn" data-act="export" data-kind="json">Download backup</button></div>';
   }
 
   function vList() {
@@ -576,6 +576,7 @@
     else html = vHow();
     $('view').innerHTML = html;
     ['register', 'todo', 'hotel', 'watch', 'how'].forEach(function (k) { if (ui.tab === k) $('tab-' + k).setAttribute('aria-current', 'page'); else $('tab-' + k).removeAttribute('aria-current'); });
+    try { var cur = $('tab-' + ui.tab); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* ignore */ }
     paintSaved();
     if (fid) { var el = $(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text field */ } } } }
   }

@@ -17,7 +17,7 @@ Built on 17 Nov 2026 from the D4 catalogue, the D7 booklet and data file, and th
 | Your hotel | Country, operating model, outlets. Drives the national notes and the "who is the user" note. |
 | Watch list | Dated, sourced list of rules and guidance still moving, linked to the tools they affect. |
 | How it works | Method, limits, the label of every use case (for team review), backup and restore. |
-| Exports | Summary (PDF), table (CSV), backup (JSON). |
+| Exports | Download PDF (summary), Download CSV (table), Download backup (JSON). |
 
 Entries are saved in the visitor's browser only. A shared, saved version for a team needs the register to be its own claude.ai page with storage switched on; that is the next step, not part of this prototype.
 
