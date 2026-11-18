@@ -48,7 +48,7 @@ ok(rows.every(u => u.a6.includes('transp') === (!!u.chat || hard(u, 'transparenc
 ok(rows.filter(u => !u.diff).every(u => u.a6.includes('prohib') === hard(u, 'prohibited')), 'a6 prohib = a hard question can make it prohibited (rows that follow the booklet)');
 ok(rows.filter(u => u.diff).every(u => u.diff.booklet && u.diff.law), 'every row that differs from the booklet says how');
 ok(labels.uses.every(u => u.switches.every(s => ref.switches[s.id])), 'every question id exists in reference.json');
-const packsUsed = new Set(['basics', 'literacy', 'ban', 'chat', 'notice', 'hr-user', 'product', 'liability', 'gen']);
+const packsUsed = new Set(['basics', 'literacy', 'ban', 'chat', 'notice', 'hr-user', 'product', 'liability', 'gen', 'brandmandate']);
 labels.uses.forEach(u => u.packs.forEach(p => packsUsed.add(p)));
 Object.values(ref.switches).forEach(s => (s.packs || []).forEach(p => packsUsed.add(p)));
 const packsDefined = new Set(ref.items.map(i => i.pack));
@@ -64,12 +64,14 @@ ok(radar.entries.every(e => (e.affects.uses || []).every(id => useIds.has(id))),
 
 // ---- labels ----
 eq(cls('rm-1').label, 'minimal', 'demand forecasting is minimal');
-eq(cls('hr-2').label, 'high', 'recruiting is high-risk');
+eq(cls('hr-2').labelUnder, 'high', 'recruiting is high-risk underneath');
+eq(cls('hr-2').label, 'banif', 'recruiting shows "Could be banned" while the staff-emotion question is open (precedence rule 1)');
+eq(cls('hr-2', { answers: { emo_staff: 'no' } }).label, 'high', 'recruiting is high-risk once the ban question is answered no');
 ok(cls('hr-2').canProhibit, 'recruiting: open emotion question can make it prohibited');
 ok(cls('hr-2').alsoTransparency, 'recruiting: the hiring chatbot must also say it is AI');
 eq(cls('hr-2', { answers: { emo_staff: 'yes' } }).label, 'prohibited', 'recruiting that reads candidates\' emotions is prohibited');
 eq(cls('hr-5').label, 'high', 'seasonal staff matching is high-risk');
-eq(cls('res-8').label, 'high', 'call scoring is high-risk');
+eq(cls('res-8').labelUnder, 'high', 'call scoring is high-risk underneath');
 eq(cls('hr-1').label, 'highif', 'rota tool with open questions shows "High-risk if"');
 eq(cls('hr-1', { answers: { rank_staff: 'no', hours_leave: 'no' } }).label, 'minimal', 'rota by availability is minimal');
 eq(cls('hr-1', { answers: { rank_staff: 'unsure', hours_leave: 'no' } }).label, 'highif', '"not sure" keeps the label open');
@@ -95,14 +97,14 @@ eq(cls('me-5').label, 'minimal', 'lift predictive maintenance is minimal (Art. 6
 ok(!!U('me-5').diff, 'lift maintenance is marked as differing from the booklet');
 const lift = cls('me-5', { answers: { safety_part: 'yes' } });
 ok(lift.label === 'high' && lift.onlyProduct && lift.dateKey === 'products' && lift.packs.product && !lift.packs['hr-user'], 'lift safety AI: high-risk from 2 Aug 2028, maker\'s duty');
-eq(cls('rm-2', { answers: { personal_price: 'yes' } }).label, 'minimal', 'personalised pricing does not change the AI Act label');
+eq(cls('rm-2', { answers: { personal_price: 'yes' } }).labelUnder, 'minimal', 'personalised pricing does not change the AI Act label');
 ok(cls('rm-2', { answers: { personal_price: 'yes' } }).packs['consumer-price'], 'personalised pricing adds the consumer-law item');
-eq(cls('custom').label, 'open', 'a custom tool is unlabelled until answered');
+eq(cls('custom').labelUnder, 'open', 'a custom tool is unlabelled until answered');
 const allNo = {}; U('custom').switches.forEach(s => allNo[s.id] = 'no');
 eq(cls('custom', { answers: allNo }).label, 'minimal', 'a custom tool with every answer "no" is minimal');
 eq(cls('custom', { answers: Object.assign({}, allNo, { c_staff: 'yes' }) }).label, 'high', 'a custom staff tool is high-risk');
-const notai = cls('hk-6', { answers: { rank_staff: 'yes' }, notAI: 'yes' });
-ok(notai.label === 'notai' && !notai.packs.literacy && !notai.packs['hr-user'] && notai.packs.labour, 'rules-only software: no AI Act items, other law stays');
+const notai = cls('hk-6', { answers: { rank_staff: 'no' }, notAI: 'yes', notAIConfirmed: 'yes' });
+ok(notai.label === 'notai' && !notai.packs.literacy && !notai.packs['hr-user'] && notai.packs.labour, 'rules-only software (vendor-confirmed, no high-risk answer): no AI Act items, other law stays');
 
 // ---- uses found in the market, not in the catalogue ----
 const extra = labels.uses.filter(u => u.provisional);
@@ -110,7 +112,7 @@ eq(extra.length, 7, '7 market uses stay outside the catalogue (10 moved into it 
 eq(labels.uses.filter(u => u.n > 91).map(u => u.id).join(), 'fo-6,fo-7,kc-6,hr-6', 'four market uses added to the catalogue as rows 92-95');
 ok(Object.entries(labels.meta.moved).every(([o, n]) => !labels.uses.some(u => u.id === o) && labels.uses.some(u => u.id === n)), 'every moved market row points to a catalogue row');
 ok(extra.every(u => u.review && u.why && u.dept), 'every market use is marked provisional with a reason');
-eq(cls('hr-2').label, 'high', 'AI recruiting, incl. AI video interviews, is high-risk');
+eq(cls('hr-2', { answers: { emo_staff: 'no' } }).label, 'high', 'AI recruiting, incl. AI video interviews, is high-risk');
 eq(cls('hk-6').label, 'highif', 'cleaning workload incl. per-attendant reports: open question');
 eq(cls('m-12').label, 'transparency', 'facial age estimation: notice duty');
 ok(cls('m-12').packs.notice && !cls('m-12').packs.chat, 'facial age estimation: notice to people exposed, not a chatbot notice');
@@ -156,12 +158,12 @@ ok(!L.radarHitsTool(W('w-marking'), U('sm-4'), cls('sm-4'), ref) && L.radarHitsT
 ok(L.radarHitsHotel(W('w-swiss'), { country: 'CH' }) && !L.radarHitsHotel(W('w-swiss'), { country: 'DE' }), 'Swiss bill applies to Swiss hotels');
 
 // ---- law-based changes (deep-dive research, 17 Nov 2026) ----
-const reg = k => rows.filter(u => { const c = cls(u.id); return k === 'highif' ? c.label === 'highif' : k === 'prohib' ? c.canProhibit || c.label === 'prohibited' : c.label === k; }).length;
+const reg = k => rows.filter(u => { const c = cls(u.id); return k === 'highif' ? c.labelUnder === 'highif' : k === 'prohib' ? c.canProhibitHard || c.label === 'prohibited' : c.labelUnder === k; }).length;
 eq(reg('high'), 3, 'register: high-risk catalogue uses');
 eq(reg('highif'), 11, 'register: "high-risk if" catalogue uses (booklet 13, minus the 2 maintenance uses)');
 eq(reg('prohib'), 6, 'register: catalogue uses that can become prohibited (booklet 5, plus IT service desk; video analytics now 2 bans)');
-eq(cls('hr-4').label, 'highif', 'attrition: per-person score question open');
-eq(cls('hr-4', { answers: { rank_staff: 'yes' } }).label, 'high', 'attrition scores on named staff are high-risk');
+eq(cls('hr-4').labelUnder, 'highif', 'attrition: per-person score question open');
+eq(cls('hr-4', { answers: { rank_staff: 'yes' } }).labelUnder, 'high', 'attrition scores on named staff are high-risk');
 eq(cls('hr-3', { answers: { rank_staff: 'yes', career_decide: 'no', coach_emo: 'no' } }).label, 'high', 'training scores reported to managers are high-risk');
 ok(cls('it-2').canProhibit, 'IT service desk: staff emotion question can make it prohibited');
 eq(cls('it-4', { answers: { face_enrol: 'yes' } }).label, 'prohibited', 'face database from CCTV footage is prohibited');
@@ -171,6 +173,45 @@ const itG = L.items(U('gx-2'), {}, hotelDE, ref).find(i => i.id === 'C1');
 ok(itG.kind === 'maker' && /maker/.test(itG.note), 'vendor chatbot notice is the maker\'s duty, the hotel checks');
 ok(ids(itRota).includes('H8'), 'high-risk user duties include cooperating with authorities');
 eq(ref.items.find(i => i.id === 'H7').kind, 'practice', 'CE confirmation from the vendor is good practice, not a duty');
+
+// ---- review of 19 Nov 2026: precedence rules (one test per rule and per reproduced bug) ----
+const itemIds = (id, tool) => L.items(U(id), tool || {}, hotelDE, ref).map(i => i.id);
+// Rule 1: an open ban question beats any lower label
+const cctv = cls('it-4', { answers: { emo_staff: 'unsure', face_enrol: 'unsure' } });
+eq(cctv.label, 'banif', 'CCTV with ban questions "Not sure" shows "Could be banned", not Minimal');
+eq(cctv.openBan.length, 3, 'CCTV: every open ban question is counted (two "Not sure" plus one unanswered), not "one"');
+eq(cls('fo-6').label, 'banif', 'guest risk screening warns it could be banned while the scoring questions are open');
+eq(cls('it-4', { answers: { emo_staff: 'no', face_enrol: 'no', sensitive_traits: 'no' } }).label, 'highif', 'CCTV with every ban question answered no falls back to "High-risk if" (face recognition still open)');
+// Rule 2: "not AI" never overrides a ban or high-risk answer or an open question
+eq(cls('custom', { answers: { emo_staff: 'yes' }, notAI: 'yes', notAIConfirmed: 'yes' }).label, 'prohibited', '"rules only" cannot turn a banned tool into "Not an AI system"');
+eq(cls('hk-6', { answers: { rank_staff: 'yes' }, notAI: 'yes', notAIConfirmed: 'yes' }).notAIBlocked, 'blocked', '"rules only" is blocked by a high-risk answer');
+eq(cls('hk-6', { answers: { rank_staff: 'no' }, notAI: 'yes' }).notAIBlocked, 'needs-confirmation', '"rules only" on a tool that can be high-risk needs the vendor\'s written confirmation');
+eq(cls('hk-4', { notAI: 'yes' }).label, 'notai', '"rules only" applies freely to a tool with no ban or high-risk question');
+// Rule 3: prohibited means stop
+const banned = cls('hr-2', { answers: { emo_staff: 'yes' } });
+ok(Object.keys(banned.packs).sort().join() === ['ban', 'basics', 'labour', 'literacy'].sort().join(), 'prohibited: only stop, literacy, basics and labour items');
+ok(banned.packsIfOff['hr-user'] && banned.packsIfOff.dpia && !banned.packsIfOff.ban, 'prohibited: the other duties are kept for "if you switch it off"');
+ok(!itemIds('hr-2', { answers: { emo_staff: 'yes' } }).includes('H1'), 'prohibited: high-risk user duties are hidden');
+// Rule 4: maker status adds duties, never removes user duties
+const mk = itemIds('hr-2', { answers: { emo_staff: 'no' }, origin: 'built' });
+ok(['M1', 'M2', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H8'].every(i => mk.includes(i)), 'group-built high-risk tool: maker items and all user duties');
+ok(!mk.includes('H7') && !mk.includes('R2'), 'group-built tool: no "ask the vendor" items');
+const ownBot = itemIds('gx-2', { origin: 'built', answers: { card_data: 'no' } });
+ok(ownBot.includes('C1m') && !ownBot.includes('C1'), 'group-built chatbot: the group owes the AI notice; no "check the vendor" item');
+// Rule 5: repurpose route
+const rp = itemIds('gm-2', { answers: { repurpose_hr: 'yes' } });
+ok(rp.includes('M1r') && !rp.includes('M1') && !rp.includes('M2') && !rp.includes('Y1'), 'repurposed chatbot: "you may be treated as provider", no product liability or QMS standard');
+// Rule 6: brand-mandated route changes the output
+ok(itemIds('rm-2', { decided: 'brand' }).includes('BR1') && !itemIds('rm-2', {}).includes('BR1'), 'brand-mandated tool: agreement item added');
+// Rule 7: "Not sure" always adds an item
+ok(itemIds('it-4', { answers: { emo_staff: 'unsure' } }).includes('Q-emo_staff'), '"Not sure" adds a "find out" item');
+ok(!itemIds('it-4', { answers: { emo_staff: 'no' } }).includes('Q-emo_staff'), 'answering removes the "find out" item');
+// Rule 8: "rests on" shows the basis of what set the label
+const rb = L.labelBasis(U('hr-4'), cls('hr-4', { answers: { rank_staff: 'yes', career_decide: 'no', emo_staff: 'no' } }), ref);
+ok(rb.from === 'answer' && rb.basis === ref.switches.rank_staff.basis, '"rests on" follows the answer that set the label');
+eq(L.labelBasis(U('rm-1'), cls('rm-1'), ref).from, 'default', '"rests on" falls back to the use case default');
+ok(!/VIP guests is allowed/.test(JSON.stringify(ref)), 'no "recognising VIP guests is allowed"');
+ok(ref.items.every(i => !/All checked/.test(i.text)), 'no "All checked" wording in items');
 
 console.log((fail ? 'FAILED' : 'ok') + ': ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

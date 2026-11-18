@@ -8,12 +8,13 @@
     "sources": [
       "Regulation (EU) 2024/1689, Official Journal 12.7.2024",
       "Regulation (EU) 2026/1744, Official Journal 24.7.2026",
-      "European Commission guidelines on prohibited AI practices, on transparency (Art. 50) and draft guidelines on high-risk classification (19 May 2026), as read by the project team",
+      "European Commission guidelines on prohibited AI practices, on transparency (Art. 50; final, November 2026: reference to confirm, the booklet cites C(2026) 7702 final of 5 Nov 2026, other sources OJ C/2026/6005 of 12 Nov 2026) and draft guidelines on high-risk classification (19 May 2026), as read by the project team",
       "AI Governance for European Hotels, briefing booklet by EHL SBP Group 36 for HFTP (November 2026)",
       "Hotel AI Use-Case Catalogue, 91 use cases in 15 departments (EHL SBP Group 36, 11 November 2026)",
       "Desk research and text check of both regulations by the project team, 17 November 2026",
       "EU AI Act hospitality deep dive (research report, 17 Nov 2026): text check of both regulations and corrections to the booklet"
-    ]
+    ],
+    "banner": "Student prototype (EHL SBP Group 36). Not reviewed by a lawyer. Not legal advice."
   },
   "dates": {
     "bans": "2025-02-02",
@@ -72,6 +73,11 @@
       "name": "Not labelled yet",
       "rank": 0,
       "short": "Answer the questions to get a label."
+    },
+    "banif": {
+      "name": "Could be banned",
+      "rank": 5.5,
+      "short": "A question that decides whether this use is banned is still unanswered or \"Not sure\". Answer it before relying on any lower label."
     }
   },
   "basis": {
@@ -112,6 +118,14 @@
     "practice": {
       "name": "Good practice",
       "desc": "Not a legal duty today, but the starting point for the duties that follow."
+    },
+    "open": {
+      "name": "To find out",
+      "desc": "An answer you marked \"Not sure\". It can change the label, so find out who can confirm it."
+    },
+    "standard": {
+      "name": "Contract / industry standard",
+      "desc": "Required by a contract or an industry standard, not by law."
     }
   },
   "tags": {
@@ -280,7 +294,7 @@
       "prov": "Annex III 1(a)",
       "basis": "draft",
       "reason": "It recognises people at a distance by their face.",
-      "help": "A guest who steps up to an entry camera to be checked is not 'at a distance'. Recognising VIP guests is allowed, but as a high-risk use.",
+      "help": "A guest who steps up to an entry camera to be checked is not 'at a distance'. Face recognition of guests uses biometric data; GDPR Art. 9 almost always requires explicit consent, and an alternative must be offered.",
       "src": "Booklet C5"
     },
     "crowd_mood": {
@@ -535,7 +549,7 @@
       "since": "bans",
       "kind": "duty",
       "who": "General manager",
-      "text": "Switch this feature off, or stop using the tool. This use is banned and cannot be made compliant.",
+      "text": "Check whether the banned feature can be switched off. If it cannot, stop using the tool.",
       "ref": "AI Act Art. 5",
       "note": "Fines for banned practices go up to €35m or 7% of worldwide annual turnover, whichever is higher (AI Act Art. 99(3)).",
       "src": "Booklet A2, A7"
@@ -548,10 +562,11 @@
       "since": "transparency",
       "kind": "maker",
       "who": "General manager, with the vendor",
-      "text": "Check that it says it is AI at the start of each conversation or call. A line in the terms and conditions is not enough.",
+      "text": "Check whether the tool says it is AI at the start of each conversation or call. A line in the terms and conditions is not enough.",
       "ref": "AI Act Art. 50(1) (maker's duty); EU consumer law",
       "note": "The law puts this duty on the tool's maker (Art. 50(1)), not on a hotel that uses a vendor's tool. Checking it is still sensible, and a hidden bot can breach consumer law.",
-      "src": "Booklet Start here 1, B3"
+      "src": "Booklet Start here 1, B3",
+      "vendorOnly": true
     },
     {
       "id": "C1m",
@@ -561,7 +576,7 @@
       "since": "transparency",
       "kind": "duty",
       "who": "Head office (CIO)",
-      "text": "Your group built this tool, so the group itself must make it say it is AI at the start of each conversation or call.",
+      "text": "Check whether your group's tool says it is AI at the start of each conversation or call: as its maker, the group owes this itself.",
       "ref": "AI Act Art. 50(1)",
       "src": "Booklet Start here 1, B2"
     },
@@ -572,7 +587,7 @@
       "since": "transparency",
       "kind": "duty",
       "who": "Marketing",
-      "text": "Label each realistic AI-made image, video or audio clip that could pass for real: the hotel, its food or its staff, including voice clones, avatars and dubbed videos.",
+      "text": "Check whether each realistic AI-made image, video or audio clip that could pass for real (the hotel, its food or its staff, including voice clones, avatars and dubbed videos) carries a label.",
       "ref": "AI Act Art. 50(4)",
       "note": "A real photo with minor edits needs no label. Where an agency makes the content and decides how it uses AI, the agency labels it. The Commission-backed Code of Practice on marking and labelling AI content (June 2026) gives label templates.",
       "src": "Booklet B3, C3"
@@ -584,7 +599,7 @@
       "kind": "law",
       "tag": "Consumer",
       "who": "General manager",
-      "text": "Check the hotel's marketing for AI images that show something the hotel does not have. A label does not make a misleading picture lawful.",
+      "text": "Check whether the hotel's marketing uses AI images that show something the hotel does not have. A label does not make a misleading picture lawful.",
       "ref": "EU consumer law",
       "src": "Booklet B3"
     },
@@ -595,7 +610,7 @@
       "since": "transparency",
       "kind": "duty",
       "who": "Marketing",
-      "text": "Have a person check AI-written claims about health, safety or sustainability before they are published. If they go out unchecked, say that the text is AI-written.",
+      "text": "Check whether a person reviews AI-written claims about health, safety or sustainability before they are published. If not, the text must say it is AI-written.",
       "ref": "AI Act Art. 50(4); Commission transparency guidelines",
       "src": "Booklet C3"
     },
@@ -606,7 +621,7 @@
       "since": "transparency",
       "kind": "duty",
       "who": "General manager",
-      "text": "Tell the people exposed that the system reads emotions or sorts people by a biometric trait.",
+      "text": "Check whether the people exposed are told that the system reads emotions or sorts people by a biometric trait.",
       "ref": "AI Act Art. 50(3)",
       "src": "Booklet C5; text check 17 Nov 2026"
     },
@@ -617,7 +632,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "Department head",
-      "text": "Use the tool as the maker's instructions for use say.",
+      "text": "Check whether the tool is used as the maker's instructions for use say.",
       "ref": "AI Act Art. 26(1)",
       "src": "Booklet A3"
     },
@@ -628,7 +643,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "General manager",
-      "text": "Name trained staff who oversee the tool and have the authority to overrule it.",
+      "text": "Check whether trained staff are named to oversee the tool, with the authority to overrule it.",
       "ref": "AI Act Art. 26(2)",
       "src": "Booklet A3, B3"
     },
@@ -639,7 +654,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "IT",
-      "text": "Keep the tool's logs for at least six months, where they are under your control.",
+      "text": "Check whether the tool's logs are kept for at least six months, where they are under your control.",
       "ref": "AI Act Art. 26(6)",
       "src": "Booklet A3",
       "note": "Only the logs the hotel actually controls, or can obtain from the vendor under the contract."
@@ -652,7 +667,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "General manager and HR",
-      "text": "Tell staff and their representatives before the tool is used on them.",
+      "text": "Check whether staff and their representatives are told before the tool is used on them.",
       "ref": "AI Act Art. 26(7)",
       "src": "Booklet A3"
     },
@@ -663,7 +678,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "Department head",
-      "text": "Tell people (staff, candidates or guests) when the tool is used in decisions about them. If a decision has a significant negative effect on someone, explain on request the tool's role and the main elements of the decision.",
+      "text": "Check whether people (staff, candidates or guests) are told when the tool is used in decisions about them, and whether you can explain on request its role in a decision with a significant negative effect.",
       "ref": "AI Act Art. 26(11), Art. 86",
       "src": "Booklet A3"
     },
@@ -674,7 +689,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "General manager",
-      "text": "If the tool may put people's health, safety or rights at risk, suspend its use and tell the vendor and the authority.",
+      "text": "Check whether you can suspend the tool, and tell the vendor and the authority, if it may put people's health, safety or rights at risk.",
       "ref": "AI Act Art. 26(5)",
       "src": "Text check 17 Nov 2026"
     },
@@ -685,7 +700,7 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "General manager",
-      "text": "Cooperate with the authorities on anything they ask about the tool.",
+      "text": "Check whether someone can answer the authorities' questions about the tool.",
       "ref": "AI Act Art. 26(12)",
       "src": "Text check 17 Nov 2026"
     },
@@ -696,10 +711,11 @@
       "when": "highrisk",
       "kind": "practice",
       "who": "Purchasing or IT",
-      "text": "Ask the vendor whether the tool is a legacy tool or will be CE-marked and registered by 2 Dec 2027, and to tell you before an update changes that.",
+      "text": "Check with the vendor whether the tool is a legacy tool or will be CE-marked and registered by 2 Dec 2027, and ask to be told before an update changes that.",
       "ref": "Vendor question 5",
       "note": "Not a legal duty on a private hotel, but you need the answer. A tool already in use before 2 Dec 2027 stays outside these duties, for the vendor and for your hotel, until its design changes significantly. That later purchases of the same model are covered rests on a recital only, and cloud tools that keep updating are unlikely to keep this status.",
-      "src": "Booklet A3, A5, B1"
+      "src": "Booklet A3, A5, B1",
+      "vendorOnly": true
     },
     {
       "id": "M1",
@@ -708,9 +724,26 @@
       "when": "highrisk",
       "kind": "duty",
       "who": "Head office (CIO)",
-      "text": "Your group is this tool's maker. Before it is used it must be tested and documented, checked against the rules, CE-marked and registered. This is specialist work: get legal and technical support now.",
+      "text": "Check whether the tool has been tested, documented, checked against the rules, CE-marked and registered before use: your group is its maker. This is specialist work: get legal and technical support.",
       "ref": "AI Act Arts. 16, 43, 49",
-      "src": "Booklet A3, B2"
+      "src": "Booklet A3, B2",
+      "notRoute": [
+        "repurpose"
+      ]
+    },
+    {
+      "id": "M1r",
+      "pack": "hr-user",
+      "role": "maker",
+      "when": "highrisk",
+      "kind": "duty",
+      "who": "General manager, with legal advice",
+      "onlyRoute": [
+        "repurpose"
+      ],
+      "text": "You may be treated as the provider of this tool, because you use a general tool for a high-risk purpose (AI Act Art. 25(1)(c)). Get legal advice, and check whether the vendor's terms forbid this use.",
+      "ref": "AI Act Art. 25(1)(c)",
+      "src": "Review 19 Nov 2026"
     },
     {
       "id": "M2",
@@ -719,9 +752,12 @@
       "when": "highrisk",
       "kind": "practice",
       "who": "Head office (CIO)",
-      "text": "Follow EN 18286:2026, the harmonised standard for the quality-management system.",
+      "text": "Check whether the group follows EN 18286:2026, the harmonised standard for the quality-management system.",
       "ref": "EN 18286:2026",
-      "src": "Booklet B2"
+      "src": "Booklet B2",
+      "notRoute": [
+        "repurpose"
+      ]
     },
     {
       "id": "P1",
@@ -729,7 +765,7 @@
       "when": "products",
       "kind": "maker",
       "who": "Engineering or purchasing",
-      "text": "Ask the maker whether the product carries the CE mark for its AI safety function. Meeting the high-risk rules is the maker's duty from 2 Aug 2028.",
+      "text": "Check with the maker whether the product carries the CE mark for its AI safety function. Meeting the high-risk rules is the maker's duty from 2 Aug 2028.",
       "ref": "AI Act Art. 6(1), Annex I",
       "src": "Booklet C6"
     },
@@ -740,9 +776,12 @@
       "kind": "law",
       "tag": "Liability",
       "who": "Head office (CIO)",
-      "text": "Keep design and testing records. AI that a group builds for its own use and puts into use after 9 Dec 2026 is a product it manufactures; without records a court can presume a defect.",
+      "text": "Check whether design and testing records are kept. AI that a group builds for its own use and puts into use after 9 Dec 2026 is a product it manufactures; without records the group is in a weaker position if a defect is alleged.",
       "ref": "Product Liability Directive (EU) 2024/2853",
-      "src": "Booklet A3, A8, B2"
+      "src": "Booklet A3, A8, B2",
+      "notRoute": [
+        "repurpose"
+      ]
     },
     {
       "id": "G1",
@@ -750,7 +789,7 @@
       "when": "now",
       "kind": "duty",
       "who": "Head office (CIO)",
-      "text": "If the group builds or adapts its own image or text generator, its output must carry a machine-readable AI mark. Generators placed on the market before 2 Aug 2026 must comply by 2 Dec 2026.",
+      "text": "Check whether the output of any image or text generator the group builds or adapts carries a machine-readable AI mark. Generators placed on the market before 2 Aug 2026 must comply by 2 Dec 2026.",
       "ref": "AI Act Art. 50(2), Art. 111(4)",
       "src": "Booklet B2"
     },
@@ -761,9 +800,9 @@
       "since": "bans",
       "kind": "duty",
       "who": "General manager and HR",
-      "text": "Brief the staff and contractors who use this tool on what it does and where it can go wrong, and keep a note of who was briefed.",
+      "text": "Take measures so that staff and contractors who use this tool understand what it does and where it can go wrong (for example a short briefing), and keep a note.",
       "ref": "AI Act Art. 4",
-      "note": "No certificate is needed; an internal record is enough. AI literacy is not in the EU fine list, but national penalty laws can cover it, and from 2 Dec 2027 the staff overseeing high-risk tools must be competent.",
+      "note": "AI Act Art. 4 as amended by Regulation (EU) 2026/1744 (in force 27 Jul 2026). No certificate or specific level is required. From 2 Dec 2027 the staff overseeing high-risk tools must be competent.",
       "src": "Booklet Start here 5, A2"
     },
     {
@@ -773,7 +812,7 @@
       "kind": "practice",
       "auto": "owner",
       "who": "General manager",
-      "text": "Name one person in the hotel who is responsible for this tool.",
+      "text": "Check whether one person in the hotel is named as responsible for this tool.",
       "ref": "Booklet B3",
       "src": "Booklet B3"
     },
@@ -784,9 +823,10 @@
       "kind": "practice",
       "auto": "vendor",
       "who": "Purchasing or IT",
-      "text": "Ask the vendor the questions listed below and put the answers in the contract.",
+      "text": "Check whether the vendor has answered the questions below, and whether the answers are in the contract.",
       "ref": "Booklet A3",
-      "src": "Booklet A3"
+      "src": "Booklet A3",
+      "vendorOnly": true
     },
     {
       "id": "LB1",
@@ -795,7 +835,7 @@
       "kind": "law",
       "tag": "Labour",
       "who": "General manager and HR",
-      "text": "Before introducing or changing this tool, involve the works council or staff representatives where you have them.",
+      "text": "Check whether the works council or staff representatives, where you have them, are involved before this tool is introduced or changed.",
       "ref": "National labour law",
       "src": "Booklet Start here, A8"
     },
@@ -806,7 +846,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "General manager, with the data protection officer",
-      "text": "Run a data protection impact assessment before the tool is switched on.",
+      "text": "Check whether a data protection impact assessment has been done before the tool is switched on.",
       "ref": "GDPR Art. 35",
       "src": "Booklet B3, C5"
     },
@@ -817,7 +857,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "HR",
-      "text": "Let no tool reject, select or rate a person on its own: a trained person with authority reviews every decision.",
+      "text": "Check whether the tool alone makes decisions about a person that have legal or similarly significant effects. If it does, the person must be able to get a human review, to give their view and to contest the decision.",
       "ref": "GDPR Art. 22",
       "src": "Booklet C1"
     },
@@ -828,7 +868,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "Front office",
-      "text": "Ask for the guest's explicit consent, offer a check-in without face scanning, and keep no central store of guests' face templates (our reading).",
+      "text": "Check whether guests give explicit consent, are offered a check-in without face scanning, and whether no central store of guests' face templates is kept (our reading).",
       "ref": "GDPR Art. 9",
       "src": "Booklet A2, C2"
     },
@@ -839,7 +879,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "General manager",
-      "text": "Keep biometric time clocks out unless staff have a real non-biometric alternative. In Spain, do not use them at all.",
+      "text": "Check whether staff have a real non-biometric alternative to the time clock. The Spanish data protection authority (AEPD) considers biometric time clocks unlawful in most cases.",
       "ref": "GDPR Art. 9",
       "src": "Booklet B3"
     },
@@ -850,7 +890,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "Front office",
-      "text": "Keep ID document scans only as long as they are needed.",
+      "text": "Check whether ID document scans are kept only as long as they are needed.",
       "ref": "GDPR Art. 5",
       "src": "Booklet C2"
     },
@@ -861,7 +901,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "Marketing",
-      "text": "Treat personalisation from guest data as profiling: check its legal basis and tell guests about it.",
+      "text": "Check whether personalisation from guest data, which is profiling, has a legal basis and whether guests are told about it.",
       "ref": "GDPR",
       "src": "Booklet A8, C3"
     },
@@ -872,7 +912,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "Marketing",
-      "text": "Send marketing emails only with consent, except to existing customers for similar services with an easy opt-out.",
+      "text": "Check whether marketing emails go only to people who consented, or to existing customers for similar services with an easy opt-out.",
       "ref": "EU e-privacy rules",
       "src": "Booklet C3"
     },
@@ -883,7 +923,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "Spa manager",
-      "text": "Treat body, skin and sleep data as health data: ask for the guest's explicit consent and collect only what the treatment needs.",
+      "text": "Check whether body, skin and sleep data are treated as health data: explicit consent, and only what the treatment needs.",
       "ref": "GDPR Art. 9",
       "src": "Desk research, 17 Nov 2026"
     },
@@ -894,7 +934,7 @@
       "kind": "law",
       "tag": "GDPR",
       "who": "General manager and head office",
-      "text": "Give staff an approved tool with a work account, and tell them not to paste guest or staff personal data into personal chatbots.",
+      "text": "Check whether staff have an approved AI tool with a work account, and know not to paste guest or staff personal data into personal chatbots.",
       "ref": "GDPR",
       "src": "Booklet B2, B3"
     },
@@ -902,11 +942,11 @@
       "id": "PC1",
       "pack": "pci",
       "when": "now",
-      "kind": "law",
+      "kind": "standard",
       "tag": "Cyber/PCI",
       "who": "IT",
-      "text": "Get a written security agreement with the vendor and keep card numbers out of recordings and chats: card data brings the tool under the card-payment standard.",
-      "ref": "PCI DSS",
+      "text": "Check whether there is a written security agreement with the vendor and card numbers are kept out of recordings and chats. Card data brings the tool under the card industry's security standard (PCI DSS).",
+      "ref": "PCI DSS (card industry standard, applied through contracts)",
       "src": "Booklet A3, C3"
     },
     {
@@ -916,7 +956,7 @@
       "kind": "law",
       "tag": "Consumer",
       "who": "Revenue and marketing",
-      "text": "Show a notice before each booking that the price is personalised. A line in the privacy policy is not enough.",
+      "text": "Check whether a notice before each booking says the price is personalised. A line in the privacy policy is not enough.",
       "ref": "EU consumer law",
       "src": "Booklet A8, C3"
     },
@@ -927,7 +967,7 @@
       "kind": "law",
       "tag": "Consumer",
       "who": "Marketing",
-      "text": "Never publish AI-written reviews as genuine.",
+      "text": "Check whether any AI-written review could be published as genuine.",
       "ref": "EU and UK consumer law",
       "src": "Booklet A8, C3"
     },
@@ -938,7 +978,7 @@
       "kind": "law",
       "tag": "Competition",
       "who": "Revenue",
-      "text": "Check that the tool does not feed your prices to competing hotels or base your rates on their non-public data.",
+      "text": "Check whether the tool feeds your prices to competing hotels or bases your rates on their non-public data.",
       "ref": "EU competition law (Art. 101 TFEU)",
       "src": "Booklet A3, C3"
     },
@@ -949,7 +989,7 @@
       "kind": "law",
       "tag": "Liability",
       "who": "Executive chef",
-      "text": "Have a person check allergen information before guests see it: it stays the hotel's responsibility whatever tool produces it.",
+      "text": "Check whether a person reviews allergen information before guests see it: it stays the hotel's responsibility whatever tool produces it.",
       "ref": "EU food information rules",
       "src": "Booklet C4"
     },
@@ -960,9 +1000,20 @@
       "kind": "law",
       "tag": "Cyber/PCI",
       "who": "Purchasing",
-      "text": "When buying connected equipment, ask the maker for the CE mark now, and from 11 Dec 2027 for proof that the product meets the Cyber Resilience Act.",
+      "text": "Check, when buying connected equipment, whether it carries the CE mark now, and from 11 Dec 2027 whether the maker can prove it meets the Cyber Resilience Act.",
       "ref": "Cyber Resilience Act",
       "src": "Booklet C4, C5"
+    },
+    {
+      "id": "BR1",
+      "pack": "brandmandate",
+      "when": "now",
+      "kind": "practice",
+      "who": "General manager, with the brand or head office",
+      "text": "Check whether the franchise or management agreement says who carries which duty for this tool. The brand or head office chose it, so the brand may also be a user (deployer) of it, or its provider if the tool carries the brand's name.",
+      "ref": "AI Act Arts. 3(4), 25(1)(a)",
+      "note": "Our reading: which party is the deployer depends on who uses the tool under its authority; the contract should say so.",
+      "src": "Review 19 Nov 2026"
     }
   ],
   "labourNotes": {
@@ -1138,7 +1189,7 @@
       "id": "S1",
       "kind": "maker",
       "who": "General manager, with the vendor",
-      "text": "Check that every guest chatbot and phone agent says it is AI at the start of the conversation.",
+      "text": "Check whether every guest chatbot and phone agent says it is AI at the start of the conversation.",
       "note": "The law puts this duty on the tool's maker; if your group built the tool, the group owes it directly (Art. 50(1), since 2 Aug 2026). For a vendor's tool it is a sensible check and protects against consumer-law claims.",
       "diff": {
         "booklet": "\"Required since 2 Aug 2026\" for every hotel (Start here, item 1).",
@@ -1149,7 +1200,7 @@
       "id": "S2",
       "kind": "practice",
       "who": "General manager and HR",
-      "text": "Ask HR and department heads whether anyone pastes CVs or staff data into a general chatbot to rank or judge people, and stop it.",
+      "text": "Check with HR and department heads whether anyone pastes CVs or staff data into a general chatbot to rank or judge people. If so, stop it.",
       "note": "From 2 Dec 2027 ranking applicants is a high-risk use. Today the problem is data protection law: the paste sends personal data to an outside service.",
       "diff": {
         "booklet": "States the high-risk and maker risk in the present tense (Start here, item 2).",
@@ -1160,7 +1211,7 @@
       "id": "S3",
       "kind": "practice",
       "who": "Department heads, with IT or purchasing",
-      "text": "Ask the vendors of rota, housekeeping, call-centre and camera tools whether they rank individual staff, read emotions or recognise people by face or voice. Switch off what you do not need.",
+      "text": "Check with the vendors of rota, housekeeping, call-centre and camera tools whether they rank individual staff, read emotions or recognise people by face or voice. Switch off what you do not need.",
       "note": "Reading staff emotions has been banned since 2 Feb 2025. Ranking staff and recognising people at a distance become high-risk on 2 Dec 2027."
     },
     {
@@ -1168,20 +1219,20 @@
       "kind": "practice",
       "who": "General manager; head office pools the lists",
       "auto": "tools",
-      "text": "List every AI tool in use: what it does, who supplies it, who in the hotel is responsible.",
+      "text": "Check whether every AI tool in use is listed: what it does, who supplies it, who in the hotel is responsible.",
       "note": "This register is that list. It is the starting point for every other duty."
     },
     {
       "id": "S5",
       "kind": "duty",
       "who": "General manager and HR",
-      "text": "Brief staff and contractors who use AI on what each tool does and where it can go wrong, and keep a note of who was briefed.",
-      "note": "Required since 2 Feb 2025 (AI Act Art. 4). No certificate is needed."
+      "text": "Take measures so that staff and contractors who use AI understand what each tool does and where it can go wrong (for example a short briefing), and keep a note.",
+      "note": "AI Act Art. 4 as amended by Regulation (EU) 2026/1744 (in force 27 Jul 2026). No certificate or specific level is required."
     }
   ],
   "countryChecks": {
     "CH": {
-      "reach": "Switzerland has no AI act yet. The EU AI Act covers any group hotel in the EU, and makers and users outside the EU whose AI output is used in the EU. A stand-alone Swiss hotel serving guests in Switzerland is not covered (our reading). The labels below are shown for reference; the Swiss Data Protection Act and labour law apply to AI directly.",
+      "reach": "A stand-alone Swiss hotel is probably not covered by the EU AI Act for on-site use (our reading). It can be covered where its AI output is used in the EU, for example a chatbot answering guests in the EU (AI Act Art. 2(1)(c)), and any group hotel in the EU is covered. AI Act items below are shown for reference. The Swiss Data Protection Act (revFADP) and labour law apply to AI directly.",
       "items": [
         {
           "id": "CH1",
@@ -1197,11 +1248,16 @@
           "id": "CH3",
           "who": "General manager and head office",
           "text": "Write the group's AI policy and involve staff before introducing any tool that monitors them."
+        },
+        {
+          "id": "CH4",
+          "who": "General manager",
+          "text": "Check whether any decision about a person is made by a tool alone with legal effects or a significant impact. If so, the person must be told and be able to give their view and ask for a human review (revFADP Art. 21)."
         }
       ]
     },
     "GB": {
-      "reach": "The United Kingdom has no AI act. The EU AI Act covers any group hotel in the EU, and UK makers and users whose AI output is used in the EU. A UK hotel serving guests in the UK is not covered (our reading). The labels below are shown for reference; UK data protection and consumer law apply to AI directly.",
+      "reach": "A stand-alone UK hotel is probably not covered by the EU AI Act for on-site use (our reading). It can be covered where its AI output is used in the EU, for example a chatbot answering guests in the EU (AI Act Art. 2(1)(c)), and any group hotel in the EU is covered. AI Act items below are shown for reference. UK GDPR, consumer and employment law apply to AI directly.",
       "items": [
         {
           "id": "GB1",

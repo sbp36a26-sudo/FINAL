@@ -10,7 +10,7 @@
   var COUNTRY = {}; REF.countries.forEach(function (c) { COUNTRY[c[0]] = c[1]; });
   var KEY = 'hftp-ai-register-v1';
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var LABEL_ORDER = ['prohibited', 'high', 'highif', 'transparency', 'transif', 'minimal', 'outside', 'notai', 'open'];
+  var LABEL_ORDER = ['prohibited', 'banif', 'high', 'highif', 'transparency', 'transif', 'minimal', 'outside', 'notai', 'open'];
   var TODAY = isoDay(new Date());
 
   // ---------- small helpers ----------
@@ -25,8 +25,13 @@
   function opt(v, label, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(label) + '</option>'; }
   function chip(label, big) { var d = REF.labels[label] || REF.labels.open; return '<span class="lb lb-' + label + (big ? ' big' : '') + '">' + esc(d.name) + '</span>'; }
   function kindChip(it) {
-    var k = REF.kinds[it.kind] || { name: it.kind };
-    return '<span class="kd kd-' + esc(it.kind) + '">' + esc(k.name) + (it.kind === 'law' && it.tag ? ' · ' + esc(it.tag) : '') + '</span>';
+    var k = REF.kinds[it.kind] || { name: it.kind }, name = k.name;
+    if (nonEU() && (it.kind === 'duty' || it.kind === 'maker')) name = 'For reference (EU)';
+    return '<span class="kd kd-' + esc(it.kind) + '">' + esc(name) + (it.kind === 'law' && it.tag ? ' · ' + esc(it.tag) : '') + '</span>';
+  }
+  function refText(r) {
+    if (!r || !nonEU() || !/^GDPR/.test(r)) return r;
+    return (state.hotel.country === 'CH' ? 'revFADP' : 'UK GDPR') + ' (EU ' + r + ' where GDPR Art. 3(2) applies)';
   }
   function diffBox(d) {
     if (!d) return '';
@@ -203,8 +208,8 @@
   }
   function listRow(x) {
     var t = x.t, open = x.items.filter(function (i) { return !i.done; }), now = open.filter(isNow).length;
-    var todo = open.length ? plural(open.length, 'item') + ' open' + (now ? ', ' + now + ' now' : '') : 'All checked';
-    if (x.c.openHard.length) todo += ' · ' + plural(x.c.openHard.length, 'question') + ' open';
+    var todo = open.length ? plural(open.length, 'item') + ' open' + (now ? ', ' + now + ' now' : '') : reviewedText(x);
+    if (x.c.open.length) todo += ' · ' + plural(x.c.open.length, 'question') + ' open';
     var sub = [];
     if (DEPTS[t.dept]) sub.push(DEPTS[t.dept].name);
     if (t.vendor) sub.push(t.vendor);
@@ -213,6 +218,11 @@
       '<div data-l="Your role">' + (x.c.label === 'notai' ? '<span class="meta">n/a</span>' : x.c.role === 'maker' ? 'Maker' : 'User') + '</div>' +
       '<div data-l="Responsible">' + (t.owner ? esc(t.owner) : '<span class="miss">Not named</span>') + '</div>' +
       '<div data-l="To check">' + esc(todo) + '</div></li>';
+  }
+
+  function reviewedText(x) {
+    var last = ''; Object.keys(x.t.done || {}).forEach(function (k) { var v = x.t.done[k]; if (typeof v === 'string' && v > last) last = v; });
+    return 'Items marked as reviewed' + (x.t.owner ? ' by ' + x.t.owner : '') + (last ? ' on ' + fmtDate(last) : '');
   }
 
   // ---------- view: add a tool ----------
@@ -272,8 +282,8 @@
       h += '<p><strong>Your role: user</strong> (the law says "deployer"). The tool\'s maker carries most of the duties.</p>';
       if (c.routePending) h += '<p class="meta">If this tool turns out to be high-risk: ' + esc(REF.makerRoutes[c.routePending].text) + '</p>';
     }
-    if (t.decided === 'brand' && (state.hotel.model === 'managed' || state.hotel.model === 'franchised')) {
-      h += '<p class="meta">Head office or the brand chose this tool. Where brand standards impose a tool and its settings, the brand may share the user\'s duties (our reading; the contracts decide in practice).</p>';
+    if (t.decided === 'brand') {
+      h += '<p class="meta">Head office or the brand chose this tool. The brand may also be a user (deployer) of it, or its provider if the tool carries the brand\'s name. The franchise or management agreement should say who carries which duty (our reading).</p>';
     }
     return h;
   }
@@ -298,7 +308,10 @@
         (s.src === 'research' ? '<span class="kd kd-practice">Added from desk research, pending team review</span>' : '') + '</p></fieldset>';
     });
     if (u.base !== 'notai') {
-      h += '<fieldset class="qa"><legend>Does the tool follow only rules written by people, with nothing learned from data?</legend>' + radios('notai', t.notAI || '', 'data-notai="1"') +
+      h += '<fieldset class="qa"><legend>Does the tool only execute rules that people wrote, with no learning or inference of its own (Art. 3(1); recital 12)?</legend>' + radios('notai', t.notAI || '', 'data-notai="1"') +
+        (t.notAI === 'yes' ? '<label class="chk"><input type="checkbox" id="f-notaiok" data-notaiok="1"' + (t.notAIConfirmed === 'yes' ? ' checked' : '') + '> The vendor confirmed this in writing</label>' : '') +
+        (x.c.notAIBlocked === 'blocked' ? '<p class="warnline">Not applied: an answer or an open question above can make this tool banned or high-risk, and that cannot be set aside by calling it "not AI". Settle those questions first.</p>' :
+         x.c.notAIBlocked === 'needs-confirmation' ? '<p class="warnline">Not applied yet: for a tool whose questions can make it banned or high-risk, tick that the vendor confirmed it in writing.</p>' : '') +
         '<p class="meta">' + (u.mayNotBeAI ? 'Tools of this kind are often not AI. ' : '') + 'Software that runs only on hand-written rules, fixed thresholds or simple averages is not an AI system. Ask the vendor how the tool works before treating it as AI; a vendor\'s letter alone does not bind an authority.</p>' +
         '<p class="qmeta"><span>Yes means the AI Act does not apply</span><span class="cite">Art. 3(1)</span><span>' + esc(basisName('guidance')) + '</span></p></fieldset>';
     }
@@ -308,8 +321,8 @@
     var since = it.since && it.since <= TODAY ? 'since ' + fmtDate(it.since) : '';
     return '<div class="item' + (it.done ? ' done' : '') + '"><input type="checkbox" id="' + id + '" ' + attrs + (it.done ? ' checked' : '') + (it.auto ? ' disabled' : '') + ' aria-labelledby="' + id + '-t">' +
       '<div class="itx"><span class="itt" id="' + id + '-t">' + esc(it.text) + '</span>' +
-      '<span class="itm">' + kindChip(it) + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + (it.ref ? '<span class="cite">' + esc(it.ref) + '</span>' : '') + (since ? '<span>' + since + '</span>' : '') + '</span>' +
-      (it.note ? '<span class="itn">' + esc(it.note) + '</span>' : '') +
+      '<span class="itm">' + kindChip(it) + (it.who ? '<span>Who can confirm: ' + esc(it.who) + '</span>' : '') + (it.ref ? '<span class="cite">' + esc(refText(it.ref)) + '</span>' : '') + (since ? '<span>' + since + '</span>' : '') + '</span>' +
+      (it.note ? '<span class="itn">' + esc(/^Why:/.test(it.note) ? it.note : 'Why: ' + it.note) + '</span>' : '') +
       (it.auto === 'owner' ? '<span class="itn">Ticks itself when you name a responsible person.</span>' : it.auto === 'vendor' ? '<span class="itn">Ticks itself when every vendor question below is ticked.</span>' : '') +
       '</div></div>';
   }
@@ -342,12 +355,13 @@
         return '<li>' + esc(r.text) + ' <span class="cite">' + esc(r.prov) + '</span> <span class="meta">' + esc(basisName(r.basis)) + (r.research ? ' · added from desk research, pending team review' : '') + '</span></li>';
       }).join('') + '</ul>';
     }
-    if (c.canProhibit) h += '<p class="flagc" style="white-space:normal">One open question below could make this tool prohibited. Answer it first.</p>';
-    if (c.openHard.length && c.label !== 'notai') h += '<p class="meta">' + plural(c.openHard.length, 'question is', 'questions are') + ' open. "Not sure" keeps the label open: ask the vendor.</p>';
+    if (c.canProhibit) h += '<p class="flagc" style="white-space:normal">' + (c.openBan.length === 1 ? 'One open question below could make this tool prohibited' : plural(c.openBan.length, 'open question') + ' below could make this tool prohibited') + ': ' + esc(c.openBan.map(function (id) { return REF.switches[id].q; }).join(' / ')) + ' Answer ' + (c.openBan.length === 1 ? 'it' : 'them') + ' first.</p>';
+    if (c.open.length && c.label !== 'notai') h += '<p class="meta">' + plural(c.open.length, 'question is', 'questions are') + ' open. "Not sure" keeps the label open and adds a "find out" item: ask the vendor.</p>';
     if (c.alsoTransparency) h += '<p class="meta">The transparency duty applies as well, whatever the answers.</p>';
     if (u.provisional) h += '<p class="meta"><span class="kd kd-practice">Provisional</span> This use is not in the team\'s catalogue of 95. It was found in vendor material and trade press on 17 Nov 2026; the label is not yet reviewed by the team.</p>';
     h += diffBox(u.diff);
-    h += '<p class="meta">Rests on: ' + esc(basisName(u.basis)) + (u.prov ? ' <span class="cite">' + esc(u.prov) + '</span>' : '') + (u.booklet ? ' · Booklet ' + esc(u.booklet) : '') + '</p>';
+    var lb = L.labelBasis(u, c, REF);
+    h += '<p class="meta">Rests on: ' + esc(basisName(lb.basis)) + (lb.prov ? ' <span class="cite">' + esc(lb.prov) + '</span>' : '') + (lb.from === 'answer' ? ' (your answer)' : lb.from === 'question' ? ' (the open question)' : '') + (u.booklet ? ' · Booklet ' + esc(u.booklet) : '') + '</p>';
     h += roleText(x);
     if (nonEU()) h += '<p class="meta">' + esc(REF.countryChecks[state.hotel.country].reach) + '</p>';
     h += '</section>';
@@ -362,6 +376,11 @@
       h += '<div class="grp"><h3>' + groupTitle(g.key) + '</h3>' + g.items.map(function (it) { return itemRow(it, 'it-' + it.id, 'data-item="' + esc(it.id) + '" data-tool="' + esc(t.id) + '"'); }).join('') + '</div>';
     });
     h += '</section>';
+    if (c.packsIfOff) {
+      var off = L.items(u, t, state.hotel, REF, c, c.packsIfOff).filter(function (it) { return it.pack !== 'ban'; });
+      h += '<section class="panel"><details><summary>If you switch the banned feature off, these apply instead <span class="meta">' + plural(off.length, 'item') + '</span></summary>' +
+        off.map(function (it) { return itemRow(it, 'off-' + it.id, 'disabled'); }).join('') + '</details></section>';
+    }
 
     // vendor questions
     var vqs = L.vendorQuestions(u, c, REF);
@@ -538,11 +557,11 @@
     var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n && u.n <= 91; });
     function regCount(k) {
       return rows.filter(function (u) {
-        var c = L.classify(u, {}, REF);
-        if (k === 'high') return c.label === 'high';
-        if (k === 'highif') return c.label === 'highif';
+        var c = L.classify(u, {}, REF), lb = c.labelUnder || c.label;
+        if (k === 'high') return lb === 'high';
+        if (k === 'highif') return lb === 'highif';
         if (k === 'transp') return c.label === 'transparency' || c.label === 'transif' || c.alsoTransparency;
-        return c.canProhibit || c.label === 'prohibited';
+        return c.canProhibitHard || c.label === 'prohibited';
       }).length;
     }
     h += '<section class="panel"><div class="ph"><h2>The label of every use case</h2><span class="meta">For review by the project team</span></div>' +
@@ -626,10 +645,10 @@
       window.parent.postMessage({ hub: 'download', id: id, filename: name, data: content }, window.location.origin);
     });
   }
-  function csvCell(v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function csvCell(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
   function buildCsv() {
     var head = ['No.', 'Tool', 'Use case', 'Department', 'Where', 'Vendor', 'Label', 'Also transparency', 'Open questions', 'Your role', 'Responsible', 'How the hotel got it', 'In use since', 'Items open now', 'Items open later', 'Items done', 'Notes'];
-    var lines = [head].concat(state.tools.map(function (t) {
+    var lines = [[REF.meta.banner + ' Items to check, not a compliance verdict.'], head].concat(state.tools.map(function (t) {
       var x = ctx(t), open = x.items.filter(function (i) { return !i.done; }), origin = '';
       REF.origins.forEach(function (o) { if (o.id === (t.origin || 'vendor')) origin = o.name; });
       return [regNo(t), t.name, x.u.triage ? '' : x.u.name, (DEPTS[t.dept] || {}).name || '', t.where, t.vendor, REF.labels[x.c.label].name, x.c.alsoTransparency ? 'yes' : '', x.c.openHard.length,
@@ -653,6 +672,7 @@
       var rows = state.tools.map(ctx), s = summary(rows);
       function need(h) { if (y + h > H - 18) { doc.addPage(); y = 19; return true; } return false; }
       function font(style, size, grey) { doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(grey || 20); }
+      font('bold', 8.5, 160); doc.setTextColor(163, 57, 42); doc.text(pdfSafe(REF.meta.banner), M, 10);
       font('bold', 17); doc.text('Hotel AI register', M, y);
       font('normal', 9, 100); doc.text(pdfSafe('Printed ' + fmtDate(TODAY)), W - M, y, { align: 'right' });
       y += 7; font('bold', 11); doc.text(pdfSafe(state.hotel.name || 'Hotel not named'), M, y);
@@ -671,7 +691,7 @@
       rows.forEach(function (x) {
         var t = x.t, open = x.items.filter(function (i) { return !i.done; }), now = open.filter(isNow).length;
         var cells = [regNo(t), (t.name || 'Unnamed tool') + (t.vendor ? '\n' + t.vendor : ''), REF.labels[x.c.label].name + (x.c.alsoTransparency ? '\n+ Transparency' : '') + (x.c.openHard.length ? '\n' + plural(x.c.openHard.length, 'question') + ' open' : ''),
-          x.c.label === 'notai' ? '-' : x.c.role === 'maker' ? 'Maker' : 'User', t.owner || 'Not named', open.length ? open.length + ' open' + (now ? ', ' + now + ' now' : '') : 'All checked'];
+          x.c.label === 'notai' ? '-' : x.c.role === 'maker' ? 'Maker' : 'User', t.owner || 'Not named', open.length ? open.length + ' open' + (now ? ', ' + now + ' now' : '') : reviewedText(x)];
         font('normal', 9);
         var lines = cells.map(function (c, i) { return doc.splitTextToSize(pdfSafe(c), cols[i][1] - 2.5); });
         var hgt = Math.max.apply(null, lines.map(function (l) { return l.length; })) * 4.1 + 3;
@@ -697,6 +717,7 @@
       var n = doc.getNumberOfPages();
       for (var i = 1; i <= n; i++) {
         doc.setPage(i); font('normal', 7.5, 120);
+        if (i > 1) { doc.setTextColor(163, 57, 42); doc.text(pdfSafe(REF.meta.banner), M, 10); doc.setTextColor(120); }
         doc.text(pdfSafe('Hotel AI Register (prototype), EHL SBP Group 36 for HFTP. Items to check, not a compliance verdict. Not legal advice. Law as of ' + fmtDate(REF.meta.lawAsOf) + '.'), M, H - 9);
         doc.text('Page ' + i + ' of ' + n, W - M, H - 9, { align: 'right' });
       }
@@ -760,6 +781,7 @@
     var el = e.target, t = toolById(ui.toolId), tt;
     if (el.hasAttribute('data-sw') && t) { t.answers[el.getAttribute('data-sw')] = el.value; persist(); render(true); }
     else if (el.hasAttribute('data-notai') && t) { t.notAI = el.value; persist(); render(true); }
+    else if (el.hasAttribute('data-notaiok') && t) { t.notAIConfirmed = el.checked ? 'yes' : ''; persist(); render(true); }
     else if (el.hasAttribute('data-item')) {
       tt = toolById(el.getAttribute('data-tool'));
       if (tt) { if (el.checked) tt.done[el.getAttribute('data-item')] = TODAY; else delete tt.done[el.getAttribute('data-item')]; persist(); render(true); }

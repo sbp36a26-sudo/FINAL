@@ -4,7 +4,8 @@
 (function (root) {
   'use strict';
 
-  var RANK = { notai: 0, open: 0, minimal: 1, outside: 1, transif: 2, transparency: 3, highif: 4, high: 5, prohibited: 6 };
+  var RANK = { notai: 0, open: 0, minimal: 1, outside: 1, transif: 2, transparency: 3, highif: 4, high: 5, banif: 5.5, prohibited: 6 };
+  var KEEP_WHEN_BANNED = ['ban', 'literacy', 'basics', 'labour'];
   var AI_ACT_PACKS = ['ban', 'chat', 'image', 'text', 'notice', 'hr-user', 'product', 'literacy', 'gen'];
 
   function addPacks(c, list) { (list || []).forEach(function (p) { c.packs[p] = true; }); }
@@ -16,7 +17,7 @@
     var ans = tool.answers || {};
     var c = { base: use.base, label: use.base, open: [], openHard: [], canProhibit: false, reasons: [], areas: {}, packs: {},
               chat: !!use.chat, notice: !!use.notice, transYes: false, highUnder: use.base === 'high',
-              role: 'user', route: null, routePending: null, dateKey: null };
+              role: 'user', route: null, routePending: null, dateKey: null, openBan: [], unsure: [], notAIBlocked: false, packsIfOff: null };
     var cur = use.base, potHigh = false, potTrans = false, potPro = false;
     if (use.base === 'high' && use.area) c.areas[use.area] = true;
 
@@ -33,6 +34,8 @@
         c.reasons.push({ id: s.id, text: d.reason || d.q, prov: d.prov || '', basis: d.basis || '', effect: d.yes || null, research: s.src === 'research' });
       } else if (a !== 'no') {
         c.open.push(s.id);
+        if (a === 'unsure') c.unsure.push(s.id);
+        if (d.yes === 'prohibited') c.openBan.push(s.id);
         if (!s.soft) {
           c.openHard.push(s.id);
           if (d.yes === 'high') potHigh = true;
@@ -50,8 +53,12 @@
     else if (potTrans) label = 'transif';
     else label = cur;
     if (use.triage && c.openHard.length && label !== 'prohibited' && label !== 'high') label = 'open';
+    /* Rule 1: an unanswered or "Not sure" ban question beats every lower label (soft questions included). */
+    c.labelUnder = label;
+    if (c.openBan.length && label !== 'prohibited') label = 'banif';
     c.label = label;
-    c.canProhibit = potPro && label !== 'prohibited';
+    c.canProhibit = (potPro || c.openBan.length > 0) && label !== 'prohibited';
+    c.canProhibitHard = potPro && label !== 'prohibited';
     c.alsoTransparency = (c.chat || c.notice || c.transYes) && RANK[label] > RANK.transparency;
 
     /* Maker or user (booklet A3). Brand it and Change it only bite on high-risk tools. */
@@ -66,6 +73,8 @@
     if (c.route === 'repurpose') c.role = 'maker';
 
     addPacks(c, ['basics', 'literacy']);
+    if (tool.decided === 'brand') addPacks(c, ['brandmandate']);
+    if (c.unsure.length) addPacks(c, ['unsure']);
     addPacks(c, use.packs);
     if (label === 'prohibited') addPacks(c, ['ban']);
     if (c.chat) addPacks(c, ['chat']);
@@ -75,18 +84,33 @@
       if (areas.some(function (a) { return a !== 'product'; }) || (c.areas.product && c.role === 'maker')) addPacks(c, ['hr-user']);
       if (c.areas.product && c.role !== 'maker') addPacks(c, ['product']);
     }
-    if (c.role === 'maker') { addPacks(c, ['liability']); if (use.gen) addPacks(c, ['gen']); }
+    /* Rule 5: a repurposed general tool (e.g. a chatbot used to rank CVs) does not bring product liability or the QMS standard. */
+    if (c.role === 'maker') { if (c.route !== 'repurpose') addPacks(c, ['liability']); if (use.gen) addPacks(c, ['gen']); }
 
     c.onlyProduct = !!c.areas.product && Object.keys(c.areas).length === 1;
     if (label === 'prohibited') c.dateKey = 'bans';
     else if (label === 'high') c.dateKey = c.onlyProduct ? 'products' : 'highrisk';
     else if (label === 'transparency') c.dateKey = 'transparency';
 
-    if (tool.notAI === 'yes' || use.base === 'notai') {
+    /* Rule 2: "rules only, not AI" can never override a ban or high-risk answer, or an open ban or high-risk question.
+       For a use whose questions can make it banned or high-risk, it also needs the vendor's written confirmation. */
+    var risky = (use.switches || []).some(function (s) { var d = ref.switches[s.id]; return d && (d.yes === 'prohibited' || d.yes === 'high'); }) || use.base === 'high';
+    var blocks = c.label === 'prohibited' || c.label === 'high' || c.label === 'highif' || c.label === 'banif' || c.openBan.length > 0;
+    var notAI = use.base === 'notai' || (tool.notAI === 'yes' && !blocks && (!risky || tool.notAIConfirmed === 'yes'));
+    if (tool.notAI === 'yes' && !notAI && use.base !== 'notai') c.notAIBlocked = blocks ? 'blocked' : 'needs-confirmation';
+    if (notAI) {
       c.label = 'notai'; c.canProhibit = false; c.alsoTransparency = false; c.highUnder = false; c.dateKey = null;
       c.role = 'user'; c.route = null; c.routePending = null;
       AI_ACT_PACKS.forEach(function (p) { delete c.packs[p]; });
-      delete c.packs.liability;
+      delete c.packs.liability; delete c.packs.unsure;
+    }
+    /* Rule 3: prohibited means stop. Only the stop item, AI literacy, basics and labour items stay; the rest is shown
+       separately as "if you switch the banned feature off". */
+    if (c.label === 'prohibited') {
+      c.packsIfOff = {};
+      Object.keys(c.packs).forEach(function (p) { if (p !== 'ban') c.packsIfOff[p] = true; });
+      var kept = {}; KEEP_WHEN_BANNED.forEach(function (p) { if (c.packs[p]) kept[p] = true; });
+      c.packs = kept;
     }
     return c;
   }
@@ -108,13 +132,18 @@
   }
 
   /* The items to check for one tool, in display order: what applies now first, then by date. */
-  function items(use, tool, hotel, ref, c) {
+  function items(use, tool, hotel, ref, c, packsOverride) {
     tool = tool || {};
     c = c || classify(use, tool, ref);
-    var out = [];
+    var packs = packsOverride || c.packs, out = [];
     (ref.items || []).forEach(function (it, idx) {
-      if (!c.packs[it.pack]) return;
-      if (it.role && it.role !== c.role) return;
+      if (!packs[it.pack]) return;
+      /* Rule 4: maker items only for makers; user duties stay for a maker that also uses the tool,
+         except checks that only make sense against an outside vendor. */
+      if (it.role === 'maker' && c.role !== 'maker') return;
+      if (c.role === 'maker' && (it.vendorOnly || (it.role === 'user' && it.kind === 'maker'))) return;
+      if (it.onlyRoute && it.onlyRoute.indexOf(c.route || '') < 0) return;
+      if (it.notRoute && it.notRoute.indexOf(c.route || '') >= 0) return;
       if (it.area && !c.areas[it.area]) return;
       var whenKey = it.when;
       if (whenKey === 'highrisk' && c.onlyProduct) whenKey = 'products';
@@ -129,6 +158,13 @@
       out.push({ id: it.id, text: it.text, kind: it.kind, tag: it.tag || '', who: it.who || '', ref: it.ref || '', note: note, src: it.src || '',
                  auto: it.auto || null, done: done, when: whenKey === 'now' ? null : ref.dates[whenKey], since: it.since ? ref.dates[it.since] : null, order: idx });
     });
+    /* Rule 6: every "Not sure" answer becomes something to find out. */
+    if (packs.unsure) c.unsure.forEach(function (id, k) {
+      var d = ref.switches[id]; if (!d) return;
+      var who = /staff|hr|career|hours|rank|judge|coach|job|repurpose/.test(id) ? 'HR or the vendor' : /face|bio|voice|card|paste|sensitive|scan|med/.test(id) ? 'Data protection contact or the vendor' : 'The vendor';
+      out.push({ id: 'Q-' + id, text: 'Find out: ' + d.q, kind: 'open', tag: 'Open question', who: who, ref: d.prov || '', note: d.yes ? 'Why: if the answer is yes, the label becomes ' + (((ref.labels || {})[d.yes] || {}).name || d.yes) + '.' : '', src: '',
+                auto: null, done: !!(tool.done && tool.done['Q-' + id]), when: null, since: null, order: -100 + k });
+    });
     out.sort(function (a, b) {
       if (a.when === b.when) return a.order - b.order;
       if (a.when === null) return -1;
@@ -136,6 +172,17 @@
       return a.when < b.when ? -1 : 1;
     });
     return out;
+  }
+
+  /* The basis behind the current label: the answer or open question that set it, else the use case's default. */
+  function labelBasis(use, c, ref) {
+    var best = null;
+    c.reasons.forEach(function (r) { if (r.effect && (r.effect === c.label || (c.label === 'high' && r.effect === 'high') || (c.label === 'prohibited' && r.effect === 'prohibited')) && (!best || RANK[r.effect] > RANK[best.effect])) best = r; });
+    if (best) return { basis: best.basis || use.basis, prov: best.prov || '', from: 'answer', id: best.id };
+    var want = c.label === 'banif' ? 'prohibited' : c.label === 'highif' ? 'high' : c.label === 'transif' ? 'transparency' : null;
+    var ids = c.label === 'banif' ? c.openBan : c.openHard;
+    if (want) for (var i = 0; i < ids.length; i++) { var d = ref.switches[ids[i]]; if (d && d.yes === want) return { basis: d.basis || use.basis, prov: d.prov || '', from: 'question', id: ids[i] }; }
+    return { basis: use.basis, prov: use.prov || '', from: 'default', id: null };
   }
 
   /* On which kinds of source the tool's current label rests. */
@@ -170,7 +217,7 @@
   }
 
   var api = { RANK: RANK, classify: classify, items: items, vendorQuestions: vendorQuestions, vendorDone: vendorDone,
-              restsOn: restsOn, radarHitsTool: radarHitsTool, radarHitsHotel: radarHitsHotel };
+              restsOn: restsOn, labelBasis: labelBasis, radarHitsTool: radarHitsTool, radarHitsHotel: radarHitsHotel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RegLogic = api;
 })(typeof self !== 'undefined' ? self : (typeof globalThis !== 'undefined' ? globalThis : this));
