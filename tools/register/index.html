@@ -226,11 +226,11 @@ td.num{font-family:var(--mono);font-size:12px;color:var(--ink3);white-space:nowr
     <p id="saved" role="status"></p>
   </header>
   <nav class="tabs" aria-label="Sections">
-    <button type="button" class="tab" data-act="tab" data-tab="register" id="tab-register">Register</button>
-    <button type="button" class="tab" data-act="tab" data-tab="todo" id="tab-todo">To do</button>
-    <button type="button" class="tab" data-act="tab" data-tab="hotel" id="tab-hotel">Your hotel</button>
-    <button type="button" class="tab" data-act="tab" data-tab="watch" id="tab-watch">Watch list</button>
     <button type="button" class="tab" data-act="tab" data-tab="how" id="tab-how">How it works</button>
+    <button type="button" class="tab" data-act="tab" data-tab="hotel" id="tab-hotel">Register your hotel</button>
+    <button type="button" class="tab" data-act="tab" data-tab="register" id="tab-register">Register AI tools</button>
+    <button type="button" class="tab" data-act="tab" data-tab="todo" id="tab-todo">To do</button>
+    <button type="button" class="tab" data-act="tab" data-tab="watch" id="tab-watch">Watch list</button>
   </nav>
   <main id="view" tabindex="-1"></main>
   <footer class="foot">
@@ -462,7 +462,7 @@ td.num{font-family:var(--mono);font-size:12px;color:var(--ink3);white-space:nowr
 
   // ---------- state ----------
   var mem = { ok: true };
-  var ui = { tab: 'register', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
+  var ui = { tab: 'how', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
   var state;
 
   function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null }; }
@@ -873,7 +873,7 @@ td.num{font-family:var(--mono);font-size:12px;color:var(--ink3);white-space:nowr
       '<label class="fld"><span>Who keeps this register</span><input type="text" id="h-keeper" data-h="keeper" value="' + esc(H.keeper) + '" placeholder="Name or role"></label></div>' +
       '<div class="fld"><span>Food, beverage and other outlets inside the hotel</span><div class="checks">' + REF.outlets.map(function (o) {
         return '<label><input type="checkbox" id="o-' + o.id + '" data-outlet="' + o.id + '"' + (H.outlets.indexOf(o.id) >= 0 ? ' checked' : '') + '> <span>' + esc(o.name) + '</span></label>';
-      }).join('') + '</div></div></section>';
+      }).join('') + '</div></div><div class="btnrow"><button type="button" class="btn primary" data-act="tab" data-tab="register">Next: register AI tools</button></div></section>';
 
     var model = null; REF.operatingModels.forEach(function (m) { if (m.id === H.model) model = m; });
     h += '<div class="detail"><div>';
@@ -938,11 +938,12 @@ td.num{font-family:var(--mono);font-size:12px;color:var(--ink3);white-space:nowr
   // ---------- view: how it works ----------
   function vHow() {
     var h = '';
-    h += '<section class="panel"><h2>How the register works</h2><ol class="steps">' +
+    h += '<section class="panel"><h2>How the register works</h2><p class="sub">Three steps: describe your hotel, add the AI tools it uses, then work through what to check. An example hotel is loaded so you can look around first.</p><ol class="steps">' +
       '<li><strong>Each tool starts from a hotel use case.</strong> The list holds the 91 use cases of the project\'s Hotel AI Use-Case Catalogue, plus 17 uses found in the market that the catalogue does not have yet.</li>' +
       '<li><strong>Each use case carries a label under the AI Act text.</strong> The labels are prohibited, high-risk, high-risk if…, transparency and minimal, plus "outside the high-risk list" and "not an AI system". They start from the briefing booklet; where a check of the law on 17 Nov 2026 found the booklet says more or less than the law, the register follows the law and shows the booklet\'s wording next to it.</li>' +
       '<li><strong>Your answers settle the label.</strong> For many tools one feature or one use decides. "Not sure" keeps the label open.</li>' +
-      '<li><strong>The label, your role and your country produce the items to check.</strong> Each item says who should do it, by when, and what it rests on.</li></ol></section>';
+      '<li><strong>The label, your role and your country produce the items to check.</strong> Each item says who should do it, by when, and what it rests on.</li></ol>' +
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="tab" data-tab="hotel">Register your hotel</button><button type="button" class="btn" data-act="tab" data-tab="register">See the example register</button></div></section>';
     h += '<div class="detail"><div><section class="panel"><h3>What each item is</h3><dl class="kv">' + Object.keys(REF.kinds).map(function (k) { return '<dt><span class="kd kd-' + k + '">' + esc(REF.kinds[k].name) + '</span></dt><dd>' + esc(REF.kinds[k].desc) + '</dd>'; }).join('') + '</dl></section>' +
       '<section class="panel"><h3>What a label rests on</h3><dl class="kv">' + Object.keys(REF.basis).map(function (k) { return '<dt>' + esc(REF.basis[k].name) + '</dt><dd>' + esc(REF.basis[k].desc) + '</dd>'; }).join('') + '</dl></section></div>' +
       '<div><section class="panel"><h3>Limits</h3><ul class="reasons">' +
