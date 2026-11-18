@@ -28,6 +28,10 @@
     var k = REF.kinds[it.kind] || { name: it.kind };
     return '<span class="kd kd-' + esc(it.kind) + '">' + esc(k.name) + (it.kind === 'law' && it.tag ? ' · ' + esc(it.tag) : '') + '</span>';
   }
+  function diffBox(d) {
+    if (!d) return '';
+    return '<div class="diff"><p><span class="kd kd-diff">Differs from the booklet</span></p><p><strong>Booklet:</strong> ' + esc(d.booklet) + '</p><p><strong>AI Act text:</strong> ' + esc(d.law) + '</p></div>';
+  }
   function basisName(b) { return (REF.basis[b] || { name: '' }).name; }
 
   // ---------- state ----------
@@ -193,6 +197,7 @@
     if (c.alsoTransparency) h += chip('transparency');
     if (c.canProhibit) h += '<span class="flagc">Can become prohibited</span>';
     if (x.u.provisional) h += '<span class="kd kd-practice">Provisional</span>';
+    if (x.u.diff) h += '<span class="kd kd-diff">Differs from booklet</span>';
     return h;
   }
   function listRow(x) {
@@ -340,6 +345,7 @@
     if (c.openHard.length && c.label !== 'notai') h += '<p class="meta">' + plural(c.openHard.length, 'question is', 'questions are') + ' open. "Not sure" keeps the label open: ask the vendor.</p>';
     if (c.alsoTransparency) h += '<p class="meta">The transparency duty applies as well, whatever the answers.</p>';
     if (u.provisional) h += '<p class="meta"><span class="kd kd-practice">Provisional</span> This use is not in the team\'s catalogue of 91. It was found in vendor material and trade press on 17 Nov 2026; the label is not yet reviewed by the team.</p>';
+    h += diffBox(u.diff);
     h += '<p class="meta">Rests on: ' + esc(basisName(u.basis)) + (u.prov ? ' <span class="cite">' + esc(u.prov) + '</span>' : '') + (u.booklet ? ' · Booklet ' + esc(u.booklet) : '') + '</p>';
     h += roleText(x);
     if (nonEU()) h += '<p class="meta">' + esc(REF.countryChecks[state.hotel.country].reach) + '</p>';
@@ -395,7 +401,7 @@
     h += '<section class="panel"><div class="ph"><h2>Five things to do now</h2><span class="meta">From the briefing booklet</span></div><div>';
     REF.hotelChecks.forEach(function (hc) {
       var auto = hc.auto === 'tools', done = auto ? state.tools.length > 0 : !!state.checks[hc.id];
-      h += itemRow({ id: hc.id, text: hc.text, kind: hc.kind, who: hc.who, note: hc.note + (auto ? ' ' + plural(state.tools.length, 'tool') + ' listed so far.' : ''), done: done, auto: null }, 'hc-' + hc.id, 'data-hc="' + esc(hc.id) + '"' + (auto ? ' disabled' : ''));
+      h += itemRow({ id: hc.id, text: hc.text, kind: hc.kind, who: hc.who, note: hc.note + (auto ? ' ' + plural(state.tools.length, 'tool') + ' listed so far.' : ''), done: done, auto: null }, 'hc-' + hc.id, 'data-hc="' + esc(hc.id) + '"' + (auto ? ' disabled' : '')) + diffBox(hc.diff);
     });
     var reps = state.hotel.reps === 'yes';
     h += '</div><p class="meta"><span class="kd kd-law">Other law · Labour</span> Before introducing any tool that schedules, scores or watches staff, involve the works council or staff representatives where you have them.' + (reps ? ' Your hotel has staff representatives.' : '') +
@@ -508,13 +514,14 @@
     var h = '';
     h += '<section class="panel"><h2>How the register works</h2><ol class="steps">' +
       '<li><strong>Each tool starts from a hotel use case.</strong> The list holds the 91 use cases of the project\'s Hotel AI Use-Case Catalogue, plus 17 uses found in the market that the catalogue does not have yet.</li>' +
-      '<li><strong>Each use case carries a label.</strong> The labels are the five of the briefing booklet: prohibited, high-risk, high-risk if…, transparency and minimal, plus "outside the high-risk list" and "not an AI system".</li>' +
+      '<li><strong>Each use case carries a label under the AI Act text.</strong> The labels are prohibited, high-risk, high-risk if…, transparency and minimal, plus "outside the high-risk list" and "not an AI system". They start from the briefing booklet; where a check of the law on 17 Nov 2026 found the booklet says more or less than the law, the register follows the law and shows the booklet\'s wording next to it.</li>' +
       '<li><strong>Your answers settle the label.</strong> For many tools one feature or one use decides. "Not sure" keeps the label open.</li>' +
       '<li><strong>The label, your role and your country produce the items to check.</strong> Each item says who should do it, by when, and what it rests on.</li></ol></section>';
     h += '<div class="detail"><div><section class="panel"><h3>What each item is</h3><dl class="kv">' + Object.keys(REF.kinds).map(function (k) { return '<dt><span class="kd kd-' + k + '">' + esc(REF.kinds[k].name) + '</span></dt><dd>' + esc(REF.kinds[k].desc) + '</dd>'; }).join('') + '</dl></section>' +
       '<section class="panel"><h3>What a label rests on</h3><dl class="kv">' + Object.keys(REF.basis).map(function (k) { return '<dt>' + esc(REF.basis[k].name) + '</dt><dd>' + esc(REF.basis[k].desc) + '</dd>'; }).join('') + '</dl></section></div>' +
       '<div><section class="panel"><h3>Limits</h3><ul class="reasons">' +
       '<li>It is a prototype. The labels and wording are waiting for review by the project team.</li>' +
+      '<li>Where it says "Differs from the booklet", the register follows the law text. Some of these points rest on Commission guidance the research could not open in full.</li>' +
       '<li>It is not legal advice and gives no verdict that a hotel complies.</li>' +
       '<li>Several labels rest on the Commission\'s draft guidelines of 19 May 2026 and may change.</li>' +
       '<li>It covers the EU AI Act and points to other laws. It does not replace a data protection or labour law review.</li>' +
@@ -527,13 +534,21 @@
 
     // label table
     var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n; });
-    function cnt(k) { return rows.filter(function (u) { return u.a6.indexOf(k) >= 0; }).length; }
-    h += '<section class="panel"><div class="ph"><h2>The label of every use case</h2><span class="meta">For review by the project team</span></div>' +
-      '<p class="sub">The briefing booklet counts ' + T.high + ' high-risk uses, ' + T.highif + ' that are high-risk depending on set-up, ' + T.transp + ' with a transparency duty and ' + T.prohib + ' that one feature can make prohibited (booklet page A6, own classification of the 91 uses). This file gives ' + cnt('high') + ', ' + cnt('highif') + ', ' + cnt('transp') + ' and ' + cnt('prohib') + '.</p>';
-    function table(us) {
-      return '<div class="tblw"><table><thead><tr><th>No.</th><th>Use case</th><th>Label before answers</th><th>Deciding questions</th><th>Rests on</th><th>Booklet</th><th>Review note</th></tr></thead><tbody>' + us.map(function (u) {
+    function regCount(k) {
+      return rows.filter(function (u) {
         var c = L.classify(u, {}, REF);
-        return '<tr><td class="num">' + (u.n || esc(u.id)) + '</td><td>' + esc(u.name) + '</td><td>' + chip(c.label) + (c.alsoTransparency ? ' ' + chip('transparency') : '') + (c.canProhibit ? ' <span class="flagc">Can become prohibited</span>' : '') + '</td><td class="num">' + (u.switches.length || '') + '</td><td>' + esc(basisName(u.basis)) + '</td><td>' + esc(u.booklet) + '</td><td>' + esc(u.review || '') + '</td></tr>';
+        if (k === 'high') return c.label === 'high';
+        if (k === 'highif') return c.label === 'highif';
+        if (k === 'transp') return c.label === 'transparency' || c.label === 'transif' || c.alsoTransparency;
+        return c.canProhibit || c.label === 'prohibited';
+      }).length;
+    }
+    h += '<section class="panel"><div class="ph"><h2>The label of every use case</h2><span class="meta">For review by the project team</span></div>' +
+      '<p class="sub">The briefing booklet counts ' + T.high + ' high-risk uses, ' + T.highif + ' that are high-risk depending on set-up, ' + T.transp + ' with a transparency duty and ' + T.prohib + ' that one feature can make prohibited (booklet page A6, own classification of the 91 uses). Following the law text, the register gives ' + regCount('high') + ', ' + regCount('highif') + ', ' + regCount('transp') + ' and ' + regCount('prohib') + '. ' + plural(rows.filter(function (u) { return u.diff; }).length, 'use case differs', 'use cases differ') + ' from the booklet; they are marked below.</p>';
+    function table(us) {
+      return '<div class="tblw"><table><thead><tr><th>No.</th><th>Use case</th><th>Label before answers</th><th>Deciding questions</th><th>Rests on</th><th>Booklet</th><th>Differs from the booklet</th><th>Review note</th></tr></thead><tbody>' + us.map(function (u) {
+        var c = L.classify(u, {}, REF);
+        return '<tr><td class="num">' + (u.n || esc(u.id)) + '</td><td>' + esc(u.name) + '</td><td>' + chip(c.label) + (c.alsoTransparency ? ' ' + chip('transparency') : '') + (c.canProhibit ? ' <span class="flagc">Can become prohibited</span>' : '') + '</td><td class="num">' + (u.switches.length || '') + '</td><td>' + esc(basisName(u.basis)) + '</td><td>' + esc(u.booklet) + '</td><td>' + (u.diff ? esc(u.diff.law) : '') + '</td><td>' + esc(u.review || '') + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     }
     CAT.depts.forEach(function (d) {

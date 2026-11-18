@@ -41,9 +41,10 @@ eq(rows.filter(u => u.staff).length, T.staff, 'booklet A6: staff exposures');
 // the a6 flags must agree with what the logic derives from base + hard switches
 const hard = (u, eff) => u.switches.some(s => !s.soft && ref.switches[s.id] && ref.switches[s.id].yes === eff);
 ok(rows.every(u => u.a6.includes('high') === (u.base === 'high')), 'a6 high = base high');
-ok(rows.every(u => u.a6.includes('highif') === (u.base !== 'high' && hard(u, 'high'))), 'a6 highif = a hard question can make it high-risk');
+ok(rows.filter(u => !u.diff).every(u => u.a6.includes('highif') === (u.base !== 'high' && hard(u, 'high'))), 'a6 highif = a hard question can make it high-risk (rows that follow the booklet)');
 ok(rows.every(u => u.a6.includes('transp') === (!!u.chat || hard(u, 'transparency'))), 'a6 transp = talks to people or a hard transparency question');
-ok(rows.every(u => u.a6.includes('prohib') === hard(u, 'prohibited')), 'a6 prohib = a hard question can make it prohibited');
+ok(rows.filter(u => !u.diff).every(u => u.a6.includes('prohib') === hard(u, 'prohibited')), 'a6 prohib = a hard question can make it prohibited (rows that follow the booklet)');
+ok(rows.filter(u => u.diff).every(u => u.diff.booklet && u.diff.law), 'every row that differs from the booklet says how');
 ok(labels.uses.every(u => u.switches.every(s => ref.switches[s.id])), 'every question id exists in reference.json');
 const packsUsed = new Set(['basics', 'literacy', 'ban', 'chat', 'notice', 'hr-user', 'product', 'liability', 'gen']);
 labels.uses.forEach(u => u.packs.forEach(p => packsUsed.add(p)));
@@ -88,7 +89,8 @@ const rep = cls('gm-2', { answers: { repurpose_hr: 'yes' } });
 ok(rep.label === 'high' && rep.role === 'maker' && rep.route === 'repurpose', 'general assistant used to rank applicants: high-risk and maker (repurpose)');
 eq(cls('it-2', { answers: { emo_staff: 'yes' } }).label, 'prohibited', 'service desk reading staff emotions is prohibited');
 ok(cls('it-2', { answers: { emo_staff: 'yes' } }).reasons[0].research, 'that reason is marked as added from research');
-eq(cls('me-5').label, 'highif', 'lift maintenance with the question open');
+eq(cls('me-5').label, 'minimal', 'lift predictive maintenance is minimal (Art. 6(1a))');
+ok(!!U('me-5').diff, 'lift maintenance is marked as differing from the booklet');
 const lift = cls('me-5', { answers: { safety_part: 'yes' } });
 ok(lift.label === 'high' && lift.onlyProduct && lift.dateKey === 'products' && lift.packs.product && !lift.packs['hr-user'], 'lift safety AI: high-risk from 2 Aug 2028, maker\'s duty');
 eq(cls('rm-2', { answers: { personal_price: 'yes' } }).label, 'minimal', 'personalised pricing does not change the AI Act label');
@@ -148,6 +150,23 @@ ok(!L.radarHitsTool(W('w-highrisk-guidelines'), U('rm-1'), cls('rm-1'), ref), 'f
 ok(L.radarHitsTool(W('w-liability'), U('gx-2'), built, ref) && !L.radarHitsTool(W('w-liability'), U('gx-2'), cls('gx-2'), ref), 'product liability affects group-built tools only');
 ok(!L.radarHitsTool(W('w-marking'), U('sm-4'), cls('sm-4'), ref) && L.radarHitsTool(W('w-marking'), U('sm-4'), cls('sm-4', { origin: 'built' }), ref), 'marking deadline: only a group-built generator');
 ok(L.radarHitsHotel(W('w-swiss'), { country: 'CH' }) && !L.radarHitsHotel(W('w-swiss'), { country: 'DE' }), 'Swiss bill applies to Swiss hotels');
+
+// ---- law-based changes (deep-dive research, 17 Nov 2026) ----
+const reg = k => rows.filter(u => { const c = cls(u.id); return k === 'highif' ? c.label === 'highif' : k === 'prohib' ? c.canProhibit || c.label === 'prohibited' : c.label === k; }).length;
+eq(reg('high'), 3, 'register: high-risk catalogue uses');
+eq(reg('highif'), 11, 'register: "high-risk if" catalogue uses (booklet 13, minus the 2 maintenance uses)');
+eq(reg('prohib'), 6, 'register: catalogue uses that can become prohibited (booklet 5, plus IT service desk; video analytics now 2 bans)');
+eq(cls('hr-4').label, 'highif', 'attrition: per-person score question open');
+eq(cls('hr-4', { answers: { rank_staff: 'yes' } }).label, 'high', 'attrition scores on named staff are high-risk');
+eq(cls('hr-3', { answers: { rank_staff: 'yes', career_decide: 'no', coach_emo: 'no' } }).label, 'high', 'training scores reported to managers are high-risk');
+ok(cls('it-2').canProhibit, 'IT service desk: staff emotion question can make it prohibited');
+eq(cls('it-4', { answers: { face_enrol: 'yes' } }).label, 'prohibited', 'face database from CCTV footage is prohibited');
+eq(cls('m-1', { answers: { crime_profile: 'yes' } }).label, 'prohibited', 'predicting offences from a guest profile is prohibited');
+eq(cls('rm-7', { answers: { exploit_price: 'yes' } }).label, 'prohibited', 'manipulative upselling causing significant harm is prohibited');
+const itG = L.items(U('gx-2'), {}, hotelDE, ref).find(i => i.id === 'C1');
+ok(itG.kind === 'maker' && /maker/.test(itG.note), 'vendor chatbot notice is the maker\'s duty, the hotel checks');
+ok(ids(itRota).includes('H8'), 'high-risk user duties include cooperating with authorities');
+eq(ref.items.find(i => i.id === 'H7').kind, 'practice', 'CE confirmation from the vendor is good practice, not a duty');
 
 console.log((fail ? 'FAILED' : 'ok') + ': ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

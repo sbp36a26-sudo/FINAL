@@ -4,6 +4,8 @@ A hotel lists every AI tool it uses. For each tool the register gives its label 
 
 Built on 17 Nov 2026 from the D4 catalogue, the D7 booklet and data file, and the two research reports in `reports/`.
 
+**Labels follow the EU AI Act text** (as amended in July 2026, checked 17 Nov 2026). They start from the booklet; where the deep-dive research found the booklet says more or less than the law, the register follows the law and shows the booklet's wording next to it (`diff` in `uc-labels.json`, "Differs from the booklet" on the page). Register counts: 3 high-risk, 11 high-risk if…, 11 transparency, 6 can become prohibited (booklet: 3 / 13 / 11 / 5).
+
 ## What is in it
 
 | Part | What it does |
@@ -29,7 +31,7 @@ Entries are saved in the visitor's browser only. A shared, saved version for a t
 | `src/logic.js` | Label, role and item logic. No dependencies; also runs in Node. |
 | `src/app.js`, `src/page.html` | The page. |
 | `build.mjs` | Builds `index.html` (GENERATED) and checks the label file against the catalogue. |
-| `tests/logic.test.mjs` | 84 checks, including the booklet's A6 totals (3 / 13 / 11 / 5). |
+| `tests/logic.test.mjs` | 99 checks: the booklet's A6 totals for rows that follow it, and the law-based changes. |
 
 ```bash
 node tools/register/tests/logic.test.mjs
@@ -43,7 +45,7 @@ After building the register, rebuild the hub with `node tools/build-hub.mjs` onl
 
 ## Known gaps
 
-- Labels follow the booklet. Where the 17 Nov research disagrees, the row carries a review note and the questions it added are marked "pending team review".
+- Where the register departs from the booklet it relies on the 17 Nov text check; some of those points rest on Commission guidance the research could not open in full.
 - Use-case ids are positional (`hr-2` = second HR use). The build fails if the catalogue order changes.
 - The custom-tool check is a short triage, not the explorer's full wizard.
 - Country research covers Germany, France, Spain, Sweden, Switzerland and the UK only.
