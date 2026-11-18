@@ -34,14 +34,15 @@
     return (state.hotel.country === 'CH' ? 'revFADP' : 'UK GDPR') + ' (EU ' + r + ' where GDPR Art. 3(2) applies)';
   }
   function diffBox(d) {
-    if (!d) return '';
+    if (!d || !ui.reviewer) return '';
     return '<div class="diff"><p><span class="kd kd-diff">Differs from the booklet</span></p><p><strong>Booklet:</strong> ' + esc(d.booklet) + '</p><p><strong>AI Act text:</strong> ' + esc(d.law) + '</p></div>';
   }
   function basisName(b) { return (REF.basis[b] || { name: '' }).name; }
 
   // ---------- state ----------
   var mem = { ok: true };
-  var ui = { tab: 'how', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
+  var REVIEWER_KEY = 'hftp-ai-register-reviewer';
+  var ui = { reviewer: (function () { try { return window.localStorage.getItem(REVIEWER_KEY) === '1'; } catch (e) { return false; } })(), whoFilter: '', tab: 'how', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
   var state;
 
   function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null }; }
@@ -99,7 +100,12 @@
   }
 
   function toolById(id) { for (var i = 0; i < state.tools.length; i++) if (state.tools[i].id === id) return state.tools[i]; return null; }
-  function ctx(t) { var u = USES[t.useId] || USES.custom, c = L.classify(u, t, REF); return { t: t, u: u, c: c, items: L.items(u, t, state.hotel, REF, c) }; }
+  function ctx(t) {
+    var u = USES[t.useId] || USES.custom, c = L.classify(u, t, REF), items = L.items(u, t, state.hotel, REF, c);
+    /* AI literacy is one hotel-wide measure: ticking it under "Five things to do now" (S5) covers every tool. */
+    if (state.checks && state.checks.S5) items.forEach(function (it) { if (it.id === 'L1') it.done = true; });
+    return { t: t, u: u, c: c, items: items };
+  }
   function isNow(it) { return !it.when || it.when <= TODAY; }
   function nonEU() { return ['CH', 'GB', 'NO', 'IS', 'LI'].indexOf(state.hotel.country) >= 0; }
 
@@ -116,11 +122,17 @@
 
   // ---------- view: register list ----------
   function summary(rows) {
-    var by = {}, now = 0, later = {}, open = 0;
+    var by = {}, now = 0, later = {}, open = 0, seen = {};
     rows.forEach(function (x) {
       by[x.c.label] = (by[x.c.label] || 0) + 1;
-      if (x.c.openHard.length) open++;
-      x.items.forEach(function (it) { if (it.done) return; if (isNow(it)) now++; else later[it.when] = (later[it.when] || 0) + 1; });
+      if (x.c.open.length) open++;
+      x.items.forEach(function (it) {
+        if (it.done) return;
+        /* hotel-wide items count once; vendor items once per vendor */
+        var key = it.scope === 'hotel' ? 'h:' + it.id : it.scope === 'vendor' ? 'v:' + ((x.t.vendor || '').trim() || x.t.id) + ':' + it.id : null;
+        if (key) { if (seen[key]) return; seen[key] = 1; }
+        if (isNow(it)) now++; else later[it.when] = (later[it.when] || 0) + 1;
+      });
     });
     return { by: by, now: now, later: later, open: open };
   }
@@ -203,7 +215,7 @@
     if (c.alsoTransparency) h += chip('transparency');
     if (c.canProhibit) h += '<span class="flagc">Can become prohibited</span>';
     if (x.u.provisional) h += '<span class="kd kd-practice">Provisional</span>';
-    if (x.u.diff) h += '<span class="kd kd-diff">Differs from booklet</span>';
+    if (x.u.diff && ui.reviewer) h += '<span class="kd kd-diff">Differs from booklet</span>';
     return h;
   }
   function listRow(x) {
@@ -225,6 +237,18 @@
     return 'Items marked as reviewed' + (x.t.owner ? ' by ' + x.t.owner : '') + (last ? ' on ' + fmtDate(last) : '');
   }
 
+  /* Everyday words people search with, mapped to the words the catalogue uses. */
+  var SYN = { 'channel manager': ['channel'], 'smart alert': ['video', 'camera', 'sensor', 'alert'], 'smart alerts': ['video', 'camera', 'sensor', 'alert'],
+    chatgpt: ['gpt', 'genai', 'general ai assistant', 'copilot'], copilot: ['assistant', 'copilot', 'genai'], rota: ['schedul', 'rota', 'roster', 'shift'], roster: ['schedul', 'roster', 'shift'],
+    camera: ['video', 'cctv', 'camera'], cctv: ['video', 'cctv', 'camera'], pms: ['pms', 'front-desk', 'front desk', 'property management', 'check-in'], chatbot: ['chat', 'messag', 'assistant'],
+    whatsapp: ['whatsapp', 'messag', 'chat'], cv: ['recruit', 'cv', 'applicant'], hiring: ['recruit', 'hiring', 'applicant'], pricing: ['pric', 'rate', 'revenue'], 'food waste': ['waste'] };
+  function searchTerms(q) {
+    var terms = [];
+    Object.keys(SYN).forEach(function (k) { if (k.indexOf(' ') > 0 && q.indexOf(k) >= 0) { terms.push(SYN[k]); q = q.replace(k, ' '); } });
+    q.split(/\s+/).filter(Boolean).forEach(function (w) { terms.push([w].concat(SYN[w] || [])); });
+    return terms;
+  }
+
   // ---------- view: add a tool ----------
   function vPick() {
     var q = ui.pickQ.trim().toLowerCase(), have = {};
@@ -234,13 +258,14 @@
       if (ui.pickDept && u.dept !== ui.pickDept) return false;
       if (!q) return true;
       var cu = CAT.uses[u.id] || {};
-      return [u.name, u.kw || '', cu.task || '', (DEPTS[u.dept] || {}).name || ''].join(' ').toLowerCase().indexOf(q) >= 0;
+      var hay = [u.name, u.kw || '', cu.task || '', (DEPTS[u.dept] || {}).name || ''].join(' ').toLowerCase();
+      return searchTerms(q).every(function (alts) { return alts.some(function (w) { return hay.indexOf(w) >= 0; }); });
     }
     function row(u) {
       var cu = CAT.uses[u.id] || {}, c = L.classify(u, {}, REF);
       return '<button type="button" class="pick" data-act="pick" data-id="' + esc(u.id) + '"><span class="pn">' + esc(u.name) + '</span>' +
         '<span class="pr">' + chip(c.label) + (have[u.id] ? '<span class="meta">In your register</span>' : '') + '</span>' +
-        '<span class="meta">' + esc(cu.task || u.why || '') + (cu.use ? ' · Use in hotels: ' + esc(cu.use.toLowerCase()) : '') + '</span></button>';
+        '<span class="meta">' + esc(cu.taskPublic || u.why || '') + (cu.use ? ' · How common in hotels (team estimate, Nov 2026): ' + esc(cu.use.toLowerCase()) : '') + '</span></button>';
     }
     var h = '<p><button type="button" class="linkbtn" data-act="back">← Back to the register</button></p>' +
       '<div class="band"><div class="who"><h2>Add a tool</h2><p class="sub">Pick the closest match. You can rename it afterwards, and the questions on the next page settle its label.</p></div>' +
@@ -372,11 +397,14 @@
 
     // items
     var done = x.items.filter(function (i) { return i.done; }).length;
-    h += '<section class="panel"><div class="ph"><h3>What to check</h3><span class="meta">' + done + ' of ' + x.items.length + ' done</span></div>';
+    var top = x.items.filter(function (i) { return !i.done && isNow(i); }).slice(0, 3);
+    h += '<section class="panel top3"><div class="ph"><h3>Top 3 for this tool</h3><span class="meta">' + done + ' of ' + x.items.length + ' items done</span></div>' +
+      (top.length ? top.map(function (it) { return itemRow(it, 'top-' + it.id, 'data-item="' + esc(it.id) + '" data-tool="' + esc(t.id) + '"'); }).join('') : '<p class="meta">Nothing open for now.' + (x.items.some(function (i) { return !i.done; }) ? ' Later items are listed below.' : '') + '</p>') + '</section>';
+    h += '<section class="panel"><details' + (ui.openAll ? ' open' : '') + '><summary><h3 style="display:inline">Everything to check for this tool</h3> <span class="meta">' + plural(x.items.length, 'item') + '</span></summary>';
     groupItems(x.items).forEach(function (g) {
       h += '<div class="grp"><h3>' + groupTitle(g.key) + '</h3>' + g.items.map(function (it) { return itemRow(it, 'it-' + it.id, 'data-item="' + esc(it.id) + '" data-tool="' + esc(t.id) + '"'); }).join('') + '</div>';
     });
-    h += '</section>';
+    h += '</details></section>';
     if (c.packsIfOff) {
       var off = L.items(u, t, state.hotel, REF, c, c.packsIfOff).filter(function (it) { return it.pack !== 'ban'; });
       h += '<section class="panel"><details><summary>If you switch the banned feature off, these apply instead <span class="meta">' + plural(off.length, 'item') + '</span></summary>' +
@@ -389,7 +417,7 @@
     vqs.forEach(function (q) {
       h += '<div class="item' + (t.vq[q.id] ? ' done' : '') + '"><input type="checkbox" id="vq-' + q.id + '" data-vq="' + q.id + '"' + (t.vq[q.id] ? ' checked' : '') + ' aria-labelledby="vq-' + q.id + '-t"><div class="itx"><span class="itt" id="vq-' + q.id + '-t">' + esc(q.q) + '</span></div></div>';
     });
-    h += '</div><p class="meta">From the briefing booklet, section A3.</p></section>';
+    h += '</div><div class="btnrow"><button type="button" class="btn sm" data-act="vmail" data-id="' + esc(t.id) + '">Write these as an email to the vendor</button></div><p class="meta">From the briefing booklet, section A3.</p></section>' + (ui.copy ? copyBox() : '');
 
     h += '</div><div>';
 
@@ -433,9 +461,37 @@
       cc.items.forEach(function (ci) { h += itemRow({ id: ci.id, text: ci.text, kind: 'law', tag: 'National', who: ci.who, done: !!state.checks[ci.id] }, 'hc-' + ci.id, 'data-hc="' + esc(ci.id) + '"'); });
       h += '</div></section>';
     }
+    // items that apply to the whole hotel: once, covering every tool
+    var hotelItems = {}, vendors = {};
+    rows.forEach(function (x) {
+      x.items.forEach(function (it) {
+        if (it.scope === 'hotel' && it.id === 'L1') return; /* shown once as S5 above */
+        if (it.scope === 'hotel') { var hi = hotelItems[it.id] = hotelItems[it.id] || { it: it, tools: [], open: 0 }; hi.tools.push(x.t); if (!it.done) hi.open++; }
+        if (it.scope === 'vendor') { var vk = (x.t.vendor || '').trim() || 'Vendor not named: ' + (x.t.name || regNo(x.t)); var v = vendors[vk] = vendors[vk] || { name: vk, items: [], tools: [] }; v.tools.push(x); v.items.push(it); }
+      });
+    });
+    var hk = Object.keys(hotelItems);
+    if (hk.length) {
+      h += '<section class="panel"><div class="ph"><h2>For the whole hotel</h2><span class="meta">Once, not per tool</span></div>';
+      hk.forEach(function (k) { var hi = hotelItems[k], it = Object.assign({}, hi.it, { text: hi.it.id === 'R1' ? 'Check whether each AI tool has one person in the hotel named as responsible for it.' : hi.it.text, done: hi.open === 0, note: (hi.it.note ? hi.it.note + ' ' : '') + 'Covers ' + plural(hi.tools.length, 'tool') + ': ' + hi.tools.map(function (t) { return t.name || regNo(t); }).join(', ') + '.' });
+        if (ui.showDone || !it.done) h += itemRow(it, 'hl-' + k, 'data-bulk="' + esc(k) + '"'); });
+      h += '</section>';
+    }
+    var vk2 = Object.keys(vendors).sort();
+    if (vk2.length) {
+      h += '<section class="panel"><div class="ph"><h2>Per vendor</h2><span class="meta">One conversation per vendor</span></div>';
+      vk2.forEach(function (k) {
+        var v = vendors[k], open = v.items.filter(function (i) { return !i.done; }).length;
+        h += '<div class="toolh"><strong>' + esc(v.name) + '</strong><span class="meta">' + esc(v.tools.map(function (x) { return x.t.name || regNo(x.t); }).join(', ')) + '</span>' + (open ? '<span class="meta">' + plural(open, 'tool') + ' with questions open</span>' : '<span class="meta">Answers recorded</span>') + '</div>' +
+          '<div class="btnrow"><button type="button" class="btn sm" data-act="vmail" data-vendor="' + esc(k) + '">Write the questions as one email</button></div>';
+      });
+      h += '</section>' + (ui.copy ? copyBox() : '');
+    }
+    var whos = {};
+    rows.forEach(function (x) { x.items.forEach(function (it) { if (it.scope === 'tool' && it.who) whos[it.who] = true; }); });
     var all = [];
-    rows.forEach(function (x) { x.items.forEach(function (it) { if (ui.showDone || !it.done) all.push({ x: x, it: it }); }); });
-    h += '<section class="panel"><div class="ph"><h2>By tool</h2><label class="checks"><input type="checkbox" id="show-done" data-showdone="1"' + (ui.showDone ? ' checked' : '') + '> <span>Show completed items</span></label></div>';
+    rows.forEach(function (x) { x.items.forEach(function (it) { if (it.scope !== 'tool') return; if (ui.whoFilter && it.who !== ui.whoFilter) return; if (ui.showDone || !it.done) all.push({ x: x, it: it }); }); });
+    h += '<section class="panel"><div class="ph"><h2>By tool</h2><div class="btnrow"><label><span class="sr">Responsible person</span><select id="f-who" data-whofilter="1">' + opt('', 'Everyone', ui.whoFilter) + Object.keys(whos).sort().map(function (w) { return opt(w, w, ui.whoFilter); }).join('') + '</select></label><label class="checks"><input type="checkbox" id="show-done" data-showdone="1"' + (ui.showDone ? ' checked' : '') + '> <span>Show completed items</span></label></div></div>';
     if (!rows.length) h += '<p class="meta">No tools yet. <button type="button" class="linkbtn" data-act="add">Add a tool</button></p>';
     else if (!all.length) h += '<p class="meta">Nothing open. Every item is ticked.</p>';
     var keys = {};
@@ -549,13 +605,17 @@
       '<li>Several labels rest on the Commission\'s draft guidelines of 19 May 2026 and may change.</li>' +
       '<li>It covers the EU AI Act and points to other laws. It does not replace a data protection or labour law review.</li>' +
       '<li>Your entries are saved in this browser only. Clearing site data removes them, so download a backup.</li></ul></section>' +
+      '<section class="panel" id="privacy"><h3>Your data and terms of use</h3><p><strong>All data stays in your browser.</strong> Nothing you enter is sent to the project team or anyone else; there are no accounts and no tracking. A file leaves your device only when you download a backup, CSV or PDF yourself.</p>' +
+      '<p class="meta"><strong>Terms of use.</strong> A free student prototype (EHL SBP Group 36, prepared for HFTP), provided as is. It lists items to check and never states that a hotel or tool complies. It is not legal advice and has not been reviewed by a lawyer; get advice before relying on it. Neither the students, EHL nor HFTP accept liability for decisions taken on the basis of it.</p></section>' +
+      '<section class="panel"><h3>For reviewers</h3><p class="meta">Shows where the register differs from the briefing booklet, and the full label table.</p><label class="chk"><input type="checkbox" id="f-reviewer" data-reviewer="1"' + (ui.reviewer ? ' checked' : '') + '> Show booklet comparison and the label table</label></section>' +
       '<section class="panel"><h3>Backup and reset</h3><div class="btnrow"><button type="button" class="btn" data-act="export" data-kind="json">Download a backup</button><label class="btn" for="f-import">Restore from a backup</label><input type="file" id="f-import" class="sr" accept=".json,application/json">' +
       '<button type="button" class="btn" data-act="example">Load the example hotel</button><button type="button" class="btn warn" data-act="reset">Clear everything</button></div>' +
       confirmBox('reset', 'Clear the whole register in this browser? This cannot be undone.', 'Clear everything') +
       confirmBox('example', 'Replace the current register with the fictional example hotel?', 'Load the example') +
       confirmBox('import', ui.pending ? 'Replace the current register with the backup (' + plural(ui.pending.tools.length, 'tool') + ')?' : '', 'Restore backup') + '</section></div></div>';
 
-    // label table
+    // label table (reviewers only)
+    if (!ui.reviewer) return h;
     var T = LAB.meta.bookletTotals, rows = LAB.uses.filter(function (u) { return u.n && u.n <= 91; });
     function regCount(k) {
       return rows.filter(function (u) {
@@ -604,8 +664,9 @@
     paintSaved();
     if (fid) { var el = $(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text field */ } } } }
   }
-  function go(tab, view, id) {
+  function go(tab, view, id, fromHistory) {
     ui.tab = tab; ui.view = view || 'list'; ui.toolId = id || null; ui.confirm = null; ui.copy = null;
+    if (!fromHistory) { try { window.history.pushState({ reg: [ui.tab, ui.view, ui.toolId] }, ''); } catch (e) { /* ignore */ } }
     render(false);
     try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
     $('view').focus({ preventScroll: true });
@@ -613,6 +674,9 @@
 
   // ---------- exports ----------
   var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {}, direct: null };
+  /* Kept on purpose: inside the claude.ai hub this page runs in a frame and cannot save files itself, so it asks
+     the hub page (postMessage, same origin only) or the artifact's downloads capability (window.claude) to do it.
+     Opened from file:// or a plain web server, neither exists and the page falls back to an ordinary download link. */
   function initHost() {
     if (window.claude && typeof window.claude.use === 'function') {
       window.claude.use('downloads').then(function (d) { host.direct = d || null; }).catch(function () { host.direct = null; });
@@ -661,19 +725,30 @@
   function loadScript(src) {
     return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { s.remove(); rej(new Error('load ' + src)); }; document.head.appendChild(s); });
   }
+  /* jsPDF is bundled into this page at build time, so the PDF works offline and from file://. */
   function getJsPDF() {
     if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
-    return loadScript('../assessment/lib/jspdf.umd.min.js').catch(function () { return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }).then(function () { return window.jspdf.jsPDF; });
+    return Promise.reject(new Error('jsPDF not bundled'));
+  }
+  /* The embedded "Register Sans" font covers Latin-1, Latin Extended-A and -B, so names like Łucja or Ørsted print as typed.
+     Anything outside that set (for example CJK) is replaced by "?" rather than silently dropped. */
+  var PDF_FONT = null;
+  function pdfFont(doc) {
+    var f = PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('d-font').textContent); } catch (e) { return null; } })());
+    if (!f) return 'helvetica';
+    doc.addFileToVFS('rs-regular.ttf', f.regular); doc.addFont('rs-regular.ttf', 'RegisterSans', 'normal');
+    doc.addFileToVFS('rs-bold.ttf', f.bold); doc.addFont('rs-bold.ttf', 'RegisterSans', 'bold');
+    return 'RegisterSans';
   }
   function pdfSafe(s) {
-    return String(s == null ? '' : s).replace(/…/g, '...').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/€/g, 'EUR ').replace(/№/g, 'No.').replace(/[^\x00-\xFF]/g, '');
+    return String(s == null ? '' : s).replace(/[^\u0000-\u024F\u2010-\u205E\u20AC\u2122\u2190-\u2193]/g, '?');
   }
   function makePdf() {
     return getJsPDF().then(function (JsPDF) {
       var doc = new JsPDF({ unit: 'mm', format: 'a4' }), W = 210, H = 297, M = 14, y = 19;
-      var rows = state.tools.map(ctx), s = summary(rows);
+      var rows = state.tools.map(ctx), s = summary(rows), FACE = pdfFont(doc);
       function need(h) { if (y + h > H - 18) { doc.addPage(); y = 19; return true; } return false; }
-      function font(style, size, grey) { doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(grey || 20); }
+      function font(style, size, grey) { doc.setFont(FACE, style); doc.setFontSize(size); doc.setTextColor(grey || 20); }
       font('bold', 8.5, 160); doc.setTextColor(163, 57, 42); doc.text(pdfSafe(REF.meta.banner), M, 10);
       font('bold', 17); doc.text('Hotel AI register', M, y);
       font('normal', 9, 100); doc.text(pdfSafe('Printed ' + fmtDate(TODAY)), W - M, y, { align: 'right' });
@@ -706,8 +781,11 @@
       var anyOpen = false;
       rows.forEach(function (x) {
         var open = x.items.filter(function (i) { return !i.done && isNow(i); });
-        if (!open.length) return;
+        if (!open.length && !x.c.open.length) return;
         anyOpen = true; need(10); font('bold', 9.5); doc.text(pdfSafe(regNo(x.t) + '  ' + (x.t.name || 'Unnamed tool') + (x.t.owner ? '  (' + x.t.owner + ')' : '')), M, y); y += 4.6;
+        function line(txt, ind, st) { font(st || 'normal', 9); var ls = doc.splitTextToSize(pdfSafe(txt), W - 2 * M - ind); need(ls.length * 4.1 + 1); doc.text(ls, M + ind, y); y += ls.length * 4.1 + 0.8; }
+        if (L.maybeLegacy(x.t, x.c, REF)) line('May be a legacy tool (in use since ' + fmtDate(x.t.since) + '): high-risk duties apply only after a significant design change (Art. 111(2) as amended). Ask the vendor.', 3);
+        if (x.c.open.length) { line('Open questions that can change the label:', 3, 'bold'); x.c.open.forEach(function (id) { var d = REF.switches[id]; if (d) line('? ' + d.q + (x.t.answers[id] === 'unsure' ? ' (Not sure)' : ' (not answered)'), 6); }); }
         open.forEach(function (it) {
           font('normal', 9);
           var ls = doc.splitTextToSize(pdfSafe('- ' + it.text + ' [' + REF.kinds[it.kind].name + (it.tag ? ', ' + it.tag : '') + (it.ref ? '; ' + it.ref : '') + ']'), W - 2 * M - 4);
@@ -734,6 +812,19 @@
   }
 
   // ---------- events ----------
+  window.addEventListener('popstate', function (e) {
+    var r = e.state && e.state.reg;
+    if (r) go(r[0], r[1], r[2] && toolById(r[2]) ? r[2] : null, true); else go('how', 'list', null, true);
+  });
+  function vendorEmail(vendor, xs) {
+    var lines = ['Subject: Questions about ' + xs.map(function (x) { return x.t.name || x.u.name; }).join(', '), '', 'Dear ' + (/^Vendor not named/.test(vendor) ? 'vendor' : vendor) + ' team,', '',
+      'As part of our hotel\'s AI register we are checking the AI tools we use. Could you answer the following questions, and confirm that the answers can be put in our contract?', ''];
+    var seen = {}, n = 0;
+    xs.forEach(function (x) { L.vendorQuestions(x.u, x.c, REF).forEach(function (q) { if (seen[q.id]) return; seen[q.id] = 1; lines.push((++n) + '. ' + q.q); }); });
+    lines.push('', 'Kind regards,', state.hotel.name || '[hotel name]');
+    return lines.join('\n');
+  }
+
   document.addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-act]') : null;
     if (!b) return;
@@ -752,6 +843,13 @@
     else if (a === 'clear-flt') { ui.fLabel = ''; ui.q = ''; render(false); }
     else if (a === 'export') doExport(b.getAttribute('data-kind'));
     else if (a === 'copy-close') { ui.copy = null; render(false); }
+    else if (a === 'vmail') {
+      var vn = b.getAttribute('data-vendor'), xs;
+      if (vn) { xs = state.tools.map(ctx).filter(function (x) { return ((x.t.vendor || '').trim() || 'Vendor not named: ' + (x.t.name || regNo(x.t))) === vn; }); }
+      else { t = toolById(id); xs = t ? [ctx(t)] : []; vn = (t && t.vendor) || 'Vendor not named'; }
+      ui.copy = { title: 'Email to ' + vn, text: vendorEmail(vn, xs) }; render(false);
+      var ta = $('copy-text'); if (ta) { ta.focus(); ta.select(); }
+    }
     else if (a === 'del') { ui.confirm = { kind: 'delete', id: ui.toolId }; render(false); focusConfirm(); }
     else if (a === 'reset') { ui.confirm = { kind: 'reset' }; render(false); focusConfirm(); }
     else if (a === 'start-own') { ui.confirm = { kind: 'own' }; render(false); focusConfirm(); }
@@ -791,6 +889,13 @@
     else if (el.hasAttribute('data-vq') && t) { if (el.checked) t.vq[el.getAttribute('data-vq')] = TODAY; else delete t.vq[el.getAttribute('data-vq')]; persist(); render(true); }
     else if (el.hasAttribute('data-hc')) { if (el.checked) state.checks[el.getAttribute('data-hc')] = TODAY; else delete state.checks[el.getAttribute('data-hc')]; persist(); render(true); }
     else if (el.hasAttribute('data-showdone')) { ui.showDone = el.checked; render(true); }
+    else if (el.hasAttribute('data-whofilter')) { ui.whoFilter = el.value; render(true); }
+    else if (el.hasAttribute('data-reviewer')) { ui.reviewer = el.checked; try { window.localStorage.setItem(REVIEWER_KEY, el.checked ? '1' : '0'); } catch (e2) { /* ignore */ } render(true); }
+    else if (el.hasAttribute('data-bulk')) {
+      var bk = el.getAttribute('data-bulk');
+      state.tools.forEach(function (tt) { var has = ctx(tt).items.some(function (i) { return i.id === bk; }); if (!has) return; if (el.checked) tt.done[bk] = TODAY; else delete tt.done[bk]; });
+      persist(); render(true);
+    }
     else if (el.hasAttribute('data-pick')) { ui.pickDept = el.value; render(true); }
     else if (el.hasAttribute('data-outlet')) {
       var o = el.getAttribute('data-outlet'), i = state.hotel.outlets.indexOf(o);

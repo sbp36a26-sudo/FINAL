@@ -24,7 +24,9 @@ for (const d of cat.depts) {
     if (!row || row.id !== id || row.name !== u.n) {
       throw new Error(`uc-labels.json is out of step with the catalogue at ${id} ("${u.n}"). Use-case ids are positional: fix the label file before building.`);
     }
-    catOut.uses[id] = { task: u.task, ai: u.ai, use: u.use };
+    // One plain sentence for users; the rest of the catalogue's task note stays for reviewers.
+    const cut = u.task.search(/;|\. /), taskPublic = (cut > 0 ? u.task.slice(0, cut) : u.task).replace(/\.$/, '') + '.';
+    catOut.uses[id] = { task: u.task, taskPublic, taskResearch: cut > 0 ? u.task.slice(cut + 1).trim() : '', ai: u.ai, use: u.use };
   });
 }
 
@@ -37,11 +39,14 @@ for (const c of act.nationalLayer.countries) {
 }
 
 const block = (id, obj) => `<script type="application/json" id="${id}">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
-const dataBlocks = [block('d-ref', ref), block('d-labels', labels), block('d-radar', radar), block('d-cat', catOut), block('d-national', nat)].join('\n');
+// PDF font (OFL subset, see fonts/README.md) and jsPDF, bundled so the page needs nothing from the internet.
+const font = { regular: readFileSync(join(here, 'fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, 'fonts/rs-bold.ttf')).toString('base64') };
+const jspdf = read('../assessment/lib/jspdf.umd.min.js');
+const dataBlocks = [block('d-ref', ref), block('d-labels', labels), block('d-radar', radar), block('d-cat', catOut), block('d-national', nat), block('d-font', font)].join('\n');
 const safeJs = s => s.replace(/<\/script/gi, '<\\/script');
 
 let page = read('src/page.html');
-for (const [mark, text] of [['<!--__DATA__-->', dataBlocks], ['/*__LOGIC__*/', safeJs(read('src/logic.js'))], ['/*__APP__*/', safeJs(read('src/app.js'))]]) {
+for (const [mark, text] of [['<!--__DATA__-->', dataBlocks + '\n<script>' + safeJs(jspdf) + '</script>'], ['/*__LOGIC__*/', safeJs(read('src/logic.js'))], ['/*__APP__*/', safeJs(read('src/app.js'))]]) {
   if (!page.includes(mark)) throw new Error('missing placeholder ' + mark);
   page = page.replace(mark, () => text);
 }

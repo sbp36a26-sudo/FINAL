@@ -6,6 +6,8 @@
 
   var RANK = { notai: 0, open: 0, minimal: 1, outside: 1, transif: 2, transparency: 3, highif: 4, high: 5, banif: 5.5, prohibited: 6 };
   var KEEP_WHEN_BANNED = ['ban', 'literacy', 'basics', 'labour'];
+  /* Order inside a date group: what can change the label, then AI Act duties, other law, standards, the maker's duties to check, good practice. */
+  var KIND_ORDER = { open: 0, duty: 1, law: 2, standard: 3, maker: 4, practice: 5 };
   var AI_ACT_PACKS = ['ban', 'chat', 'image', 'text', 'notice', 'hr-user', 'product', 'literacy', 'gen'];
 
   function addPacks(c, list) { (list || []).forEach(function (p) { c.packs[p] = true; }); }
@@ -155,7 +157,7 @@
       if (it.auto === 'owner') done = !!(tool.owner && String(tool.owner).trim());
       else if (it.auto === 'vendor') done = vendorDone(use, tool, c, ref);
       else done = !!(tool.done && tool.done[it.id]);
-      out.push({ id: it.id, text: it.text, kind: it.kind, tag: it.tag || '', who: it.who || '', ref: it.ref || '', note: note, src: it.src || '',
+      out.push({ id: it.id, scope: it.scope || 'tool', text: it.text, kind: it.kind, tag: it.tag || '', who: it.who || '', ref: it.ref || '', note: note, src: it.src || '',
                  auto: it.auto || null, done: done, when: whenKey === 'now' ? null : ref.dates[whenKey], since: it.since ? ref.dates[it.since] : null, order: idx });
     });
     /* Rule 6: every "Not sure" answer becomes something to find out. */
@@ -166,7 +168,7 @@
                 auto: null, done: !!(tool.done && tool.done['Q-' + id]), when: null, since: null, order: -100 + k });
     });
     out.sort(function (a, b) {
-      if (a.when === b.when) return a.order - b.order;
+      if (a.when === b.when) return (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || (a.order - b.order);
       if (a.when === null) return -1;
       if (b.when === null) return 1;
       return a.when < b.when ? -1 : 1;
@@ -223,7 +225,7 @@
     return (c.label === 'high' || c.highUnder) && since < ref.dates.highrisk;
   }
 
-  var api = { RANK: RANK, maybeLegacy: maybeLegacy, classify: classify, items: items, vendorQuestions: vendorQuestions, vendorDone: vendorDone,
+  var api = { RANK: RANK, KIND_ORDER: KIND_ORDER, maybeLegacy: maybeLegacy, classify: classify, items: items, vendorQuestions: vendorQuestions, vendorDone: vendorDone,
               restsOn: restsOn, labelBasis: labelBasis, radarHitsTool: radarHitsTool, radarHitsHotel: radarHitsHotel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RegLogic = api;

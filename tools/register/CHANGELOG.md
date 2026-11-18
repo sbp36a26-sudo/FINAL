@@ -37,3 +37,21 @@ Every article below was checked against the two regulation PDFs in `tools/ai-act
 - **Watch list:** source links on every entry; Latombe v Commission (C-703/25 P) restored; DFA wording fixed (fake scarcity claims, personalised prices aimed at minors or vulnerable consumers; COM(2026) 1100); QANDA/26/2408 and French bill no. 2518 added as "to verify" (only the review cites them); GDPR entry linked to the data-protection items; Swiss date marked estimated; new "Published" entry for the final Art. 50 guidelines (reference to verify); the entry on a possible EU law on AI at work removed (no source for the European Parliament resolution); "Germany has done so" removed from the product-liability entry (no source).
 - **Removed:** "the AI Hospitality Alliance's framework has a 14-question vendor questionnaire" (not verified).
 - **Not done:** the Paris Court of Appeal ruling of 21 May 2026 (RG 25/13232) named in the review; nothing in the project files says what it concerns, so no entry was written. Listed for the D7 owner.
+
+## Phase 3 (19 Nov 2026): use and customer journey
+
+- **De-duplicated To do.** Three sections: "For the whole hotel" (once, covering every tool: staff AI tools, a responsible person per tool; AI literacy is the S5 check above and ticking it covers every tool), "Per vendor" (one conversation per vendor, with a ready email of all its questions) and "By tool" (only tool-specific items). The headline count counts hotel-wide items once and vendor items once per vendor. Barcelona test case (6 tools, 5 vendors): 17 "now" items before, now 4 by tool plus 3 hotel-wide, and one email per vendor.
+- **Sort and filter.** Inside each date group: "to find out" first, then AI Act duties, other law, standards, the maker's duties to check, good practice. "By tool" filters by responsible person.
+- **Top 3 for this tool** strip on every tool page; the full list is collapsed below it.
+- **Plain text for users.** The picker shows one plain sentence from the catalogue (`taskPublic`) and "How common in hotels (team estimate, Nov 2026)"; the rest of the catalogue note is kept for reviewers (`taskResearch`).
+- **For reviewers toggle** (How it works): the "Differs from the booklet" boxes, chips and the label table now show only when it is on.
+- **Neutral roles:** "Head office (CIO)" now reads "IT lead (head office or CIO in a group)".
+- **Search synonyms:** channel manager, smart alerts, ChatGPT, Copilot, rota, roster, camera, CCTV, PMS, chatbot, WhatsApp, CV, hiring, pricing, food waste.
+- **Back button** stays inside the tool (browser history per view).
+- **PDF:** embedded font "Register Sans" (OFL subset of Liberation Sans, `fonts/`) prints every European letter; characters outside it show as "?" instead of disappearing. Each tool lists its open questions and the legacy note. jsPDF is bundled into the page.
+- **No internet needed:** Google Fonts removed (system font stack); jsPDF and the font are embedded. The page works from file://.
+- **CSV:** UTF-8 BOM kept; banner row first; formula-like cells escaped (phase 1).
+- **Vendor questions as an email** per tool and per vendor.
+- **Privacy notice and terms of use** in How it works: all data stays in the browser, no accounts, no tracking; provided as is, not legal advice, no liability.
+- **Phone:** citations wrap, so the To do tab no longer overflows at 390 px.
+- **Kept on purpose:** the `window.claude` and postMessage code. It is what lets the page save files inside the claude.ai hub, and it is inert from file:// (comment in `src/app.js`).

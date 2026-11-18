@@ -589,7 +589,7 @@
       "when": "now",
       "since": "transparency",
       "kind": "duty",
-      "who": "Head office (CIO)",
+      "who": "IT lead (head office or CIO in a group)",
       "text": "Check whether your group's tool says it is AI at the start of each conversation or call: as its maker, the group owes this itself.",
       "ref": "AI Act Art. 50(1)",
       "src": "Booklet Start here 1, B2"
@@ -778,7 +778,7 @@
       "role": "maker",
       "when": "highrisk",
       "kind": "duty",
-      "who": "Head office (CIO)",
+      "who": "IT lead (head office or CIO in a group)",
       "text": "Check whether the tool has been tested, documented, checked against the rules, CE-marked and registered before use: your group is its maker. This is specialist work: get legal and technical support.",
       "ref": "AI Act Arts. 16, 43, 49",
       "src": "Booklet A3, B2",
@@ -806,7 +806,7 @@
       "role": "maker",
       "when": "highrisk",
       "kind": "practice",
-      "who": "Head office (CIO)",
+      "who": "IT lead (head office or CIO in a group)",
       "text": "Check whether the group follows EN 18286:2026, the harmonised standard for the quality-management system.",
       "ref": "EN 18286:2026",
       "src": "Booklet B2",
@@ -830,7 +830,7 @@
       "when": "now",
       "kind": "law",
       "tag": "Liability",
-      "who": "Head office (CIO)",
+      "who": "IT lead (head office or CIO in a group)",
       "text": "Check whether design and testing records are kept. AI that a group builds for its own use and puts into use after 9 Dec 2026 is a product it manufactures; without records the group is in a weaker position if a defect is alleged.",
       "ref": "Product Liability Directive (EU) 2024/2853",
       "src": "Booklet A3, A8, B2",
@@ -843,7 +843,7 @@
       "pack": "gen",
       "when": "now",
       "kind": "duty",
-      "who": "Head office (CIO)",
+      "who": "IT lead (head office or CIO in a group)",
       "text": "Check whether the text, images, audio or video that your group's own tool generates carry a machine-readable AI mark (since 2 Aug 2026). Tools already on the market before 2 Aug 2026 have until 2 Dec 2026.",
       "ref": "AI Act Art. 50(2), Art. 111(4) as amended",
       "src": "Booklet B2"
@@ -858,7 +858,8 @@
       "text": "Take measures so that staff and contractors who use this tool understand what it does and where it can go wrong (for example a short briefing), and keep a note.",
       "ref": "AI Act Art. 4",
       "note": "AI Act Art. 4 as amended by Regulation (EU) 2026/1744 (in force 27 Jul 2026). No certificate or specific level is required. From 2 Dec 2027 the staff overseeing high-risk tools must be competent.",
-      "src": "Booklet Start here 5, A2"
+      "src": "Booklet Start here 5, A2",
+      "scope": "hotel"
     },
     {
       "id": "R1",
@@ -869,7 +870,8 @@
       "who": "General manager",
       "text": "Check whether one person in the hotel is named as responsible for this tool.",
       "ref": "Booklet B3",
-      "src": "Booklet B3"
+      "src": "Booklet B3",
+      "scope": "hotel"
     },
     {
       "id": "R2",
@@ -881,7 +883,8 @@
       "text": "Check whether the vendor has answered the questions below, and whether the answers are in the contract.",
       "ref": "Booklet A3",
       "src": "Booklet A3",
-      "vendorOnly": true
+      "vendorOnly": true,
+      "scope": "vendor"
     },
     {
       "id": "LB1",
@@ -988,10 +991,11 @@
       "when": "now",
       "kind": "law",
       "tag": "GDPR",
-      "who": "General manager and head office",
+      "who": "General manager (with head office in a group)",
       "text": "Check whether staff have an approved AI tool with a work account, and know not to paste guest or staff personal data into personal chatbots.",
       "ref": "GDPR",
-      "src": "Booklet B2, B3"
+      "src": "Booklet B2, B3",
+      "scope": "hotel"
     },
     {
       "id": "PC1",
@@ -1301,7 +1305,7 @@
         },
         {
           "id": "CH3",
-          "who": "General manager and head office",
+          "who": "General manager (with head office in a group)",
           "text": "Write the group's AI policy and involve staff before introducing any tool that monitors them."
         },
         {
