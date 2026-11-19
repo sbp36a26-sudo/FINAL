@@ -62,3 +62,7 @@ Every article below was checked against the two regulation PDFs in `tools/ai-act
 - **Links both ways.** A register tool page has "Check whether the hotel is ready for this tool"; a readiness result has "Add to the AI Register" (adds the tool once and opens it). Inside the hub the tabs switch; outside it the pages link directly.
 - **Since you last opened this register:** new watch-list entries (`added` date), dates that have passed and items that now apply, with "Mark as seen".
 - **Fix:** the "vendor confirmed in writing" tick and the new fields were dropped when a saved register was reloaded.
+
+## 19 Nov 2026: two questions made firm (from the AI Act guide comparison)
+
+- `auto_reply` on res-2 (email and offer handling) and `job_ads` on sm-5 were soft questions, so "Not sure" left these tools Minimal. Both rest on the law text (Art. 50(1); Annex III 4(a)), so they now decide the label: res-2 opens as "Transparency if…", sm-5 as "High-risk if…". Both rows are marked as differing from the booklet.

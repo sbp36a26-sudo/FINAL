@@ -161,7 +161,9 @@ ok(L.radarHitsHotel(W('w-swiss'), { country: 'CH' }) && !L.radarHitsHotel(W('w-s
 // ---- law-based changes (deep-dive research, 17 Nov 2026) ----
 const reg = k => rows.filter(u => { const c = cls(u.id); return k === 'highif' ? c.labelUnder === 'highif' : k === 'prohib' ? c.canProhibitHard || c.label === 'prohibited' : c.labelUnder === k; }).length;
 eq(reg('high'), 3, 'register: high-risk catalogue uses');
-eq(reg('highif'), 11, 'register: "high-risk if" catalogue uses (booklet 13, minus the 2 maintenance uses)');
+eq(reg('highif'), 12, 'register: "high-risk if" catalogue uses (booklet 13, minus the 2 maintenance uses, plus job-ad targeting on sm-5)');
+eq(cls('res-2').label, 'transif', 'email handling: "Transparency if" until the auto-reply question is answered (Art. 50(1), law)');
+eq(cls('sm-5').label, 'highif', 'ad tools: "High-risk if" until the job-ads question is answered (Annex III 4(a), law)');
 eq(reg('prohib'), 6, 'register: catalogue uses that can become prohibited (booklet 5, plus IT service desk; video analytics now 2 bans)');
 eq(cls('hr-4').labelUnder, 'highif', 'attrition: per-person score question open');
 eq(cls('hr-4', { answers: { rank_staff: 'yes' } }).labelUnder, 'high', 'attrition scores on named staff are high-risk');
