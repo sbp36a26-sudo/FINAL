@@ -104,6 +104,7 @@ Each interview has its own link (…/artifact/…#a-20261106-xxxx), so you can s
 | `index.html` | Interface: overview, interview editor, framework settings |
 | `engine.js` | Scoring and classification; no dependencies, also runs in Node |
 | `report.js` | One-page A4 PDF layout |
+| `flows.js` | Save and draft state machines (pure, also runs in Node; see `CLEANUP.md`) |
 | `lib/` | Open-source libraries bundled with the page |
 
 The bundled libraries are jsPDF 2.5.1 (MIT) for the PDF, pdf.js 3.11.174 (Apache-2.0) for reading PDF transcripts, and mammoth 1.6.0 (BSD-2-Clause) for reading Word transcripts.

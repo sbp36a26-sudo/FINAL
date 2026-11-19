@@ -331,10 +331,11 @@ td.gap-hi { background: var(--warn-wash); }
 
 <script src="engine.js"></script>
 <script src="report.js"></script>
+<script src="flows.js"></script>
 <script>
 (function () {
   'use strict';
-  var E = window.AIEngine, RPT = window.AIReport;
+  var E = window.AIEngine, RPT = window.AIReport, F = window.AIFlows;
   var DEFAULT_FW = E.DEFAULT_FRAMEWORK;
   var INDUSTRY = ['Hotel', 'F&B', 'Other'];
   var OPTYPE = ['Chain', 'Independent', 'Affiliated'];
@@ -472,7 +473,8 @@ td.gap-hi { background: var(--warn-wash); }
     route();
     if (!window.claude || typeof window.claude.use !== 'function') { APP.mode = 'nostore'; APP.loadedA = APP.loadedF = true; renderBanners(); route(); return; }
     var slow = setTimeout(function () { APP.slow = true; renderBanners(); }, 10000);
-    var res = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
+    // A capability that is refused resolves to null here, so the page reaches 'live' or 'nostore' instead of hanging on "Loading".
+    var res = await Promise.all(['db', 'user', 'downloads'].map(function (n) { return Promise.resolve().then(function () { return window.claude.use(n); }).catch(function () { return null; }); }));
     APP.db = res[0]; APP.user = res[1]; APP.downloads = res[2];
     if (APP.user) {
       try {
@@ -530,8 +532,29 @@ td.gap-hi { background: var(--warn-wash); }
     route();
   }
 
+  // ---------------- state for agents and tests (AX) ----------------
+  /* Read-only snapshot and data attributes on <main id="view">; the page is driven by its #hash routes (see CLEANUP.md).
+     data-view: overview | framework | new | assessment | company
+     data-mode: starting | nostore | live      data-access: edit | read
+     data-save (only while an interview is open): saved | pending | saving | retrying | blocked | error */
+  function snapshot() {
+    var r = parseRoute();
+    return { view: r.view, id: r.id || null, slug: r.slug || null, mode: APP.mode, readOnly: !!APP.readOnly, isOwner: !!APP.isOwner,
+      loaded: { assessments: !!APP.loadedA, frameworks: !!APP.loadedF }, slow: !!APP.slow, problems: Object.keys(APP.problems),
+      count: Object.keys(APP.assessments).length, framework: currentFw().version, editingFramework: !!APP.fwEdit,
+      editor: ED ? { id: ED.id, save: ED.status, dirty: !!ED.dirty, persisted: !!ED.persisted, framework: ED.a.frameworkVersion || 1 } : null };
+  }
+  function paintState() {
+    var v = document.getElementById('view'); if (!v) return;
+    var s = snapshot();
+    v.setAttribute('data-view', s.view); v.setAttribute('data-mode', s.mode); v.setAttribute('data-access', s.readOnly || s.mode !== 'live' ? 'read' : 'edit');
+    if (s.editor) v.setAttribute('data-save', s.editor.save); else v.removeAttribute('data-save');
+  }
+  window.AIAssessment = { state: snapshot, flush: function () { return ED ? ED.saver.flush() : Promise.resolve(); } };
+
   // ---------------- banners ----------------
   function renderBanners() {
+    paintState();
     var el = document.getElementById('banners'); el.textContent = '';
     function b(kind, title, text, btn) { el.appendChild(h('div', { class: 'banner ' + kind }, h('div', { class: 'grow' }, h('b', { text: title }), text ? ' ' + text : ''), btn || null)); }
     if (APP.mode === 'nostore') b('crit', 'Saving is not available here.', 'Open this tool on claude.ai while signed in to Claude. Anything you enter now is lost when you close the page.');
@@ -555,7 +578,8 @@ td.gap-hi { background: var(--warn-wash); }
   function setNav(v) {
     ['overview', 'framework'].forEach(function (n) { document.getElementById('nav-' + n).classList.toggle('on', v === n); });
   }
-  function route() {
+  function route() { renderRoute(); paintState(); }
+  function renderRoute() {
     var r = parseRoute();
     if (ED && (r.view !== 'assessment' || r.id !== ED.id)) leaveEditor();
     if (r.view !== 'framework') APP.fwEdit = null;
@@ -949,39 +973,52 @@ td.gap-hi { background: var(--warn-wash); }
     ed.lastRemoteAt = d.updatedAt;
     return d;
   }
+  /* Save machine (states and events: flows.js SAVE). send() is the only writer of the state; statusFn paints it.
+     The 700 ms debounce and the retry wait are timers, but each ends in an event (save / retry), never a silent state change.
+     flush() always returns a promise that settles after everything queued so far is written (or has failed). */
   function makeSaver(pathFn, keyFn, docFn, statusFn) {
-    var timer = null, inflight = null, again = false, last = null, retried = false;
-    async function flush() {
-      if (timer) { clearTimeout(timer); timer = null; }
-      if (inflight) { again = true; return inflight; }
+    var m = { state: 'saved', timer: null, inflight: null, again: false, last: null };
+    function send(ev, info, err) { var nx = F.saveNext(m.state, ev); if (!nx) return false; m.state = nx; statusFn(nx, err || null, info); return true; }
+    function write(isRetry) {
       var key = keyFn();
-      if (key === last) { statusFn('saved', null, 'insync'); return; }
-      if (APP.readOnly || !APP.db) { statusFn('blocked'); return; }
-      statusFn('saving');
-      inflight = (async function () {
-        try {
-          await APP.db.doc(pathFn()).set(docFn());
-          last = key; retried = false; statusFn('saved', null, 'wrote');
-        } catch (e) {
-          var code = (e && e.code) || 'unavailable';
-          if (code === 'unavailable' && !retried) { retried = true; await new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 1200); }); inflight = null; return flush(); }
-          dbProblem(e); statusFn('error', e);
-        } finally { inflight = null; }
-      })();
-      await inflight;
-      if (again) { again = false; return flush(); }
+      return APP.db.doc(pathFn()).set(docFn()).then(function () {
+        m.last = key;
+        if (keyFn() === key) send('wrote', 'wrote'); else send('behind', 'behind');
+      }, function (e) {
+        var code = (e && e.code) || 'unavailable';
+        if (code === 'unavailable' && !isRetry) {
+          send('retry');
+          return new Promise(function (r) { setTimeout(r, 1200 + Math.random() * 1200); }).then(function () { send('save'); return write(true); });
+        }
+        dbProblem(e); send('fail', null, e);
+      });
+    }
+    function flush() {
+      if (m.timer) { clearTimeout(m.timer); m.timer = null; }
+      if (m.inflight) { m.again = true; return m.inflight; }
+      if (keyFn() === m.last) { send('insync', 'insync'); return Promise.resolve(); }
+      if (APP.readOnly || !APP.db) { send('block'); return Promise.resolve(); }
+      send('save');
+      m.inflight = write(false).then(function () {
+        m.inflight = null;
+        if (m.again || (m.state === 'pending' && !m.timer)) { m.again = false; return flush(); }
+      });
+      return m.inflight;
     }
     return {
-      schedule: function () { if (timer) clearTimeout(timer); timer = setTimeout(flush, 700); statusFn('pending'); },
-      flush: flush, baseline: function (k) { last = k; },
-      pending: function () { return !!timer || !!inflight || keyFn() !== last; }
+      schedule: function () { if (m.timer) clearTimeout(m.timer); m.timer = setTimeout(flush, 700); send('edit'); },
+      flush: flush, baseline: function (k) { m.last = k; },
+      pending: function () { return !!m.timer || !!m.inflight || keyFn() !== m.last; },
+      state: function () { return m.state; }
     };
   }
-  // info: 'wrote' = a save just completed; 'insync' = nothing new to save; undefined = repaint only (no side effects)
+  // info: 'wrote' = a save just completed and matches the screen; 'behind' = a save completed but newer edits are still
+  // unsaved (keep dirty and the browser draft); 'insync' = nothing new to save; undefined = repaint only (no side effects)
   function setSaveStatus(ed, st, err, info) {
     ed.status = st;
     if (info === 'wrote' || info === 'insync') { ed.dirty = false; clearDraft(ed.id); }
-    if (info === 'wrote') { ed.persisted = true; ed.savedAt = new Date(); }
+    if (info === 'wrote' || info === 'behind') { ed.persisted = true; ed.savedAt = new Date(); }
+    paintState();
     var el = document.getElementById('save-state'); if (!el || ED !== ed) return;
     el.className = 'save';
     if (st === 'saved') { el.classList.add('ok'); el.textContent = ed.persisted ? savedLabel(ed.savedAt) : 'Not saved yet'; }
@@ -990,9 +1027,10 @@ td.gap-hi { background: var(--warn-wash); }
     else { el.classList.add('err'); el.textContent = 'Not saved – kept in this browser'; }
   }
   function draftKey(id) { return 'aiat-draft-' + id; }
-  function saveDraft(ed) { try { localStorage.setItem(draftKey(ed.id), JSON.stringify({ at: Date.now(), a: ed.a })); } catch (e) { } }
+  // Draft format and the migration from drafts without a version: flows.js parseDraft.
+  function saveDraft(ed) { try { localStorage.setItem(draftKey(ed.id), JSON.stringify(F.makeDraft(ed.a, Date.now()))); } catch (e) { } }
   function clearDraft(id) { try { localStorage.removeItem(draftKey(id)); } catch (e) { } }
-  function readDraft(id) { try { var s = localStorage.getItem(draftKey(id)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function readDraft(id) { try { var s = localStorage.getItem(draftKey(id)); return s ? F.parseDraft(s, id) : null; } catch (e) { return null; } }
 
   function leaveEditor() {
     var ed = ED; ED = null;
@@ -1044,7 +1082,7 @@ td.gap-hi { background: var(--warn-wash); }
     if (draft && draft.a && !ro && contentKey(draft.a) !== contentKey(a) && (!a.updatedAt || draft.at > new Date(a.updatedAt).getTime())) {
       view.appendChild(h('div', { class: 'banner warn', style: { 'margin-bottom': '14px' } },
         h('div', { class: 'grow' }, h('b', { text: 'Unsaved changes found in this browser.' }), ' From ' + fmtDT(new Date(draft.at).toISOString()) + '.'),
-        h('button', { class: 'btn sm', type: 'button', text: 'Restore them', onclick: function () { ed.a = draft.a; ed.dirty = true; renderEditor(ed.id); ed.saver.schedule(); } }),
+        h('button', { class: 'btn sm', type: 'button', text: 'Restore them', onclick: function () { ed.a = normalizeA(draft.a, ed.id); ed.dirty = true; renderEditor(ed.id); ed.saver.schedule(); } }),
         h('button', { class: 'btn sm ghost', type: 'button', text: 'Discard', onclick: function (e) { clearDraft(a.id); e.target.closest('.banner').remove(); } })));
     }
     var remoteBox = h('div', { id: 'remote-box' });
@@ -1517,7 +1555,8 @@ td.gap-hi { background: var(--warn-wash); }
     dialog({ title: 'Delete this interview permanently?', body: 'The assessment for ' + name + ' (' + id + ') and its transcript will be removed for everyone. This cannot be undone. Export a backup first if you might need it.',
       actions: [{ label: 'Cancel' }, { label: 'Delete permanently', danger: true, onClick: function () {
         var ed = ED; ED = null; if (ed) { ed.saver = { flush: function () { return Promise.resolve(); }, pending: function () { return false; } }; }
-        Promise.all([APP.db.doc('assessments/' + id).delete(), APP.db.doc('transcripts/' + id).delete()]).then(function () { clearDraft(id); go('#overview'); toast('Interview deleted.'); }).catch(dbProblem);
+        Promise.all([APP.db.doc('assessments/' + id).delete(), APP.db.doc('transcripts/' + id).delete()]).then(function () { clearDraft(id); go('#overview'); toast('Interview deleted.'); })
+          .catch(function (e) { dbProblem(e); toast('Delete did not finish (' + ((e && e.code) || 'error') + '). What is left is shown again.'); if (location.hash.toLowerCase() === '#a-' + id.toLowerCase()) route(); });
       } }] });
   }
 
