@@ -35,7 +35,7 @@ const style = read('src/style.css');
 
 for (const [page, script, out] of [['src/check.html', 'src/check.js', 'index.html'], ['src/team.html', 'src/team.js', 'team.html']]) {
   let html = read(page);
-  for (const [mark, text] of [['/*__STYLE__*/', style], ['<!--__DATA__-->', block], ['/*__STORE__*/', safe(read('src/store.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__APP__*/', safe(read(script))]]) {
+  for (const [mark, text] of [['/*__STYLE__*/', style], ['<!--__DATA__-->', block], ['/*__STORE__*/', safe(read('src/store.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__APP__*/', safe(read(script))]]) {
     if (!html.includes(mark)) throw new Error(page + ': missing ' + mark);
     html = html.replace(mark, () => text);
   }

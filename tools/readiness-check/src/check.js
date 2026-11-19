@@ -24,10 +24,24 @@
   function newId() { return 'rc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function plural(n, a, b) { return n + ' ' + (n === 1 ? a : (b || a + 's')); }
 
-  function blank() { return { id: newId(), step: 'start', hotel: { name: '', role: '', type: '', country: '' }, stage: '', useId: '', A: {}, P: {}, Who: {}, owner: { ask: '', cost: '', by: '' }, next: { when: '', date: '' }, snaps: [], share: { on: false, named: false }, sharedAt: null, created: new Date().toISOString(), q: '', dept: '' }; }
-  var mine = lget(MY, {});
-  var st = mine[lget(CUR, '')] ? Object.assign(blank(), mine[lget(CUR, '')]) : blank();
-  if (st.step !== 'start' && !M.UI[st.useId]) st.step = 'start';
+  /* State, in two parts (machines and tables in src/flow.js, inventory in CLEANUP.md):
+     st  = the check record (persisted in MY and in files): st.step is the FLOW state.
+     ui  = what is happening on screen now (never persisted):
+           confirm  CONFIRM machine (null | {kind:'new'|'rm'|'file', id})
+           share    null when settled, else {phase:'sending'|'withdrawing', id} (SHARE machine; settled state comes from st.sharedAt)
+           choosing true while the hotel is choosing another tool (the chosen one is kept until it picks)
+           pdf      true while a PDF is being made
+           file     a check read from a file, waiting for the 'file' confirmation */
+  var F = window.RCFlow;
+  function known(u) { return !!M.UI[u]; }
+  function blank() { return { id: newId(), rv: F.RV, step: 'start', hotel: { name: '', role: '', type: '', country: '' }, stage: '', useId: '', A: {}, P: {}, Who: {}, owner: { ask: '', cost: '', by: '' }, next: { when: '', date: '' }, snaps: [], share: { on: false, named: false }, sharedAt: null, sharedSig: null, sharedMode: null, created: new Date().toISOString(), q: '', dept: '' }; }
+  /* A saved record, validated and migrated (F.migrate), as a working check; null if it cannot be opened. */
+  function fromRecord(r) { var m = F.migrate(r, known); return m ? Object.assign(blank(), m) : null; }
+  var mine = lget(MY, {}); if (!mine || typeof mine !== 'object' || Array.isArray(mine)) mine = {};
+  /* Records that cannot be opened by this build (tool no longer in the catalogue, damaged) stay in storage untouched. */
+  function openable(k) { var r = mine[k]; return !!(r && r.id === k && F.migrate(r, known) && M.UI[r.useId]); }
+  var ui = { confirm: null, share: null, choosing: false, pdf: false, file: null };
+  var st = (openable(lget(CUR, '')) && fromRecord(mine[lget(CUR, '')])) || blank();
   /* Shared hotel profile (key hftp-hotel-profile-v1), also used by the AI Register in this browser. */
   var PROFILE = 'hftp-hotel-profile-v1';
   var CC = { AT: 'Austria', BE: 'Belgium', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', FI: 'Finland', FR: 'France', DE: 'Germany', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland', PT: 'Portugal', ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', GB: 'United Kingdom' };
@@ -58,20 +72,26 @@
 
   // ---------- start ----------
   function myList() {
-    var ids = Object.keys(mine).filter(function (k) { var r = mine[k]; return M.UI[r.useId] && ((r.snaps && r.snaps.length) || Object.keys(r.A || {}).length); }).sort(function (a, b) { return String(mine[b].updated).localeCompare(String(mine[a].updated)); });
+    var ids = Object.keys(mine).filter(function (k) { var r = mine[k]; return openable(k) && ((r.snaps && r.snaps.length) || Object.keys(r.A || {}).length); }).sort(function (a, b) { return String(mine[b].updated).localeCompare(String(mine[a].updated)); });
     if (!ids.length) return '';
     var h = '<section class="panel"><h2>Your checks in this browser</h2><p class="sub">Pick one up where you left it. "Update open items" shows only what is still open.</p><div>';
     ids.forEach(function (k) {
-      var r = mine[k], x = M.UI[r.useId], e = L.evaluate(M, x, r.hotel, r.A, r.P, r.Who, r.stage), last = r.snaps && r.snaps[r.snaps.length - 1];
+      var r = F.migrate(mine[k], known), x = M.UI[r.useId], e = L.evaluate(M, x, r.hotel, r.A, r.P, r.Who, r.stage), cRm = ui.confirm && ui.confirm.kind === 'rm' && ui.confirm.id === k;
       h += '<div class="mycheck"><div class="g1"><strong>' + esc(x.name) + '</strong><span class="meta">' + esc([r.hotel.name, L.STAGES[r.stage] && L.STAGES[r.stage].name, 'last changed ' + fmtDate(r.updated)].filter(Boolean).join(' · ')) + '</span>' +
         '<span class="btnrow"><span class="chip c-' + L.LEVELS[e.level].chip + '">' + esc(L.LEVELS[e.level].name) + '</span><span class="meta">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves met · ' + plural(e.actions.length, 'open item') + '</span></span>' +
         (r.next && r.next.when ? '<span class="meta">Planned next look: ' + esc(nextText(r.next)) + '</span>' : '') + '</div>' +
         '<div class="btnrow"><button type="button" class="btn primary" data-act="open-review" data-id="' + k + '">Update open items</button><button type="button" class="btn" data-act="open-result" data-id="' + k + '">See result</button>' +
-        (confirmRm === k ? '<button type="button" class="btn warn" data-act="rm-yes" data-id="' + k + '">Remove for good</button><button type="button" class="btn" data-act="rm-no">Keep</button>' : '<button type="button" class="linkbtn" data-act="rm" data-id="' + k + '">Remove</button>') + '</div></div>';
+        (cRm ? '<button type="button" class="btn warn" data-act="rm-yes" data-id="' + k + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="rm-no" id="rm-no">Keep</button>' : '<button type="button" class="linkbtn" data-act="rm" data-id="' + k + '">Remove</button>') + '</div>' +
+        (cRm ? '<p class="meta" data-confirm="rm">Remove this check from this browser? Files you saved are not affected.' + (r.sharedAt ? ' It was shared with the project team: that copy stays until you withdraw it from the result page (See result).' : '') + '</p>' : '') + '</div>';
     });
     return h + '</div></section>';
   }
-  var confirmRm = null, confirmNew = false, confirmPick = null;
+  function fileConfirm() {
+    if (!(ui.confirm && ui.confirm.kind === 'file' && ui.file)) return '';
+    var cur = mine[ui.file.id];
+    return '<section class="panel banner" data-confirm="file"><h3>This browser has a newer copy of this check</h3><p>The file was last changed ' + esc(fmtDate(ui.file.updated) || 'on an unknown date') + '; the copy in this browser ' + esc(fmtDate(cur && cur.updated)) + '. Opening the file replaces the newer copy.</p>' +
+      '<div class="btnrow"><button type="button" class="btn warn" data-act="file-yes" id="file-yes">Open the file anyway</button><button type="button" class="btn" data-act="file-no" id="file-no">Keep the copy in this browser</button></div></section>';
+  }
   function nextText(n) { var w = NEXT.filter(function (o) { return o[0] === n.when; })[0]; return (w ? w[1] : n.when) + (n.date ? ', ' + fmtDate(n.date) : ''); }
 
   function matches(u, q) {
@@ -82,7 +102,7 @@
 
   function vStart() {
     var H = st.hotel, x = M.UI[st.useId], q = (st.q || '').trim().toLowerCase();
-    var h = myList() + '<section class="panel intro"><h2>Before you begin</h2>' +
+    var h = fileConfirm() + myList() + '<section class="panel intro"><h2>Before you begin</h2>' +
       '<div class="cols3"><div><h4>Who fills it in</h4><p>The person who will be <b>responsible for the tool going live</b>: in an independent hotel usually the general manager; in a group, the head of the department that will use it, with IT. Not necessarily the CIO.</p></div>' +
       '<div><h4>How it works</h4><p>1. See the list of what you will need and who knows it. 2. Answer, about 15 minutes; leave open what you do not know. 3. Get a verdict and an action plan by person.</p></div>' +
       '<div><h4>Come back</h4><p>Your check is kept in this browser. Come back when answers arrive or before signing: you see what changed and update only what is open.</p></div></div></section>';
@@ -95,10 +115,11 @@
     h += '<section class="panel"><h2>2. Which AI tool?</h2>' +
       '<div class="legend"><p><b>Type of tool:</b> what kind of AI it is. Tools of the same type need similar resources.</p>' +
       '<p><b>Effort:</b> Light (a subscription, little set-up) · Moderate (links to your PMS or CRM, clean data) · Heavy (hardware, group platforms or high legal risk).</p></div>';
-    if (x) {
+    if (x && !ui.choosing) {
       h += '<div class="panel" style="border-color:var(--accent)"><p class="meta">Selected</p><h3>' + esc(x.name) + '</h3><p class="meta">' + esc(x.deptName) + ' · ' + esc(typeName(x)) + ' tool · ' + esc(x.int) + ' effort</p><p>' + esc(x.task) + '</p>' +
         '<div><button type="button" class="linkbtn" data-act="unpick">Choose another tool</button></div></div>';
     } else {
+      if (x) h += '<p class="meta">Now chosen: <b>' + esc(x.name) + '</b>.' + (Object.keys(st.A).length ? ' Picking another tool starts a new check; this one stays in “Your checks”.' : '') + ' <button type="button" class="linkbtn" data-act="keep-tool">Keep this tool</button></p>';
       h += '<div class="formgrid"><label class="fld"><span>Search</span><input type="search" id="q" value="' + esc(st.q) + '" placeholder="For example chatbot, pricing, rota, food waste"></label>' +
         '<label class="fld"><span>Department</span><select id="dept">' + opt('', 'All departments', st.dept) + D.cat.depts.map(function (d) { return opt(d.id, d.name, st.dept); }).join('') + '</select></label></div><div class="list" id="picklist">' + pickList(q) + '</div>';
     }
@@ -107,8 +128,8 @@
       Object.keys(L.STAGES).map(function (k) { return '<label class="opt' + (st.stage === k ? ' on' : '') + '"><input type="radio" name="stage" value="' + k + '" data-stage="1"' + (st.stage === k ? ' checked' : '') + '>' + esc(L.STAGES[k].long) + '</label>'; }).join('') + '</div>' +
       '<p class="meta">This changes the advice, not the rules: some answers can only be known once you have a vendor.</p></section>';
     h += notice();
-    var ok = H.type && x && st.stage;
-    h += '<div class="btnrow"><button type="button" class="btn primary" data-act="prep" id="go-prep"' + (ok ? '' : ' disabled') + '>Next: what you will need</button><span class="meta" id="go-hint">' + (ok ? '' : 'Choose how the hotel is run, a tool and where you are with it.') + '</span>' +
+    var ok = flowCtx().ready;
+    h += '<div class="btnrow"><button type="button" class="btn primary" data-act="prep" id="go-prep"' + (ok ? '' : ' disabled') + '>Next: what you will need</button><span class="meta" id="go-hint">' + (ok ? '' : START_HINT) + '</span>' +
       '<span class="spacer"></span><label class="btn" for="loadfile">Open a saved file</label><input type="file" id="loadfile" accept=".json,application/json" class="sr"></div>';
     return h;
   }
@@ -306,15 +327,21 @@
     h += sharePanel();
     h += '<section class="panel"><details><summary>How this result was worked out</summary><ol class="steps">' + e.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
       '<p class="meta">Rules ' + esc(L.RULES) + '. Questions from the project\'s D6 readiness research, reworded after expert review on 18 Nov 2026. Thresholds and must-haves are the team\'s judgement, not yet tested with hotels. Answers and proof lines are self-declared and not checked. Self-assessment, not legal or investment advice.</p></details></section>';
-    h += '<div class="btnrow"><button type="button" class="btn" data-act="edit">Go through all questions</button>' + (confirmNew ? '<span class="meta">Start a new check? This one stays in “Your checks”.</span><button type="button" class="btn warn" data-act="new-yes">Start new</button><button type="button" class="btn" data-act="new-no">Cancel</button>' : '<button type="button" class="btn" data-act="new">Start a new check</button>') + '</div>';
+    var cNew = ui.confirm && ui.confirm.kind === 'new';
+    h += '<div class="btnrow"><button type="button" class="btn" data-act="edit">Go through all questions</button>' + (cNew ? '<span class="meta" data-confirm="new">Start a new check? This one stays in “Your checks”.</span><button type="button" class="btn warn" data-act="new-yes" id="new-yes">Start new</button><button type="button" class="btn" data-act="new-no" id="new-no">Cancel</button>' : '<button type="button" class="btn" data-act="new" id="new">Start a new check</button>') + '</div>';
     return h;
   }
+  function sharePhase() { return ui.share && ui.share.id === st.id ? ui.share.phase : F.shareSettled(st); }
   function sharePanel() {
-    var mode = S.mode();
-    return '<section class="panel"><h2>Share with the project team (optional)</h2><p class="meta">Helps the EHL student team test the check. Sent: your role, hotel type, country, the tool, your answers and the verdict. Not sent: proof lines, owner note' + (st.share.named ? '' : ', hotel name') + '.</p>' +
-      '<label class="chk"><input type="checkbox" data-share="named"' + (st.share.named ? ' checked' : '') + '> Also send our hotel name and proof lines so the team can discuss the result with us</label>' +
-      '<div class="btnrow"><button type="button" class="btn" data-act="share">' + (st.sharedAt ? 'Send updated copy' : 'Share a copy') + '</button><span class="meta">' + (st.sharedAt ? 'Last shared ' + esc(fmtDate(st.sharedAt)) + (mode === 'local' ? ' (test copy in this browser)' : '') + '.' : mode === 'local' ? 'Outside the project hub this keeps a test copy in this browser only.' : '') + '</span>' +
-      (st.sharedAt ? '<button type="button" class="linkbtn" data-act="unshare">Withdraw shared copy</button>' : '') + '</div></section>';
+    var mode = S.state(), ph = sharePhase(), busy = ph === 'sending' || ph === 'withdrawing', stale = F.shareStale(st), where = st.sharedMode || mode;
+    var status = ph === 'sending' ? (mode === 'probing' || mode === 'idle' ? 'Checking whether the project hub is reachable…' : 'Sending…')
+      : ph === 'withdrawing' ? 'Withdrawing…'
+      : st.sharedAt ? 'Last shared ' + fmtDate(st.sharedAt) + (where === 'local' ? ' (test copy in this browser)' : '') + '.' + (stale ? ' Your answers have changed since then: send an updated copy so the team sees the current ones.' : '')
+      : mode === 'local' ? 'Outside the project hub this keeps a test copy in this browser only.' : '';
+    return '<section class="panel" id="share" data-share-state="' + ph + (stale ? ' stale' : '') + '"><h2>Share with the project team (optional)</h2><p class="meta">Helps the EHL student team test the check. Sent: your role, hotel type, country, the tool, your answers and the verdict. Not sent: proof lines, owner note' + (st.share.named ? '' : ', hotel name') + '.</p>' +
+      '<label class="chk"><input type="checkbox" data-share="named"' + (st.share.named ? ' checked' : '') + (busy ? ' disabled' : '') + '> Also send our hotel name and proof lines so the team can discuss the result with us</label>' +
+      '<div class="btnrow"><button type="button" class="btn' + (stale ? ' primary' : '') + '" data-act="share" id="share-btn"' + (busy ? ' disabled' : '') + '>' + (st.sharedAt ? 'Send updated copy' : 'Share a copy') + '</button><span class="meta" role="status">' + esc(status) + '</span>' +
+      (st.sharedAt && !busy ? '<button type="button" class="linkbtn" data-act="unshare" id="unshare">Withdraw shared copy</button>' : '') + '</div></section>';
   }
 
   // ---------- text outputs ----------
@@ -333,43 +360,57 @@
   function copy(t, what) { if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast(what + ' copied.'); }, function () { toast('Copying is blocked here.'); }); else toast('Copying is blocked here.'); }
 
   // ---------- files and PDF ----------
-  var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {} };
+  /* BRIDGE machine (F.bridgeNext): does the hub bar save files for us? 'none' (not in a frame) | 'pending' | 'yes' | 'no'.
+     Events: pong (downloads yes/no), error (cannot post), timeout (12 s, an explicit event). Downloads asked for
+     while 'pending' wait for the answer. Each download sent to the hub is in flight until 'download-result'
+     or 2 minutes (the hub may be showing the person a dialog); the same file cannot be asked for twice meanwhile. */
+  var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {}, busy: {} };
+  function hostSend(ev) {
+    var to = F.bridgeNext(host.state, ev); if (to === host.state) return;
+    host.state = to; document.body.setAttribute('data-bridge', to); host.waiters.splice(0).forEach(function (f) { f(); });
+  }
   if (host.state === 'pending') {
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data) return;
       var m = e.data;
-      if (m.hub === 'pong') { host.state = m.downloads ? 'yes' : 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); }
+      if (m.hub === 'pong') hostSend(m.downloads ? 'yes' : 'no');
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
-    try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { host.state = 'no'; }
-    setTimeout(function () { if (host.state === 'pending') { host.state = 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); } }, 12000);
+    try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
+    setTimeout(function () { hostSend('timeout'); }, 12000);
   }
-  function saveFile(name, blob) {
+  function saveFile(name, blob, kind) {
     function viaLink() { try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); } catch (e) { toast('This browser could not save the file.'); } }
     function go2() {
       if (host.state !== 'yes') { viaLink(); return; }
-      var id = 'd' + (++host.seq);
-      host.calls[id] = function (m) { toast(m.ok ? 'Saved ' + name : m.code === 'declined' ? 'Download cancelled.' : 'The file could not be saved here.'); };
-      window.parent.postMessage({ hub: 'download', id: id, filename: name, data: blob }, location.origin);
+      if (host.busy[kind]) { toast('The earlier download is still waiting for your answer.'); return; }
+      var id = 'd' + (++host.seq), t = setTimeout(function () { if (host.calls[id]) host.calls[id]({ ok: false, code: 'timeout' }); delete host.calls[id]; }, 120000);
+      host.busy[kind] = id;
+      host.calls[id] = function (m) { clearTimeout(t); delete host.busy[kind]; toast(m.ok ? 'Saved ' + name : m.code === 'declined' ? 'Download cancelled.' : m.code === 'timeout' ? 'No answer about the download. Try again.' : 'The file could not be saved here.'); };
+      try { window.parent.postMessage({ hub: 'download', id: id, filename: name, data: blob }, location.origin); }
+      catch (e) { host.calls[id]({ ok: false, code: 'unavailable' }); delete host.calls[id]; }
     }
-    if (host.state === 'pending') host.waiters.push(go2); else go2();
+    if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(go2); } else go2();
   }
   function fileBase() { return (st.hotel.name || 'hotel').replace(/[^\w-]+/g, '-') + '_' + st.useId + '_' + new Date().toISOString().slice(0, 10); }
   function saveRecord() {
     var r = Object.assign({}, st); delete r.q; delete r.dept;
-    saveFile('AI-readiness-check_' + fileBase() + '.json', new Blob([JSON.stringify({ kind: 'hftp-readiness-check', v: 3, rules: L.RULES, savedAt: new Date().toISOString(), check: r }, null, 1)], { type: 'application/json' }));
+    saveFile('AI-readiness-check_' + fileBase() + '.json', new Blob([JSON.stringify({ kind: 'hftp-readiness-check', v: 3, rules: L.RULES, savedAt: new Date().toISOString(), check: r }, null, 1)], { type: 'application/json' }), 'json');
   }
+  /* Read a saved file. If this browser holds a newer copy of the same check, ask first (CONFIRM 'file'). */
   function loadRecord(file) {
     var fr = new FileReader();
     fr.onload = function () {
-      try {
-        var o = JSON.parse(fr.result), r = o && o.check;
-        if (!o || o.kind !== 'hftp-readiness-check' || !r || !M.UI[r.useId]) throw 0;
-        st = Object.assign(blank(), r); st.step = 'result'; keep(); toast('Check opened from the file.'); go('result', true);
-      } catch (e) { toast('This file is not a saved readiness check.'); }
+      var r = null;
+      try { var o = JSON.parse(fr.result); if (o && o.kind === 'hftp-readiness-check' && o.check && M.UI[o.check.useId]) r = fromRecord(o.check); } catch (e) { r = null; }
+      if (!r) { toast('This file is not a saved readiness check.'); return; }
+      var cur = mine[r.id];
+      if (cur && String(cur.updated || '') > String(r.updated || '')) { ui.file = r; ui.confirm = F.confirmNext(ui.confirm, 'ask', 'file', r.id).c; render(); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } return; }
+      openFile(r);
     };
     fr.readAsText(file);
   }
+  function openFile(r) { ui.file = null; ui.confirm = null; ui.choosing = false; st = r; keep(); toast('Check opened from the file.'); go('result'); }
   function loadScript(src) { return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
   function pdfSafe(s) {
     s = String(s == null ? '' : s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, '-').replace(/…/g, '...').replace(/→/g, '->').replace(/€/g, 'EUR ');
@@ -455,49 +496,79 @@
   // ---------- render and events ----------
   function render(keepFocus) {
     var act = document.activeElement, fid = keepFocus && act && act.id ? act.id : null;
+    if (!F.isStep(st.step) || (st.step !== 'start' && !M.UI[st.useId])) st.step = 'start'; // never show an impossible screen
     var html = st.step === 'start' ? vStart() : st.step === 'prep' ? vPrep() : st.step === 'review' ? vReview() : st.step === 'result' ? vResult() : vStep(st.step);
-    $('view').innerHTML = html;
-    if (fid && $(fid)) { $(fid).focus(); try { var v = $(fid).value.length; $(fid).setSelectionRange(v, v); } catch (e) { /* not text */ } }
+    var v = $('view');
+    v.innerHTML = html;
+    v.setAttribute('data-state', String(st.step));
+    v.setAttribute('data-confirm', ui.confirm ? ui.confirm.kind : 'none');
+    v.setAttribute('data-share-state', sharePhase() + (F.shareStale(st) ? ' stale' : ''));
+    v.setAttribute('data-choosing', ui.choosing ? 'yes' : 'no');
+    document.body.setAttribute('data-store', S.state());
+    if (fid && $(fid)) { $(fid).focus(); try { var n = $(fid).value.length; $(fid).setSelectionRange(n, n); } catch (e) { /* not text */ } }
   }
+  /* Move to a step. Only send(), openCheck(), openFile() and the confirm handlers call this; any navigation closes a confirmation. */
   function go(step, replace) {
+    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.file = null; ui.choosing = false;
     st.step = step; if (step === 'result') takeSnap(); else keep();
-    try { history[replace ? 'replaceState' : 'pushState']({ rc: step }, ''); } catch (e) { /* ignore */ }
+    try { history[replace ? 'replaceState' : 'pushState']({ rc: step, id: st.id }, ''); } catch (e) { /* ignore */ }
     render(); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } $('view').focus({ preventScroll: true });
   }
-  window.addEventListener('popstate', function (e) {
-    var s = e.state && e.state.rc; if (s == null) s = 'start';
-    if (s !== 'start' && !M.UI[st.useId]) s = 'start';
-    st.step = s; if (s === 'result') takeSnap(); else keep(); render();
-  });
-  function openCheck(id, step) { var r = mine[id]; if (!r) return; st = Object.assign(blank(), r); go(step); }
-  function updateStartButton() {
-    var b = $('go-prep'); if (!b) return; var ok = !!(st.hotel.type && M.UI[st.useId] && st.stage);
-    b.disabled = !ok; var hnt = $('go-hint'); if (hnt) hnt.textContent = ok ? '' : 'Choose how the hotel is run, a tool and where you are with it.';
+  function flowCtx() { var t = !!M.UI[st.useId]; return { tool: t, ready: !!(t && st.hotel.type && st.stage && !ui.choosing) }; }
+  /* The only way the journey moves: an event from the FLOW table (src/flow.js). Returns false if not allowed here. */
+  function send(ev) {
+    var to = F.flowNext(st.step, ev, flowCtx());
+    if (to === null) return false;
+    go(to); return true;
   }
+  /* Back/forward: each history entry names its step and its check. Entries of another check reopen that check;
+     entries of a removed check, or steps that cannot be shown, land on a safe step. */
+  window.addEventListener('popstate', function (e) {
+    var s = e.state || {}, rc = s.rc == null ? 'start' : s.rc;
+    if (s.id && s.id !== st.id) {
+      var r = openable(s.id) && fromRecord(mine[s.id]);
+      if (r) st = r; else rc = 'start';
+    }
+    ui.confirm = null; ui.file = null; ui.choosing = false;
+    st.step = F.safeStep(rc, flowCtx()); if (st.step === 'result') takeSnap(); else keep(); render();
+  });
+  function openCheck(id, step) { var r = openable(id) && fromRecord(mine[id]); if (!r) { toast('This check cannot be opened here.'); return; } st = r; go(step); }
+  var START_HINT = 'Choose how the hotel is run, a tool and where you are with it.';
+  function updateStartButton() {
+    var b = $('go-prep'); if (!b) return; var ok = flowCtx().ready;
+    b.disabled = !ok; var hnt = $('go-hint'); if (hnt) hnt.textContent = ok ? '' : START_HINT;
+  }
+  var ACT_EVENT = { prep: 'prep', begin: 'begin', back: 'back', next: 'next', 'to-result': 'result', edit: 'edit', review: 'review' };
+  function confirmed(kind, id) { var r = F.confirmNext(ui.confirm, 'yes', kind, id); ui.confirm = r.c; return r.fire; }
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b || b.disabled) return;
     var a = b.getAttribute('data-act'), id = b.getAttribute('data-id');
+    if (ACT_EVENT[a]) { send(ACT_EVENT[a]); return; }
     if (a === 'pick') {
+      if (!M.UI[id]) return;
       if (st.useId && st.useId !== id && Object.keys(st.A).length) { st = Object.assign(blank(), { hotel: st.hotel, stage: st.stage }); toast('New tool, new check. The earlier one stays in “Your checks”.'); }
-      st.useId = id; keep(); render();
+      st.useId = id; ui.choosing = false; keep(); render();
     }
-    else if (a === 'unpick') { st.useId = ''; render(); }
-    else if (a === 'prep') go('prep');
-    else if (a === 'begin') go(0);
-    else if (a === 'back') go(st.step === 'prep' ? 'start' : st.step === 0 ? 'prep' : st.step - 1);
-    else if (a === 'next') go(st.step === 5 ? 'result' : st.step + 1);
-    else if (a === 'to-result') go('result');
-    else if (a === 'edit') go(0);
-    else if (a === 'review') go('review');
+    else if (a === 'unpick') { ui.choosing = true; render(); }
+    else if (a === 'keep-tool') { ui.choosing = false; render(); }
     else if (a === 'open-review') openCheck(id, 'review');
     else if (a === 'open-result') openCheck(id, 'result');
-    else if (a === 'rm') { confirmRm = id; render(); }
-    else if (a === 'rm-no') { confirmRm = null; render(); }
-    else if (a === 'rm-yes') { delete mine[id]; lset(MY, mine); confirmRm = null; if (st.id === id) st = blank(); keep(); render(); toast('Removed from this browser.'); }
-    else if (a === 'new') { confirmNew = true; render(); }
-    else if (a === 'new-no') { confirmNew = false; render(); }
-    else if (a === 'new-yes') { confirmNew = false; var h = st.hotel; st = blank(); st.hotel = h; go('start'); }
+    else if (a === 'rm') { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'rm', id).c; render(); }
+    else if (a === 'rm-no' || a === 'new-no') { ui.confirm = F.confirmNext(ui.confirm, 'cancel').c; render(); }
+    else if (a === 'file-no') { ui.confirm = F.confirmNext(ui.confirm, 'cancel').c; ui.file = null; render(); toast('Kept the copy in this browser.'); }
+    else if (a === 'file-yes') { var fr2 = ui.file; if (confirmed('file', fr2 && fr2.id) && fr2) openFile(fr2); else render(); }
+    else if (a === 'rm-yes') {
+      if (!confirmed('rm', id)) { render(); return; }
+      delete mine[id]; lset(MY, mine);
+      if (st.id === id) { var h0 = st.hotel; st = blank(); st.hotel = h0; }
+      keep(); render(); toast('Removed from this browser.');
+    }
+    else if (a === 'new') { if (st.step === 'result') { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'new').c; render(); } }
+    else if (a === 'new-yes') {
+      if (!confirmed('new') || st.step !== 'result') { render(); return; }
+      var h = st.hotel; st = blank(); st.hotel = h; go('start');
+    }
     else if (a === 'copy-prep') { var w = b.getAttribute('data-who'), qs = byWho(L.selectQuestions(M, M.UI[st.useId], st.hotel))[w] || []; copy(prepText(w, qs), 'Questions'); }
     else if (a === 'copy-find') copy(findText(b.getAttribute('data-who')), 'Questions');
     else if (a === 'copy-vendor') copy('Questions about ' + M.UI[st.useId].name + ':\n\n' + L.vendorQs(M, M.UI[st.useId], ev()).map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions');
@@ -508,10 +579,42 @@
       if (window.parent !== window) { try { window.parent.postMessage({ hub: 'open', tool: 'register', hash: hh }, location.origin); } catch (e2) { /* ignore */ } }
       else location.href = '../register/index.html#' + hh;
     }
-    else if (a === 'pdf') { toast('Preparing the report…'); makePdf().then(function (blob) { saveFile('AI-readiness-check_' + fileBase() + '.pdf', blob); }).catch(function () { toast('The PDF could not be made here. Use “Copy a note for the owner” instead.'); }); }
-    else if (a === 'share') { S.save(st.id, shareDoc()).then(function (m) { st.sharedAt = new Date().toISOString(); keep(); render(); toast(m === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).'); }, function () { toast('Sharing is not available here. Save the file and send it instead.'); }); }
-    else if (a === 'unshare') { S.remove(st.id).then(function () { st.sharedAt = null; keep(); render(); toast('Shared copy withdrawn.'); }, function () { toast('Could not withdraw here. Ask the team to delete it.'); }); }
+    else if (a === 'pdf') {
+      if (ui.pdf) { toast('The report is still being prepared.'); return; }
+      ui.pdf = true; toast('Preparing the report…');
+      var name = 'AI-readiness-check_' + fileBase() + '.pdf';
+      makePdf().then(function (blob) { ui.pdf = false; saveFile(name, blob, 'pdf'); }, function () { ui.pdf = false; toast('The PDF could not be made here. Use “Copy a note for the owner” instead.'); });
+    }
+    else if (a === 'share') shareSend('share');
+    else if (a === 'unshare') shareSend('withdraw');
   });
+  /* SHARE machine (F.shareNext). The answer may arrive after the person has moved to another check, so the
+     result is written to the check it was sent for (patch), not to whatever is open by then. */
+  function patch(id, fn) {
+    if (st.id === id) { fn(st); keep(); if (st.step === 'result') render(true); return; }
+    var r = mine[id]; if (r) { fn(r); lset(MY, mine); }
+  }
+  function shareSend(ev) {
+    var from = sharePhase(), to = F.shareNext(from, ev); if (!to) return;
+    if (ev === 'withdraw' && st.sharedMode && S.mode() && st.sharedMode !== S.mode()) {
+      toast(st.sharedMode === 'shared' ? 'This copy was shared from the project hub: open the check there to withdraw it.' : 'This was only a test copy in another browser setting: nothing reached the team.');
+      return;
+    }
+    var id = st.id, doc = ev === 'share' ? shareDoc() : null, sig = F.shareSig(st);
+    ui.share = { phase: to, id: id }; render(true);
+    var done = function () { if (ui.share && ui.share.id === id) ui.share = null; };
+    if (ev === 'share') {
+      S.save(id, doc).then(function (m) {
+        done(); patch(id, function (r) { r.sharedAt = new Date().toISOString(); r.sharedMode = m; r.sharedSig = sig; });
+        toast(m === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).');
+      }, function () { done(); if (st.id === id) render(true); toast('Sharing is not available here. Save the file and send it instead.'); });
+    } else {
+      S.remove(id).then(function () {
+        done(); patch(id, function (r) { r.sharedAt = null; r.sharedMode = null; r.sharedSig = null; });
+        toast('Shared copy withdrawn.');
+      }, function () { done(); if (st.id === id) render(true); toast('Could not withdraw here. Ask the team to delete it.'); });
+    }
+  }
   document.addEventListener('change', function (e) {
     var el = e.target;
     if (el.hasAttribute('data-q')) { var k = el.getAttribute('data-q'); st.A[k] = el.value; keep(); render(true); }
@@ -520,7 +623,7 @@
     else if (el.tagName === 'SELECT' && el.hasAttribute('data-h')) { st.hotel[el.getAttribute('data-h')] = el.value; keep(); updateStartButton(); }
     else if (el.hasAttribute('data-n')) { st.next[el.getAttribute('data-n')] = el.value; keep(); }
     else if (el.hasAttribute('data-o') && el.type === 'date') { st.owner.by = el.value; keep(); }
-    else if (el.hasAttribute('data-share')) { st.share.named = el.checked; keep(); render(true); }
+    else if (el.hasAttribute('data-share')) { if (sharePhase() === 'sending' || sharePhase() === 'withdrawing') { el.checked = st.share.named; return; } st.share.named = el.checked; keep(); render(true); }
     else if (el.id === 'dept') { st.dept = el.value; var pl = $('picklist'); if (pl) pl.innerHTML = pickList((st.q || '').trim().toLowerCase()); }
     else if (el.id === 'loadfile' && el.files && el.files[0]) loadRecord(el.files[0]);
   });
@@ -532,19 +635,33 @@
     else if (el.hasAttribute('data-proof')) { st.P[el.getAttribute('data-proof')] = el.value; keep(); var w = el.closest('fieldset').querySelector('.warnline'); if (w) w.hidden = L.proofOk(el.value); }
   });
 
-  S.ready();
+  /* STORE machine (src/store.js): 'idle' → 'probing' → 'shared' | 'local'. The share panel says which, once known. */
+  S.ready().then(function () { document.body.setAttribute('data-store', S.state()); if (st.step === 'result') render(true); });
   adoptProfile();
   /* Coming from the AI Register: #use=<use id> starts a check for that tool. */
   function fromHash() {
     var m = /(?:^|[#&])use=([a-z]+-\d+)/.exec(location.hash || ''); if (!m || !M.UI[m[1]]) return;
     if (st.useId !== m[1]) { var h0 = st.hotel; st = blank(); st.hotel = h0; adoptProfile(); st.useId = m[1]; }
+    ui.confirm = null; ui.file = null; ui.choosing = false;
     st.step = 'start'; keep();
     return true;
   }
   fromHash();
-  window.addEventListener('hashchange', function () { if (fromHash()) { try { history.replaceState({ rc: st.step }, '', location.pathname); } catch (e) { /* ignore */ } render(); } });
-  try { history.replaceState({ rc: st.step }, '', location.pathname); } catch (e) { /* ignore */ }
+  window.addEventListener('hashchange', function () { if (fromHash()) { try { history.replaceState({ rc: st.step, id: st.id }, '', location.pathname); } catch (e) { /* ignore */ } render(); } });
+  try { history.replaceState({ rc: st.step, id: st.id }, '', location.pathname); } catch (e) { /* ignore */ }
+  document.body.setAttribute('data-bridge', host.state);
   if (st.step === 'result') takeSnap();
   render();
-  window.ReadinessCheck = { state: function () { return st; }, model: M };
+  /* For agents and tests: a read-only snapshot of where things are, the record (a copy), and the FLOW events. */
+  window.ReadinessCheck = {
+    state: function () {
+      return { step: st.step, id: st.id, useId: st.useId, confirm: ui.confirm ? { kind: ui.confirm.kind, id: ui.confirm.id } : null, choosing: ui.choosing,
+               share: sharePhase(), shareStale: F.shareStale(st), sharedAt: st.sharedAt, store: S.state(), bridge: host.state, pdf: ui.pdf,
+               snaps: (st.snaps || []).length, checks: Object.keys(mine).filter(openable) };
+    },
+    record: function () { return JSON.parse(JSON.stringify(st)); },
+    send: send,
+    events: function () { return Object.keys((F.FLOW[st.step] || {})).filter(function (k) { return F.flowNext(st.step, k, flowCtx()) !== null; }); },
+    model: M
+  };
 })();

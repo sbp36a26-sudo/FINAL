@@ -42,4 +42,8 @@ node tools/readiness-check/build.mjs
 node tools/readiness-check/tests/logic.test.mjs
 ```
 
-The tests (34) include every scoring fault found in the trials of 18 Nov 2026.
+```bash
+node tools/readiness-check/tests/flow.test.mjs
+```
+
+The logic tests (34) include every scoring fault found in the trials of 18 Nov 2026. The flow tests (70) cover the page's state machines in `src/flow.js` (journey steps, confirmations, sharing, the hub download bridge, the team page, saved-check migration); see `CLEANUP.md`.

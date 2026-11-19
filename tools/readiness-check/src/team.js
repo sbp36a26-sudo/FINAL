@@ -7,7 +7,11 @@
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var TYPES = { independent: 'Independent hotel', group: 'Part of a group', managed: 'Managed or franchised' };
   var ROLES = { gm: 'General manager', owner: 'Owner or asset manager', dept: 'Head of a department', it: 'IT or CIO', fin: 'Finance', other: 'Other' };
-  var subs = [], old = 0, sel = null, confirmDel = false, loading = true, err = '';
+  /* TEAM machine (src/flow.js teamNext): t.phase 'loading' | 'ready' | 'empty' | 'error'; t.del null | 'confirm' | 'deleting'.
+     send(event) is the only writer of t. A list answer that arrives after a newer Refresh is ignored (seq). */
+  var F = window.RCFlow;
+  var subs = [], old = 0, sel = null, err = '', t = { phase: 'loading', del: null }, seq = 0;
+  function send(ev, n) { var to = F.teamNext(t, ev, n); if (!to) return false; t = to; return true; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmt(iso) { if (!iso) return ''; var d = new Date(iso); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function pct(v) { return v == null ? '–' : Math.round(v * 100) + '%'; }
@@ -16,13 +20,19 @@
   function title(s) { return s.named && s.hotelName ? s.hotelName : 'Anonymous · ' + (ROLES[s.role] || 'role not given') + ', ' + (TYPES[s.type] || 'type not given') + (s.country ? ', ' + s.country : ''); }
 
   function load() {
-    loading = true; err = ''; render();
+    var my = ++seq; err = ''; render();
     S.list().then(function (docs) {
+      if (my !== seq) return;
+      docs = Array.isArray(docs) ? docs : [];
       old = docs.filter(function (d) { return d && d.v !== 3; }).length;
       subs = docs.filter(function (d) { return d && d.v === 3 && M.UI[d.useId]; }).sort(function (a, b) { return String(b.sharedAt).localeCompare(String(a.sharedAt)); });
       if (!sel || !subs.some(function (s) { return s._id === sel; })) sel = subs.length ? subs[0]._id : null;
-      loading = false; render();
-    }, function (e) { loading = false; err = e && e.code === 'not_allowed' ? 'Only Editors of the hub can see shared checks.' : 'The shared checks could not be loaded. Try Refresh list.'; render(); });
+      send('loaded', subs.length); render();
+    }, function (e) {
+      if (my !== seq) return;
+      err = e && e.code === 'not_allowed' ? 'Only Editors of the hub can see shared checks.' : 'The shared checks could not be loaded. Try Refresh list.';
+      subs = []; sel = null; send('failed'); render();
+    });
   }
 
   function flowCard() {
@@ -37,9 +47,9 @@
 
   function listPanel() {
     var h = '<section class="panel" style="padding:0;gap:0;overflow:hidden"><div style="padding:14px 14px 10px"><h3>Shared checks</h3><p class="meta">' +
-      (loading ? 'Loading…' : subs.length + ' shared' + (S.mode() === 'local' ? ' (this browser only: open the hub on claude.ai for the real list)' : '') + (old ? ' · ' + old + ' in the old v2 format not shown' : '')) + '</p></div>';
+      (t.phase === 'loading' ? 'Loading…' : subs.length + ' shared' + (S.mode() === 'local' ? ' (this browser only: open the hub on claude.ai for the real list)' : '') + (old ? ' · ' + old + ' in the old v2 format not shown' : '')) + '</p></div>';
     if (err) h += '<p class="warnline" style="padding:0 14px 12px">' + esc(err) + '</p>';
-    if (!loading && !subs.length && !err) h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
+    if (t.phase === 'empty') h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
     subs.forEach(function (s) {
       var lv = L.LEVELS[s.level] || L.LEVELS.open;
       h += '<button type="button" class="sub-row" data-act="sel" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">' + esc(s.useName) + '</span><span class="btnrow"><span class="chip c-' + lv.chip + '">' + esc(lv.name) + '</span><span class="meta">' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + '</span></span></button>';
@@ -77,24 +87,33 @@
     });
     h += '</tbody></table></div></section>';
     h += '<section class="panel"><h3>Their action plan</h3><ol class="steps">' + e.actions.map(function (a) { return '<li>' + esc(a.text) + ' <span class="meta">(' + esc(a.group) + ', ' + esc(L.WHO[a.who]) + ')</span></li>'; }).join('') + '</ol></section>';
-    h += '<section class="panel"><h3>Delete</h3>' + (confirmDel ? '<p>Delete this shared copy? The hotel keeps its own copy. This cannot be undone.</p><div class="btnrow"><button type="button" class="btn warn" data-act="del-yes" id="del-yes">Delete copy</button><button type="button" class="btn" data-act="del-no">Cancel</button></div>' : '<div><button type="button" class="btn warn" data-act="del">Delete this shared copy</button></div>') + '</section>';
+    h += '<section class="panel" data-del="' + (t.del || 'none') + '"><h3>Delete</h3>' + (t.del === 'confirm' ? '<p>Delete this shared copy? The hotel keeps its own copy. This cannot be undone.</p><div class="btnrow"><button type="button" class="btn warn" data-act="del-yes" id="del-yes">Delete copy</button><button type="button" class="btn" data-act="del-no" id="del-no">Cancel</button></div>'
+      : t.del === 'deleting' ? '<p class="meta" role="status">Deleting…</p>' : '<div><button type="button" class="btn warn" data-act="del" id="del">Delete this shared copy</button></div>') + '</section>';
     return h;
   }
 
   function render() {
-    var s = subs.filter(function (d) { return d._id === sel; })[0];
-    $('view').innerHTML = flowCard() + '<div class="teamgrid" style="margin-top:16px">' + listPanel() + '<div style="display:flex;flex-direction:column;gap:16px;min-width:0">' + (s ? detail(s) : '<section class="panel"><p class="meta">Select a check to see its working-out.</p></section>') + '</div></div>';
+    var s = t.phase === 'ready' ? subs.filter(function (d) { return d._id === sel; })[0] : null;
+    $('view').setAttribute('data-state', t.phase); $('view').setAttribute('data-del', t.del || 'none'); document.body.setAttribute('data-store', S.state());
+    var rb = document.querySelector('[data-act="refresh"]'); if (rb) rb.disabled = t.phase === 'loading' || t.del === 'deleting';
+    $('view').innerHTML = flowCard() + '<div class="teamgrid" style="margin-top:16px">' + listPanel() + '<div style="display:flex;flex-direction:column;gap:16px;min-width:0">' + (s ? detail(s) : '<section class="panel"><p class="meta">' + (t.phase === 'loading' ? 'Loading the shared checks…' : t.phase === 'error' ? 'Nothing to show until the list loads.' : t.phase === 'empty' ? 'No shared checks yet.' : 'Select a check to see its working-out.') + '</p></section>') + '</div></div>';
   }
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
     var a = b.getAttribute('data-act');
-    if (a === 'refresh') load();
-    else if (a === 'sel') { sel = b.getAttribute('data-id'); confirmDel = false; render(); }
-    else if (a === 'del') { confirmDel = true; render(); var y = $('del-yes'); if (y) y.focus(); }
-    else if (a === 'del-no') { confirmDel = false; render(); }
-    else if (a === 'del-yes') { S.remove(sel).then(function () { confirmDel = false; sel = null; toast('Shared copy deleted.'); load(); }, function () { toast('The copy could not be deleted.'); }); }
+    if (a === 'refresh') { if (send('refresh')) load(); }
+    else if (a === 'sel') { if (send('select')) { sel = b.getAttribute('data-id'); render(); } }
+    else if (a === 'del') { if (send('ask-del')) { render(); var y = $('del-yes'); if (y) y.focus(); } }
+    else if (a === 'del-no') { if (send('cancel-del')) render(); }
+    else if (a === 'del-yes') {
+      if (!send('yes-del')) return;
+      var id = sel; render();
+      S.remove(id).then(function () { send('deleted'); if (sel === id) sel = null; toast('Shared copy deleted.'); load(); },
+        function () { send('del-failed'); render(); toast('The copy could not be deleted.'); });
+    }
   });
   load();
-  window.ReadinessTeam = { subs: function () { return subs; } };
+  /* For agents and tests. */
+  window.ReadinessTeam = { subs: function () { return subs; }, state: function () { return { phase: t.phase, del: t.del, selected: sel, count: subs.length, old: old, error: err, store: S.state() }; } };
 })();

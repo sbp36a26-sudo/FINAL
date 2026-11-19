@@ -1,7 +1,10 @@
 /* Where readiness checks are saved.
    Inside the hub on claude.ai: the hub page's shared database (collection "readiness"), reached through
    the hub bar's bridge, because only an artifact's main page can use the database.
-   Anywhere else (opened on its own, or locally): this browser only, so the pages still work for testing. */
+   Anywhere else (opened on its own, or locally): this browser only, so the pages still work for testing.
+   Mode machine (see state()): 'idle' --ready()--> 'probing' --probe answered--> 'shared'
+                                                             \--no hub / error / 8 s timeout--> 'local'
+   'shared' and 'local' are final for the page's life; every list/save/remove waits for them. */
 (function (root) {
   'use strict';
   var KEY = 'hftp-readiness-checks-v1', seq = 0, calls = {}, mode = null, waiters = [];
@@ -34,6 +37,7 @@
   }
   var api = {
     mode: function () { return mode; },
+    state: function () { return mode || (waiters.length ? 'probing' : 'idle'); },
     ready: ready,
     list: function () {
       return ready().then(function (m) {
