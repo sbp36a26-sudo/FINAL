@@ -612,6 +612,16 @@ const itemLabel = (x,i) => i.res ? `${ANAME[i.a]} resources for this use case: $
 const KEY = 'hotel-ai-readiness-v1';
 let STORE = {}, CAN_STORE = true;
 try { STORE = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; if (typeof STORE !== 'object' || Array.isArray(STORE)) STORE = {}; } catch(e){ STORE = {}; CAN_STORE = false; }
+/* restore check: each entry must be {a:{code:'y'|'p'|'n'|'na'}, t:number}; a damaged entry would crash setAns or show a result
+   for answers that do not exist, so bad answers are dropped and empty entries removed (saved again on the next change) */
+for (const id of Object.keys(STORE)){
+  const s = STORE[id], a = s && typeof s==='object' && s.a && typeof s.a==='object' && !Array.isArray(s.a) ? s.a : {};
+  const clean = {}; Object.keys(a).forEach(c=>{ if (['y','p','n','na'].includes(a[c])) clean[c]=a[c]; });
+  if (Object.keys(clean).length) STORE[id] = {a:clean, t: typeof s.t==='number' ? s.t : 0}; else delete STORE[id];
+}
+/* Reset confirmation: null = not armed; {id, at} = first click done for that use case. Any re-render of the result
+   (an answer changed, another use case opened) disarms it, so the second click must follow the first directly. */
+let resetArm = null;
 const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(STORE)); CAN_STORE = true; } catch(e){ CAN_STORE = false; } };
 const ans = id => (STORE[id] && STORE[id].a) || {};
 const hasAns = id => !!(STORE[id] && Object.keys(STORE[id].a||{}).length);
@@ -796,6 +806,7 @@ function renderAssess(id){
   renderMine();
 }
 function updateResult(x){
+  resetArm = null;
   const A = ans(x.id), ev = evaluate(x, A), lv = LV[ev.lv];
   AK.forEach(a=>{ const s=ev.area[a], el=$('as-'+a); if (el) el.innerHTML = `<b>${s.pct===null?'–':pct(s.pct)}</b><span class="meta">${s.ans} of ${s.n} answered</span>`; });
   const coreDone = ev.core.length - ev.coreOpen.length;
@@ -867,7 +878,6 @@ $('acopyw').addEventListener('change', e=>{
   renderAssess(CUR);
   msg(`Copied ${n} answer${n===1?'':'s'} from "${src}". Check them: some depend on the tool.`);
 });
-let resetArm = 0;
 
 /* ---------- framework ---------- */
 $('fwBldg').innerHTML = bldg((b)=>({em:pct(share(b)), title:`${b.n}: needed for every tool of their type in ${pct(share(b))} of the ${TOOLS.length} catalogue tools`}), {label:'Building blocks by layer with the share of catalogue tools that need them'}) + '<p class="meta" style="margin-top:8px">Percentage: share of the 90 catalogue tools whose type needs the block every time (team coding).</p>';
@@ -1026,8 +1036,8 @@ document.addEventListener('click', e=>{
   }
   const rb = e.target.closest('#breset');
   if (rb && CUR){
-    if (Date.now()-resetArm < 4000){ resetArm=0; delete STORE[CUR]; persist(); renderAssess(CUR); msg('Answers cleared for this use case.'); }
-    else { resetArm=Date.now(); rb.textContent='Click again to clear all answers'; setTimeout(()=>{ if (rb.isConnected) rb.textContent='Reset answers'; }, 4000); }
+    if (resetArm && resetArm.id===CUR && Date.now()-resetArm.at < 4000){ resetArm=null; delete STORE[CUR]; persist(); renderAssess(CUR); msg('Answers cleared for this use case.'); }
+    else { resetArm={id:CUR, at:Date.now()}; rb.textContent='Click again to clear all answers'; setTimeout(()=>{ if (rb.isConnected) rb.textContent='Reset answers'; }, 4000); }
     return;
   }
 });
