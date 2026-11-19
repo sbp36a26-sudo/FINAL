@@ -1,0 +1,1539 @@
+{
+ "schema": "ai-act-guide/1",
+ "meta": {
+  "rulesAsOf": "2026-11-19",
+  "title": "What the EU AI Act means for your hotel",
+  "about": "Front door to the AI Register: the same rules (RegLogic and the register data), asked in plain words. Mapping from test2/map/mapping.json with the 19 Nov 2026 spec fixes.",
+  "pendingSignOff": "Questions that attach a register question to a row that does not carry it (for example the emotion question on the CCTV row) need D7 sign-off; see README."
+ },
+ "tiers": {
+  "banned": {
+   "name": "Banned",
+   "chip": "prohibited",
+   "rank": 7
+  },
+  "pbanned": {
+   "name": "Possibly banned",
+   "chip": "banif",
+   "rank": 6
+  },
+  "high": {
+   "name": "High-risk",
+   "chip": "high",
+   "rank": 5
+  },
+  "phigh": {
+   "name": "Possibly high-risk",
+   "chip": "highif",
+   "rank": 4
+  },
+  "transp": {
+   "name": "Transparency",
+   "chip": "transparency",
+   "rank": 3
+  },
+  "ptransp": {
+   "name": "Possibly transparency",
+   "chip": "transif",
+   "rank": 2
+  },
+  "minimal": {
+   "name": "Minimal",
+   "chip": "minimal",
+   "rank": 1
+  },
+  "unknown": {
+   "name": "Not known yet",
+   "chip": "open",
+   "rank": 0
+  },
+  "pending": {
+   "name": "Not answered yet",
+   "chip": "open",
+   "rank": -1
+  }
+ },
+ "levelMap": {
+  "prohibited": {
+   "tier": "banned"
+  },
+  "banif": {
+   "tier": "pbanned"
+  },
+  "high": {
+   "tier": "high"
+  },
+  "highif": {
+   "tier": "phigh"
+  },
+  "transparency": {
+   "tier": "transp"
+  },
+  "transif": {
+   "tier": "ptransp"
+  },
+  "minimal": {
+   "tier": "minimal"
+  },
+  "outside": {
+   "tier": "minimal",
+   "badge": "Outside the high-risk list"
+  },
+  "notai": {
+   "tier": "minimal",
+   "badge": "Not an AI system"
+  },
+  "open": {
+   "tier": "unknown"
+  }
+ },
+ "origins": [
+  {
+   "id": "vendor",
+   "name": "Bought from a vendor and used as supplied",
+   "reg": "vendor"
+  },
+  {
+   "id": "bundled",
+   "name": "Came inside a system we already had (PMS, CRM, phone system)",
+   "reg": "bundled"
+  },
+  {
+   "id": "shadow",
+   "name": "Staff started using it themselves",
+   "reg": "shadow"
+  },
+  {
+   "id": "built-hotel",
+   "name": "Built by us or for us (staff or an agency), under our hotel's name",
+   "reg": "built",
+   "inhouse": true
+  },
+  {
+   "id": "built-group",
+   "name": "Built by or for our group, under the group's or brand's name",
+   "reg": "built",
+   "inhouse": true
+  },
+  {
+   "id": "branded",
+   "name": "A vendor's tool with our name on it",
+   "reg": "branded"
+  },
+  {
+   "id": "changed",
+   "name": "A vendor's tool we changed substantially, for example retrained on our data",
+   "reg": "changed"
+  },
+  {
+   "id": "unsure",
+   "name": "Not sure",
+   "reg": "vendor",
+   "unsure": true
+  }
+ ],
+ "originUnsure": {
+  "text": "Find out who built this tool and whose name it carries. If your hotel or group built it or put its name on it, you may be its maker, with more duties.",
+  "who": "General manager, with IT",
+  "ask": "Who is the maker of this tool under the AI Act, and does the contract say so?"
+ },
+ "isAI": {
+  "intro": "Software counts as AI under the Act when it works out its output from data (learns, predicts, writes or generates), not when it only follows rules people wrote.",
+  "questions": [
+   {
+    "id": "learns",
+    "ask": "Does it learn from data, predict, or write text or make images?"
+   },
+   {
+    "id": "says",
+    "ask": "Does the vendor call it AI or machine learning (website, brochure, contract)?"
+   },
+   {
+    "id": "rules",
+    "ask": "Or does it only follow rules you set (if this, then that)?"
+   }
+  ],
+  "basis": "AI Act Art. 3(1); register rule: \"rules only, not AI\" never overrides a ban or high-risk answer, and for a tool whose questions can make it banned or high-risk it needs the vendor's written confirmation."
+ },
+ "staffReps": {
+  "ask": "Does the hotel have a works council or staff representatives?",
+  "yes": "Your hotel has staff representatives: involve them before you switch on a tool that plans, scores or watches staff.",
+  "no": "You said the hotel has no works council or staff representatives. Tell the affected staff directly before you switch the tool on.",
+  "unsure": {
+   "text": "Find out whether the hotel has a works council or staff representatives. Where it has, they must be involved before a tool that plans, scores or watches staff is switched on.",
+   "who": "General manager and HR",
+   "ref": "National labour law"
+  }
+ },
+ "redFlag": {
+  "text": "Follow up with {vendor} in writing on: \"{ask}\" If the answer stays a red flag, plan a replacement or switch the feature off.",
+  "who": "Purchasing or IT"
+ },
+ "outOfScope": "One hotel in one country at a time. Groups with several hotels or countries: run the guide once per hotel. A group view is not part of this prototype.",
+ "honest": {
+  "picture": "Most hotel AI is minimal-risk. The weight sits in hiring and staff management, in anything that recognises faces or reads emotions, and in telling guests when they talk to an AI.",
+  "fines": [
+   [
+    "Banned practices",
+    "Up to EUR 35 million or 7% of worldwide annual turnover, whichever is higher",
+    "Art. 99(3)"
+   ],
+   [
+    "Most other duties, including a user's high-risk duties and the transparency duties",
+    "Up to EUR 15 million or 3% of worldwide annual turnover, whichever is higher",
+    "Art. 99(4)"
+   ],
+   [
+    "Wrong, incomplete or misleading information given to authorities",
+    "Up to EUR 7.5 million or 1% of worldwide annual turnover, whichever is higher",
+    "Art. 99(5)"
+   ]
+  ],
+  "fineNotes": [
+   "For small and medium-sized companies the lower of the two amounts applies (Art. 99(6)); small mid-caps get the same rule for the second and third rows (Art. 99(6a), as amended by Regulation (EU) 2026/1744).",
+   "These are ceilings. Authorities weigh gravity, duration, harm and size (Art. 99(7)).",
+   "The AI literacy duty (Art. 4) is not in the list of fined provisions in Art. 99(4), but each country sets its own penalty rules (Art. 99(1)), so check yours."
+  ],
+  "enforcers": "Each EU country names its own authorities to supervise the AI Act, and anyone can complain to them (Arts. 70 and 85; team research, 10 Nov 2026). Data protection authorities stay in charge of the GDPR.",
+  "dates": [
+   [
+    "2025-02-02",
+    "Bans apply, including reading staff emotions",
+    "Art. 113"
+   ],
+   [
+    "2026-07-27",
+    "Amending Regulation (EU) 2026/1744 (Digital Omnibus) in force; AI literacy rule (Art. 4) rewritten",
+    "Reg. (EU) 2026/1744"
+   ],
+   [
+    "2026-08-02",
+    "Transparency rules apply (telling people they deal with AI, labelling realistic AI content)",
+    "Art. 50, Art. 113"
+   ],
+   [
+    "2026-12-02",
+    "Two new bans apply; deadline for machine-readable marking by generative tools already on the market",
+    "Art. 5(1)(ba), (bb); Art. 111(4), as amended"
+   ],
+   [
+    "2027-12-02",
+    "High-risk duties for the Annex III list (hiring, staff management, biometrics, credit), including the hotel's own duties as user",
+    "Art. 113, as amended"
+   ],
+   [
+    "2028-08-02",
+    "High-risk duties for AI in regulated products (lifts, gas appliances). Rarely relevant to hotels",
+    "Art. 113, as amended"
+   ]
+  ],
+  "guidelines": "Commission guidelines on transparency (Art. 50), final, November 2026. Reference to verify: the briefing booklet cites C(2026) 7702 final of 5 Nov 2026; other sources cite OJ C/2026/6005 of 12 Nov 2026.",
+  "gdpr": "Data protection law applies alongside: automated decisions about people (GDPR Art. 22), face and other biometric data (Art. 9), impact assessments (Art. 35). Ask your data protection officer or adviser.",
+  "sources": [
+   "Regulation (EU) 2024/1689 (AI Act), Official Journal 12.7.2024",
+   "Regulation (EU) 2026/1744 (Digital Omnibus on AI), Official Journal 24.7.2026",
+   "Commission draft guidelines on high-risk classification, 19 May 2026 (not final)",
+   "AI Governance for European Hotels, briefing booklet by EHL SBP Group 36 for HFTP, November 2026",
+   "Hotel AI Register labels and items (tools/register/data), team text check of 17 Nov 2026"
+  ]
+ },
+ "templates": {
+  "chatNotice": {
+   "title": "Guest chatbot AI notice",
+   "text": "AI NOTICE FOR {hotel}: GUEST CHATBOT\n(Place it in the chat window and on the page that hosts the chatbot.)\n\n1. First message from the assistant\n\"Hello, I'm the AI assistant of {hotel}. I'm not a person, and I can make mistakes. I can help with rooms, rates, the restaurant and directions. To speak to our team at any time, call [phone] or write to [email].\"\n\n2. Line under the chat window\n\"This assistant uses artificial intelligence. Please check important details such as prices, dates and allergies with our team. Please do not share passport or payment details in the chat.\"\n\n3. If you also have a voice assistant, open the call with\n\"Hello, this is the automated AI assistant of {hotel}. For a person, say 'team member'.\"\n\nCheck before you publish: the notice appears at the first message or call, not only in the terms and conditions."
+  },
+  "supplierEmail": {
+   "title": "Supplier question email",
+   "intro": "To: {to}\nSubject: Questions about AI in {products}\n\nDear {to},\n\nWe use {products} at {hotel}. We are checking the AI tools we use under the EU AI Act. Please answer in writing:\n",
+   "outro": "\nPlease reply by [date]. If a question does not apply, please say so and why.\n\nKind regards,\n[Name, role]\n{hotel}"
+  },
+  "withheld": [
+   "One-page staff AI policy",
+   "AI literacy training checklist"
+  ],
+  "withheldNote": "Awaiting legal review. Not shown in this prototype.",
+  "draftMark": "Draft wording, check with your adviser."
+ },
+ "types": [
+  {
+   "id": "chatbot",
+   "name": "Guest chatbot or messaging assistant",
+   "what": "Answers guests on your website, WhatsApp or email.",
+   "use": "gx-2",
+   "chatNotice": true,
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it do?",
+     "answers": [
+      {
+       "id": "talks",
+       "label": "Answers guests itself (chat, messaging, email)",
+       "set": {},
+       "use": "gx-2"
+      },
+      {
+       "id": "drafts",
+       "label": "Only drafts replies that a team member reads and sends",
+       "set": {
+        "auto_reply": "no"
+       },
+       "use": "res-2"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "auto_reply": "unsure"
+       },
+       "use": "res-2"
+      }
+     ]
+    },
+    {
+     "id": "card",
+     "ask": "Do guests give card numbers through it, typed in a chat or spoken on a call?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "card_data": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "card_data": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "card_data": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it tell people it is an AI at the first message or call? Can we edit that wording?",
+     "fine": "Yes by default, at first contact, with wording we can change. They can show it in a demo.",
+     "red": "Only in the terms and conditions, switched off by default, or 'guests prefer it to feel human'."
+    },
+    {
+     "ask": "How does a guest reach a person? Does it hand over on request and when it cannot help?",
+     "fine": "A 'talk to a person' route at any time, with the conversation passed on.",
+     "red": "No human route, or the guest has to start again."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "rms",
+   "name": "Revenue management or dynamic pricing",
+   "what": "Suggests or sets room rates from demand.",
+   "use": "rm-2",
+   "questions": [
+    {
+     "id": "price",
+     "ask": "What does it price on? Pick the most sensitive thing it does.",
+     "answers": [
+      {
+       "id": "demand",
+       "label": "Demand, events, competitor rates and bookings, the same price for everyone",
+       "set": {
+        "exploit_price": "no",
+        "personal_price": "no"
+       }
+      },
+      {
+       "id": "person",
+       "label": "Different prices for individual guests, from what it knows about them",
+       "set": {
+        "exploit_price": "no",
+        "personal_price": "yes"
+       }
+      },
+      {
+       "id": "vuln",
+       "label": "It targets guests it sees as vulnerable (age, disability, money worries) to make them pay more",
+       "set": {
+        "exploit_price": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "exploit_price": "unsure",
+        "personal_price": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "comp",
+     "ask": "Does it use other hotels' non-public data, or share your prices with them?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "competitor_data": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "competitor_data": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "competitor_data": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does anything price or target individual guests from personal data or a profile, rather than only from demand and bookings?",
+     "fine": "Prices come from market and demand signals. If anything is personalised, it is documented, explainable and based on consent.",
+     "red": "Per-guest prices from device, location or inferred wealth, or targeting of 'vulnerable' segments."
+    },
+    {
+     "ask": "Which features of [product] use AI (learning, predicting, ranking, generating or conversing)? Please list them.",
+     "fine": "A clear list by feature, in plain words, with what each one does.",
+     "red": "'It is all proprietary', 'we do not use AI' while the brochure says AI, or no list at all."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "pms",
+   "name": "PMS with AI features",
+   "what": "Room assignment, no-show prediction, upsell prompts, auto-replies.",
+   "use": "fo-4",
+   "questions": [
+    {
+     "id": "feat",
+     "ask": "Pick the most sensitive AI feature that is switched on",
+     "answers": [
+      {
+       "id": "basic",
+       "label": "Forecasts, room assignment, upsell suggestions, drafted messages",
+       "set": {},
+       "use": "fo-4"
+      },
+      {
+       "id": "auto",
+       "label": "Sends AI-written replies to guests with no person checking",
+       "set": {
+        "auto_reply": "yes"
+       },
+       "use": "res-2"
+      },
+      {
+       "id": "score",
+       "label": "Scores guests on trust, behaviour or credit, and uses it to refuse or limit service",
+       "set": {
+        "social_score": "unsure",
+        "c_credit": "unsure",
+        "crime_profile": "unsure"
+       },
+       "use": "fo-6"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "social_score": "unsure",
+        "c_credit": "unsure",
+        "crime_profile": "unsure"
+       },
+       "use": "fo-6"
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Which features of [product] use AI (learning, predicting, ranking, generating or conversing)? Please list them.",
+     "fine": "A clear list by feature, in plain words, with what each one does.",
+     "red": "'It is all proprietary', 'we do not use AI' while the brochure says AI, or no list at all."
+    },
+    {
+     "ask": "Which EU AI Act level do you give each feature (banned, high-risk, transparency or minimal), and why? Please answer in writing.",
+     "fine": "A written level per feature, with the reason, and who counts as the provider.",
+     "red": "'The Act does not apply to us', 'ask your lawyer', or any answer with no reasons."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "cv",
+   "name": "CV screening or candidate ranking",
+   "what": "Filters, scores or ranks job applicants.",
+   "use": "hr-2",
+   "staff": true,
+   "questions": [
+    {
+     "id": "rank",
+     "ask": "What does it do with applicants?",
+     "answers": [
+      {
+       "id": "rank",
+       "label": "Filters, scores, ranks or shortlists applicants",
+       "set": {
+        "c_chat": "no"
+       },
+       "use": "hr-2"
+      },
+      {
+       "id": "sched",
+       "label": "Only schedules interviews or answers candidates' questions; people choose who goes forward",
+       "set": {
+        "c_staff": "no",
+        "c_chat": "yes"
+       },
+       "use": "custom",
+       "implied": "no"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "c_staff": "unsure",
+        "c_chat": "unsure"
+       },
+       "use": "custom",
+       "implied": "no"
+      }
+     ]
+    },
+    {
+     "id": "emo",
+     "ask": "Does it read candidates' emotions or personality from their face or voice, for example in video interviews?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "emo_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_staff": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it score, rank or filter applicants? On which criteria? Can we see and change them, and turn ranking off?",
+     "fine": "Visible, editable criteria; a recruiter decides; ranking can be switched off.",
+     "red": "A hidden 'fit score', criteria we cannot see, or automatic rejection."
+    },
+    {
+     "ask": "Is it high-risk under the Act's employment category? Will it be CE-marked and registered by 2 December 2027, or is it a legacy product? Will you tell us before an update changes that?",
+     "fine": "A dated plan with a named contact, or a written reason why it is outside the category.",
+     "red": "'You are the user, not our problem', no plan, or 'we will update when required' with no date."
+    },
+    {
+     "ask": "What instructions for use and human-oversight guidance do you give us? Can a reviewer see why a result came out and overrule it?",
+     "fine": "Written instructions, a screen that shows the reasons, and an override.",
+     "red": "Black-box scores with no explanation and no way to overrule them."
+    },
+    {
+     "ask": "Which logs are kept, for how long, and can we export them? We need at least six months where the logs are under our control.",
+     "fine": "Exportable logs, with retention of six months or more that we can set.",
+     "red": "Automatic deletion after 30 days, or no export."
+    }
+   ]
+  },
+  {
+   "id": "jobads",
+   "name": "Job-ad targeting",
+   "what": "Decides who sees your job ads, or drafts them.",
+   "use": "sm-5",
+   "staff": true,
+   "questions": [
+    {
+     "id": "ads",
+     "ask": "What does it do?",
+     "answers": [
+      {
+       "id": "targets",
+       "label": "Decides who sees our job ads (targeting, automatic placement)",
+       "set": {
+        "job_ads": "yes"
+       },
+       "use": "sm-5"
+      },
+      {
+       "id": "drafts",
+       "label": "Drafts job-ad text; we choose where and to whom it is posted",
+       "set": {
+        "pub_claims": "no"
+       },
+       "use": "sm-1"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "job_ads": "unsure"
+       },
+       "use": "sm-5"
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it decide who sees our job ads (by age, gender, location or profile)? Can we set the audience ourselves?",
+     "fine": "We set the audience; no targeting on protected traits.",
+     "red": "Automatic optimisation by demographics that we cannot switch off."
+    },
+    {
+     "ask": "Is it high-risk under the Act's employment category? Will it be CE-marked and registered by 2 December 2027, or is it a legacy product? Will you tell us before an update changes that?",
+     "fine": "A dated plan with a named contact, or a written reason why it is outside the category.",
+     "red": "'You are the user, not our problem', no plan, or 'we will update when required' with no date."
+    },
+    {
+     "ask": "Have you tested it for bias (for example by gender, age or nationality)? Can you share a summary?",
+     "fine": "A written summary of testing, repeated after major updates.",
+     "red": "'AI is objective' or 'there is no bias'."
+    }
+   ]
+  },
+  {
+   "id": "rota",
+   "name": "Staff rota or scheduling",
+   "what": "Plans shifts from demand and availability.",
+   "use": "hr-1",
+   "staff": true,
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it do?",
+     "answers": [
+      {
+       "id": "fill",
+       "label": "Fills shifts from forecast demand and staff's stated availability",
+       "set": {
+        "rank_staff": "no",
+        "hours_leave": "no"
+       }
+      },
+      {
+       "id": "rank",
+       "label": "Ranks or scores staff, or decides who gets more or fewer hours, shifts or leave",
+       "set": {
+        "rank_staff": "yes",
+        "hours_leave": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "rank_staff": "unsure",
+        "hours_leave": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it use anything beyond stated availability and forecast demand to decide who works when (for example performance scores, speed, sick days)? Can it decide hours or leave?",
+     "fine": "Availability, contract hours and forecast only; no individual scoring; a manager approves hours.",
+     "red": "It ranks staff on 'reliability' or 'productivity' and allocates shifts from that."
+    },
+    {
+     "ask": "Which EU AI Act level do you give each feature (banned, high-risk, transparency or minimal), and why? Please answer in writing.",
+     "fine": "A written level per feature, with the reason, and who counts as the provider.",
+     "red": "'The Act does not apply to us', 'ask your lawyer', or any answer with no reasons."
+    },
+    {
+     "ask": "What instructions for use and human-oversight guidance do you give us? Can a reviewer see why a result came out and overrule it?",
+     "fine": "Written instructions, a screen that shows the reasons, and an override.",
+     "red": "Black-box scores with no explanation and no way to overrule them."
+    }
+   ]
+  },
+  {
+   "id": "staffmon",
+   "name": "Staff performance or productivity monitoring",
+   "what": "Housekeeping productivity, call scoring, sales rankings.",
+   "use": "hr-4",
+   "staff": true,
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it show?",
+     "answers": [
+      {
+       "id": "indiv",
+       "label": "Scores or tracks individual staff",
+       "set": {
+        "rank_staff": "yes"
+       }
+      },
+      {
+       "id": "team",
+       "label": "Only team or process figures, no individual scores",
+       "set": {
+        "rank_staff": "no"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "rank_staff": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "career",
+     "ask": "Are its results used to decide pay, promotion, contract renewal or dismissal?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "career_decide": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "career_decide": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "career_decide": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "emo",
+     "ask": "Does it read staff emotions, mood or wellbeing from their face or voice?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "emo_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_staff": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it score or rank individuals, or only show team and process figures? Can individual scoring be switched off?",
+     "fine": "Team-level by default; individual scoring is optional and documented.",
+     "red": "Always-on individual scores or leaderboards."
+    },
+    {
+     "ask": "Does any feature infer emotions, mood or personality from faces, voices or body language? Can it be switched off?",
+     "fine": "No such feature, or a separate module that is off for EU customers. Text-only sentiment is explained as such.",
+     "red": "'Mood' or 'engagement' scores from video or voice switched on by default, or 'sentiment' with no source named."
+    },
+    {
+     "ask": "Is it high-risk under the Act's employment category? Will it be CE-marked and registered by 2 December 2027, or is it a legacy product? Will you tell us before an update changes that?",
+     "fine": "A dated plan with a named contact, or a written reason why it is outside the category.",
+     "red": "'You are the user, not our problem', no plan, or 'we will update when required' with no date."
+    }
+   ]
+  },
+  {
+   "id": "cctv",
+   "name": "CCTV, face identification or access control",
+   "what": "Cameras with analytics, face recognition, door access.",
+   "use": "it-4",
+   "staff": true,
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it do with people's faces?",
+     "answers": [
+      {
+       "id": "basic",
+       "label": "Records or detects intrusion, objects or crowding, without recognising faces",
+       "set": {
+        "face_distance": "no"
+       },
+       "use": "it-4"
+      },
+      {
+       "id": "match",
+       "label": "Matches a guest's face to their own ID (one to one), for example at check-in",
+       "set": {
+        "face_distance": "no"
+       },
+       "use": "fo-3"
+      },
+      {
+       "id": "ident",
+       "label": "Recognises guests or staff by face in the camera feed",
+       "set": {
+        "face_distance": "yes"
+       },
+       "use": "it-4"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "face_distance": "unsure"
+       },
+       "use": "it-4"
+      }
+     ]
+    },
+    {
+     "id": "emo",
+     "ask": "Does it read emotions, mood or intentions from people's faces, voices or gestures? (Reading the words people write does not count.)",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "emo_guest": "no",
+        "emo_staff": "no",
+        "crowd_mood": "no",
+        "aggression": "no"
+       }
+      },
+      {
+       "id": "guests",
+       "label": "Yes, of guests or crowds",
+       "set": {
+        "emo_guest": "yes",
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "staff",
+       "label": "Yes, of staff",
+       "set": {
+        "emo_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_guest": "unsure",
+        "emo_staff": "unsure",
+        "crowd_mood": "unsure",
+        "aggression": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "enrol",
+     "ask": "Does it build a face database from everyone the cameras capture?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "face_enrol": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "face_enrol": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "face_enrol": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "traits",
+     "ask": "Does it guess sensitive traits from how people look, such as ethnic origin, religion, political views or sexual orientation?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "sensitive_traits": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "sensitive_traits": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "sensitive_traits": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "judge",
+     "ask": "Are its footage, logs or alerts used to rate or judge individual staff?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "judge_staff": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "judge_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "judge_staff": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it identify people by face (one against many) or only match a person to their own ID (one to one)? Where are face templates stored and for how long?",
+     "fine": "One-to-one only, with opt-in consent, an alternative for guests, and templates deleted after a short, stated period.",
+     "red": "A face database built from camera footage, no consent step, or unlimited retention."
+    },
+    {
+     "ask": "Does any feature infer emotions, mood or personality from faces, voices or body language? Can it be switched off?",
+     "fine": "No such feature, or a separate module that is off for EU customers. Text-only sentiment is explained as such.",
+     "red": "'Mood' or 'engagement' scores from video or voice switched on by default, or 'sentiment' with no source named."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "content",
+   "name": "AI-generated marketing content or images",
+   "what": "Text, images, video or audio for ads, social media and the website.",
+   "use": "sm-4",
+   "questions": [
+    {
+     "id": "kind",
+     "ask": "Pick the most sensitive thing it makes",
+     "answers": [
+      {
+       "id": "text",
+       "label": "Text for ads, social posts and the website",
+       "set": {
+        "pub_claims": "no"
+       },
+       "use": "sm-1"
+      },
+      {
+       "id": "media",
+       "label": "Images, video or audio that could pass for real people, places or food",
+       "set": {
+        "ai_image": "yes"
+       },
+       "use": "sm-4"
+      },
+      {
+       "id": "pub",
+       "label": "Sustainability or similar reports that you publish",
+       "set": {},
+       "use": "lg-1"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "ai_image": "unsure"
+       },
+       "use": "sm-4"
+      }
+     ]
+    },
+    {
+     "id": "check",
+     "when": {
+      "q": "kind",
+      "in": [
+       "pub",
+       "text"
+      ]
+     },
+     "ask": "Does a person check AI-written claims about health, safety or sustainability before they are published?",
+     "answers": [
+      {
+       "id": "yes",
+       "label": "Yes, always",
+       "set": {
+        "pub_claims": "no"
+       }
+      },
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "pub_claims": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "pub_claims": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it mark generated images, video and audio as AI-made in a machine-readable way (for example metadata or a watermark)?",
+     "fine": "Yes, built in, documented, and it survives export.",
+     "red": "No marking, or 'you can add a watermark yourself'."
+    },
+    {
+     "ask": "Which EU AI Act level do you give each feature (banned, high-risk, transparency or minimal), and why? Please answer in writing.",
+     "fine": "A written level per feature, with the reason, and who counts as the provider.",
+     "red": "'The Act does not apply to us', 'ask your lawyer', or any answer with no reasons."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "reviews",
+   "name": "Review responses and sentiment analysis",
+   "what": "Drafts replies to reviews, sorts reviews by topic and mood.",
+   "use": "gx-1",
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it analyse?",
+     "answers": [
+      {
+       "id": "text",
+       "label": "Only the written text of reviews and messages",
+       "set": {
+        "emo_guest": "no"
+       }
+      },
+      {
+       "id": "voice",
+       "label": "Also guests' voice or video recordings, to detect mood",
+       "set": {
+        "emo_guest": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_guest": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Which features of [product] use AI (learning, predicting, ranking, generating or conversing)? Please list them.",
+     "fine": "A clear list by feature, in plain words, with what each one does.",
+     "red": "'It is all proprietary', 'we do not use AI' while the brochure says AI, or no list at all."
+    },
+    {
+     "ask": "Does any feature infer emotions, mood or personality from faces, voices or body language? Can it be switched off?",
+     "fine": "No such feature, or a separate module that is off for EU customers. Text-only sentiment is explained as such.",
+     "red": "'Mood' or 'engagement' scores from video or voice switched on by default, or 'sentiment' with no source named."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "upsell",
+   "name": "Upsell and personalisation",
+   "what": "Offers and messages tailored to each guest.",
+   "use": "fo-5",
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it use to tailor offers?",
+     "answers": [
+      {
+       "id": "hist",
+       "label": "Stay history and preferences you already hold",
+       "set": {
+        "exploit_price": "no",
+        "personal_price": "yes"
+       }
+      },
+      {
+       "id": "vuln",
+       "label": "It pushes offers at guests it sees as vulnerable (age, disability, money worries)",
+       "set": {
+        "exploit_price": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "exploit_price": "unsure",
+        "personal_price": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does anything price or target individual guests from personal data or a profile, rather than only from demand and bookings?",
+     "fine": "Prices come from market and demand signals. If anything is personalised, it is documented, explainable and based on consent.",
+     "red": "Per-guest prices from device, location or inferred wealth, or targeting of 'vulnerable' segments."
+    },
+    {
+     "ask": "Which features of [product] use AI (learning, predicting, ranking, generating or conversing)? Please list them.",
+     "fine": "A clear list by feature, in plain words, with what each one does.",
+     "red": "'It is all proprietary', 'we do not use AI' while the brochure says AI, or no list at all."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "voice",
+   "name": "Voice and phone AI",
+   "what": "Reservation line, in-room voice, call analytics.",
+   "use": "res-1",
+   "staff": true,
+   "chatNotice": true,
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What does it do?",
+     "answers": [
+      {
+       "id": "calls",
+       "label": "Answers or makes calls with a synthetic voice",
+       "set": {},
+       "use": "res-1"
+      },
+      {
+       "id": "transcribe",
+       "label": "Only transcribes or translates calls",
+       "set": {},
+       "use": "hk-1"
+      },
+      {
+       "id": "score",
+       "label": "Scores agents' or staff members' calls",
+       "set": {},
+       "use": "res-8"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {},
+       "use": "res-1"
+      }
+     ]
+    },
+    {
+     "id": "emo",
+     "ask": "Does it read emotions, mood or intentions from people's faces, voices or gestures? (Reading the words people write does not count.)",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "emo_guest": "no",
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "guests",
+       "label": "Yes, of callers or guests",
+       "set": {
+        "emo_guest": "yes",
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "staff",
+       "label": "Yes, of staff",
+       "set": {
+        "emo_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_guest": "unsure",
+        "emo_staff": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "vprint",
+     "ask": "Does it recognise callers by their voice without them doing anything?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "voiceprint": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "voiceprint": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "voiceprint": "unsure"
+       }
+      }
+     ]
+    },
+    {
+     "id": "card",
+     "ask": "Do guests give card numbers through it, typed in a chat or spoken on a call?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "card_data": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "card_data": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "card_data": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Does it tell people it is an AI at the first message or call? Can we edit that wording?",
+     "fine": "Yes by default, at first contact, with wording we can change. They can show it in a demo.",
+     "red": "Only in the terms and conditions, switched off by default, or 'guests prefer it to feel human'."
+    },
+    {
+     "ask": "Does any feature infer emotions, mood or personality from faces, voices or body language? Can it be switched off?",
+     "fine": "No such feature, or a separate module that is off for EU customers. Text-only sentiment is explained as such.",
+     "red": "'Mood' or 'engagement' scores from video or voice switched on by default, or 'sentiment' with no source named."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  },
+  {
+   "id": "assistant",
+   "name": "General AI assistant used by staff",
+   "what": "ChatGPT, Copilot, Gemini or similar, at reception or in the office.",
+   "use": "gm-2",
+   "questions": [
+    {
+     "id": "mode",
+     "ask": "What do staff use it for?",
+     "answers": [
+      {
+       "id": "drafts",
+       "label": "Drafting, summarising or translating; staff check the result",
+       "set": {
+        "repurpose_hr": "no"
+       },
+       "use": "gm-2"
+      },
+      {
+       "id": "answers",
+       "label": "Answering staff questions about procedures and policies",
+       "set": {},
+       "use": "gm-6"
+      },
+      {
+       "id": "judges",
+       "label": "Ranking job applicants or judging staff",
+       "set": {
+        "repurpose_hr": "yes"
+       },
+       "use": "gm-2"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "repurpose_hr": "unsure"
+       },
+       "use": "gm-2"
+      }
+     ]
+    },
+    {
+     "id": "paste",
+     "ask": "Do staff paste guest or staff personal data into it (names, passports, CVs)?",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "paste_data": "no"
+       }
+      },
+      {
+       "id": "yes",
+       "label": "Yes",
+       "set": {
+        "paste_data": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "paste_data": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Do you use what our staff type in to train your models, and can we switch that off for our account?",
+     "fine": "A business account where training on our data is off by default, in writing.",
+     "red": "Training on our data unless each user opts out, or no business account."
+    },
+    {
+     "ask": "Where is the data stored, and will you sign a data-processing agreement?",
+     "fine": "EU storage or a valid transfer tool, and a signed data-processing agreement.",
+     "red": "No data-processing agreement, or no answer on where data goes."
+    },
+    {
+     "ask": "Can we see who in our team uses it, and set rules for what may be pasted in?",
+     "fine": "Admin controls for accounts and data rules.",
+     "red": "Only personal accounts with no admin view."
+    }
+   ]
+  },
+  {
+   "id": "other",
+   "name": "Another AI tool",
+   "what": "Something not listed here. Two quick questions.",
+   "use": "custom",
+   "questions": [
+    {
+     "id": "kind",
+     "ask": "What does it mainly do?",
+     "answers": [
+      {
+       "id": "talks",
+       "label": "Talks with people (chat, voice, email)",
+       "set": {
+        "c_chat": "yes"
+       },
+       "implied": "no"
+      },
+      {
+       "id": "decides",
+       "label": "Ranks, scores or decides about staff, applicants or guests",
+       "set": {
+        "c_staff": "unsure",
+        "c_credit": "unsure"
+       },
+       "implied": "no"
+      },
+      {
+       "id": "ident",
+       "label": "Identifies people by face, voice or another body trait",
+       "set": {
+        "c_biometric": "unsure"
+       },
+       "implied": "no"
+      },
+      {
+       "id": "media",
+       "label": "Makes realistic images, video or audio",
+       "set": {
+        "ai_image": "yes"
+       },
+       "implied": "no"
+      },
+      {
+       "id": "helper",
+       "label": "Forecasts, summarises, translates or drafts for staff, with a person checking",
+       "set": {},
+       "implied": "no"
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {}
+      }
+     ]
+    },
+    {
+     "id": "emo",
+     "ask": "Does it read emotions, mood or intentions from people's faces, voices or gestures? (Reading the words people write does not count.)",
+     "answers": [
+      {
+       "id": "no",
+       "label": "No",
+       "set": {
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "guests",
+       "label": "Yes, of guests",
+       "set": {
+        "c_biometric": "yes",
+        "emo_staff": "no"
+       }
+      },
+      {
+       "id": "staff",
+       "label": "Yes, of staff or job candidates",
+       "set": {
+        "emo_staff": "yes"
+       }
+      },
+      {
+       "id": "unsure",
+       "label": "Not sure",
+       "set": {
+        "emo_staff": "unsure",
+        "c_biometric": "unsure"
+       }
+      }
+     ]
+    }
+   ],
+   "vendor": [
+    {
+     "ask": "Which features of [product] use AI (learning, predicting, ranking, generating or conversing)? Please list them.",
+     "fine": "A clear list by feature, in plain words, with what each one does.",
+     "red": "'It is all proprietary', 'we do not use AI' while the brochure says AI, or no list at all."
+    },
+    {
+     "ask": "Which EU AI Act level do you give each feature (banned, high-risk, transparency or minimal), and why? Please answer in writing.",
+     "fine": "A written level per feature, with the reason, and who counts as the provider.",
+     "red": "'The Act does not apply to us', 'ask your lawyer', or any answer with no reasons."
+    },
+    {
+     "ask": "What data does it use, where is it stored, and do you use our data to train models for others?",
+     "fine": "EU storage or a valid transfer tool, a signed data-processing agreement, and training on our data only if we opt in.",
+     "red": "Training on our data by default, or no data-processing agreement."
+    }
+   ]
+  }
+ ]
+}
