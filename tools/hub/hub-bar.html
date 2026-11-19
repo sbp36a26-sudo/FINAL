@@ -33,6 +33,7 @@
     <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
     <button type="button" data-tool="readiness-check" aria-pressed="false">Readiness check</button>
+    <button type="button" data-tool="ai-act-guide" aria-pressed="false">AI Act guide</button>
     <button type="button" data-tool="register" aria-pressed="false">AI Register</button>
     <button type="button" data-tool="team" class="team" aria-pressed="false" hidden title="Team only: each client's readiness check and how the score was worked out">Team: readiness results</button>
   </nav>
@@ -42,7 +43,7 @@
 (function () {
   var frames = {};
   var SRC = { 'readiness-check': 'readiness-check/index.html', team: 'readiness-check/team.html' };
-  var SRC_OK = { 'readiness-check': 1, register: 1 }, SRC_NEXT = {};
+  var SRC_OK = { 'readiness-check': 1, register: 1, 'ai-act-guide': 1 }, SRC_NEXT = {};
   var bar = document.getElementById('hubBar');
   var box = document.getElementById('hubFrame');
   function show(tool) {

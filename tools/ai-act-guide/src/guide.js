@@ -157,7 +157,7 @@
         var first = nowRows.filter(function (r) { return r.kind !== 'open'; })[0];
         var bits = [];
         if (asks) bits.push('find out ' + asks + ' thing' + (asks > 1 ? 's' : '') + ' from the vendor');
-        if (first) bits.push(lower(shorten(first.text)) + (nowRows.length - asks > 1 ? ' (+' + (nowRows.length - asks - 1) + ' more)' : ''));
+        if (first) bits.push(lower(shorten(first.text)) + (nowRows.length - asks > 1 ? ' (and ' + plural(nowRows.length - asks - 1, 'more item') + ')' : ''));
         now.push(e.name + ': ' + bits.join('; '));
       }
       var dates = laterRows.map(function (r) { return r.when; });
@@ -174,7 +174,8 @@
       nothing: nothing, pending: pending
     };
   }
-  function shorten(s) { s = String(s).replace(/^Check whether /, 'check whether ').split(/(?<=\.)\s/)[0]; return s.length > 110 ? s.slice(0, 107).replace(/\s+\S*$/, '') + '…' : s.replace(/\.$/, ''); }
+  function shorten(s) { s = String(s).replace(/^Check whether /, 'check whether ').split(/(?<=\.)\s/)[0]; return s.length > 150 ? s.slice(0, 147).replace(/\s+\S*$/, '') + '…' : s.replace(/\.$/, ''); }
+  function plural(n, one) { return n + ' ' + (n === 1 ? one : one.replace(/item$/, 'items')); }
   function lower(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
   function verdictLines(v) {
     var out = [];
@@ -195,7 +196,7 @@
 
   /* "Still open" lines on a tool card: each unsure or unanswered register question, phrased as a question for the vendor. */
   function stillOpenLines(e) {
-    if (e.stillOpen.length > 4) return ['Still open: ask the vendor what the tool does. ' + e.stillOpen.length + ' questions decide its level; they are listed in the AI Register.'];
+    if (e.stillOpen.length > 6) return ['Still open: ask the vendor what the tool does. ' + e.stillOpen.length + ' questions decide its level; they are listed in the AI Register.'];
     var out = e.stillOpen.map(function (s) { return 'Still open: ask the vendor: ' + s.q; });
     if (e.origin && e.origin.unsure) out.push('Still open: ask the vendor: Who is the maker of this tool under the AI Act, and does the contract say so?');
     return out;

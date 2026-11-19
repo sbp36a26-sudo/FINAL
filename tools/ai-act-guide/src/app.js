@@ -197,7 +197,6 @@
 
   // ---------- screen 3: results and plan ----------
   function verdictBox(v) {
-    var lines = G.verdictLines(v);
     var h = '<section class="verdict" aria-labelledby="vh"><h2 id="vh" class="sr">The short version</h2>';
     h += '<div class="vl"><span class="vh">Do this month</span><div>' + (v.now.length || v.hotelNow.length ? '<ul>' + v.now.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
       (v.hotelNow.length ? '<li>For the whole hotel: ' + esc(v.hotelNow.map(function (s) { return s.replace(/\.$/, ''); }).join('; ')) + '.</li>' : '') + '</ul>' : '<p>Nothing open.</p>') + '</div></div>';
@@ -205,7 +204,6 @@
     else h += '<div class="vl"><span class="vh">Can wait</span><p>Nothing with a later date.</p></div>';
     h += '<div class="vl"><span class="vh">Nothing to do beyond briefing staff</span><p>' + esc(v.nothing.length ? v.nothing.join(', ') : 'None of your tools.') + '</p></div>';
     if (v.pending.length) h += '<p class="meta">Not finished: ' + esc(v.pending.join(', ')) + '. <button type="button" class="linkbtn" data-act="step" data-step="tools">Answer the remaining questions</button></p>';
-    h += '<p class="sr">' + esc(lines.join(' ')) + '</p>';
     return h + '</section>';
   }
   function vResults() {
@@ -225,7 +223,7 @@
   }
   function resultCard(e) {
     var t = e.tool, open = ui.open[t.id] != null ? ui.open[t.id] : GD.tiers[e.tier].rank > 1 || e.tier === 'pending';
-    var h = '<details class="wcard" data-card="' + t.id + '"' + (open ? ' open' : '') + ' style="display:block"><summary><span style="display:inline-flex;gap:8px;align-items:baseline;flex-wrap:wrap">' + esc(e.name) + ' ' + chip(e.tier) + (e.badge ? ' <span class="lb lb-notai">' + esc(e.badge) + '</span>' : '') + (t.vendor ? ' <span class="meta">' + esc(t.vendor) + '</span>' : '') + '</span></summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">';
+    var h = '<details class="wcard" data-card="' + t.id + '"' + (open ? ' open' : '') + ' style="display:block"><summary><span class="sumline">' + esc(e.name) + ' ' + chip(e.tier) + (e.badge ? ' <span class="lb lb-notai">' + esc(e.badge) + '</span>' : '') + (t.vendor ? ' <span class="meta">' + esc(t.vendor) + '</span>' : '') + '</span></summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">';
     if (e.tier === 'pending') return h + '<p>' + plural(e.unanswered, 'answer') + ' missing. <button type="button" class="linkbtn" data-act="step" data-step="tools">Finish on the Tools page</button></p></div></details>';
     var bn = (REF.basis[e.basis.basis] || {}).name;
     h += '<p class="why"><strong>Why:</strong> ' + esc(e.reason) + cite(e.basis.prov) + (bn ? ' <span class="meta">· rests on: ' + esc(bn.toLowerCase()) + '</span>' : '') + '</p>';
@@ -436,7 +434,7 @@
     var n = doc.getNumberOfPages();
     for (var i = 1; i <= n; i++) {
       doc.setPage(i); font('bold', 8, null); doc.setTextColor(163, 57, 42); doc.text(pdfSafe(REF.meta.banner), M, 11);
-      font('normal', 7.5, 120); doc.text(pdfSafe('AI Act guide (prototype), EHL SBP Group 36 for HFTP. Levels from the Hotel AI Register\'s rules. Rules as of ' + fmt(GD.meta.rulesAsOf) + '. Check with your adviser.'), M, H - 9);
+      font('normal', 7.5, 120); doc.text(doc.splitTextToSize(pdfSafe('AI Act guide (prototype), EHL SBP Group 36 for HFTP. Levels from the Hotel AI Register\'s rules. Rules as of ' + fmt(GD.meta.rulesAsOf) + '. Check with your adviser.'), W - 2 * M - 26), M, H - 11);
       doc.text('Page ' + i + ' of ' + n, W - M, H - 9, { align: 'right' });
     }
     return Promise.resolve(doc.output('blob'));
@@ -489,22 +487,22 @@
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-card')) ui.open[d.getAttribute('data-card')] = d.open; }, true);
   document.addEventListener('input', function (e) {
     var el = e.target, t;
-    if (el.hasAttribute('data-h') && el.tagName === 'INPUT') { state.hotel[el.getAttribute('data-h')] = el.value; leaveExample(); persistSoon(); }
-    else if (el.hasAttribute('data-t') && el.tagName === 'INPUT') { t = toolById(el.getAttribute('data-id')); if (t) { t[el.getAttribute('data-t')] = el.value; leaveExample(); persistSoon(); } }
+    if (el.hasAttribute('data-h') && el.tagName === 'INPUT') { state.hotel[el.getAttribute('data-h')] = el.value; persistSoon(); }
+    else if (el.hasAttribute('data-t') && el.tagName === 'INPUT') { t = toolById(el.getAttribute('data-id')); if (t) { t[el.getAttribute('data-t')] = el.value; persistSoon(); } }
   });
-  function leaveExample() { if (state.example) { state.example = false; } }
   document.addEventListener('change', function (e) {
     var el = e.target, t = el.getAttribute('data-id') ? toolById(el.getAttribute('data-id')) : null;
-    if (el.hasAttribute('data-h')) { state.hotel[el.getAttribute('data-h')] = el.value; leaveExample(); persist(); render(true); }
-    else if (el.hasAttribute('data-t') && t) { t[el.getAttribute('data-t')] = el.value; leaveExample(); persist(); render(true); }
+    /* Text fields only save on change: re-rendering there would swap the field the person is moving to. */
+    if (el.hasAttribute('data-h')) { state.hotel[el.getAttribute('data-h')] = el.value; persist(); if (el.tagName === 'SELECT') render(true); }
+    else if (el.hasAttribute('data-t') && t) { t[el.getAttribute('data-t')] = el.value; persist(); if (el.tagName === 'SELECT') render(true); }
     else if (el.hasAttribute('data-q') && t) {
       t.ans[el.getAttribute('data-q')] = el.value;
       /* Answers to a question that is no longer shown are dropped, so they cannot set the level. */
       var vis = G.visibleQuestions(CTX.types[t.type], t).map(function (q) { return q.id; });
       Object.keys(t.ans).forEach(function (k) { if (vis.indexOf(k) < 0) delete t.ans[k]; });
-      leaveExample(); persist(); render(true);
+      persist(); render(true);
     }
-    else if (el.hasAttribute('data-isai') && t) { t.isai[el.getAttribute('data-isai')] = el.value; syncIsAI(t); leaveExample(); persist(); render(true); }
+    else if (el.hasAttribute('data-isai') && t) { t.isai[el.getAttribute('data-isai')] = el.value; syncIsAI(t); persist(); render(true); }
     else if (el.hasAttribute('data-notaiconf')) { t = toolById(el.getAttribute('data-notaiconf')); if (t) { t.notAIConfirmed = el.checked ? 'yes' : ''; persist(); render(true); } }
     else if (el.hasAttribute('data-plan')) { var k = el.getAttribute('data-plan'); if (el.checked) state.done[k] = TODAY; else delete state.done[k]; persist(); render(true); }
     else if (el.hasAttribute('data-vqs') && t) { var i = el.getAttribute('data-vqs'), q = t.vq[i] = t.vq[i] || {}; q.status = el.value; if (el.value !== 'not' && !q.date) q.date = TODAY; persist(); render(true); }
