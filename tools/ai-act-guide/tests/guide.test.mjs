@@ -153,5 +153,112 @@ if (existsSync(join(root, 'index.html'))) {
   ok(page.includes(read('../register/src/logic.js').slice(0, 200)), 'built page carries the register logic unchanged');
 } else console.log('(index.html not built: page checks skipped)');
 
+// ================= State machines (CLEANUP.md) =================
+// 1. Screen flow.
+ok(JSON.stringify(G.STEPS) === JSON.stringify(['hotel', 'tools', 'results', 'vendors', 'owner']), 'steps in the straight order');
+G.STEPS.forEach((s, i) => {
+  ok(G.navNext(s, { type: 'next' }) === (G.STEPS[i + 1] || null), `next from ${s}`);
+  ok(G.navNext(s, { type: 'back' }) === (G.STEPS[i - 1] || null), `back from ${s}`);
+  G.STEPS.forEach(t => { ok(G.navNext(s, { type: 'go', step: t }) === t, `go ${s} -> ${t}`); ok(G.navNext(s, { type: 'pop', step: t }) === t, `pop ${s} -> ${t}`); });
+  ok(G.navNext(s, { type: 'go', step: 'admin' }) === null, `go to an unknown step from ${s} is refused`);
+  ok(G.navNext(s, { type: 'pop', step: undefined }) === 'hotel', `pop to a foreign history entry from ${s} returns to Hotel`);
+  ok(G.navNext(s, { type: 'jump' }) === null, `unknown event from ${s} is refused`);
+});
+// 2. Overlay: confirm/cancel only in confirm states; close only where there is something to close.
+const OV = ['none', 'copy', 'confirmReset', 'confirmRestore', 'restoreError'];
+ok(JSON.stringify(Object.keys(G.OVERLAY).sort()) === JSON.stringify([...OV].sort()), 'overlay states');
+for (const s of OV) {
+  for (const [ev, to] of [['copy', 'copy'], ['askReset', 'confirmReset'], ['restoreAsk', 'confirmRestore'], ['restoreFail', 'restoreError']]) ok(G.overlayNext(s, ev) === to, `overlay ${s} --${ev}--> ${to}`);
+  const confirmState = s === 'confirmReset' || s === 'confirmRestore';
+  ok((G.overlayNext(s, 'confirm') === 'none') === confirmState, `overlay ${s}: confirm ${confirmState ? 'allowed' : 'refused'}`);
+  ok((G.overlayNext(s, 'cancel') === 'none') === confirmState, `overlay ${s}: cancel ${confirmState ? 'allowed' : 'refused'}`);
+  ok((G.overlayNext(s, 'close') === 'none') === (s === 'copy' || s === 'restoreError'), `overlay ${s}: close`);
+}
+// double-fire: after confirm the second confirm is refused
+ok(G.overlayNext(G.overlayNext('confirmReset', 'confirm'), 'confirm') === null, 'a second "Clear everything" is refused');
+ok(G.overlayNext('none', 'confirm') === null, 'reset cannot be confirmed without being asked (skipped confirmation)');
+// 3. Export.
+ok(G.exportNext('idle', 'start') === 'working' && G.exportNext('working', 'start') === null, 'export: start, then a second start is refused');
+ok(G.exportNext('working', 'done') === 'done' && G.exportNext('working', 'fail') === 'failed' && G.exportNext('working', 'timeout') === 'failed', 'export: working ends in done or failed (timeout too)');
+['done', 'failed'].forEach(s => ok(G.exportNext(s, 'start') === 'working' && G.exportNext(s, 'done') === null, `export: from ${s} only start`));
+ok(G.exportNext('idle', 'done') === null, 'export: done without start is refused');
+// 4. Vendor question status and date.
+const D = TODAY;
+ok(JSON.stringify(G.setVendorStatus({}, 'asked', D)) === JSON.stringify({ status: 'asked', date: D }), 'status asked sets today as date asked');
+ok(G.setVendorStatus({ status: 'asked', date: '2026-11-01' }, 'fine', D).date === '2026-11-01', 'status change keeps the date asked');
+ok(G.setVendorStatus({ status: 'red', date: '2026-11-01' }, 'not', D).date === '', '"Not asked yet" clears the date (no "not asked" with a date)');
+ok(G.setVendorStatus({}, 'maybe', D) === null, 'unknown status refused');
+ok(G.setVendorDate({ status: 'not', date: '' }, '2026-11-10', D).status === 'asked', 'entering a date asked moves "not asked" to "asked"');
+ok(G.setVendorDate({ status: 'asked', date: '2026-11-10' }, '2027-01-01', D) === null, 'date in the future refused');
+ok(G.setVendorDate({ status: 'asked', date: '2026-11-10' }, 'yesterday', D) === null, 'malformed date refused');
+ok(G.setVendorDate({ status: 'fine', date: '2026-11-10' }, '', D).date === '2026-11-10', 'an answered question keeps its date when the field is cleared');
+ok(JSON.stringify(G.setVendorDate({ status: 'not', date: '' }, '', D)) === JSON.stringify({ status: 'not', date: '' }), 'clearing an empty date on "not asked" stays not asked');
+for (const st of G.VQ_STATUS) for (const from of [{}, { status: 'asked', date: '2026-11-02' }]) {
+  const r = G.setVendorStatus(from, st, D); ok(r && ((r.status === 'not') === (r.date === '')), `invariant: ${st} from ${JSON.stringify(from)} has date iff asked`);
+}
+// vendorStatus summary keeps its meaning
+const vs = (vq) => G.vendorStatus({ type: byName['CCTV'].type, tool: { vq } });
+ok(vs({}) === 'Not asked yet' && vs({ 0: { status: 'asked', date: D } }) === 'Asked, waiting for answers' && /red flag/.test(vs({ 1: { status: 'red', date: D } })), 'vendor summary: not asked / asked / red flag');
+ok(vs(Object.fromEntries(byName['CCTV'].type.vendor.map((q, i) => [i, { status: 'fine', date: D }]))) === 'Answered: looks fine', 'vendor summary: all fine');
+// 5. "Is it AI?" helper.
+const toolAI = (isai, conf) => G.syncIsAI({ isai, notAI: 'stale', notAIConfirmed: conf || '' });
+ok(G.isAIState(toolAI({}), {}) === 'empty', 'is-AI: empty');
+ok(G.isAIState(toolAI({ learns: 'yes' }), {}) === 'ai' && G.isAIState(toolAI({ says: 'yes', rules: 'yes' }), {}) === 'ai', 'is-AI: learns or vendor says AI -> ai');
+ok(G.isAIState(toolAI({ rules: 'yes' }), {}) === 'unsettled' && G.isAIState(toolAI({ learns: 'unsure' }), {}) === 'unsettled', 'is-AI: partial -> unsettled');
+const rulesOnly = { rules: 'yes', learns: 'no', says: 'no' };
+ok(toolAI(rulesOnly).notAI === 'yes' && toolAI({ rules: 'yes', learns: 'unsure', says: 'no' }).notAI === '', 'notAI derived only from rules-only answers');
+ok(toolAI({ learns: 'yes' }, 'yes').notAIConfirmed === '', 'confirmation dropped when the answers no longer say rules-only');
+ok(G.isAIState(toolAI(rulesOnly), { notAIBlocked: 'blocked' }) === 'notai-blocked', 'is-AI: blocked by a ban/high-risk answer');
+ok(G.isAIState(toolAI(rulesOnly), { notAIBlocked: 'needs-confirmation' }) === 'notai-needs-confirmation', 'is-AI: needs written confirmation');
+ok(G.isAIState(toolAI(rulesOnly, 'yes'), { notAIBlocked: 'needs-confirmation' }) === 'notai-confirmed', 'is-AI: confirmed');
+ok(G.isAIState(toolAI(rulesOnly), {}) === 'notai', 'is-AI: not AI');
+// is-AI through the register: rules-only CV tool needs confirmation, and confirmation changes the register label
+const cvRules = { id: 'r', type: 'cv', origin: 'vendor', ans: { rank: 'sched', emo: 'no' }, vq: {}, isai: rulesOnly };
+G.syncIsAI(cvRules); const cvR = G.evalTool(cvRules, hotel, ctx);
+ok(['notai-needs-confirmation', 'notai', 'notai-blocked'].includes(G.isAIState(cvRules, cvR.c)), 'is-AI on a register row gives a named state: ' + G.isAIState(cvRules, cvR.c));
+// 6. Answer status.
+const cctvT = guide.types.find(t => t.id === 'cctv');
+const qMode = cctvT.questions.find(q => q.id === 'mode');
+ok(G.questionStatus(qMode, { ans: {} }) === 'unanswered' && G.questionStatus(qMode, { ans: { mode: 'unsure' } }) === 'unsure' && G.questionStatus(qMode, { ans: { mode: 'basic' } }) === 'answered', 'question status: unanswered / unsure / answered');
+ok(G.questionStatus(qMode, { ans: { mode: 'bogus' } }) === 'unanswered', 'an answer that is not offered counts as unanswered');
+ok(G.toolStatus(G.evalTool({ id: 'p', type: 'cctv', origin: 'vendor', ans: { mode: 'basic' }, vq: {}, isai: {} }, hotel, ctx)) === 'incomplete', 'tool status: incomplete');
+ok(G.toolStatus(G.evalTool({ id: 'p', type: 'cctv', origin: '', ans: { mode: 'basic', emo: 'no', enrol: 'no', traits: 'no', judge: 'no' }, vq: {}, isai: {} }, hotel, ctx)) === 'incomplete', 'tool status: origin missing is incomplete');
+ok(G.toolStatus(byName['CCTV']) === 'open' && G.toolStatus(byName['Rota']) === 'open', 'tool status: GM CCTV and rota are open (not sure)');
+ok(G.toolStatus(byName['Pricing']) === 'settled' && G.toolStatus(byName['WhatsApp chatbot']) === 'settled', 'tool status: settled');
+ok(G.toolStatus(G.evalTool({ id: 'o', type: 'chatbot', origin: 'unsure', ans: { mode: 'talks', card: 'no' }, vq: {}, isai: {} }, hotel, ctx)) === 'open', 'tool status: origin "not sure" is open');
+// previously possible impossible state: an invalid answer id or origin used to count as answered and settle the level
+const bogus = G.evalTool({ id: 'z', type: 'cctv', origin: 'vendor', ans: { mode: 'bogus', emo: 'no', enrol: 'no', traits: 'no', judge: 'no' }, vq: {}, isai: {} }, hotel, ctx);
+ok(bogus.tier === 'pending' && bogus.unanswered === 1, 'invalid answer id leaves the tool pending (was settled before)');
+ok(G.evalTool({ id: 'z', type: 'chatbot', origin: 'martian', ans: { mode: 'talks', card: 'no' }, vq: {}, isai: {} }, hotel, ctx).tier === 'pending', 'unknown origin leaves the tool pending');
+// 7. Saved data: version, validation, migration.
+const saved = { v: 1, example: false, hotel: { name: 'Hotel Mirador', country: 'ES', size: 's', model: 'owned', group: 'no', reps: 'yes' }, done: { 'h:L1': '2026-11-19' }, seq: 0, updatedAt: '2026-11-19T10:00:00.000Z',
+  tools: gm.tools.map(t => ({ name: '', vendor: '', origin: '', ans: {}, vq: {}, askAnyway: false, notAI: '', notAIConfirmed: '', isai: {}, ...t })) };
+saved.tools[4].vq = { 0: { status: 'asked', date: '2026-11-18' }, 1: { status: 'red', date: '2026-11-19' } };
+const rs = G.restoreState(JSON.parse(JSON.stringify(saved)), ctx);
+ok(rs.ok && rs.state.v === G.SCHEMA && rs.state.tools.length === 6 && rs.dropped === 0, 'current-build data restores whole');
+ok(JSON.stringify(rs.state.tools.map(t => [t.id, t.ans, t.origin, t.vq])) === JSON.stringify(saved.tools.map(t => [t.id, t.ans, t.origin, t.vq])), 'restore keeps ids, answers, origins and vendor statuses');
+const evR = G.evalAll(rs.state, ctx), rowsR = G.plan(rs.state, evR, ctx);
+ok(JSON.stringify(evR.map(e => e.tier)) === JSON.stringify(G.evalAll(saved, ctx).map(e => e.tier)) && G.ownerSummary(rs.state, evR, rowsR, ctx) === G.ownerSummary(saved, G.evalAll(saved, ctx), G.plan(saved, G.evalAll(saved, ctx), ctx), ctx), 'restored data gives the same levels and owner summary');
+ok(!G.restoreState(null, ctx).ok && !G.restoreState({ tools: [] }, ctx).ok && !G.restoreState({ v: 1 }, ctx).ok && !G.restoreState([], ctx).ok, 'not a guide file: refused');
+ok(G.restoreState({ v: 99, tools: [] }, ctx).error === 'newer-version', 'newer schema: refused with its own message');
+ok(!G.restoreState({ v: 0, tools: [] }, ctx).ok, 'older schema with no migration: refused');
+const dirty = G.restoreState({ v: 1, hotel: { country: 'XX', size: 'huge', name: 7, reps: 'unsure' }, done: { a: 1, b: '2026-11-01' }, tools: [
+  { id: 'a', type: 'nope' }, null,
+  { id: 'a', type: 'cctv', origin: 'martian', ans: { mode: 'bogus', emo: 'no', extra: 'yes' }, vq: { 0: { status: 'not', date: '2026-11-01' }, 1: { status: 'red', date: '2099-01-01' }, 9: { status: 'fine' } }, isai: { learns: 'maybe', rules: 'yes' }, notAI: 'yes', notAIConfirmed: 'yes', askAnyway: 'yes' },
+  { id: 'a', type: 'content', ans: { kind: 'media', check: 'yes' } }] }, ctx);
+const dt = dirty.state.tools;
+ok(dirty.ok && dirty.dropped === 2 && dt.length === 2, 'unknown types and nulls dropped');
+ok(dirty.state.hotel.country === '' && dirty.state.hotel.size === '' && dirty.state.hotel.name === '' && dirty.state.hotel.reps === 'unsure', 'hotel fields validated');
+ok(JSON.stringify(dirty.state.done) === JSON.stringify({ b: '2026-11-01' }), 'done marks validated');
+ok(dt[0].origin === '' && JSON.stringify(dt[0].ans) === JSON.stringify({ emo: 'no' }), 'unknown origin and answers that are not offered dropped');
+ok(JSON.stringify(dt[0].vq) === JSON.stringify({ 1: { status: 'red', date: TODAY } }), 'vendor statuses: "not" with a date dropped, future date replaced, out-of-range index dropped');
+ok(dt[0].notAI === '' && dt[0].notAIConfirmed === '' && JSON.stringify(dt[0].isai) === JSON.stringify({ rules: 'yes' }), 'notAI re-derived from the helper answers (a stored "notAI: yes" alone no longer applies)');
+ok(dt[0].askAnyway === false, 'askAnyway must be a boolean');
+ok(dt[0].id === 'a' && dt[1].id !== 'a', 'duplicate tool ids get a new id');
+ok(JSON.stringify(dt[1].ans) === JSON.stringify({ kind: 'media' }), 'answer to a question hidden by an earlier answer dropped (content "check" only for text/pub)');
+ok(G.evalTool(dt[0], dirty.state.hotel, ctx).tier === 'pending', 'restored dirty tool is pending, not silently settled');
+// The example and a blank state round-trip.
+ok(G.restoreState(JSON.parse(JSON.stringify(G.blankState())), ctx).ok, 'blank state restores');
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -9,7 +9,7 @@
   var CTX = G.makeCtx(REF, LAB, GD, L, TODAY);
   var COUNTRY = {}; REF.countries.forEach(function (c) { COUNTRY[c[0]] = c[1]; });
   var KEY = 'hftp-ai-act-guide-v1', PROFILE = 'hftp-hotel-profile-v1';
-  var STEPS = ['hotel', 'tools', 'results', 'vendors', 'owner'];
+  var STEPS = G.STEPS;
   var fmt = G.fmtDate;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
@@ -20,27 +20,22 @@
   function nonEU() { return ['CH', 'GB', 'NO', 'IS', 'LI'].indexOf(state.hotel.country) >= 0; }
 
   // ---------- state ----------
+  /* The machines (transition tables, guards) live in guide.js and are documented in CLEANUP.md. Here:
+     ui.step     screen flow: hotel | tools | results | vendors | owner     (only nav() changes it)
+     ui.overlay  none | copy | confirmReset | confirmRestore | restoreError  (only overlay() changes it; nav() resets it)
+     ui.exp      file export: idle | working | done | failed                (only exportSend() changes it)
+     save        derived: saved | pending | blocked | example | empty        (paintSaved shows it)
+     The saved data (state) carries v: G.SCHEMA and is read only through G.restoreState. */
   var mem = { ok: true };
-  var ui = { step: 'hotel', copy: null, welcome: false, open: {} };
+  var ui = { step: 'hotel', overlay: 'none', copy: null, welcome: false, open: {}, exp: { state: 'idle', kind: null }, pendingRestore: null, restoreError: '', readToken: 0, removed: null };
   var state;
-  function blank() { return { v: 1, example: false, hotel: { name: '', country: '', size: '', model: '', group: '', reps: '' }, tools: [], done: {}, seq: 0, updatedAt: null }; }
-  function newTool(type) { return { id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: type, name: '', vendor: '', origin: '', ans: {}, vq: {}, askAnyway: false, notAI: '', notAIConfirmed: '', isai: {} }; }
-  function normalise(o) {
-    var s = blank(), k;
-    s.example = !!o.example; s.updatedAt = o.updatedAt || null; s.done = o.done && typeof o.done === 'object' ? o.done : {};
-    for (k in s.hotel) if (o.hotel && typeof o.hotel[k] === 'string') s.hotel[k] = o.hotel[k];
-    (o.tools || []).forEach(function (t) {
-      if (!t || !CTX.types[t.type]) return;
-      var n = newTool(t.type);
-      for (k in n) if (t[k] != null && typeof t[k] === typeof n[k]) n[k] = t[k];
-      ['ans', 'vq', 'isai'].forEach(function (f) { if (!n[f] || typeof n[f] !== 'object') n[f] = {}; });
-      s.tools.push(n);
-    });
-    return s;
-  }
+  function blank() { return G.blankState(); }
+  function newTool(type) { return G.newTool(type); }
   function load() {
-    try { var raw = window.localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && o.v === 1 && Array.isArray(o.tools)) return normalise(o); } }
-    catch (e) { mem.ok = false; }
+    var raw = null;
+    try { raw = window.localStorage.getItem(KEY); } catch (e) { mem.ok = false; return null; }
+    if (!raw) return null;
+    try { var r = G.restoreState(JSON.parse(raw), CTX); if (r.ok) return r.state; } catch (e) { /* unreadable: start clean, keep the stored copy untouched until the next save */ }
     return null;
   }
   /* Shared hotel profile (hftp-hotel-profile-v1), also read and written by the AI Register and the Readiness check. The example hotel is never written. */
@@ -61,22 +56,34 @@
   }
   var saveTimer = null;
   function persist() {
-    clearTimeout(saveTimer);
+    clearTimeout(saveTimer); saveTimer = null;
     state.updatedAt = new Date().toISOString();
     writeProfile();
     try { window.localStorage.setItem(KEY, JSON.stringify(state)); mem.ok = true; } catch (e) { mem.ok = false; }
     paintSaved();
   }
-  function persistSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); }
+  /* Typing saves after a short pause; leaving or hiding the page saves at once, so a reload never loses the last keystrokes. */
+  function persistSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); paintSaved(); }
+  function flush() { if (saveTimer) persist(); }
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flush(); });
+  function saveState() { return !mem.ok ? 'blocked' : state.example ? 'example' : saveTimer ? 'pending' : state.updatedAt ? 'saved' : 'empty'; }
   function paintSaved() {
     var el = $('saved'); if (!el) return;
-    if (!mem.ok) { el.className = 'bad'; el.textContent = 'Not saved: this browser blocks storage. Save a backup file on the Owner page.'; return; }
+    var s = saveState(); el.setAttribute('data-state', s);
+    if (s === 'blocked') { el.className = 'bad'; el.textContent = 'Not saved: this browser blocks storage. Save a backup file on the Owner page.'; return; }
     el.className = '';
     var t = state.updatedAt ? new Date(state.updatedAt) : null;
-    el.textContent = state.example ? 'Example hotel: changes are not kept as your own.' : 'Saved in this browser only' + (t ? ' · ' + ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) : '') + '.';
+    var txt = s === 'example' ? 'Example hotel: changes are not kept as your own.' : s === 'pending' ? 'Saving…' : s === 'empty' ? 'Nothing saved yet. Answers are kept in this browser only.' : 'Saved in this browser only' + (t ? ' · ' + ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) : '') + '.';
+    if (el.textContent !== txt) el.textContent = txt; /* a live region: announce changes only */
   }
   var toastTimer = null;
-  function toast(msg) { var el = $('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, 4200); }
+  /* The toast only shows a message (and an optional undo button); hiding it changes no state. */
+  function toast(msg, action) {
+    var el = $('toast'); el.textContent = msg;
+    if (action) { var b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.setAttribute('data-act', action.act); b.textContent = action.label; el.appendChild(document.createTextNode(' ')); el.appendChild(b); }
+    el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, action ? 8000 : 4200);
+  }
 
   function example() {
     var s = blank(); s.example = true;
@@ -145,14 +152,14 @@
     return h;
   }
   function toolCard(e) {
-    var t = e.tool, ty = e.type, h = '<article class="tcard" id="card-' + t.id + '">';
+    var t = e.tool, ty = e.type, h = '<article class="tcard" id="card-' + t.id + '" data-tool="' + t.id + '" data-state="' + G.toolStatus(e) + '">';
     h += '<div class="th"><div class="nm"><span class="meta">' + esc(ty.name) + '</span><label><span class="sr">Name of this tool</span><input type="text" class="title" data-t="name" data-id="' + t.id + '" value="' + esc(t.name) + '" placeholder="' + esc(ty.name) + '"></label></div>' +
       '<div class="now"><span class="meta">Level right now</span>' + chip(e.tier) + (e.badge ? '<span class="lb lb-notai">' + esc(e.badge) + '</span>' : '') + '<button type="button" class="btn sm" data-act="remove" data-id="' + t.id + '">Remove</button></div></div>';
     h += '<div class="formgrid"><label class="fld"><span>Vendor</span><input type="text" data-t="vendor" data-id="' + t.id + '" value="' + esc(t.vendor) + '" placeholder="Company that supplies it"></label>' +
       '<label class="fld"><span>How did the hotel get it?</span><select data-t="origin" data-id="' + t.id + '">' + opt('', 'Choose', t.origin) + GD.origins.map(function (o) { return opt(o.id, o.name, t.origin); }).join('') + '</select></label></div>';
     G.visibleQuestions(ty, t).forEach(function (q) {
       var name = 'q-' + t.id + '-' + q.id;
-      h += '<fieldset class="qa"><legend>' + esc(q.ask) + '</legend><div class="opts">' + q.answers.map(function (a) {
+      h += '<fieldset class="qa" data-q="' + q.id + '" data-state="' + G.questionStatus(q, t) + '"><legend>' + esc(q.ask) + '</legend><div class="opts">' + q.answers.map(function (a) {
         var on = t.ans[q.id] === a.id;
         return '<label class="opt' + (on ? ' on' : '') + '"><input type="radio" name="' + name + '" data-q="' + q.id + '" data-id="' + t.id + '" value="' + a.id + '"' + (on ? ' checked' : '') + '>' + esc(a.label) + '</label>';
       }).join('') + '</div></fieldset>';
@@ -173,13 +180,15 @@
         return '<label class="opt' + (on ? ' on' : '') + '"><input type="radio" name="' + name + '" data-isai="' + q.id + '" data-id="' + t.id + '" value="' + o[0] + '"' + (on ? ' checked' : '') + '>' + o[1] + '</label>';
       }).join('') + '</div></fieldset>';
     });
-    var a = t.isai, msg = '';
-    if (a.learns === 'yes' || a.says === 'yes') msg = 'Treat it as AI.';
-    else if (a.rules === 'yes' && a.learns === 'no' && a.says === 'no') {
-      if (e.c.notAIBlocked === 'blocked') msg = 'It cannot count as "not AI" here: a ban or high-risk question is answered yes or still open (the register\'s rule). Settle those first.';
-      else if (e.c.notAIBlocked === 'needs-confirmation') msg = 'Probably not AI. Because this kind of tool can be high-risk or banned, it counts as "not AI" only with the vendor\'s written confirmation.';
-      else msg = 'Probably not AI: software that only follows rules people wrote is outside the AI Act. Other laws still apply.';
-    } else if (a.learns || a.says || a.rules) msg = 'Not settled. Ask the vendor: "Which features of ' + (t.name || e.type.name) + ' use AI (learning, predicting, ranking, generating or conversing)?"';
+    var ais = G.isAIState(t, e.c), msg = {
+      ai: 'Treat it as AI.',
+      'notai-blocked': 'It cannot count as "not AI" here: a ban or high-risk question is answered yes or still open (the register\'s rule). Settle those first.',
+      'notai-needs-confirmation': 'Probably not AI. Because this kind of tool can be high-risk or banned, it counts as "not AI" only with the vendor\'s written confirmation.',
+      'notai-confirmed': 'Counts as not AI: the vendor confirmed in writing that it only follows rules you set. Keep that confirmation.',
+      notai: 'Probably not AI: software that only follows rules people wrote is outside the AI Act. Other laws still apply.',
+      unsettled: 'Not settled. Ask the vendor: "Which features of ' + (t.name || e.type.name) + ' use AI (learning, predicting, ranking, generating or conversing)?"'
+    }[ais] || '';
+    h = h.replace('<details class="isai"', '<details class="isai" data-state="' + ais + '"');
     if (msg) h += '<p class="why">' + esc(msg) + '</p>';
     if (e.c.notAIBlocked === 'needs-confirmation' || (t.notAI === 'yes' && t.notAIConfirmed === 'yes')) h += '<label class="chk"><input type="checkbox" data-notaiconf="' + t.id + '"' + (t.notAIConfirmed === 'yes' ? ' checked' : '') + '> The vendor confirmed in writing that it only follows rules we set</label>';
     return h + '</details>';
@@ -189,11 +198,7 @@
     var hash = 'add=' + e.row.id + '&name=' + encodeURIComponent(e.name);
     return '<p class="meta noprint"><button type="button" class="linkbtn" data-act="to-register" data-hash="' + esc(hash) + '">Open the detailed view in the AI Register</button> (adds it to your register there)</p>';
   }
-  function syncIsAI(t) {
-    var a = t.isai;
-    t.notAI = (a.rules === 'yes' && a.learns === 'no' && a.says === 'no') ? 'yes' : '';
-    if (t.notAI !== 'yes') t.notAIConfirmed = '';
-  }
+  function syncIsAI(t) { G.syncIsAI(t); }
 
   // ---------- screen 3: results and plan ----------
   function verdictBox(v) {
@@ -223,7 +228,7 @@
   }
   function resultCard(e) {
     var t = e.tool, open = ui.open[t.id] != null ? ui.open[t.id] : GD.tiers[e.tier].rank > 1 || e.tier === 'pending';
-    var h = '<details class="wcard" data-card="' + t.id + '"' + (open ? ' open' : '') + ' style="display:block"><summary><span class="sumline">' + esc(e.name) + ' ' + chip(e.tier) + (e.badge ? ' <span class="lb lb-notai">' + esc(e.badge) + '</span>' : '') + (t.vendor ? ' <span class="meta">' + esc(t.vendor) + '</span>' : '') + '</span></summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">';
+    var h = '<details class="wcard" data-card="' + t.id + '" data-state="' + G.toolStatus(e) + '"' + (open ? ' open' : '') + ' style="display:block"><summary><span class="sumline">' + esc(e.name) + ' ' + chip(e.tier) + (e.badge ? ' <span class="lb lb-notai">' + esc(e.badge) + '</span>' : '') + (t.vendor ? ' <span class="meta">' + esc(t.vendor) + '</span>' : '') + '</span></summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">';
     if (e.tier === 'pending') return h + '<p>' + plural(e.unanswered, 'answer') + ' missing. <button type="button" class="linkbtn" data-act="step" data-step="tools">Finish on the Tools page</button></p></div></details>';
     var bn = (REF.basis[e.basis.basis] || {}).name;
     h += '<p class="why"><strong>Why:</strong> ' + esc(e.reason) + cite(e.basis.prov) + (bn ? ' <span class="meta">· rests on: ' + esc(bn.toLowerCase()) + '</span>' : '') + '</p>';
@@ -279,7 +284,7 @@
   }
 
   // ---------- screen 4: vendors ----------
-  var STATUS = [['not', 'Not asked yet'], ['asked', 'Asked the vendor'], ['fine', 'Answered: looks fine'], ['red', 'Answered: red flag']];
+  var STATUS = [['not', 'Not asked yet'], ['asked', 'Asked the vendor'], ['fine', 'Answered: looks fine'], ['red', 'Answered: red flag']]; /* = G.VQ_STATUS */
   function vVendors() {
     var ev = evals().filter(function (e) { return e.tier !== 'pending'; }), h = '';
     if (!ev.length) return '<section class="panel empty"><h2>No finished tools yet</h2><p>Answer the tool questions first.</p><button type="button" class="btn primary" data-act="step" data-step="tools">Go to Tools</button></section>';
@@ -293,16 +298,16 @@
     order.forEach(function (k) {
       var list = byVendor[k];
       h += '<section class="panel"><div class="ph"><h2>' + esc(k) + '</h2><button type="button" class="btn sm" data-act="vmail" data-vendor="' + esc(k) + '">Copy the email to this vendor</button></div>';
-      if (ui.copy && ui.copy.vendor === k) h += copyBox();
+      if (ui.overlay === 'copy' && ui.copy && ui.copy.anchor === k) h += copyBox();
       list.forEach(function (e) {
-        h += '<div class="toolh"><strong>' + esc(e.name) + '</strong>' + chip(e.tier) + '<span class="meta">' + esc(G.vendorStatus(e)) + '</span>' + (!e.vendorNeeded ? '<button type="button" class="btn sm" data-act="anyway" data-id="' + e.tool.id + '">Do not ask</button>' : '') + '</div>';
+        h += '<div class="toolh" data-tool="' + e.tool.id + '"><strong>' + esc(e.name) + '</strong>' + chip(e.tier) + '<span class="meta">' + esc(G.vendorStatus(e)) + '</span>' + (!e.vendorNeeded ? '<button type="button" class="btn sm" data-act="anyway" data-id="' + e.tool.id + '">Do not ask</button>' : '') + '</div>';
         G.stillOpenLines(e).forEach(function (l) { h += '<p class="open-l">' + esc(l) + '</p>'; });
         h += '<div class="vq head" aria-hidden="true"><div>Ask</div><div>A fine answer</div><div>A red flag</div><div>Status</div></div>';
         (e.type.vendor || []).forEach(function (q, i) {
           var st = (e.tool.vq[i] || {}).status || 'not', dt = (e.tool.vq[i] || {}).date || '';
-          h += '<div class="vq"><div>' + esc(q.ask.replace(/\[product\]/g, e.name)) + '</div><div class="fine" data-l="A fine answer">' + esc(q.fine) + '</div><div class="red" data-l="A red flag">' + esc(q.red) + '</div>' +
+          h += '<div class="vq" data-tool="' + e.tool.id + '" data-vq="' + i + '" data-state="' + st + '"><div>' + esc(q.ask.replace(/\[product\]/g, e.name)) + '</div><div class="fine" data-l="A fine answer">' + esc(q.fine) + '</div><div class="red" data-l="A red flag">' + esc(q.red) + '</div>' +
             '<div class="ctl"><label><span class="sr">Status</span><select data-vqs="' + i + '" data-id="' + e.tool.id + '">' + STATUS.map(function (s) { return opt(s[0], s[1], st); }).join('') + '</select></label>' +
-            '<label class="fld"><span>Date asked</span><input type="date" data-vqd="' + i + '" data-id="' + e.tool.id + '" value="' + esc(dt) + '"></label></div></div>';
+            '<label class="fld"><span>Date asked</span><input type="date" data-vqd="' + i + '" data-id="' + e.tool.id + '" value="' + esc(dt) + '" max="' + TODAY + '"></label></div></div>';
         });
       });
       h += '</section>';
@@ -312,9 +317,6 @@
     h += templatesBox();
     h += '<div class="btnrow"><button type="button" class="btn primary" data-act="step" data-step="owner">Next: the owner page</button></div>';
     return h;
-  }
-  function copyBox() {
-    return '<div class="copybox fld"><span>' + esc(ui.copy.title) + '</span><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea><div class="btnrow"><button type="button" class="btn sm" data-act="copy">Copy</button><button type="button" class="btn sm" data-act="copy-close">Close</button></div></div>';
   }
   function templatesBox() {
     var tp = GD.templates, h = '<details class="panel"><summary>Templates</summary><div style="display:flex;flex-direction:column;gap:12px">';
@@ -327,9 +329,13 @@
   }
 
   // ---------- screen 5: owner page ----------
+  function expBtn(kind, cls, label) {
+    var busy = ui.exp.state === 'working';
+    return '<button type="button" class="btn' + cls + '" data-act="' + kind + '" data-state="' + (ui.exp.kind === kind ? ui.exp.state : 'idle') + '"' + (busy ? ' disabled aria-disabled="true"' : '') + '>' + (busy && ui.exp.kind === kind ? 'Preparing…' : label) + '</button>';
+  }
   function vOwner() {
     var ev = evals(), rows = G.plan(state, ev, CTX), text = G.ownerSummary(state, ev, rows, CTX), h = '';
-    h += '<section class="panel owner"><div class="ph"><h2>Summary for the owner</h2><div class="btnrow"><button type="button" class="btn primary" data-act="pdf">Download PDF</button><button type="button" class="btn" data-act="copytext" data-what="owner">Copy as text</button></div></div>';
+    h += '<section class="panel owner"><div class="ph"><h2>Summary for the owner</h2><div class="btnrow">' + expBtn('pdf', ' primary', 'Download PDF') + '<button type="button" class="btn" data-act="copytext" data-what="owner">Copy as text</button></div></div>';
     h += '<p class="meta">One page for the owner or finance lead: tools and levels, what must be done now, vendor status and the decisions needed.</p>';
     var sec = null;
     text.split('\n').forEach(function (ln, i) {
@@ -340,40 +346,66 @@
     });
     if (sec) h += '</ul>';
     h += '</section>';
-    h += '<section class="panel"><h2>Keep your work</h2><p class="sub">Everything stays in this browser. Save a backup file to keep it, move it to another computer or share it; open it here to carry on.</p>' +
-      '<div class="btnrow"><button type="button" class="btn" data-act="backup">Save a backup file</button><label class="btn" for="restore">Open a backup file</label><input type="file" id="restore" accept="application/json,.json" class="sr" data-restore="1"><button type="button" class="btn warn" data-act="reset">Start again</button></div>' +
-      (ui.confirmReset ? '<div class="note stop"><p>Clear every answer in this browser? Save a backup first if you may need it.</p><div class="btnrow"><button type="button" class="btn warn" data-act="reset-yes">Clear everything</button><button type="button" class="btn" data-act="reset-no">Keep it</button></div></div>' : '') + '</section>';
-    if (ui.copy && ui.copy.vendor === '__owner') h += copyBox();
-    return h;
+    h += '<section class="panel" id="keep" data-state="' + ui.overlay + '"><h2>Keep your work</h2><p class="sub">Everything stays in this browser. Save a backup file to keep it, move it to another computer or share it; open it here to carry on.</p>' +
+      '<div class="btnrow">' + expBtn('backup', '', 'Save a backup file') + '<label class="btn" for="restore">Open a backup file</label><input type="file" id="restore" accept="application/json,.json" class="sr" data-restore="1"><button type="button" class="btn warn" data-act="reset">Start again</button></div>';
+    if (ui.overlay === 'confirmReset') h += '<div class="note stop" id="confirm-reset"><p>Clear every tool and answer in this browser? Save a backup first if you may need it. The hotel details shared with the other tools stay.</p><div class="btnrow"><button type="button" class="btn warn" data-act="reset-yes">Clear everything</button><button type="button" class="btn" data-act="reset-no">Keep it</button></div></div>';
+    if (ui.overlay === 'confirmRestore' && ui.pendingRestore) {
+      var pr = ui.pendingRestore;
+      h += '<div class="note stop" id="confirm-restore"><p>Replace what is saved here (' + esc(plural(state.tools.length, 'tool')) + ' for ' + esc(state.hotel.name || 'an unnamed hotel') + ') with the backup "' + esc(pr.file) + '" (' + esc(plural(pr.state.tools.length, 'tool')) + ' for ' + esc(pr.state.hotel.name || 'an unnamed hotel') + ')? Save a backup of the current answers first if you may need them.</p><div class="btnrow"><button type="button" class="btn warn" data-act="restore-yes">Replace with the backup</button><button type="button" class="btn" data-act="restore-no">Keep what is here</button></div></div>';
+    }
+    if (ui.overlay === 'restoreError') h += '<div class="note warn" id="restore-error"><p>' + esc(ui.restoreError) + '</p><div class="btnrow"><button type="button" class="btn sm" data-act="overlay-close">Close</button></div></div>';
+    return h + '</section>';
+  }
+  function copyBox() {
+    return '<div class="copybox fld" id="copybox"><span>' + esc(ui.copy.title) + '</span><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea><div class="btnrow"><button type="button" class="btn sm" data-act="copy">Copy</button><button type="button" class="btn sm" data-act="copy-close">Close</button></div></div>';
   }
 
-  // ---------- render ----------
+  // ---------- render and the screen flow ----------
+  var VIEWS = { hotel: vHotel, tools: vTools, results: vResults, vendors: vVendors, owner: vOwner };
   function render(keepScroll) {
-    var y = window.scrollY, html = '';
-    if (ui.step === 'hotel') html = vHotel();
-    else if (ui.step === 'tools') html = vTools();
-    else if (ui.step === 'results') html = vResults();
-    else if (ui.step === 'vendors') html = vVendors();
-    else html = vOwner();
+    var y = window.scrollY, html = VIEWS[ui.step]();
+    /* A copy box with no place of its own (owner text, chatbot notice) sits at the top of the screen it was opened on. */
+    if (ui.overlay === 'copy' && ui.copy && ui.copy.anchor == null) html = '<section class="panel">' + copyBox() + '</section>' + html;
     var active = document.activeElement, aid = active && active.id, adata = active && active.getAttribute && (active.getAttribute('data-t') ? active.getAttribute('data-t') + active.getAttribute('data-id') : null);
-    $('view').innerHTML = html;
+    var view = $('view');
+    view.innerHTML = html;
+    view.setAttribute('data-state', ui.step); view.setAttribute('data-overlay', ui.overlay);
     STEPS.forEach(function (k) { var b = $('st-' + k); if (ui.step === k) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (keepScroll) { try { window.scrollTo(0, y); } catch (e) { /* ignore */ } }
     if (aid && $(aid)) $(aid).focus();
     else if (adata) { var el = document.querySelector('[data-t="' + active.getAttribute('data-t') + '"][data-id="' + active.getAttribute('data-id') + '"]'); if (el) el.focus(); }
   }
-  function go(step) {
-    ui.step = step; ui.copy = null; ui.confirmReset = false;
-    if (step !== 'hotel') ui.welcome = false;
-    try { window.history.pushState({ guide: step }, ''); } catch (e) { /* ignore */ }
+  /* The only writer of ui.step. type: go | next | back | pop. Leaving a screen closes its overlay and forgets a backup
+     that was still being read, so nothing from one screen shows up on another. */
+  function nav(type, step) {
+    var next = G.navNext(ui.step, { type: type, step: step });
+    if (!next) return false;
+    var moved = next !== ui.step;
+    ui.step = next; ui.overlay = 'none'; ui.copy = null; ui.pendingRestore = null; ui.readToken++;
+    if (next !== 'hotel') ui.welcome = false;
+    if (type !== 'pop') { try { window.history[moved ? 'pushState' : 'replaceState']({ guide: next }, ''); } catch (e) { /* ignore */ } }
     render(false);
-    try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
-    $('view').focus({ preventScroll: true });
+    if (type !== 'pop') { try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } $('view').focus({ preventScroll: true }); }
+    return true;
   }
-  window.addEventListener('popstate', function (e) { var s = e.state && e.state.guide; ui.step = STEPS.indexOf(s) >= 0 ? s : 'hotel'; render(false); });
+  function go(step) { return nav('go', step); }
+  window.addEventListener('popstate', function (e) { nav('pop', e.state && e.state.guide); });
+  /* The only writer of ui.overlay. Returns false when the event is not allowed now (for example a second "Clear everything"). */
+  function overlay(ev) {
+    var next = G.overlayNext(ui.overlay, ev);
+    if (!next) return false;
+    ui.overlay = next;
+    if (next !== 'copy') ui.copy = null;
+    if (next !== 'confirmRestore') ui.pendingRestore = null;
+    return true;
+  }
 
   // ---------- files, PDF and the hub bridge ----------
-  var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {}, direct: null };
+  /* Bridge to the hub page. host.state: none (top-level page: plain download link) | pending (frame, asked the parent)
+     | yes (the hub answered and can save files) | no (the hub answered without downloads, or nobody answered in 12 s).
+     host.hub is true once the hub answered; only then does "Open in the AI Register" post the hub "open" message. */
+  var host = { state: window.parent !== window ? 'pending' : 'none', hub: false, waiters: [], seq: 0, calls: {}, direct: null };
+  function settleHost(s) { if (host.state !== 'pending') return; host.state = s; host.waiters.splice(0).forEach(function (f) { f(); }); }
   /* Inside the claude.ai hub this page runs in a frame and cannot save files itself, so it asks the hub page
      (postMessage, same origin only) or the artifact's downloads capability. From file:// it uses a plain download link. */
   function initHost() {
@@ -382,31 +414,55 @@
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
       var m = e.data;
-      if (m.hub === 'pong') { host.state = m.downloads ? 'yes' : 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); }
+      if (m.hub === 'pong') { host.hub = true; settleHost(m.downloads ? 'yes' : 'no'); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
-    try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { host.state = 'no'; }
-    setTimeout(function () { if (host.state === 'pending') { host.state = 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); } }, 12000);
+    try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { settleHost('no'); }
+    setTimeout(function () { settleHost('no'); }, 12000);
   }
   function whenHostKnown(fn) { if (host.state === 'pending') host.waiters.push(fn); else fn(); }
-  function saveFile(name, content, mime) {
+  /* saveFile reports back once: done(message) or fail(message). A hub that never answers counts as a failure after 30 s. */
+  function saveFile(name, content, mime, done, fail) {
     function viaLink() {
       try {
         var blob = content instanceof Blob ? content : new Blob([content], { type: mime });
         var url = URL.createObjectURL(blob), a = document.createElement('a');
         a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-        toast('Download started: ' + name);
-      } catch (e) { toast('This browser could not save the file.'); }
+        done('Download started: ' + name);
+      } catch (e) { fail('This browser could not save the file.'); }
     }
-    function fail(code) { toast(code === 'declined' ? 'Download cancelled.' : 'The file could not be saved here.'); }
-    if (host.direct) { host.direct.save({ filename: name, data: content }).then(function () { toast('Saved ' + name); }).catch(function (e) { fail(e && e.code); }); return; }
+    function failCode(code) { fail(code === 'declined' ? 'Download cancelled.' : 'The file could not be saved here.'); }
+    if (host.direct) { host.direct.save({ filename: name, data: content }).then(function () { done('Saved ' + name); }).catch(function (e) { failCode(e && e.code); }); return; }
     whenHostKnown(function () {
       if (host.state !== 'yes') { viaLink(); return; }
       var id = 'd' + (++host.seq);
-      host.calls[id] = function (m) { if (m.ok) toast('Saved ' + name); else fail(m.code); };
+      var timer = setTimeout(function () { if (host.calls[id]) { delete host.calls[id]; fail('The hub did not answer. Try again, or use "Copy as text".'); } }, 30000);
+      host.calls[id] = function (m) { clearTimeout(timer); if (m.ok) done('Saved ' + name); else failCode(m.code); };
       window.parent.postMessage({ hub: 'download', id: id, filename: name, data: content }, window.location.origin);
     });
+  }
+  /* The only writer of ui.exp. */
+  function exportSend(ev, kind, msg) {
+    var next = G.exportNext(ui.exp.state, ev);
+    if (!next) return false;
+    ui.exp = { state: next, kind: kind || ui.exp.kind };
+    document.querySelectorAll('[data-act="pdf"],[data-act="backup"]').forEach(function (b) {
+      var k = b.getAttribute('data-act'), busy = next === 'working';
+      b.setAttribute('data-state', ui.exp.kind === k ? next : 'idle');
+      b.disabled = busy; if (busy) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
+      b.textContent = busy && ui.exp.kind === k ? 'Preparing…' : k === 'pdf' ? 'Download PDF' : 'Save a backup file';
+    });
+    if (msg) toast(msg);
+    return true;
+  }
+  function startExport(kind) {
+    if (!exportSend('start', kind)) return;
+    var name = kind === 'pdf' ? 'ai-act-guide-owner-summary_' + TODAY + '.pdf' : 'ai-act-guide-backup_' + TODAY + '.json';
+    var made = kind === 'pdf' ? makePdf() : Promise.resolve(JSON.stringify(state, null, 2));
+    made.then(function (content) {
+      saveFile(name, content, kind === 'pdf' ? 'application/pdf' : 'application/json', function (m) { exportSend('done', kind, m); }, function (m) { exportSend('fail', kind, m); });
+    }).catch(function () { exportSend('fail', kind, 'The PDF could not be made here. Use "Copy as text" instead.'); });
   }
   var PDF_FONT = null;
   function pdfFont(doc) {
@@ -439,17 +495,44 @@
     }
     return Promise.resolve(doc.output('blob'));
   }
+  /* Copy: clipboard first; where the browser refuses (some frames, http), the copy box opens with the text selected. */
+  function openCopy(anchor, title, text) {
+    if (!overlay('copy')) return;
+    ui.copy = { anchor: anchor, title: title, text: text }; render(true);
+    var box = $('copybox'); if (box && box.scrollIntoView) box.scrollIntoView({ block: 'nearest' });
+    var ta = $('copy-text'); if (ta) { ta.focus({ preventScroll: true }); ta.select(); }
+  }
   function copyText(text, title) {
-    function fallback() { ui.copy = { vendor: '__owner', title: title, text: text }; render(true); var ta = $('copy-text'); if (ta) { ta.focus(); ta.select(); } toast('Select the text and copy it.'); }
+    function fallback() { if (!(ui.overlay === 'copy' && ui.copy && ui.copy.text === text)) openCopy(null, title, text); toast('Select the text and copy it.'); }
     try {
       if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { toast('Copied.'); }, fallback);
       else fallback();
     } catch (e) { fallback(); }
   }
 
+  // ---------- backup file: read, check, confirm, apply ----------
+  function applyRestore(s, file) {
+    state = s; state.example = false; ui.welcome = false;
+    persist(); go('results'); toast('Backup opened: ' + plural(state.tools.length, 'tool') + '.');
+  }
+  var RESTORE_ERR = { 'not-a-guide-file': 'That file is not a backup from this guide. Backups are named ai-act-guide-backup_<date>.json.', 'newer-version': 'That backup was saved by a newer version of this guide. Open the latest guide and try again.', unreadable: 'That file could not be read.' };
+  function restoreFail(code) { if (overlay('restoreFail')) { ui.restoreError = RESTORE_ERR[code] || RESTORE_ERR.unreadable; render(true); } }
+  function readBackup(f) {
+    var token = ui.readToken, rd = new FileReader();
+    rd.onload = function () {
+      if (token !== ui.readToken || ui.step !== 'owner') return; /* the person left the page meanwhile */
+      var r; try { r = G.restoreState(JSON.parse(rd.result), CTX); } catch (err) { r = { ok: false, error: 'not-a-guide-file' }; }
+      if (!r.ok) { restoreFail(r.error); return; }
+      if (state.tools.length && !state.example) { if (overlay('restoreAsk')) { ui.pendingRestore = { state: r.state, file: f.name }; render(true); var cr = $('confirm-restore'); if (cr) cr.scrollIntoView({ block: 'nearest' }); } }
+      else applyRestore(r.state, f.name);
+    };
+    rd.onerror = function () { if (token === ui.readToken) restoreFail('unreadable'); };
+    rd.readAsText(f);
+  }
+
   // ---------- events ----------
   document.addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) return;
+    var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b || b.disabled) return;
     var a = b.getAttribute('data-act'), id = b.getAttribute('data-id'), t;
     if (a === 'step') go(b.getAttribute('data-step'));
     else if (a === 'example') { state = example(); persist(); go('results'); }
@@ -459,29 +542,50 @@
       t = newTool(b.getAttribute('data-type')); state.tools.push(t); persist(); render(true);
       var card = $('card-' + t.id); if (card) { card.scrollIntoView({ block: 'start' }); var inp = card.querySelector('input.title'); if (inp) inp.focus({ preventScroll: true }); }
     }
-    else if (a === 'remove') { state.tools = state.tools.filter(function (x) { return x.id !== id; }); persist(); render(true); toast('Removed.'); }
+    else if (a === 'remove') {
+      var idx = -1; state.tools.forEach(function (x, i) { if (x.id === id) idx = i; });
+      if (idx < 0) return;
+      ui.removed = { tool: state.tools[idx], index: idx };
+      state.tools.splice(idx, 1); persist(); render(true);
+      toast('Removed ' + (ui.removed.tool.name || CTX.types[ui.removed.tool.type].name) + '.', { act: 'undo-remove', label: 'Undo' });
+    }
+    else if (a === 'undo-remove') {
+      if (!ui.removed || toolById(ui.removed.tool.id)) return;
+      state.tools.splice(Math.min(ui.removed.index, state.tools.length), 0, ui.removed.tool); ui.removed = null;
+      persist(); render(true); toast('Restored.');
+    }
     else if (a === 'anyway') { t = toolById(id); if (t) { t.askAnyway = !t.askAnyway; persist(); render(true); } }
     else if (a === 'vmail') {
       var vn = b.getAttribute('data-vendor'), list = evals().filter(function (x) { return x.vendorShown && G.vendorKey(x) === vn; });
-      ui.copy = { vendor: vn, title: 'Email to ' + vn + ' (' + GD.templates.draftMark + ')', text: G.vendorEmail(vn, list, state.hotel.name, CTX) }; render(true);
-      var ta = $('copy-text'); if (ta) { ta.focus(); ta.select(); }
+      openCopy(vn, 'Email to ' + vn + ' (' + GD.templates.draftMark + ')', G.vendorEmail(vn, list, state.hotel.name, CTX));
     }
-    else if (a === 'copy') { var tx = $('copy-text'); if (tx) copyText(tx.value, ui.copy.title); }
-    else if (a === 'copy-close') { ui.copy = null; render(true); }
+    else if (a === 'copy') { var tx = $('copy-text'); if (tx && ui.copy) copyText(tx.value, ui.copy.title); }
+    else if (a === 'copy-close' || a === 'overlay-close') { if (overlay('close')) render(true); }
     else if (a === 'copytext') {
       var what = b.getAttribute('data-what');
       if (what === 'notice') copyText(GD.templates.chatNotice.text.replace(/\{hotel\}/g, hotelName()), 'Guest chatbot AI notice');
       else { var ev = evals(); copyText(G.ownerSummary(state, ev, G.plan(state, ev, CTX), CTX), 'Summary for the owner'); }
     }
-    else if (a === 'pdf') { toast('Preparing the PDF…'); makePdf().then(function (blob) { saveFile('ai-act-guide-owner-summary_' + TODAY + '.pdf', blob, 'application/pdf'); }).catch(function () { toast('The PDF could not be made here. Use "Copy as text" instead.'); }); }
-    else if (a === 'backup') saveFile('ai-act-guide-backup_' + TODAY + '.json', JSON.stringify(state, null, 2), 'application/json');
-    else if (a === 'reset') { ui.confirmReset = true; render(true); }
-    else if (a === 'reset-no') { ui.confirmReset = false; render(true); }
-    else if (a === 'reset-yes') { ui.confirmReset = false; state = blank(); try { window.localStorage.removeItem(KEY); } catch (e2) { /* ignore */ } paintSaved(); go('hotel'); toast('Cleared.'); }
+    else if (a === 'pdf' || a === 'backup') startExport(a);
+    else if (a === 'reset') { if (overlay('askReset')) { render(true); var cf = $('confirm-reset'); if (cf) cf.scrollIntoView({ block: 'nearest' }); } }
+    else if (a === 'reset-no' || a === 'restore-no') { if (overlay('cancel')) render(true); }
+    else if (a === 'reset-yes') {
+      if (ui.overlay !== 'confirmReset' || !overlay('confirm')) return;
+      state = blank(); adoptProfile(state);
+      try { window.localStorage.removeItem(KEY); } catch (e2) { /* ignore */ }
+      paintSaved(); go('hotel'); toast('Cleared.');
+    }
+    else if (a === 'restore-yes') {
+      if (ui.overlay !== 'confirmRestore' || !ui.pendingRestore) return;
+      var pr = ui.pendingRestore; if (!overlay('confirm')) return;
+      applyRestore(pr.state, pr.file);
+    }
     else if (a === 'to-register') {
       var hash = b.getAttribute('data-hash');
-      if (window.parent !== window) { try { window.parent.postMessage({ hub: 'open', tool: 'register', hash: hash }, window.location.origin); } catch (e3) { /* ignore */ } }
-      else window.location.href = '../register/index.html#' + hash;
+      whenHostKnown(function () {
+        if (host.hub) { try { window.parent.postMessage({ hub: 'open', tool: 'register', hash: hash }, window.location.origin); } catch (e3) { /* ignore */ } }
+        else window.location.href = '../register/index.html#' + hash;
+      });
     }
   });
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-card')) ui.open[d.getAttribute('data-card')] = d.open; }, true);
@@ -503,31 +607,55 @@
       persist(); render(true);
     }
     else if (el.hasAttribute('data-isai') && t) { t.isai[el.getAttribute('data-isai')] = el.value; syncIsAI(t); persist(); render(true); }
-    else if (el.hasAttribute('data-notaiconf')) { t = toolById(el.getAttribute('data-notaiconf')); if (t) { t.notAIConfirmed = el.checked ? 'yes' : ''; persist(); render(true); } }
+    else if (el.hasAttribute('data-notaiconf')) { t = toolById(el.getAttribute('data-notaiconf')); if (t) { t.notAIConfirmed = el.checked && t.notAI === 'yes' ? 'yes' : ''; persist(); render(true); } }
     else if (el.hasAttribute('data-plan')) { var k = el.getAttribute('data-plan'); if (el.checked) state.done[k] = TODAY; else delete state.done[k]; persist(); render(true); }
-    else if (el.hasAttribute('data-vqs') && t) { var i = el.getAttribute('data-vqs'), q = t.vq[i] = t.vq[i] || {}; q.status = el.value; if (el.value !== 'not' && !q.date) q.date = TODAY; persist(); render(true); }
-    else if (el.hasAttribute('data-vqd') && t) { var j = el.getAttribute('data-vqd'), q2 = t.vq[j] = t.vq[j] || {}; q2.date = el.value; persist(); }
-    else if (el.hasAttribute('data-restore')) {
-      var f = el.files && el.files[0]; if (!f) return;
-      var rd = new FileReader();
-      rd.onload = function () {
-        try { var o = JSON.parse(rd.result); if (!o || o.v !== 1 || !Array.isArray(o.tools)) throw new Error('shape'); state = normalise(o); state.example = false; persist(); go('results'); toast('Backup opened: ' + plural(state.tools.length, 'tool') + '.'); }
-        catch (err) { toast('That file is not a backup from this guide.'); }
-      };
-      rd.readAsText(f);
+    else if ((el.hasAttribute('data-vqs') || el.hasAttribute('data-vqd')) && t) {
+      /* Vendor question status and date go through one guarded setter each (G.setVendorStatus / G.setVendorDate). */
+      var i = el.getAttribute('data-vqs') || el.getAttribute('data-vqd'), cur = t.vq[i] || { status: 'not', date: '' };
+      var nx = el.hasAttribute('data-vqs') ? G.setVendorStatus(cur, el.value, TODAY) : G.setVendorDate(cur, el.value, TODAY);
+      if (!nx) toast(el.hasAttribute('data-vqd') ? 'The date asked cannot be in the future.' : 'Unknown status.');
+      else if (nx.status === 'not') delete t.vq[i]; else t.vq[i] = nx;
+      persist(); render(true);
     }
+    else if (el.hasAttribute('data-restore')) { var f = el.files && el.files[0]; el.value = ''; if (f) readBackup(f); }
   });
 
   // ---------- start ----------
   state = load();
-  if (state && state.tools.length && !state.example) ui.welcome = true;
   if (!state) { state = blank(); try { window.localStorage.setItem(KEY + '-probe', '1'); window.localStorage.removeItem(KEY + '-probe'); } catch (e) { mem.ok = false; } }
   if (adoptProfile(state)) persist();
+  /* Reload mid-flow returns to the same screen (the browser keeps history.state); a fresh visit starts at Hotel,
+     with "welcome back" when tools are saved. */
+  var hs = null; try { hs = window.history.state && window.history.state.guide; } catch (e) { hs = null; }
+  if (STEPS.indexOf(hs) >= 0) ui.step = hs;
+  ui.welcome = ui.step === 'hotel' && state.tools.length > 0 && !state.example;
+  try { window.history.replaceState({ guide: ui.step }, ''); } catch (e) { /* ignore */ }
   $('banner').innerHTML = '<strong>' + esc(REF.meta.banner) + '</strong> It gives a first indication and items to check; it never says a tool is compliant.';
   $('asof').textContent = 'Rules as of ' + fmt(GD.meta.rulesAsOf);
   $('footlaw').textContent = 'Legal basis: ' + REF.meta.legalBasis + '. ' + GD.honest.guidelines + ' Prepared by EHL Hospitality Business School students for HFTP.';
   initHost();
   paintSaved();
   render(false);
-  window.AIActGuide = { state: function () { return state; }, pdf: makePdf, evals: evals };
+
+  /* For agents and tests: a read-only snapshot and the screen-flow events. See CLEANUP.md. */
+  function snapshot() {
+    var ev = evals();
+    return JSON.parse(JSON.stringify({
+      step: ui.step, overlay: ui.overlay, save: saveState(), export: ui.exp, host: host.state, hub: host.hub, welcome: ui.welcome, example: state.example, schema: state.v,
+      hotel: state.hotel,
+      tools: ev.map(function (e) {
+        var qs = {}; G.visibleQuestions(e.type, e.tool).forEach(function (q) { qs[q.id] = G.questionStatus(q, e.tool); });
+        return { id: e.tool.id, type: e.tool.type, name: e.name, tier: e.tier, status: G.toolStatus(e), origin: e.tool.origin || null, questions: qs, isAI: G.isAIState(e.tool, e.c),
+                 vendor: { shown: e.vendorShown, summary: e.vendorShown ? G.vendorStatus(e) : null, questions: (e.type.vendor || []).map(function (q, i) { var x = e.tool.vq[i] || {}; return { status: x.status || 'not', date: x.date || '' }; }) } };
+      }),
+      data: state
+    }));
+  }
+  window.AIActGuide = {
+    state: snapshot,
+    /* send('go', 'vendors') | send('next') | send('back'): returns false when the event is not allowed */
+    send: function (ev, step) { return (ev === 'go' || ev === 'next' || ev === 'back') ? nav(ev, step) : false; },
+    events: ['go', 'next', 'back'],
+    pdf: makePdf, evals: evals
+  };
 })();

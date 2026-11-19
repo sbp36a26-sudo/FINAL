@@ -13,6 +13,131 @@
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   function fmtDate(iso) { if (!iso) return ''; var p = iso.split('-'); return (+p[2]) + ' ' + MONTHS[+p[1] - 1] + ' ' + p[0]; }
 
+  /* ================= State machines (see CLEANUP.md) =================
+     Pure transition functions; app.js holds the current values and is the only caller. A function returns null
+     when the event is not allowed in that state, so the caller ignores it (no impossible or double-fired states).
+
+     1. Screen flow  STEPS: hotel -> tools -> results -> vendors -> owner.
+        Events: go(step) (step tabs and buttons), pop(step) (browser Back/forward), next, back.
+        Any step is reachable from any other through the tabs; next/back follow the straight path. */
+  var STEPS = ['hotel', 'tools', 'results', 'vendors', 'owner'];
+  var NAV = { hotel: { next: 'tools' }, tools: { next: 'results', back: 'hotel' }, results: { next: 'vendors', back: 'tools' }, vendors: { next: 'owner', back: 'results' }, owner: { back: 'vendors' } };
+  function navNext(step, ev) {
+    if (ev.type === 'go') return STEPS.indexOf(ev.step) >= 0 ? ev.step : null;
+    if (ev.type === 'pop') return STEPS.indexOf(ev.step) >= 0 ? ev.step : 'hotel'; /* an entry this page did not write: start */
+    return (NAV[step] && NAV[step][ev.type]) || null;
+  }
+  /* 2. Overlay on the current screen (one at a time; every screen change returns it to "none").
+        none | copy (copy box) | confirmReset | confirmRestore (backup read, waiting for "replace?") | restoreError.
+        confirm/cancel exist only in the two confirm states, so a confirmation cannot be skipped or fired twice. */
+  var OPENERS = { copy: 'copy', askReset: 'confirmReset', restoreAsk: 'confirmRestore', restoreFail: 'restoreError' };
+  var OVERLAY = {
+    none: OPENERS,
+    copy: Object.assign({ close: 'none' }, OPENERS),
+    restoreError: Object.assign({ close: 'none' }, OPENERS),
+    confirmReset: Object.assign({ cancel: 'none', confirm: 'none' }, OPENERS),
+    confirmRestore: Object.assign({ cancel: 'none', confirm: 'none' }, OPENERS)
+  };
+  function overlayNext(s, ev) { return (OVERLAY[s] && OVERLAY[s][ev]) || null; }
+  /* 3. File export (PDF and backup): idle | working | done | failed. "start" is refused while working (no double download);
+        a bridge that never answers ends in "timeout", so the button cannot stay stuck. */
+  var EXPORT = { idle: { start: 'working' }, done: { start: 'working' }, failed: { start: 'working' }, working: { done: 'done', fail: 'failed', timeout: 'failed' } };
+  function exportNext(s, ev) { return (EXPORT[s] && EXPORT[s][ev]) || null; }
+  /* 4. One vendor question: status not | asked | fine | red, plus the date asked.
+        Invariants: "not" has no date; any other status has a date (today when first set); no date in the future. */
+  var VQ_STATUS = ['not', 'asked', 'fine', 'red'];
+  var ISO = /^\d{4}-\d{2}-\d{2}$/;
+  function setVendorStatus(vq, status, today) {
+    if (VQ_STATUS.indexOf(status) < 0) return null;
+    var date = (vq && vq.date) || '';
+    if (status === 'not') date = ''; else if (!date) date = today;
+    return { status: status, date: date };
+  }
+  function setVendorDate(vq, date, today) {
+    if (date && (!ISO.test(date) || date > today)) return null;
+    var status = (vq && VQ_STATUS.indexOf(vq.status) >= 0) ? vq.status : 'not';
+    if (date && status === 'not') status = 'asked'; /* a date asked means it was asked */
+    if (!date && status !== 'not') date = (vq && vq.date) || today; /* asked stays dated */
+    return { status: status, date: date };
+  }
+  /* 5. "Is it AI?" helper, derived from the three answers and the register's not-AI rule:
+        empty | ai | unsettled | notai | notai-needs-confirmation | notai-confirmed | notai-blocked.
+        tool.notAI is always derived from tool.isai (syncIsAI), never set on its own. */
+  function isAIRules(a) { return !!a && a.rules === 'yes' && a.learns === 'no' && a.says === 'no'; }
+  function syncIsAI(tool) {
+    tool.notAI = isAIRules(tool.isai) ? 'yes' : '';
+    if (tool.notAI !== 'yes') tool.notAIConfirmed = '';
+    return tool;
+  }
+  function isAIState(tool, c) {
+    var a = tool.isai || {};
+    if (a.learns === 'yes' || a.says === 'yes') return 'ai';
+    if (isAIRules(a)) {
+      if (c.notAIBlocked === 'blocked') return 'notai-blocked';
+      if (c.notAIBlocked === 'needs-confirmation') return tool.notAIConfirmed === 'yes' ? 'notai-confirmed' : 'notai-needs-confirmation';
+      return 'notai';
+    }
+    return (a.learns || a.says || a.rules) ? 'unsettled' : 'empty';
+  }
+  /* 6. Answer status of one question (unanswered | unsure | answered) and of one tool:
+        incomplete (an answer or "how did the hotel get it" missing) | open (settled level, but something is "not sure"
+        or still open with the vendor) | settled. */
+  function questionStatus(q, tool) {
+    var a = findAnswer(q, (tool.ans || {})[q.id]);
+    return !a ? 'unanswered' : a.id === 'unsure' ? 'unsure' : 'answered';
+  }
+  function toolStatus(e) {
+    if (e.unanswered) return 'incomplete';
+    return (e.stillOpen.length || (e.origin && e.origin.unsure)) ? 'open' : 'settled';
+  }
+  /* 7. Saved data (localStorage and backup files). Schema version 1 is the only version so far; restoreState validates
+        every field and drops what this build cannot use (unknown types, answers that are not offered or not shown,
+        unknown origins, broken vendor statuses), so a file can never put a tool in a state the screens cannot reach. */
+  var SCHEMA = 1;
+  function blankState() { return { v: SCHEMA, example: false, hotel: { name: '', country: '', size: '', model: '', group: '', reps: '' }, tools: [], done: {}, seq: 0, updatedAt: null }; }
+  function newTool(type, id) { return { id: id || 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: type, name: '', vendor: '', origin: '', ans: {}, vq: {}, askAnyway: false, notAI: '', notAIConfirmed: '', isai: {} }; }
+  var MIGRATE = { /* 1: current. Add "1: function (o) { ...; o.v = 2; return o; }" here when the schema changes. */ };
+  function restoreState(o, ctx) {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return { ok: false, error: 'not-a-guide-file' };
+    if (typeof o.v !== 'number' || !Array.isArray(o.tools)) return { ok: false, error: 'not-a-guide-file' };
+    if (o.v > SCHEMA) return { ok: false, error: 'newer-version' };
+    while (o.v < SCHEMA) { if (!MIGRATE[o.v]) return { ok: false, error: 'not-a-guide-file' }; o = MIGRATE[o.v](o); }
+    var s = blankState(), ref = ctx.ref, k, seen = {};
+    var allowed = { country: ref.countries.map(function (c) { return c[0]; }), size: ['s', 'm', 'l', 'xl'], model: ref.operatingModels.map(function (m) { return m.id; }), group: ['yes', 'no'], reps: ['yes', 'no', 'unsure'] };
+    s.example = o.example === true;
+    s.updatedAt = typeof o.updatedAt === 'string' ? o.updatedAt : null;
+    s.seq = typeof o.seq === 'number' ? o.seq : 0;
+    if (o.done && typeof o.done === 'object') for (k in o.done) if (typeof o.done[k] === 'string') s.done[k] = o.done[k];
+    for (k in s.hotel) if (o.hotel && typeof o.hotel[k] === 'string' && (!allowed[k] || allowed[k].indexOf(o.hotel[k]) >= 0)) s.hotel[k] = o.hotel[k];
+    o.tools.forEach(function (t) {
+      if (!t || typeof t !== 'object' || !ctx.types[t.type]) return;
+      var type = ctx.types[t.type], n = newTool(t.type);
+      if (typeof t.id === 'string' && /^[\w-]{1,40}$/.test(t.id) && !seen[t.id]) n.id = t.id;
+      seen[n.id] = 1;
+      ['name', 'vendor'].forEach(function (f) { if (typeof t[f] === 'string') n[f] = t[f]; });
+      if (typeof t.origin === 'string' && ctx.origins[t.origin]) n.origin = t.origin;
+      n.askAnyway = t.askAnyway === true;
+      /* answers: in question order, only offered answers to questions shown given the earlier answers */
+      var ans = t.ans && typeof t.ans === 'object' ? t.ans : {};
+      type.questions.forEach(function (q) {
+        if (q.when && q.when['in'].indexOf(n.ans[q.when.q]) < 0) return;
+        if (findAnswer(q, ans[q.id])) n.ans[q.id] = ans[q.id];
+      });
+      var vq = t.vq && typeof t.vq === 'object' ? t.vq : {};
+      (type.vendor || []).forEach(function (q, i) {
+        var x = vq[i]; if (!x || typeof x !== 'object') return;
+        var st = setVendorStatus({ date: ISO.test(x.date) && x.date <= ctx.today ? x.date : '' }, x.status, ctx.today);
+        if (st && st.status !== 'not') n.vq[i] = st;
+      });
+      var ia = t.isai && typeof t.isai === 'object' ? t.isai : {};
+      ['learns', 'says', 'rules'].forEach(function (f) { if (['yes', 'no', 'unsure'].indexOf(ia[f]) >= 0) n.isai[f] = ia[f]; });
+      n.notAIConfirmed = t.notAIConfirmed === 'yes' ? 'yes' : '';
+      syncIsAI(n);
+      s.tools.push(n);
+    });
+    return { ok: true, state: s, dropped: o.tools.length - s.tools.length };
+  }
+
   /* ctx = { ref, labels (uc-labels.json), guide, L (RegLogic), today } */
   function makeCtx(ref, labels, guide, L, today) {
     var uses = {}; labels.uses.forEach(function (u) { uses[u.id] = u; });
@@ -63,7 +188,8 @@
   function evalTool(tool, hotel, ctx) {
     var L = ctx.L, ref = ctx.ref, type = ctx.types[tool.type];
     var m = toRegister(tool, ctx), qs = visibleQuestions(type, tool);
-    var unanswered = qs.filter(function (q) { return !(tool.ans || {})[q.id]; }).length + (tool.origin ? 0 : 1);
+    /* an answer that is not one of the question's own answers counts as missing (it sets nothing) */
+    var unanswered = qs.filter(function (q) { return !findAnswer(q, (tool.ans || {})[q.id]); }).length + (ctx.origins[tool.origin] ? 0 : 1);
     var c = L.classify(m.row, m.reg, ref);
     var items = L.items(m.row, m.reg, { country: hotel.country }, ref, c);
     var lm = ctx.guide.levelMap[c.label] || {};
@@ -271,7 +397,11 @@
 
   var api = { LAW_COL: LAW_COL, makeCtx: makeCtx, visibleQuestions: visibleQuestions, toRegister: toRegister, evalTool: evalTool, evalAll: evalAll, plan: plan, isNow: isNow,
               verdict: verdict, verdictLines: verdictLines, tiles: tiles, stillOpenLines: stillOpenLines, vendorStatus: vendorStatus, vendorKey: vendorKey, vendorEmail: vendorEmail,
-              decisions: decisions, ownerSummary: ownerSummary, fmtDate: fmtDate, isoDay: isoDay };
+              decisions: decisions, ownerSummary: ownerSummary, fmtDate: fmtDate, isoDay: isoDay,
+              /* state machines */
+              STEPS: STEPS, NAV: NAV, navNext: navNext, OVERLAY: OVERLAY, overlayNext: overlayNext, EXPORT: EXPORT, exportNext: exportNext,
+              VQ_STATUS: VQ_STATUS, setVendorStatus: setVendorStatus, setVendorDate: setVendorDate, syncIsAI: syncIsAI, isAIState: isAIState,
+              questionStatus: questionStatus, toolStatus: toolStatus, SCHEMA: SCHEMA, blankState: blankState, newTool: newTool, restoreState: restoreState };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.GuideLogic = api;
 })(typeof self !== 'undefined' ? self : (typeof globalThis !== 'undefined' ? globalThis : this));
