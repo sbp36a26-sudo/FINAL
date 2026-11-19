@@ -1,0 +1,60 @@
+{
+ "v": 1,
+ "example": false,
+ "hotel": {
+  "name": "",
+  "country": "",
+  "model": "",
+  "group": "",
+  "reps": "",
+  "size": "",
+  "outlets": [],
+  "keeper": ""
+ },
+ "tools": [
+  {
+   "id": "tmwnjnnpa5nd18",
+   "no": 1,
+   "useId": "hr-2",
+   "name": "AI recruiting",
+   "vendor": "Vendor X",
+   "dept": "hr",
+   "where": "",
+   "origin": "vendor",
+   "decided": "",
+   "owner": "HR manager",
+   "since": "",
+   "notes": "",
+   "answers": {},
+   "done": {},
+   "vq": {},
+   "notAI": "",
+   "notAIConfirmed": "",
+   "createdAt": "2026-11-19T12:46:23.422Z"
+  },
+  {
+   "id": "tmwnjnoa6v64g4",
+   "no": 2,
+   "useId": "gx-2",
+   "name": "AI chat and messaging assistant, pre-booking and in-stay",
+   "vendor": "",
+   "dept": "gx",
+   "where": "",
+   "origin": "vendor",
+   "decided": "",
+   "owner": "",
+   "since": "",
+   "notes": "",
+   "answers": {},
+   "done": {},
+   "vq": {},
+   "notAI": "",
+   "notAIConfirmed": "",
+   "createdAt": "2026-11-19T12:46:24.174Z"
+  }
+ ],
+ "checks": {},
+ "seq": 2,
+ "updatedAt": "2026-11-19T12:46:24.174Z",
+ "seenOn": ""
+}

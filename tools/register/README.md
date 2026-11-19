@@ -29,12 +29,15 @@ Entries are saved in the visitor's browser only. A shared, saved version for a t
 | `data/reference.json` | Labels, dates, questions, items to check, vendor questions, operating models, country notes. |
 | `data/radar.json` | The watch list. Add an entry only after checking it at the source. |
 | `src/logic.js` | Label, role and item logic. No dependencies; also runs in Node. |
+| `src/machines.js` | The page's state machines (screen, confirm boxes, downloads, saved data, `#add=` link). No DOM; also runs in Node. See `CLEANUP.md`. |
 | `src/app.js`, `src/page.html` | The page. |
 | `build.mjs` | Builds `index.html` (GENERATED) and checks the label file against the catalogue. |
-| `tests/logic.test.mjs` | 99 checks: the booklet's A6 totals for rows that follow it, and the law-based changes. |
+| `tests/logic.test.mjs` | 138 checks: the booklet's A6 totals for rows that follow it, and the law-based changes. |
+| `tests/machines.test.mjs` | 64 checks of the page's state machines, with a register saved by the 19 Nov 2026 build (`tests/fixtures/`). |
 
 ```bash
 node tools/register/tests/logic.test.mjs
+node tools/register/tests/machines.test.mjs
 ```
 
 ```bash

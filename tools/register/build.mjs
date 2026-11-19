@@ -1,5 +1,5 @@
 // Builds tools/register/index.html: one self-contained page with the data and code inlined.
-// Run after editing anything in src/ or data/:   node tools/register/build.mjs
+// Run after editing anything in src/ (page.html, app.js, logic.js, machines.js) or data/:   node tools/register/build.mjs
 // It also checks that the label file still matches the catalogue (use-case ids are positional, so they must not drift).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -46,7 +46,7 @@ const dataBlocks = [block('d-ref', ref), block('d-labels', labels), block('d-rad
 const safeJs = s => s.replace(/<\/script/gi, '<\\/script');
 
 let page = read('src/page.html');
-for (const [mark, text] of [['<!--__DATA__-->', dataBlocks + '\n<script>' + safeJs(jspdf) + '</script>'], ['/*__LOGIC__*/', safeJs(read('src/logic.js'))], ['/*__APP__*/', safeJs(read('src/app.js'))]]) {
+for (const [mark, text] of [['<!--__DATA__-->', dataBlocks + '\n<script>' + safeJs(jspdf) + '</script>'], ['/*__LOGIC__*/', safeJs(read('src/logic.js'))], ['/*__MACHINES__*/', safeJs(read('src/machines.js'))], ['/*__APP__*/', safeJs(read('src/app.js'))]]) {
   if (!page.includes(mark)) throw new Error('missing placeholder ' + mark);
   page = page.replace(mark, () => text);
 }

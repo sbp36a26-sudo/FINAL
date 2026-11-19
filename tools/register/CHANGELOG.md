@@ -66,3 +66,17 @@ Every article below was checked against the two regulation PDFs in `tools/ai-act
 ## 19 Nov 2026: two questions made firm (from the AI Act guide comparison)
 
 - `auto_reply` on res-2 (email and offer handling) and `job_ads` on sm-5 were soft questions, so "Not sure" left these tools Minimal. Both rest on the law text (Art. 50(1); Annex III 4(a)), so they now decide the label: res-2 opens as "Transparency if…", sm-5 as "High-risk if…". Both rows are marked as differing from the booklet.
+
+## 19 Nov 2026: clean-up of the page's state (no change to labels or items)
+
+Details and reproductions: `CLEANUP.md`. `src/logic.js` unchanged (138 tests). New `src/machines.js` with the page's state machines (route, dialog, download bridge, stored register, `#add=` link) and `tests/machines.test.mjs` (64 checks).
+
+- **Fix:** "Start my own register" and "Clear everything" no longer wipe the hotel profile shared with the Readiness check; the new register takes it.
+- **Fix:** typing is saved when the page is left or reloaded (it was lost within 400 ms).
+- **Fix:** reload keeps the screen (it went back to "How it works"); Back to a deleted tool shows the list; clicking the current tab adds no history entry; Forward to a tool opened by an `#add=` link works.
+- **Fix:** a saved register this version cannot read (damaged, or from a newer version) is kept under its own key with a note and a download button, instead of being replaced by the example.
+- **Fix:** a malformed `#add=` name no longer leaves a blank page.
+- **Fix:** framed by another origin, downloads start at once (they waited about 12 s).
+- **Fix:** the fictional example hotel can no longer reach the shared profile.
+- **New:** one confirm or copy box at a time, Escape closes it; `data-state`, `data-tool`, `data-dialog` on the page and `window.HotelAIRegister.ui()` / `send()` for tests and agents.
+- Storage key, `v: 1` format, shared profile, hub messages and the `#add=` link are unchanged; registers saved by the earlier build load.

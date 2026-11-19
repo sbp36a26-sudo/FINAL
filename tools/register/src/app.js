@@ -4,7 +4,7 @@
   function $(id) { return document.getElementById(id); }
   function data(id) { return JSON.parse($(id).textContent); }
   var REF = data('d-ref'), LAB = data('d-labels'), RADAR = data('d-radar'), CAT = data('d-cat'), NAT = data('d-national');
-  var L = window.RegLogic;
+  var L = window.RegLogic, M = window.RegMachines;
   var USES = {}; LAB.uses.forEach(function (u) { USES[u.id] = u; });
   var DEPTS = {}; CAT.depts.forEach(function (d) { DEPTS[d.id] = d; });
   var COUNTRY = {}; REF.countries.forEach(function (c) { COUNTRY[c[0]] = c[1]; });
@@ -42,7 +42,11 @@
   // ---------- state ----------
   var mem = { ok: true };
   var REVIEWER_KEY = 'hftp-ai-register-reviewer';
-  var ui = { reviewer: (function () { try { return window.localStorage.getItem(REVIEWER_KEY) === '1'; } catch (e) { return false; } })(), whoFilter: '', tab: 'how', view: 'list', toolId: null, q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false, confirm: null, copy: null, pending: null };
+  /* ui.route and ui.dialog are the two explicit machines of this page (src/machines.js, CLEANUP.md).
+     Only setRoute() writes ui.route and only send() writes ui.dialog. The other ui fields are view filters. */
+  var ui = { reviewer: (function () { try { return window.localStorage.getItem(REVIEWER_KEY) === '1'; } catch (e) { return false; } })(), whoFilter: '', q: '', fLabel: '', pickQ: '', pickDept: '', showDone: false,
+             route: M.route('how'), dialog: { name: 'none' }, unreadable: null };
+  function isConfirm(kind) { return ui.dialog.name === 'confirm' && ui.dialog.kind === kind; }
   var state;
 
   function blank() { return { v: 1, example: false, hotel: { name: '', country: '', model: '', group: '', reps: '', size: '', outlets: [], keeper: '' }, tools: [], checks: {}, seq: 0, updatedAt: null, seenOn: '' }; }
@@ -61,16 +65,33 @@
       var mv = (LAB.meta.moved || {})[t.useId]; if (mv && !USES[t.useId]) t.useId = mv;
       var n = newTool({ seq: 0 }, USES[t.useId] ? t.useId : 'custom');
       for (k in n) if (t[k] != null && k !== 'useId') n[k] = t[k];
+      /* ids are compared as strings (data-id); a number or a duplicate would make a tool impossible to open */
+      if (typeof n.id !== 'string' || !n.id || s.tools.some(function (x) { return x.id === n.id; })) n.id = newTool({ seq: 0 }, 'custom').id;
       ['answers', 'done', 'vq'].forEach(function (f) { if (!n[f] || typeof n[f] !== 'object') n[f] = {}; });
       if (!n.no) n.no = ++s.seq; else if (n.no > s.seq) s.seq = n.no;
       s.tools.push(n);
     });
     return s;
   }
+  /* Start-up read. A register this build cannot read (damaged, or saved by a newer version) is copied to its own key
+     and shown in a note, so the example that replaces it never overwrites it silently. */
   function load() {
-    try { var raw = window.localStorage.getItem(KEY); if (raw) { var o = JSON.parse(raw); if (o && o.v === 1 && Array.isArray(o.tools)) return normalise(o); } }
-    catch (e) { mem.ok = false; }
+    var raw;
+    try { raw = window.localStorage.getItem(KEY); } catch (e) { mem.ok = false; return null; }
+    var r = M.readStored(raw);
+    if (r.status === 'ok') return normalise(r.data);
+    if (r.status === 'unreadable') {
+      var keep = KEY + '-unreadable-' + Date.now();
+      try { window.localStorage.setItem(keep, raw); } catch (e) { keep = ''; }
+      ui.unreadable = { key: keep, raw: raw, reason: r.reason };
+    }
     return null;
+  }
+  function unreadableNote() {
+    var u = ui.unreadable; if (!u) return '';
+    return '<div class="note stop" id="unreadable"><p><strong>A register saved in this browser could not be opened</strong> (' + (u.reason === 'newer' ? 'it was made by a newer version of this page' : 'the saved data is damaged') + '). ' +
+      (u.key ? 'It is kept unchanged in this browser. ' : '') + 'Download it before you go on, and send it to the project team if you need it back.</p>' +
+      '<div class="btnrow"><button type="button" class="btn" data-act="unreadable-save">Download it</button><button type="button" class="btn sm" data-act="unreadable-hide">Hide</button></div></div>';
   }
   var saveTimer = null;
   /* One hotel profile shared with the Readiness check in this browser (key hftp-hotel-profile-v1).
@@ -94,13 +115,22 @@
     return took;
   }
   function persist() {
-    clearTimeout(saveTimer);
+    clearTimeout(saveTimer); saveTimer = null;
     state.updatedAt = new Date().toISOString();
     writeProfile();
     try { window.localStorage.setItem(KEY, JSON.stringify(state)); mem.ok = true; } catch (e) { mem.ok = false; }
     paintSaved();
   }
   function persistSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(persist, 400); }
+  /* Typing is saved 400 ms after the last key; leaving or reloading the page saves at once. */
+  function flushSave() { if (saveTimer) persist(); }
+  /* Every replacement of the whole register (start empty, clear, example, backup, #add= link) goes through here.
+     A real register first takes the shared hotel profile's filled fields, so persist() never writes blanks over them. */
+  function replaceRegister(next) {
+    clearTimeout(saveTimer); saveTimer = null;
+    if (!next.example) adoptProfile(next);
+    state = next; persist();
+  }
 
   function example() {
     var s = blank(); s.example = true;
@@ -172,7 +202,7 @@
   }
   function exampleNote() {
     if (!state.example) return '';
-    if (ui.confirm && ui.confirm.kind === 'own') return confirmBox('own', 'Remove the example hotel and start with an empty register?', 'Start empty');
+    if (isConfirm('own')) return confirmBox('own', 'Remove the example hotel and start with an empty register?', 'Start empty');
     return '<div class="note"><p><strong>This is an example.</strong> Seeblick Hotel is fictional and its tools are made up, so you can see how the register works. Nothing here describes a real hotel or vendor.</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="start-own">Start my own register</button></div></div>';
   }
@@ -181,12 +211,12 @@
     return '<div class="note warn"><p>' + esc(REF.countryChecks[state.hotel.country].reach) + '</p></div>';
   }
   function confirmBox(kind, text, yes) {
-    if (!ui.confirm || ui.confirm.kind !== kind) return '';
+    if (!isConfirm(kind)) return '';
     return '<div class="note stop" id="confirm"><p>' + esc(text) + '</p><div class="btnrow"><button type="button" class="btn warn" data-act="confirm-yes" id="confirm-yes">' + esc(yes) + '</button><button type="button" class="btn" data-act="confirm-no">Cancel</button></div></div>';
   }
   function copyBox() {
-    if (!ui.copy) return '';
-    return '<div class="panel copybox"><div class="ph"><h3>' + esc(ui.copy.title) + '</h3><button type="button" class="btn sm" data-act="copy-close">Close</button></div><p class="meta">Select all of the text and copy it.</p><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea></div>';
+    if (ui.dialog.name !== 'copy') return '';
+    return '<div class="panel copybox"><div class="ph"><h3>' + esc(ui.dialog.title) + '</h3><button type="button" class="btn sm" data-act="copy-close">Close</button></div><p class="meta">Select all of the text and copy it.</p><textarea id="copy-text" readonly>' + esc(ui.dialog.text) + '</textarea></div>';
   }
   function exportBar() {
     return '<div class="btnrow" role="group" aria-label="Download"><button type="button" class="btn" data-act="export" data-kind="pdf">Download PDF</button><button type="button" class="btn" data-act="export" data-kind="csv">Download CSV</button><button type="button" class="btn" data-act="export" data-kind="json">Download backup</button></div>';
@@ -439,7 +469,7 @@
     vqs.forEach(function (q) {
       h += '<div class="item' + (t.vq[q.id] ? ' done' : '') + '"><input type="checkbox" id="vq-' + q.id + '" data-vq="' + q.id + '"' + (t.vq[q.id] ? ' checked' : '') + ' aria-labelledby="vq-' + q.id + '-t"><div class="itx"><span class="itt" id="vq-' + q.id + '-t">' + esc(q.q) + '</span></div></div>';
     });
-    h += '</div><div class="btnrow"><button type="button" class="btn sm" data-act="vmail" data-id="' + esc(t.id) + '">Write these as an email to the vendor</button></div><p class="meta">From the briefing booklet, section A3.</p></section>' + (ui.copy ? copyBox() : '');
+    h += '</div><div class="btnrow"><button type="button" class="btn sm" data-act="vmail" data-id="' + esc(t.id) + '">Write these as an email to the vendor</button></div><p class="meta">From the briefing booklet, section A3.</p></section>' + copyBox();
 
     h += '</div><div>';
 
@@ -461,7 +491,7 @@
         hits.map(function (e) { return '<li>' + esc(e.title) + ' <span class="meta">' + esc(e.when) + '</span></li>'; }).join('') + '</ul></section>';
     }
 
-    h += '<section class="panel"><h3>Remove</h3>' + (ui.confirm && ui.confirm.kind === 'delete' ? confirmBox('delete', 'Delete "' + (t.name || 'this tool') + '" from the register? This cannot be undone.', 'Delete tool') : '<div><button type="button" class="btn warn" data-act="del">Delete this tool</button></div>') + '</section>';
+    h += '<section class="panel"><h3>Remove</h3>' + (isConfirm('delete') ? confirmBox('delete', 'Delete "' + (t.name || 'this tool') + '" from the register? This cannot be undone.', 'Delete tool') : '<div><button type="button" class="btn warn" data-act="del">Delete this tool</button></div>') + '</section>';
     h += '</div></div>';
     return h;
   }
@@ -507,7 +537,7 @@
         h += '<div class="toolh"><strong>' + esc(v.name) + '</strong><span class="meta">' + esc(v.tools.map(function (x) { return x.t.name || regNo(x.t); }).join(', ')) + '</span>' + (open ? '<span class="meta">' + plural(open, 'tool') + ' with questions open</span>' : '<span class="meta">Answers recorded</span>') + '</div>' +
           '<div class="btnrow"><button type="button" class="btn sm" data-act="vmail" data-vendor="' + esc(k) + '">Write the questions as one email</button></div>';
       });
-      h += '</section>' + (ui.copy ? copyBox() : '');
+      h += '</section>' + copyBox();
     }
     var whos = {};
     rows.forEach(function (x) { x.items.forEach(function (it) { if (it.scope === 'tool' && it.who) whos[it.who] = true; }); });
@@ -635,7 +665,7 @@
       '<button type="button" class="btn" data-act="example">Load the example hotel</button><button type="button" class="btn warn" data-act="reset">Clear everything</button></div>' +
       confirmBox('reset', 'Clear the whole register in this browser? This cannot be undone.', 'Clear everything') +
       confirmBox('example', 'Replace the current register with the fictional example hotel?', 'Load the example') +
-      confirmBox('import', ui.pending ? 'Replace the current register with the backup (' + plural(ui.pending.tools.length, 'tool') + ')?' : '', 'Restore backup') + '</section></div></div>';
+      confirmBox('import', isConfirm('import') ? 'Replace the current register with the backup (' + plural(ui.dialog.payload.tools.length, 'tool') + ')?' : '', 'Restore backup') + '</section></div></div>';
 
     // label table (reviewers only)
     if (!ui.reviewer) return h;
@@ -675,28 +705,70 @@
   function render(keep) {
     var act = document.activeElement, fid = keep && act && act.id ? act.id : null, sel = null;
     if (fid) { try { if (act.selectionStart != null) sel = [act.selectionStart, act.selectionEnd]; } catch (e) { sel = null; } }
-    var html, t = ui.view === 'tool' ? toolById(ui.toolId) : null;
-    if (ui.tab === 'register') html = ui.view === 'pick' ? vPick() : t ? vTool(t) : vList();
-    else if (ui.tab === 'todo') html = vTodo();
-    else if (ui.tab === 'hotel') html = vHotel();
-    else if (ui.tab === 'watch') html = vWatch();
+    var html, t = ui.route.view === 'tool' ? toolById(ui.route.toolId) : null;
+    if (ui.route.tab === 'register') html = ui.route.view === 'pick' ? vPick() : t ? vTool(t) : vList();
+    else if (ui.route.tab === 'todo') html = vTodo();
+    else if (ui.route.tab === 'hotel') html = vHotel();
+    else if (ui.route.tab === 'watch') html = vWatch();
     else html = vHow();
-    $('view').innerHTML = html;
-    ['register', 'todo', 'hotel', 'watch', 'how'].forEach(function (k) { if (ui.tab === k) $('tab-' + k).setAttribute('aria-current', 'page'); else $('tab-' + k).removeAttribute('aria-current'); });
-    try { var cur = $('tab-' + ui.tab); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* ignore */ }
+    if (ui.route.tab === 'how' || (ui.route.tab === 'register' && ui.route.view === 'list')) html = unreadableNote() + html;
+    var v = $('view');
+    v.innerHTML = html;
+    /* AX: the current state, readable without scraping the page */
+    v.setAttribute('data-state', M.routeName(ui.route)); v.setAttribute('data-tool', ui.route.toolId || ''); v.setAttribute('data-dialog', M.dialogName(ui.dialog));
+    ['register', 'todo', 'hotel', 'watch', 'how'].forEach(function (k) { if (ui.route.tab === k) $('tab-' + k).setAttribute('aria-current', 'page'); else $('tab-' + k).removeAttribute('aria-current'); });
+    try { var cur = $('tab-' + ui.route.tab); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* ignore */ }
     paintSaved();
     if (fid) { var el = $(fid); if (el) { el.focus(); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* not a text field */ } } } }
   }
-  function go(tab, view, id, fromHistory) {
-    ui.tab = tab; ui.view = view || 'list'; ui.toolId = id || null; ui.confirm = null; ui.copy = null;
-    if (!fromHistory) { try { window.history.pushState({ reg: [ui.tab, ui.view, ui.toolId] }, ''); } catch (e) { /* ignore */ } }
+  // ---------- the two machines: route and dialog (transition tables in src/machines.js) ----------
+  function exists(id) { return !!toolById(id); }
+  /* The only writer of ui.route. history: 'push' (a click), 'replace' (after a delete, an #add= link, start-up), 'none' (Back/forward).
+     A click on the route you are already on adds no history entry. Moving closes any open dialog. */
+  function setRoute(r, history) {
+    var same = M.sameRoute(r, ui.route);
+    ui.route = r; ui.dialog = M.dialogSend(ui.dialog, { type: 'navigate' }).dialog;
+    try {
+      if (history === 'replace' || (history === 'push' && same)) window.history.replaceState(M.historyEntry(r), '');
+      else if (history === 'push') window.history.pushState(M.historyEntry(r), '');
+    } catch (e) { /* ignore */ }
+  }
+  function go(tab, view, id, history) {
+    setRoute(M.route(tab, view, id, exists), history || 'push');
     render(false);
     try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
     $('view').focus({ preventScroll: true });
   }
+  /* The only writer of ui.dialog. Runs a confirmed effect once; returns false when the event was ignored. */
+  function send(ev) {
+    if (ev && ev.type === 'ask' && !M.dialogHome(ev.kind, ui.route)) {
+      /* a confirm is drawn on its home screen only: the backup prompt lives under How it works */
+      if (ev.kind === 'import' || ev.kind === 'reset') setRoute(M.route('how'), 'push'); else return false;
+    }
+    var r = M.dialogSend(ui.dialog, ev);
+    if (r.ignored) return false;
+    ui.dialog = r.dialog;
+    if (r.effect) runEffect(r.effect); else render(false);
+    if (ui.dialog.name === 'confirm') focusConfirm();
+    else if (ui.dialog.name === 'copy') { var ta = $('copy-text'); if (ta) { ta.focus(); ta.select(); } }
+    return true;
+  }
+  function runEffect(e) {
+    if (e.kind === 'delete') { state.tools = state.tools.filter(function (x) { return x.id !== e.id; }); persist(); go('register', 'list', null, 'replace'); toast('Tool deleted.'); }
+    else if (e.kind === 'reset') { replaceRegister(blank()); go('register', 'list'); toast('Register cleared.'); }
+    else if (e.kind === 'example') { replaceRegister(example()); go('register', 'list'); }
+    else if (e.kind === 'own') { replaceRegister(blank()); go('register', 'list'); toast('Empty register ready. You can load the example again under How it works.'); }
+    else if (e.kind === 'import') { replaceRegister(e.payload); go('register', 'list'); toast('Backup restored.'); }
+  }
 
   // ---------- exports ----------
-  var host = { state: window.parent !== window ? 'pending' : 'none', waiters: [], seq: 0, calls: {}, direct: null };
+  /* host.state is the download-bridge machine (src/machines.js: hostStart, hostSend): none | pending | yes | no. */
+  function parentSameOrigin() { try { return window.parent.location.origin === window.location.origin; } catch (e) { return false; } }
+  var host = { state: M.hostStart(window.parent !== window, window.parent !== window && parentSameOrigin()), waiters: [], seq: 0, calls: {}, direct: null };
+  function hostEvent(ev) {
+    var was = host.state; host.state = M.hostSend(host.state, ev);
+    if (was === 'pending' && host.state !== 'pending') host.waiters.splice(0).forEach(function (f) { f(); });
+  }
   /* Kept on purpose: inside the claude.ai hub this page runs in a frame and cannot save files itself, so it asks
      the hub page (postMessage, same origin only) or the artifact's downloads capability (window.claude) to do it.
      Opened from file:// or a plain web server, neither exists and the page falls back to an ordinary download link. */
@@ -708,13 +780,13 @@
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
       var m = e.data;
-      if (m.hub === 'pong') { host.state = m.downloads ? 'yes' : 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); }
+      if (m.hub === 'pong') hostEvent({ type: 'pong', downloads: !!m.downloads });
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
-    try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { host.state = 'no'; }
-    setTimeout(function () { if (host.state === 'pending') { host.state = 'no'; host.waiters.splice(0).forEach(function (f) { f(); }); } }, 12000);
+    try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { hostEvent({ type: 'timeout' }); }
+    setTimeout(function () { hostEvent({ type: 'timeout' }); }, 12000);
   }
-  function whenHostKnown(fn) { if (host.state === 'pending') host.waiters.push(fn); else fn(); }
+  function whenHostKnown(fn) { if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(fn); } else fn(); }
   function saveFile(name, content, mime) {
     function viaLink() {
       try {
@@ -835,9 +907,12 @@
   }
 
   // ---------- events ----------
+  /* Back/forward: the entry's route, checked again (the tool may have been deleted since). An entry without one means "How it works". */
   window.addEventListener('popstate', function (e) {
-    var r = e.state && e.state.reg;
-    if (r) go(r[0], r[1], r[2] && toolById(r[2]) ? r[2] : null, true); else go('how', 'list', null, true);
+    var r = M.routeFromHistory(e.state, exists) || M.route('how');
+    go(r.tab, r.view, r.toolId, 'none');
+    var hs = e.state && e.state.reg;
+    if (hs && hs[1] === 'tool' && r.view !== 'tool') { try { window.history.replaceState(M.historyEntry(r), ''); } catch (e2) { /* ignore */ } }
   });
   function vendorEmail(vendor, xs) {
     var lines = ['Subject: Questions about ' + xs.map(function (x) { return x.t.name || x.u.name; }).join(', '), '', 'Dear ' + (/^Vendor not named/.test(vendor) ? 'vendor' : vendor) + ' team,', '',
@@ -857,7 +932,8 @@
     else if (a === 'back') go('register', 'list');
     else if (a === 'open') go('register', 'tool', id);
     else if (a === 'pick') {
-      if (state.example && !state.tools.length) state.example = false;
+      /* the first own tool in an emptied example register: the fictional hotel goes, so it never reaches the shared profile */
+      if (state.example && !state.tools.length) { state.example = false; state.hotel = blank().hotel; adoptProfile(state); }
       t = newTool(state, id); state.tools.push(t); persist(); go('register', 'tool', t.id);
       toast('Added to the register as ' + regNo(t) + '. Answer the questions to settle its label.');
       var nm = $('f-name'); if (nm && !t.name) nm.focus();
@@ -865,7 +941,9 @@
     else if (a === 'flt') { var lb = b.getAttribute('data-label'); ui.fLabel = ui.fLabel === lb ? '' : lb; render(false); }
     else if (a === 'clear-flt') { ui.fLabel = ''; ui.q = ''; render(false); }
     else if (a === 'export') doExport(b.getAttribute('data-kind'));
-    else if (a === 'copy-close') { ui.copy = null; render(false); }
+    else if (a === 'copy-close') send({ type: 'close' });
+    else if (a === 'unreadable-hide') { ui.unreadable = null; render(false); }
+    else if (a === 'unreadable-save' && ui.unreadable) saveFile('hotel-ai-register-unreadable_' + TODAY + '.json', ui.unreadable.raw, 'application/json');
     else if (a === 'seen') { state.seenOn = TODAY; persist(); render(false); }
     else if (a === 'to-readiness') {
       var tr = toolById(id), hash = 'use=' + (tr ? tr.useId : '');
@@ -876,25 +954,22 @@
       var vn = b.getAttribute('data-vendor'), xs;
       if (vn) { xs = state.tools.map(ctx).filter(function (x) { return ((x.t.vendor || '').trim() || 'Vendor not named: ' + (x.t.name || regNo(x.t))) === vn; }); }
       else { t = toolById(id); xs = t ? [ctx(t)] : []; vn = (t && t.vendor) || 'Vendor not named'; }
-      ui.copy = { title: 'Email to ' + vn, text: vendorEmail(vn, xs) }; render(false);
-      var ta = $('copy-text'); if (ta) { ta.focus(); ta.select(); }
+      send({ type: 'copy', title: 'Email to ' + vn, text: vendorEmail(vn, xs) });
     }
-    else if (a === 'del') { ui.confirm = { kind: 'delete', id: ui.toolId }; render(false); focusConfirm(); }
-    else if (a === 'reset') { ui.confirm = { kind: 'reset' }; render(false); focusConfirm(); }
-    else if (a === 'start-own') { ui.confirm = { kind: 'own' }; render(false); focusConfirm(); }
+    else if (a === 'del') send({ type: 'ask', kind: 'delete', id: ui.route.toolId });
+    else if (a === 'reset') send({ type: 'ask', kind: 'reset' });
+    else if (a === 'start-own') send({ type: 'ask', kind: 'own' });
     else if (a === 'example') {
-      if (state.tools.length && !state.example) { ui.confirm = { kind: 'example' }; render(false); focusConfirm(); }
-      else { state = example(); persist(); go('register', 'list'); }
+      if (state.tools.length && !state.example) send({ type: 'ask', kind: 'example' });
+      else { replaceRegister(example()); go('register', 'list'); }
     }
-    else if (a === 'confirm-no') { ui.confirm = null; ui.pending = null; render(false); }
-    else if (a === 'confirm-yes' && ui.confirm) {
-      var k = ui.confirm.kind;
-      if (k === 'delete') { state.tools = state.tools.filter(function (x) { return x.id !== ui.confirm.id; }); persist(); go('register', 'list'); toast('Tool deleted.'); }
-      else if (k === 'reset') { state = blank(); persist(); go('register', 'list'); toast('Register cleared.'); }
-      else if (k === 'example') { state = example(); persist(); go('register', 'list'); }
-      else if (k === 'own') { state = blank(); persist(); go('register', 'list'); toast('Empty register ready. You can load the example again under How it works.'); }
-      else if (k === 'import' && ui.pending) { state = ui.pending; ui.pending = null; persist(); go('register', 'list'); toast('Backup restored.'); }
-    }
+    else if (a === 'confirm-no') send({ type: 'cancel' });
+    else if (a === 'confirm-yes') send({ type: 'yes' });
+  });
+  /* Escape closes an open confirm or copy box (same as Cancel / Close). */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || ui.dialog.name === 'none') return;
+    send({ type: ui.dialog.name === 'copy' ? 'close' : 'cancel' });
   });
   function focusConfirm() { var el = $('confirm-yes'); if (el) { el.focus(); try { el.scrollIntoView({ block: 'center' }); } catch (e) { /* ignore */ } } }
 
@@ -903,11 +978,11 @@
     if (el.getAttribute('data-q') === 'list') { ui.q = el.value; render(true); return; }
     if (el.getAttribute('data-q') === 'pick') { ui.pickQ = el.value; render(true); return; }
     if (el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
-    if (el.hasAttribute('data-f')) { t = toolById(ui.toolId); if (t) { t[el.getAttribute('data-f')] = el.value; persistSoon(); } }
+    if (el.hasAttribute('data-f')) { t = toolById(ui.route.toolId); if (t) { t[el.getAttribute('data-f')] = el.value; persistSoon(); } }
     else if (el.hasAttribute('data-h')) { state.hotel[el.getAttribute('data-h')] = el.value; persistSoon(); }
   });
   document.addEventListener('change', function (e) {
-    var el = e.target, t = toolById(ui.toolId), tt;
+    var el = e.target, t = toolById(ui.route.toolId), tt;
     if (el.hasAttribute('data-sw') && t) { t.answers[el.getAttribute('data-sw')] = el.value; persist(); render(true); }
     else if (el.hasAttribute('data-notai') && t) { t.notAI = el.value; persist(); render(true); }
     else if (el.hasAttribute('data-notaiok') && t) { t.notAIConfirmed = el.checked ? 'yes' : ''; persist(); render(true); }
@@ -937,9 +1012,9 @@
       var fr = new FileReader();
       fr.onload = function () {
         try {
-          var o = JSON.parse(String(fr.result));
-          if (!o || o.v !== 1 || !Array.isArray(o.tools)) throw new Error('shape');
-          ui.pending = normalise(o); ui.confirm = { kind: 'import' }; render(false); focusConfirm();
+          var r = M.readStored(String(fr.result));
+          if (r.status !== 'ok') { toast(r.reason === 'newer' ? 'This backup was made by a newer version of the register and cannot be opened here.' : 'That file is not a register backup. Choose a file made with "Backup".'); return; }
+          send({ type: 'ask', kind: 'import', payload: normalise(r.data) });
         } catch (err) { toast('That file is not a register backup. Choose a file made with "Backup".'); }
       };
       fr.onerror = function () { toast('The file could not be read.'); };
@@ -972,18 +1047,42 @@
   $('footlaw').textContent = 'Legal basis: ' + REF.meta.legalBasis + '. Law as of ' + fmtDate(REF.meta.lawAsOf) + '. Prepared by EHL Hospitality Business School students for HFTP.';
   if (adoptProfile(state)) persist();
   if (!state.seenOn) { state.seenOn = TODAY; persist(); }
-  /* Coming from the Readiness check: #add=<use id>&name=<tool name> adds the tool (once) and opens it. */
+  /* Coming from the Readiness check or the AI Act guide: #add=<use id>&name=<tool name> adds the tool (once) and opens it.
+     The hash is then removed and the history entry holds the tool route, so Back, forward and reload agree with the page. */
   function fromHash() {
-    var m = /(?:^|[#&])add=([a-z]+-\d+)(?:&name=([^&]*))?/.exec(location.hash || ''); if (!m || !USES[m[1]]) return;
-    var t = state.tools.filter(function (x) { return x.useId === m[1]; })[0];
-    if (!t) { if (state.example) { state = blank(); adoptProfile(state); } t = newTool(state, m[1]); if (m[2]) t.name = decodeURIComponent(m[2]); state.tools.push(t); persist(); }
-    ui.tab = 'register'; ui.view = 'tool'; ui.toolId = t.id;
-    try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+    var h = M.parseAddHash(location.hash); if (!h || !USES[h.useId]) return false;
+    var t = state.tools.filter(function (x) { return x.useId === h.useId; })[0];
+    if (!t) {
+      var next = state.example ? blank() : state;
+      t = newTool(next, h.useId); if (h.name) t.name = h.name; next.tools.push(t);
+      if (next !== state) replaceRegister(next); else persist();
+    }
+    ui.route = M.route('register', 'tool', t.id, exists); ui.dialog = { name: 'none' };
+    try { history.replaceState(M.historyEntry(ui.route), '', location.pathname + location.search); } catch (e) { /* ignore */ }
     return true;
   }
-  fromHash();
-  window.addEventListener('hashchange', function () { if (fromHash()) render(false); });
+  /* Reload keeps the place: history.state survives a reload, so start from the route it names (checked against the register). */
+  if (!fromHash()) {
+    var startRoute = null; try { startRoute = M.routeFromHistory(window.history.state, exists); } catch (e) { startRoute = null; }
+    ui.route = startRoute || M.route('how');
+    try { window.history.replaceState(M.historyEntry(ui.route), ''); } catch (e) { /* ignore */ }
+  }
+  window.addEventListener('hashchange', function () { if (fromHash()) { render(false); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } } });
+  window.addEventListener('pagehide', flushSave);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushSave(); });
   initHost();
   render(false);
-  window.HotelAIRegister = { state: function () { return state; }, csv: buildCsv, pdf: makePdf };
+  /* AX: read-only snapshots and the documented events. state() is the saved register (unchanged); ui() is where the page is.
+     send({type:'go', tab, view, id}) | {type:'ask', kind:'delete'|'reset'|'example'|'own'} | {type:'cancel'} | {type:'yes'} | {type:'close'} */
+  function snapshot() {
+    return { route: { tab: ui.route.tab, view: ui.route.view, toolId: ui.route.toolId }, state: M.routeName(ui.route), dialog: M.dialogName(ui.dialog),
+             host: host.state, saved: mem.ok && !saveTimer, storage: mem.ok, unreadable: !!ui.unreadable, example: !!state.example, tools: state.tools.length };
+  }
+  window.HotelAIRegister = { state: function () { return state; }, ui: snapshot, csv: buildCsv, pdf: makePdf,
+    send: function (ev) {
+      if (!ev || typeof ev !== 'object') return false;
+      if (ev.type === 'go') { go(ev.tab, ev.view, ev.id); return true; }
+      if (ev.type === 'ask' && ev.kind === 'import') return false; /* a backup comes only from a file the person chose */
+      return send(ev);
+    } };
 })();
