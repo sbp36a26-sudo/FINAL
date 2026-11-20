@@ -309,7 +309,7 @@
       '<p><span class="chip big c-' + lv.chip + '">' + esc(lv.name) + '</span></p>' +
       '<p class="tally">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves met · ' + e.counts.known + ' of ' + e.counts.asked + ' questions answered · ' + plural(e.actions.length, 'open item') + '</p>' +
       '<div class="sumtext">' + L.summary(e, st.stage).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>' +
-      '<div class="btnrow"><button type="button" class="btn primary" data-act="pdf">Download report (PDF)</button><button type="button" class="btn" data-act="file">Save as file</button><button type="button" class="btn" data-act="review">Update open items</button><button type="button" class="btn" data-act="to-register">Add to the AI Register</button></div></section>';
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="pdf">Download report (PDF)</button><button type="button" class="btn" data-act="file">Save as file</button><button type="button" class="btn" data-act="review">Update open items</button><button type="button" class="btn" data-act="to-register">Add to the AI Register</button>' + newCheckCtl() + '</div></section>';
     h += sinceBanner();
     h += mustCards(e);
     h += actionPlan(e);
@@ -327,9 +327,13 @@
     h += sharePanel();
     h += '<section class="panel"><details><summary>How this result was worked out</summary><ol class="steps">' + e.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
       '<p class="meta">Rules ' + esc(L.RULES) + '. Questions from the project\'s D6 readiness research, reworded after expert review on 18 Nov 2026. Thresholds and must-haves are the team\'s judgement, not yet tested with hotels. Answers and proof lines are self-declared and not checked. Self-assessment, not legal or investment advice.</p></details></section>';
-    var cNew = ui.confirm && ui.confirm.kind === 'new';
-    h += '<div class="btnrow"><button type="button" class="btn" data-act="edit">Go through all questions</button>' + (cNew ? '<span class="meta" data-confirm="new">Start a new check? This one stays in “Your checks”.</span><button type="button" class="btn warn" data-act="new-yes" id="new-yes">Start new</button><button type="button" class="btn" data-act="new-no" id="new-no">Cancel</button>' : '<button type="button" class="btn" data-act="new" id="new">Start a new check</button>') + '</div>';
+    h += '<div class="btnrow"><button type="button" class="btn" data-act="edit">Go through all questions</button></div>';
     return h;
+  }
+  // "Start a new check" sits in the top action row of the result; the confirm replaces it in place.
+  function newCheckCtl() {
+    var cNew = ui.confirm && ui.confirm.kind === 'new';
+    return cNew ? '<span class="meta" data-confirm="new">Start a new check? This one stays in “Your checks”.</span><button type="button" class="btn warn" data-act="new-yes" id="new-yes">Start new</button><button type="button" class="btn" data-act="new-no" id="new-no">Cancel</button>' : '<button type="button" class="btn" data-act="new" id="new">Start a new check</button>';
   }
   function sharePhase() { return ui.share && ui.share.id === st.id ? ui.share.phase : F.shareSettled(st); }
   function sharePanel() {
