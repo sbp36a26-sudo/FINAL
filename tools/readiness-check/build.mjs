@@ -22,13 +22,23 @@ const cat = { depts: catFull.depts.map(d => ({ id: d.id, name: d.name, cat: d.ca
   return o;
 }) })) };
 const ref = JSON.parse(read('../register/data/reference.json'));
+// Rules v4 (ruling items 15 and 26): nothing unverified is embedded in the hotel-facing pages.
+// Swiss and UK labour notes and anything marked "to verify" stay out until checked at source (D7 owner);
+// two unsourced claims are cut from the step subtitles. The register's and the D6 tool's own files are not changed.
+const labourNotes = Object.fromEntries(Object.entries(ref.labourNotes).filter(([k, v]) => k !== 'CH' && k !== 'GB' && !/to\s+verify/i.test(v)));
+const switches = Object.fromEntries(Object.entries(ref.switches).map(([k, v]) => [k, { q: v.q, yes: v.yes }]));
+const CUT = [['; integration is the bottleneck', ''], ['; most hotels are not there yet', '']];
+rdy.areas.forEach(a => { CUT.forEach(([x, y]) => { a.one = a.one.replace(x, y); }); });
+rdy.uc.forEach(u => { Object.keys(u.r || {}).forEach(k => { if (typeof u.r[k] === 'string') u.r[k] = u.r[k].replace(/\s*\(often\s+missing\)/gi, ''); }); });
 // Provisional legal labels from the AI Register (awaiting D7 sign-off). Only what the check shows.
 const reg = {
-  labels: ref.labels, dates: ref.dates, switches: ref.switches, labourNotes: ref.labourNotes, vendorQuestions: ref.vendorQuestions,
+  labels: ref.labels, dates: ref.dates, switches, labourNotes, vendorQuestions: ref.vendorQuestions,
   items: ref.items.map(i => ({ id: i.id, pack: i.pack, role: i.role, since: i.since, who: i.who, text: i.text })),
   uses: labels.uses.map(u => ({ id: u.id, base: u.base, chat: !!u.chat, staff: !!u.staff, why: u.why, packs: u.packs || [], switches: u.switches || [] }))
 };
-const data = { rdy, cat, reg, builtOn: new Date().toISOString().slice(0, 10) };
+// Only what the check uses is embedded (the D6 research tool's own level names, method notes and figures stay in that tool).
+const rdyUsed = { areas: rdy.areas.map(a => ({ k: a.k, name: a.name, one: a.one, qs: a.qs })), q: rdy.q, blocks: rdy.blocks, arch: rdy.arch.map(a => ({ c: a.c, s: a.s, n: a.n })), uc: rdy.uc, addons: rdy.addons };
+const data = { rdy: rdyUsed, cat, reg, builtOn: new Date().toISOString().slice(0, 10) };
 const block = `<script type="application/json" id="d-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
 const safe = s => s.replace(/<\/script/gi, '<\\/script');
 const style = read('src/style.css');

@@ -1,0 +1,30 @@
+{
+ "note": "localStorage exactly as written by the v3 build (backup-v3/index.html, rules v3 (19 Nov 2026)) on 20 Nov 2026, before the v4 changes. Tool hr-2, Switzerland, shared in local mode.",
+ "seenInV3": {
+  "state": {
+   "step": "result",
+   "id": "rcmwov71rrxqh9",
+   "useId": "hr-2",
+   "confirm": null,
+   "choosing": false,
+   "share": "shared",
+   "shareStale": false,
+   "sharedAt": "2026-11-20T10:57:11.557Z",
+   "store": "local",
+   "bridge": "none",
+   "pdf": false,
+   "snaps": 1,
+   "checks": [
+    "rcmwov71rrxqh9"
+   ]
+  },
+  "tally": "5 of 10 must-haves met · 16 of 26 questions answered · 15 open items",
+  "verdict": "Not ready yet"
+ },
+ "localStorage": {
+  "hftp-readiness-mychecks-v1": "{\"rcmwov71rrxqh9\":{\"id\":\"rcmwov71rrxqh9\",\"rv\":2,\"step\":\"result\",\"hotel\":{\"name\":\"Hotel Fixture\",\"role\":\"gm\",\"type\":\"independent\",\"country\":\"Switzerland\"},\"stage\":\"choose\",\"useId\":\"hr-2\",\"A\":{\"P1\":\"y\",\"P5\":\"p\",\"X1\":\"y\",\"R-pe#0\":\"y\",\"P2\":\"na\",\"P3\":\"na\",\"R-sk#0\":\"y\",\"R-sk#1\":\"na\",\"F1\":\"y\",\"F2\":\"p\",\"T1\":\"n\",\"R-te#0\":\"y\",\"D5a\":\"none\",\"D5b\":\"y\",\"R-da#0\":\"y\",\"R-da#1\":\"k\",\"O1\":\"y\",\"XG\":\"none\",\"XL\":\"k\",\"G2s\":\"k\"},\"P\":{\"P1\":\"HR manager, 3 hours a week, in job description\",\"D5b\":\"DPO confirmed by email on 5 Nov\",\"O1\":\"One-page plan approved by owner on 12 Nov\"},\"Who\":{},\"owner\":{\"ask\":\"\",\"cost\":\"\",\"by\":\"\"},\"next\":{\"when\":\"\",\"date\":\"\"},\"snaps\":[{\"at\":\"2026-11-20T10:57:11.488Z\",\"rules\":\"v3 (19 Nov 2026)\",\"level\":\"stop\",\"met\":5,\"gates\":10,\"known\":16,\"asked\":26,\"open\":15,\"metCodes\":[\"P1\",\"D5a\",\"D5b\",\"O1\",\"XG\"],\"areas\":{\"pe\":88,\"sk\":100,\"fi\":50,\"te\":50,\"da\":100,\"or\":100}}],\"share\":{\"on\":false,\"named\":false},\"sharedAt\":\"2026-11-20T10:57:11.557Z\",\"sharedSig\":\"[\\\"hr-2\\\",\\\"choose\\\",\\\"gm\\\",\\\"independent\\\",\\\"Switzerland\\\",{\\\"D5a\\\":\\\"none\\\",\\\"D5b\\\":\\\"y\\\",\\\"F1\\\":\\\"y\\\",\\\"F2\\\":\\\"p\\\",\\\"G2s\\\":\\\"k\\\",\\\"O1\\\":\\\"y\\\",\\\"P1\\\":\\\"y\\\",\\\"P2\\\":\\\"na\\\",\\\"P3\\\":\\\"na\\\",\\\"P5\\\":\\\"p\\\",\\\"R-da#0\\\":\\\"y\\\",\\\"R-da#1\\\":\\\"k\\\",\\\"R-pe#0\\\":\\\"y\\\",\\\"R-sk#0\\\":\\\"y\\\",\\\"R-sk#1\\\":\\\"na\\\",\\\"R-te#0\\\":\\\"y\\\",\\\"T1\\\":\\\"n\\\",\\\"X1\\\":\\\"y\\\",\\\"XG\\\":\\\"none\\\",\\\"XL\\\":\\\"k\\\"},{},false]\",\"sharedMode\":\"local\",\"created\":\"2026-11-20T10:57:10.071Z\",\"updated\":\"2026-11-20T10:57:11.557Z\"}}",
+  "hftp-readiness-current-v1": "\"rcmwov71rrxqh9\"",
+  "hftp-readiness-checks-v1": "{\"rcmwov71rrxqh9\":{\"v\":3,\"rules\":\"v3 (19 Nov 2026)\",\"useId\":\"hr-2\",\"useName\":\"AI recruiting (conversational hiring, screening, matching)\",\"stage\":\"choose\",\"role\":\"gm\",\"type\":\"independent\",\"country\":\"Switzerland\",\"answers\":{\"P1\":\"y\",\"P5\":\"p\",\"X1\":\"y\",\"R-pe#0\":\"y\",\"P2\":\"na\",\"P3\":\"na\",\"R-sk#0\":\"y\",\"R-sk#1\":\"na\",\"F1\":\"y\",\"F2\":\"p\",\"T1\":\"n\",\"R-te#0\":\"y\",\"D5a\":\"none\",\"D5b\":\"y\",\"R-da#0\":\"y\",\"R-da#1\":\"k\",\"O1\":\"y\",\"XG\":\"none\",\"XL\":\"k\",\"G2s\":\"k\"},\"who\":{},\"level\":\"stop\",\"met\":5,\"gates\":10,\"known\":16,\"asked\":26,\"open\":15,\"snaps\":[{\"at\":\"2026-11-20T10:57:11.488Z\",\"level\":\"stop\",\"met\":5,\"open\":15}],\"sharedAt\":\"2026-11-20T10:57:11.553Z\",\"named\":false,\"proofGiven\":{\"P1\":true,\"D5b\":true,\"O1\":true}}}",
+  "hftp-hotel-profile-v1": "{\"name\":\"Hotel Fixture\",\"updatedAt\":\"2026-11-20T10:57:11.557Z\",\"from\":\"readiness\",\"type\":\"independent\",\"country\":\"CH\"}"
+ }
+}

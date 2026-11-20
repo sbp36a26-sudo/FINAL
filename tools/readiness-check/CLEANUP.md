@@ -49,3 +49,33 @@ Unchanged contracts: hub messages (`{hub:'db', op:'probe'|'list'|'set'|'delete'}
 
 - Two tabs open at once can overwrite each other's `mine` map (last write wins). This is rare and needs a storage event merge; noted for later.
 - Data-notice placeholders and the D7 legal wording are still open (see README).
+
+---
+
+# v4 pass (20 Nov 2026): what changed in the machines
+
+Scope: the build ruling in `reports/Council - readiness check audit.md`, section A. Scoring changed this time (rules v4), so `src/logic.js` is no longer "unchanged"; see `CHANGELOG.md`. The clean-up rules were followed: explicit states, one writer, tests for every transition, versioned data, browser proof.
+
+| Machine | Change | Why |
+|---|---|---|
+| FLOW | New event **`home`**: from `prep`, `0`–`5`, `review`, `result` to `start` (header link "Your checks"). Still only `send()` writes `st.step`. 10 new flow tests. | A returning person could not reach the list of checks from the result (J25) |
+| START GATE (was a disabled button) | **Made explicit**: `missing()` lists what is missing (`type`, `tool`, `stage`); `ui.missing` is set only by pressing "Next" with something missing and cleared by any navigation. The FLOW guard is unchanged: `prep` is still refused until ready. | The grey button never said which field was missing (J2) |
+| MUST-HAVE (per question) | **Made explicit** in `score()`: `yes` (in place) / `unconf` (Yes, note missing) / `gap` (not in place) / `unknown`. Before, "Yes without a note" was folded into `gap`. | A Yes was shown as "Not met" (F12, J11) |
+| ANSWER validity | A stored answer this tool no longer offers (`none` on D5a/D5b for personal-data tools; "Doesn't apply" on a protective question) is kept in storage and scored `unknown` with `stale: true`. Never deleted. | F01; rules changes must not break saved checks |
+| REVIEW (update screen) | **Made explicit**: `ui.review = { id, codes, was }` is taken once on entry and dropped on any navigation; a question is `open` or `done` (greyed, "Undo" restores the entry answers). | Answered questions vanished with no undo (J26) |
+| RESULT ROWS | `ui.open[row]` holds which collapsed rows are open; written only by the `toggle` listener, cleared on navigation. | Re-renders (sharing, notes) must not close what the person opened |
+| NOTE FIELD | `ui.touched[code]`: the hint is grey until the field was left with too little; updated in place, never by re-rendering on blur (a re-render on blur could swallow the click on "Next"). | J11 |
+| SHARE | Unchanged machine. New constant `SHARING_ON` (true): when false, `share` is refused before the machine and the panel says so; `withdraw` still works. | Owner's decision: sharing stays on, one switch for later |
+| RECORD | Unchanged (`rv: 2`). Snapshots: a new one is taken when the rules version differs from the last one, so a v3 result is never shown as the current one. | Honest history after a rules change |
+
+## AX handles added
+
+- `ReadinessCheck.state()` also returns `missing` (on start), `sharing`, `rules`. `send('home')` is allowed from every screen but start.
+- Stable ids added: `home`, `primary` (the one primary button of the result), `begin-top`, `note-save`, `undo-<code>`, `verdict` (`data-level`), `vsent`, `count`, `plan`, `send`, `mychecks`, `picked`, `pickcount`, `stepfoot`, `nh-<code>` (note hint), `stage-<key>`. Result rows: `details[data-row=must|areas|vendor|legal|owner|next|share|method]`. Action-plan groups: `.agroup[data-group=must|note|vendor|find|close]`.
+- All earlier ids still exist (`go-prep`, `share-btn`, `unshare`, `new`/`new-yes`/`new-no`, `rm-yes`/`rm-no`, `file-yes`/`file-no`, `o-ask`, `o-cost`, `o-by`, `n-when`, `n-date`, `share`). `go-prep` is no longer disabled; `share-btn`, the owner fields and the reminder fields now sit inside closed rows (open the row first).
+
+## Proof (v4)
+
+- `tests/logic.test.mjs` 35 passed; `tests/flow.test.mjs` 80 passed; `tests/v4.test.mjs` 81 passed (65 of them fail on the v3 rules, which is the point).
+- Playwright, `tests/browser/walk.cjs`: 197 checks at 1280 px and 390 px (touch): start gate, search, prep, steps, notes, result for each verdict, review with Undo, new check, return visit, a record and a file saved by the **v3 build**, share and withdraw in local mode, the fake hub frame (one `db:set` despite a double click, one `db:delete`, shapes unchanged), PDF, team page. No console errors, no horizontal scroll, no control under 44 px on the phone, the only external request is the existing Google Fonts link.
+- Still left alone: two tabs overwriting each other's `mine` map.

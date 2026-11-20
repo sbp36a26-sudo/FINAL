@@ -26,6 +26,9 @@ F.STEPS.forEach(s => ['prep', 'back', 'begin', 'next', 'review', 'result', 'edit
   if (!listed) { if (F.flowNext(s, e, R) === null) refused++; else console.log('FAIL  unexpected flow ' + s + ' ' + e); }
 }));
 ok(refused === total - expect.length, 'every event not in the table is refused (' + refused + ')');
+// v4: 'home' (header link "Your checks") leads to start from every other screen, with or without a tool; not from start itself.
+['prep', 0, 1, 2, 3, 4, 5, 'review', 'result'].forEach(s => ok(F.flowNext(s, 'home', R) === 'start' && F.flowNext(s, 'home', N) === 'start', `flow ${s} --home--> start`));
+ok(F.flowNext('start', 'home', R) === null, 'home from start: nothing to do');
 ok(F.flowNext('review', 'back', R) === null, 'old bug: "back" from review gave step NaN; now refused');
 ok(F.flowNext('start', 'prep', T) === null, 'guard: no "what you will need" without hotel type, tool and stage');
 ok(F.flowNext('prep', 'begin', N) === null && F.flowNext('result', 'review', N) === null, 'guard: no step but start without a known tool');

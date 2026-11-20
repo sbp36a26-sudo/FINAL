@@ -4,7 +4,7 @@
 
    1. FLOW (check page, st.step): where the hotel is in its journey.
       States: 'start' | 'prep' | 0..5 (the six steps) | 'review' (open items only) | 'result'
-      Events: prep, back, begin, next, review, result, edit, new
+      Events: prep, back, begin, next, review, result, edit, new, home (v4: header link "Your checks", any screen → start)
       Guards: 'prep' needs a tool, how the hotel is run and a stage; every state but 'start' needs a known tool.
    2. CONFIRM (check page): at most one confirmation open at a time; any navigation closes it.
       States: null | {kind:'new'} | {kind:'rm', id} | {kind:'file', id}
@@ -34,6 +34,8 @@
     result: { review: 'review', edit: 0, new: 'start' }
   };
   [0, 1, 2, 3, 4, 5].forEach(function (i) { FLOW[i] = { back: i === 0 ? 'prep' : i - 1, next: i === 5 ? 'result' : i + 1 }; });
+  /* 'home' (v4): the "Your checks" link in the header. From any screen but start, back to the start screen; the check is kept. */
+  ['prep', 0, 1, 2, 3, 4, 5, 'review', 'result'].forEach(function (s) { FLOW[s].home = 'start'; });
   /* ctx: { tool: bool (a known tool is chosen), ready: bool (tool + hotel type + stage) }.
      Returns the next step, or null when the event is not allowed in this state. */
   function flowNext(step, ev, ctx) {

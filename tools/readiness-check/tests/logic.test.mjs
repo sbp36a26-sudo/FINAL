@@ -1,4 +1,4 @@
-// Checks the readiness-check rules (v3). Run after building: node tools/readiness-check/tests/logic.test.mjs
+// Checks the readiness-check rules (v3 tests, kept green under rules v4; the v4 rule changes are tested in v4.test.mjs). Run after building: node tools/readiness-check/tests/logic.test.mjs
 // Includes every scoring fault found in the trials of 18 Nov 2026 (reports/Readiness check retention and trust.md, section 2).
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -26,19 +26,25 @@ const rm2 = M.UI['rm-2'], hr2 = M.UI['hr-2'], gx2 = M.UI['gx-2'];
 
 ok(M.USES.length === 98, '98 tool use cases (99 in the catalogue; the AI-use policy is not a tool)');
 let [A, P] = fill(rm2, ind, 'y'); let e = L.evaluate(M, rm2, ind, A, P);
-ok(e.level === 'pilot', 'all Yes with real proof lines: Ready to pilot');
+ok(e.level === 'pilot', 'all Yes with real notes: top verdict (level key "pilot")');
 ok(!('score' in e) && !('raw' in e), 'no 0-100 composite score');
-ok(!L.LEVELS.scale, 'no "Ready to scale" verdict in v3');
+ok(!L.LEVELS.scale, 'no "scale" verdict');
 
 // Trial fault 1: all Yes with proof "x" on a recruiting tool gave 100, Ready to scale.
 [A, P] = fill(hr2, ind, 'y', { proof: 'x' }); e = L.evaluate(M, hr2, ind, A, P);
-ok(e.level === 'stop', 'proof "x" does not count: not ready');
+// v4 (ruling item 5, F12): the old expectation was 'stop'. A Yes whose note is too short stays a Yes that is not confirmed:
+// it cannot reach the top verdict, but it is no longer reported as "not in place".
+ok(e.level === 'open' && e.counts.met < e.counts.gates && e.unmet.length === 0, 'note "x" does not count: must-haves not confirmed, top verdict out of reach');
 ok(!L.proofOk('x') && !L.proofOk('yes') && L.proofOk(GOOD), 'proof line needs a few words');
 
 // Trial fault 2: must-haves Yes, everything else "Doesn't apply", AI Act item No gave 96, Ready to scale.
 [A, P] = fill(hr2, ind, 'na', { gateV: 'y', lv: 'na' }); e = L.evaluate(M, hr2, ind, A, P);
 ok(L.selectQuestions(M, hr2, ind).some(q => q.code === 'XL' && q.gate), 'high-risk use: AI Act check is a must-have');
-ok(e.level !== 'pilot', 'Yes on must-haves and Doesn\'t apply elsewhere cannot reach Ready to pilot');
+// v4 (ruling item 1, F03): the old expectation was "not pilot", which only held because areas answered "Doesn't apply" throughout
+// were treated as "no known answer" (the stuck verdict of F03). Such areas are now left out. What still protects the verdict:
+// protective questions never take "Doesn't apply" (a stored one is asked again), and on high-risk tools P5 and G3 are must-haves.
+ok(e.gates.every(g => g.met) && e.level === 'pilot', 'must-haves Yes with notes, "Doesn\'t apply" elsewhere: areas left out, no stuck verdict (F03)');
+{ const q = L.selectQuestions(M, hr2, ind).find(q => q.noNa && !q.gate); const A2 = Object.assign({}, A); if (q) A2[q.code] = 'na'; ok(!q || L.score(q, A2, P).state === 'unknown', '"Doesn\'t apply" on a protective question is not accepted'); }
 A.XL = 'n'; e = L.evaluate(M, hr2, ind, A, P);
 ok(e.level === 'stop', 'AI Act check answered No: not ready');
 ok(L.selectQuestions(M, hr2, ind).filter(q => q.gate || ['P5', 'G3', 'G4', 'X2a', 'XL'].includes(q.code)).every(q => q.noNa), 'no "Doesn\'t apply" on must-haves and protective items');
