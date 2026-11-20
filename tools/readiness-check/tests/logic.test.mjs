@@ -24,7 +24,7 @@ function fill(x, h, v, { proof = GOOD, lv = null, gateV = null } = {}) {
 const ind = { type: 'independent', country: 'Portugal' };
 const rm2 = M.UI['rm-2'], hr2 = M.UI['hr-2'], gx2 = M.UI['gx-2'];
 
-ok(M.USES.length === 94, '94 tool use cases (95 in the catalogue; the AI-use policy is not a tool)');
+ok(M.USES.length === 96, '96 tool use cases (97 in the catalogue; the AI-use policy is not a tool)');
 let [A, P] = fill(rm2, ind, 'y'); let e = L.evaluate(M, rm2, ind, A, P);
 ok(e.level === 'pilot', 'all Yes with real proof lines: Ready to pilot');
 ok(!('score' in e) && !('raw' in e), 'no 0-100 composite score');

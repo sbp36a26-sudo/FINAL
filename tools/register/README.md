@@ -11,7 +11,7 @@ Built on 17 Nov 2026 from the D4 catalogue, the D7 booklet and data file, and th
 | Part | What it does |
 |---|---|
 | Register | One line per tool: label, role (user or maker), responsible person, open items. Opens with a fictional example hotel. |
-| Add a tool | Pick from the 91 catalogue use cases, from 17 market uses the catalogue does not have yet (provisional), or describe your own. |
+| Add a tool | Pick from the 97 catalogue use cases (91 from the booklet, 6 added on 19 and 20 Nov 2026), from 17 market uses the catalogue does not have yet (provisional), or describe your own. |
 | Tool page | Questions that decide the label, items to check grouped by date, vendor questions, register entry fields. |
 | To do | The booklet's five things to do now, plus every open item by tool. |
 | Your hotel | Country, operating model, outlets. Drives the national notes and the "who is the user" note. |
@@ -32,7 +32,7 @@ Entries are saved in the visitor's browser only. A shared, saved version for a t
 | `src/machines.js` | The page's state machines (screen, confirm boxes, downloads, saved data, `#add=` link). No DOM; also runs in Node. See `CLEANUP.md`. |
 | `src/app.js`, `src/page.html` | The page. |
 | `build.mjs` | Builds `index.html` (GENERATED) and checks the label file against the catalogue. |
-| `tests/logic.test.mjs` | 138 checks: the booklet's A6 totals for rows that follow it, and the law-based changes. |
+| `tests/logic.test.mjs` | 141 checks: the booklet's A6 totals for rows that follow it, and the law-based changes. |
 | `tests/machines.test.mjs` | 64 checks of the page's state machines, with a register saved by the 19 Nov 2026 build (`tests/fixtures/`). |
 
 ```bash
