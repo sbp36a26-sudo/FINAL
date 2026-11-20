@@ -142,7 +142,7 @@
     var h = fileConfirm() + myList();
     h += '<section class="panel"><h2>1. About your hotel</h2><div class="formgrid">' +
       '<label class="fld' + (need('type') ? ' missing' : '') + '" id="box-type"><span>How the hotel is run</span><select id="h-type" data-h="type">' + opt('', 'Choose', H.type) + TYPES.map(function (t) { return opt(t[0], t[1], H.type); }).join('') + '</select>' + needLine('type') + '<span class="meta">This only adds the owner-approval question for managed hotels.</span></label>' +
-      '<label class="fld"><span>Hotel name (optional, for your own report)</span><input type="text" id="h-name" data-h="name" value="' + esc(H.name) + '" autocomplete="organization"><span class="meta" id="name-warn" role="status">' + esc(nameWarn()) + '</span></label>' +
+      '<label class="fld"><span>Hotel name (optional)</span><input type="text" id="h-name" data-h="name" value="' + esc(H.name) + '" autocomplete="organization"><span class="meta">Only for your own report.</span><span class="meta" id="name-warn" role="status">' + esc(nameWarn()) + '</span></label>' +
       '<label class="fld"><span>Your role (optional)</span><select id="h-role" data-h="role">' + opt('', 'Choose', H.role) + ROLES.map(function (t) { return opt(t[0], t[1], H.role); }).join('') + '</select></label>' +
       '<label class="fld"><span>Country (optional)</span><select id="h-country" data-h="country">' + opt('', 'Choose', H.country) + COUNTRIES.map(function (c) { return opt(c, COUNTRY_LABEL[c] || c, H.country); }).join('') + '</select></label>' +
       '</div></section>';
