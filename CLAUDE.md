@@ -20,3 +20,4 @@ Update that file when the project status changes.
 - The report must work for AI experts and for hospitality people who know nothing about AI.
 - Design: bird theme, must not look AI-made. `brand/brand.json` is law; the design never bends to fit content.
 - HFTP AI Essentials course material may inform the opening pages, but it must not be obvious the report copies HFTP.
+- Never cite the AI Hospitality Alliance (AIHA) or its material in any deliverable or tool: they are HFTP's competitors. Their lists may only be used internally as a gap check; anything taken forward is sourced independently.
