@@ -27,12 +27,12 @@ const ids = list => list.map(i => i.id);
 // ---- data integrity ----
 const catUses = [];
 cat.depts.forEach(d => d.uses.forEach((u, i) => catUses.push({ id: d.id + '-' + (i + 1), name: u.n })));
-eq(catUses.length, 97, 'catalogue has 97 uses (91 in the booklet + 4 added 19 Nov 2026 + 2 added 20 Nov 2026)');
+eq(catUses.length, 99, 'catalogue has 99 uses (91 in the booklet + 4 added 19 Nov 2026 + 4 added 20 Nov 2026)');
 const catRows = labels.uses.filter(u => u.n);
 const rows = labels.uses.filter(u => u.n && u.n <= 91); // the booklet's 91; rows 92+ were added after it
 eq(rows.length, 91, 'label file has 91 catalogue rows');
 ok(catUses.every((u, i) => catRows[i] && catRows[i].id === u.id && catRows[i].name === u.name), 'label ids and names match the catalogue order (ids are frozen)');
-ok(catRows.every(u => (u.n <= 91) === !/^(fo-6|fo-7|hr-6|kc-6|rm-9|gm-7)$/.test(u.id)), 'booklet numbers 1-91 unchanged; new rows numbered 92-97');
+ok(catRows.every(u => (u.n <= 91) === !/^(fo-6|fo-7|hr-6|kc-6|rm-9|gm-7|fo-8|hk-7)$/.test(u.id)), 'booklet numbers 1-91 unchanged; new rows numbered 92-99');
 const a6 = k => rows.filter(u => u.a6.includes(k)).length;
 const T = labels.meta.bookletTotals;
 eq(a6('high'), T.high, 'booklet A6: high-risk uses');
@@ -109,7 +109,9 @@ ok(notai.label === 'notai' && !notai.packs.literacy && !notai.packs['hr-user'] &
 // ---- uses found in the market, not in the catalogue ----
 const extra = labels.uses.filter(u => u.provisional);
 eq(extra.length, 7, '7 market uses stay outside the catalogue (10 moved into it on 19 Nov 2026)');
-eq(labels.uses.filter(u => u.n > 91).map(u => u.id + ':' + u.n).join(), 'rm-9:96,fo-6:92,fo-7:93,kc-6:95,hr-6:94,gm-7:97', 'rows 92-95 added 19 Nov 2026 and rows 96-97 added 20 Nov 2026');
+eq(labels.uses.filter(u => u.n > 91).map(u => u.id + ':' + u.n).join(), 'rm-9:96,fo-6:92,fo-7:93,fo-8:98,hk-7:99,kc-6:95,hr-6:94,gm-7:97', 'rows 92-95 added 19 Nov 2026 and rows 96-99 added 20 Nov 2026');
+eq(cls('fo-8').label, 'minimal', 'lost-and-found logging is minimal');
+eq(cls('hk-7').label, 'minimal', 'bed-bug monitoring sensors are minimal');
 eq(cls('rm-9').label, 'minimal', 'rate parity monitoring is minimal');
 eq(cls('gm-7').label, 'highif', 'internal tools built with AI coding assistants: depends on what is built');
 eq(cls('gm-7', { answers: { c_staff: 'yes' }, origin: 'built' }).role, 'maker', 'a hotel that builds its own high-risk tool is its maker');

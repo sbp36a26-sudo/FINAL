@@ -11,7 +11,7 @@ Built on 17 Nov 2026 from the D4 catalogue, the D7 booklet and data file, and th
 | Part | What it does |
 |---|---|
 | Register | One line per tool: label, role (user or maker), responsible person, open items. Opens with a fictional example hotel. |
-| Add a tool | Pick from the 97 catalogue use cases (91 from the booklet, 6 added on 19 and 20 Nov 2026), from 17 market uses the catalogue does not have yet (provisional), or describe your own. |
+| Add a tool | Pick from the 99 catalogue use cases (91 from the booklet, 8 added on 19 and 20 Nov 2026), from 17 market uses the catalogue does not have yet (provisional), or describe your own. |
 | Tool page | Questions that decide the label, items to check grouped by date, vendor questions, register entry fields. |
 | To do | The booklet's five things to do now, plus every open item by tool. |
 | Your hotel | Country, operating model, outlets. Drives the national notes and the "who is the user" note. |

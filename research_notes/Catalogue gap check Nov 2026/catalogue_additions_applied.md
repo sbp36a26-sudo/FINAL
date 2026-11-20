@@ -215,3 +215,134 @@ Existing entries changed (6):
 - D7 owner: confirm the AI Act readings for rows 96 and 97 and the two added sentences (`it-4`, `hr-6`). The regulation text was not re-opened in the gap check.
 - Team: review the two draft readiness entries.
 - Pages worth opening in a browser before the text is final (blocked for the check): the Hospitality Net copy of the Lighthouse release, the two IDeaS UK function-space stories, OpenAI's Hyatt page, the hospitalitytech.com Wyndham queue test.
+
+---
+
+# Second batch, 20 Nov 2026: safety and operations (rows 98–99, two extensions, one correction)
+
+Evidence: `verified_safety_ops.md` in this folder; the evidence ids (1-A, 2-D, 3-P, 4-A and so on) are the ids used there. Only sources marked opened (HTTP 200, sentence read on the page) were used. Nothing was changed in the "Not solved yet" texts.
+
+The catalogue now has 99 use cases. Booklet numbers 1–91 and rows 92–97 are unchanged; the two new rows are 98 and 99. Both sit at the end of their department, so no existing id moved.
+
+Every result figure below is vendor-measured, self-reported or taken from complaints and guest reviews; the only independent measurements are the Virginia Tech study (a different product) and the JMIR review (research prototypes). No adoption survey exists for any of these rows, so each use level is the team's estimate.
+
+## New rows
+
+### 98. Lost-and-found logging and guest claim matching (`fo-8`, Front Office)
+
+- **Use case:** Lost-and-found logging and guest claim matching
+- **What AI does:** Staff photograph a found item with a phone; image recognition writes the description and tags, and the software compares the item with the claims guests submit. Vendors call the matching AI without explaining the method; shipping labels and payment are ordinary software, and two European tools do the same job without claiming AI. No independent hotel source and no measured result from a hotel were found
+- **Kind of AI:** Computer vision (image recognition writes the item description); matching claimed as AI by vendors, method not described; rules-based workflow (NOT AI) for shipping and payment
+- **Effect:** Automates (team rating)
+- **Use today:** Low (team estimate, no survey)
+
+| Evidence id | Shown as | Text in the catalogue (the claim) | Date on page | URL | Type |
+|---|---|---|---|---|---|
+| 1-A | company: BOUNTE | "BOUNTE uses A.I. image recognition" to log and match found items; "BOUNTE's A.I. automatically blocks out sensitive information on credit cards and IDs" (vendor page, US, © 2026; vendor claims, no hotel result) | © 2026 | https://www.bounte.net/ | Vendor page |
+| 1-E | plain link | Stayntouch: "BOUNTE's AI identifies and catalogs the item, then compares it with incoming guest claims to surface potential matches" (PMS vendor's integration page; no date; a description, not a result) | no date | https://www.stayntouch.com/integrations/bounte | PMS vendor integration page |
+| 1-G | company: NotLost | Image recognition and matching described as AI-powered; testimonial from the Senior Head Housekeeper, Alton Towers Hotels (Merlin, UK): "Being able to handle it accurately using images created a great guest experience." (vendor page, UK, modified 8 Sep 2026; a testimonial on the vendor's own page, not a hotel publication; the vendor's time-saving claim has no base and is not repeated here) | page modified 8 Sep 2026 | https://www.notlost.com/ | Vendor page with a hotel testimonial |
+| 1-F | company: Chargerback | "sophisticated AI, advanced image recognition" in its lost-and-found platform (vendor page, US; no date; no hotel named) | no date | https://chargerback.com/ | Vendor page |
+| 1-J | plain link | NBC News: Chargerback "is used by Austin-Bergstrom International Airport in Texas, Alaska Airlines, hotels, parks and lodges" (general press, 25 Jan 2023; an article about airports, no hotel named) | 25 Jan 2023 | https://www.nbcnews.com/tech/travel/airports-turn-ai-tech-tools-hunt-lost-bags-rcna65335 | General press (about airports) |
+| 1-B | plain link | Curator Hotel & Resort Collection (US) chose BOUNTE as preferred vendor for lost and found (statement by BOUNTE, the vendor, 19 Dec 2024; a preferred-vendor deal, not a rollout; no statement from Curator) | 19 Dec 2024 | https://www.bounte.net/curator-hotel-and-resort-collection-a-leader-in-luxury-and-lifestyle-hospitality-has-selected-bounte-as-their-preferred-vendor-for-lost-found-and-parcel-tracking/ | Vendor statement about a hotel group |
+| 1-K | plain link | iLost (Netherlands): staff take a photo and type the details themselves; guests then search for the item online (vendor page; no AI stated) | no date | https://ilost.co/business/hotel | Vendor page, no AI stated |
+| 1-K | plain link | Faundit: "helps hotels and hotel chains automate lost & found from item registration to guest communication, payment and shipping" (vendor page, Europe; no AI stated) | no date | https://faundit.com/lost-and-found-software-for-hotels | Vendor page, no AI stated |
+
+### 99. Bed-bug monitoring sensors with image recognition (`hk-7`, Housekeeping)
+
+- **Use case:** Bed-bug monitoring sensors with image recognition
+- **What AI does:** A sensor pod under the mattress or by the bed draws insects in and photographs whatever enters; image recognition decides whether it is a bed bug and sends the hotel the room number and the photo. The AI step is classifying the photographed insect. Results so far are measured by the vendor, and no independent test of the classifier was found
+- **Kind of AI:** Computer vision (image recognition classifies the photographed insect; Spotta); camera monitors where a person reads the photo are NOT AI
+- **Effect:** Adds new (team rating)
+- **Use today:** Low (team estimate, no survey)
+
+| Evidence id | Shown as | Text in the catalogue (the claim) | Date on page | URL | Type |
+|---|---|---|---|---|---|
+| 2-D | plain link | Daily Mail: Bankside Hotel, London (Marriott Autograph Collection) "has installed 225 Spotta 'bed pods'"; bed bugs are identified using "advanced image recognition algorithms"; maintenance manager Andras Goldsbrough: "Spotta's devices are the only way we can monitor the situation 24/7" (general press built on the vendor's material, 12 Dec 2023; one hotel; a count of devices, not a result) | 12 Dec 2023 | https://www.dailymail.co.uk/travel/article-12852597/UK-hotels-step-war-bed-bugs-bite-free-festive-season-smart-gadget-helped-rid-Paris-creepy-crawlies.html | General press with the hotel manager on record |
+| 2-A | company: Spotta | "AI-driven recognition technology"; in the first year in customer hotels in the UK, "94.2% of cases were successfully detected by Spotta", with guests reporting 3.3% (measured and published by Spotta, the vendor, from its own customers; first year of deployment, published Nov 2020; base "over 91,000 room nights"; number of hotels and of bed-bug cases not given) | 4 Nov 2020 | https://insights.ehotelier.com/suppliers/2020/11/04/spotta-puts-bed-bugs-to-the-test/ | Vendor press release in trade press |
+| 2-C | plain link | Spotta: "Bankside Hotel is proactively dealing with the increasing number of Bed Bugs being detected here in London, and Spotta is an excellent product for doing so." (Andras Goldsbrough, Maintenance Manager, quoted on the vendor's page; no date; no result given) | no date | https://www.spotta.co/solutions/bed-pod | Vendor page with a hotel manager quote |
+| 2-G | plain link | Virginia Tech (Miller, 2022): 20 apartments, each with one heated camera monitor that sends a photo without classifying the insect (a different product, not Spotta); in the first month 3 of 4 alerts were not bed bugs (independent conference paper; US apartments, not hotels; one month, small and preliminary) | 2022 | https://icup.org.uk/media/drthsi0w/16-miller-34-f-pp-107-111.pdf | Independent academic conference paper |
+| 2-H | plain link | Skift: Valpas (Finland) "helps dozens of luxury hotels combat bedbugs" with a system built into the bed legs "forming a mesh IoT [internet of things] network" (trade press, 14 Apr 2022; Skift's wording, no hotel named; IoT, no AI stated) | 14 Apr 2022 | https://skift.com/2022/04/14/luxury-hotels-turn-to-unlikely-tech-to-fight-bedbugs/ | Trade press |
+
+Notes on the new rows:
+
+- **98:** the AI step is the photo-to-description step (image recognition), stated on the vendors' own pages. Matching is called AI by BOUNTE and NotLost without a method. Shipping and payment are ordinary software. No hotel or hotel group has published anything itself: Alton Towers Hotels appears as a testimonial on NotLost's page, Curator only in BOUNTE's statement. Left out as unverified vendor claims with no method: NotLost's "50–80%" staff time, Boomerang's "over 300%" recovery rate, BOUNTE's "125 hours a year" and cost estimates. Boomerang and Lost and Found Software are not named (interview only; hotels not named). iLost's "within 30 seconds" was paraphrased without the figure.
+- **99:** Spotta's 94.2% and 3.3% are the vendor's own measurement with no visible case count; the entry says so next to the figures. Left out: 52.2% and 2.5% from the same release, "about 50%" before, "10x more effective", "over three million room nights", the savings and cost estimates in pounds (vendor calculations, method not shown), and the brand names Wyndham, Accor, Marriott and Radisson (named only by the vendor, no property). Spotta is in the Companies list on the strength of its own press release ("AI-driven recognition technology"); the text of its current product pages that loaded does not use the word AI. The Virginia Tech study is about a camera monitor without classification and is marked as a different product. Delta Five is not named in the catalogue text because the opened paper's quoted sentences do not name it.
+
+## Extended rows
+
+For each row: the clause added to the end of "What AI does", the clause added to "Kind of AI" (where one was added), the sources added, and any existing source text that was changed.
+
+### Physical security video analytics (`it-4`)
+
+- **Added to "What AI does":** "; for pool drowning detection, published research does not yet show reliability in live pools, and no European hotel deployment was verified (the opened examples are public pools)"
+- **Existing source text changed** (https://www.lynxight.com/content/which-ai-drowning-systems-do-large-public-operators-use): from "AI drowning detection at pools; the vendor reports more than 1,000 pools in 16 countries (no hotel named)" to "AI drowning detection at pools; the vendor reports more than 1,000 pools in 16 countries, more than 1,000,000 swimmers a month and 12% of the UK commercial pool market (all vendor claims, page dated 31 Aug 2026; no list, no date for the counts, market not defined; no hotel named)"
+
+| Evidence id | Shown as | Text in the catalogue (the claim) | Date on page | URL | Type |
+|---|---|---|---|---|---|
+| 3-P | plain link | JMIR Rehabilitation and Assistive Technologies (Chepkorir et al., University of Nairobi, 3 Nov 2026): of 30 academic machine-learning studies on drowning detection, 1 reported validation "under real-world operational conditions" and 29 had a high risk of bias (peer-reviewed systematic review, abstract read; about research prototypes, not the commercial products) | 3 Nov 2026 | https://pubmed.ncbi.nlm.nih.gov/42976332/ | Peer-reviewed systematic review (abstract) |
+| 3-D | plain link | KölnBäder, Cologne (municipal public pool, not a hotel): Lynxight at the Ossendorfbad with "a total of 17 cameras" that "record exclusively the water surfaces"; investment "around 80,000 euros"; "the AI does not replace personnel" (stated by the operator, EAP magazine, 26 Jan 2026; one public pool, context only) | 26 Jan 2026 | https://www.eap-magazin.de/Article/Ossendorfbad-Invests-in-AI-for-Greater-Safety-in-the-Water.html | Trade press reporting a municipal pool operator |
+| 3-K | plain link | ISO 20380:2017, the test standard for camera systems that detect drowning, "does not apply to the systems used in domestic swimming pools and pool basins with a surface area of less than 150 m2", so a vendor's ISO 20380 claim does not cover small hotel pools (scope read on a reseller's copy, to confirm against the ISO text) | no date | https://genorma.com/en/standards/iso-20380-2017 | Standard scope on a reseller copy |
+
+### Occupancy-sensor driven cleaning and room status (`hk-4`)
+
+- **Added to "What AI does":** "; caution: in the US, in-room smoking and vape sensors have led to disputed fees charged to guests who say they never smoked. Most of these sensors work on thresholds or a vendor algorithm, not AI. No lawsuit or regulator action, and no European hotel billing guests this way, was found (checked 20 Nov 2026); a sensor alert should start a check by staff, not a charge"
+- **Added to "Kind of AI":** "; smoking and vape sensors: thresholds and a "proprietary algorithm" (Rest; NOT claimed as AI), AI claimed by one vendor only (Wynd, no test published); on-device machine learning for sound claimed by Minut"
+- **Existing source text changed** (https://www.minut.com/solutions/aparthotels): from "Minut: sensors alert hotels and aparthotels to noise, smoking and unauthorised parties, without cameras or microphones (no AI stated)" to "Minut: sensors alert hotels and aparthotels to noise, smoking and unauthorised parties, without cameras or microphones (vendor page, Sweden; this page does not mention AI, but Minut claims machine learning for sound detection elsewhere, see the Minut entry below)"
+
+| Evidence id | Shown as | Text in the catalogue (the claim) | Date on page | URL | Type |
+|---|---|---|---|---|---|
+| 4-A | plain link | Consumers' Checkbook (US consumer organisation, Jun 2026): guests "are charged cleaning fees of $250 to more than $560", and it "has heard from several travelers who never smoke or vape but were nonetheless hit with these fees" (range of fees in the complaints it received, US; not a survey; it found no data on how many hotels use such sensors) | 1 Jun 2026 | https://www.checkbook.org/national/consumers-notebook/articles/Hotels-In-Room-Smoking-Sensors-Falsely-Charge-Some-Guests-Hundreds-in-Fees-7990 | Consumer organisation (US) |
+| 4-C | plain link | The Points Guy (15 Feb 2026): The Strat charged a couple "a $396 smoking fee at checkout"; at the Kimpton Palladian a card issuer sided with the hotel on the sensor printout, and the hotel's new manager said sensors "should not be considered as a stand-alone confirmation of a smoking violation" (travel press, from its consumer ombudsman's case files, US; individual cases as told by guests) | 15 Feb 2026 | https://thepointsguy.com/hotel/incorrect-hotel-room-smoking-fees-rest-sensor/ | Travel press, ombudsman case files (US) |
+| 4-E | plain link | ABC15 (Phoenix TV, 5 Aug 2026): two guests say the Holiday Inn & Suites Phoenix Airport North charged them $500 smoking fees; the reporters found 15 reviews "describing similar smoking fee charges" (one US hotel; unverified guest reviews, counted by the reporters) | 5 Aug 2026 | https://www.abc15.com/news/let-abc15-know/phoenix-hotel-guests-fight-500-smoking-fees-they-say-they-shouldnt-have-been-charged | Local TV consumer desk (US) |
+| 4-F | plain link | ABC7 New York (13 May 2024): guests of the NoMo SoHo say they were wrongly charged a $500 smoking fee; the reporters found "at least 20 other similar complaints" on the hotel's TripAdvisor and Expedia pages (one US hotel; unverified guest reviews, counted by the reporters; sensor brand not named) | 13 May 2024 | https://abc7ny.com/post/guests-of-the-swanky-nomo-hotel-in-soho-contacted-our-7-on-your-side-investigates-team-after-they-said-were-wrongfully-charged-a-500-smoking-fee/14807470/ | Local TV investigation (US) |
+| 4-K | plain link | Rest (US): a "proprietary algorithm evaluates multiple environmental indicators" (vendor page; no date; no AI stated; no false-alarm rate published) | no date | https://restsensor.com/product-overview/technology-privacy | Vendor page |
+| 4-L | plain link | Rest: an alert is sent "When a change in air quality meets defined thresholds"; "Rest does not issue charges, contact guests or make enforcement decisions" (vendor blog, 2026; no AI stated) | no date (2026 footer) | https://restsensor.com/blog/how-rest-sensor-detects-smoking-and-vaping-in-hotel-rooms | Vendor blog |
+| 4-N | plain link | Wynd Sentry (US): "Powered by advanced AI" (vendor page; no date; an unverified vendor claim, no test published; the only smoking-sensor vendor opened that claims AI) | no date | https://hellowynd.com/pages/sentry | Vendor page |
+| 4-P | company: Minut | "thanks to our advanced edge processing and machine learning technologies, Minut sensors process a lot of data, but the large majority of it is never stored nor leaves the device" (vendor blog on GDPR, Sweden; page shows two dates, 7 Oct 2024 and 9 Jun 2020; machine learning claimed for sound, no method or accuracy published; no hotel named) | 7 Oct 2024 and 9 Jun 2020 (two dates on page) | https://www.minut.com/blog/how-minut-works-with-gdpr | Vendor blog |
+
+Notes on the extensions:
+
+- **Pool drowning detection (`it-4`):** added as evidence on a function the row already named; use level (Very low) not changed. Lynxight's counts (1,000 pools, 16 countries, 1,000,000 swimmers a month, 12% of the UK commercial pool market) are marked as vendor claims in the existing Lynxight entry (evidence 3-A). KölnBäder is a public pool and is marked as context only. The ISO 20380 scope was read on a reseller's copy (genorma.com; iso.org was blocked) and is marked "to confirm". Left out: the "95% validated effectiveness" (not seen at source), the ukactive field test (not opened), the Leonardo Cyprus pilot (search results only), the "more than 100 public pools" in Australia (unsourced), AngelEye, the Imperial College and UK council pages, and the HSE/RLSS guidance (not asked for in this pass; all are in the evidence file if wanted).
+- **Smoking and vape sensors (`hk-4`):** a caution, not a new use case. Hotels are named only as the cited reporting names them (The Strat, Kimpton Palladian, Holiday Inn & Suites Phoenix Airport North, NoMo SoHo). Fees are from complaints and individual cases in the US, not a survey; the review counts (15 and "at least 20") are unverified guest reviews counted by reporters. Left out: Wynd's "99% precision" and revenue-per-room claims, FreshAir's "100% scientific certainty", the Venetian and M Social cases, the $1,000 case. Wynd, Rest and FreshAir are not in the Companies list.
+- **Minut correction (`hk-4`):** the catalogue said "no AI stated" for Minut. That is true of the aparthotels page it cites but not of Minut as a vendor: its GDPR blog (evidence 4-P) claims machine learning for on-device sound analysis. The old entry now says so, a second Minut entry quotes the opened page, and Minut is in the Companies list. Minut's smoke feature has no stated method (4-Q) and is not called AI. Both data copies changed; no other place in the tools named Minut outside the generated pages.
+
+## Companies list
+
+New entries (5):
+
+| Company | Type | Department | Text | Source (date) |
+|---|---|---|---|---|
+| BOUNTE | Hospitality software | Front Office | Lost-and-found software: AI image recognition describes a photographed item, matches it with guest claims and masks card and ID details (vendor claims, US; no hotel result published). | https://www.bounte.net/ (2026); https://www.stayntouch.com/integrations/bounte (2026-11 (accessed)) |
+| NotLost | Horizontal tech | Front Office | Lost-property software (UK) with image recognition and matching described as AI-powered; hotel testimonial from Alton Towers Hotels on the vendor's own page. | https://www.notlost.com/ (2026-09) |
+| Chargerback | Horizontal tech | Front Office | Lost-and-found platform (US) that says it uses AI and image recognition; used by airports, airlines and hotels (NBC News, 2023; no hotel named). | https://chargerback.com/ (2026-11 (accessed)); https://www.nbcnews.com/tech/travel/airports-turn-ai-tech-tools-hunt-lost-bags-rcna65335 (2023-01) |
+| Spotta | Horizontal tech | Housekeeping | Bed-bug monitoring pods (UK): a camera photographs insects and image recognition identifies bed bugs; 225 pods at Bankside Hotel, London (Daily Mail, Dec 2023); detection figures are the vendor's own. | https://insights.ehotelier.com/suppliers/2020/11/04/spotta-puts-bed-bugs-to-the-test/ (2020-11); https://www.dailymail.co.uk/travel/article-12852597/UK-hotels-step-war-bed-bugs-bite-free-festive-season-smart-gadget-helped-rid-Paris-creepy-crawlies.html (2023-12) |
+| Minut | Horizontal tech | Housekeeping | Room sensors (Sweden) for noise, occupancy and cigarette smoke; says sound is analysed on the device with machine learning; no method or accuracy published, no hotel named. | https://www.minut.com/blog/how-minut-works-with-gdpr (2024-10); https://www.minut.com/solutions/aparthotels (2026-11 (accessed)) |
+
+No existing company entry was changed. Hotel groups were not added to the Hotel groups tab.
+
+## Kept in step
+
+| File | Change |
+|---|---|
+| `tools/use-case-catalogue/index.html` (`data`) and `tools/readiness/index.html` (`cat`) | Same data in both: 2 rows, 2 extensions, 2 corrected source texts, 5 companies, effect tags. `mix` recomputed; the overview adds up to 99. |
+| `tools/register/data/uc-labels.json` | Draft labels for `fo-8` (98): minimal, may not be AI, chat question asked (soft). `hk-7` (99): minimal. One sentence added to the reasons of `it-4` (drowning detection as a safety function) and `hk-4` (billing from a sensor reading). All are the team's reading and need D7 sign-off. |
+| `tools/readiness/index.html` (`rdy`) | Draft readiness entries for `fo-8` and `hk-7`, marked "Team draft 20 Nov 2026 (not from the D6 evidence pack)". |
+| `tools/register/src/app.js`, `tools/register/README.md`, `tools/readiness/index.html` | "97" to "99" in the visible texts. |
+| Tests | Totals updated to 99 (register) and 98 tools (readiness check); two checks added for the two new labels. |
+| Generated pages | `tools/register/index.html`, `tools/readiness-check/index.html`, `team.html`, `tools/ai-act-guide/index.html` rebuilt. |
+
+## Draft register labels and readiness entries (for review)
+
+- **`fo-8` readiness:** effort Light; type A5. People: Front-office or housekeeping supervisor owns the found-items log. Skills: Photograph and log items in the app; check the suggested description and any match before an item is released. Finance: Subscription per property or a fee on return shipping, depending on the vendor. Technology: Staff phones or tablets; optional link to the PMS. Data: Photos of found items with place and time; guest claims with name, address and stay. Organisation: Retention period for photos and claims; who confirms a match and releases the item; data-processing agreement with the vendor. Checks: D5, P5, T3.
+- **`hk-7` readiness:** effort Moderate; type A7; add-on: hw. People: Maintenance or housekeeping manager receives the alerts; pest-control contractor treats the room. Skills: Read an alert and its photo; follow the procedure for closing and treating a room. Finance: Sensor pods per bed plus a monitoring subscription. Technology: Pods in every fitted room; alerts by e-mail to the hotel. Data: Room number for each pod; alert log with photos. Organisation: Procedure from alert to inspection and treatment; alert logs kept as operational data with a retention period. Checks: F1, P1, T3.
+- **`fo-8` register label:** base minimal; questions: c_chat (soft); provision: Not on the Annex III list. Reason shown: "Minimal (our reading): recognising objects in a photo is not on the high-risk list and no person is assessed. Some tools do this job without AI. Found items and guest claims often hold personal data (ID and bank cards, phones, names and addresses), so data protection law applies: a vendor agreement, a retention period and care with photos of documents. If a chat or voice assistant takes the claim, guests must be told it is AI."
+- **`hk-4` sentence added to the reason:** "Billing a guest from a sensor reading alone raises consumer-law questions and, under data protection law, the rule on decisions taken by automated means only; staff should check before any charge (our reading, D7 to confirm)."
+- **`hk-7` register label:** base minimal; questions: none; provision: Not on the Annex III list. Reason shown: "Minimal (our reading): the camera photographs insects inside a closed pod, not people, and the use is not on the high-risk list. An alert is tied to a room number, so keep alert logs as operational data with a retention period."
+- **`it-4` sentence added to the reason:** "Pool drowning detection is a safety function: ask the vendor whether it is sold as a safety component of a regulated product, which could change the label (our reading, D7 to confirm)."
+
+## Still open (second batch)
+
+- D7 owner: confirm the AI Act readings for rows 98 and 99 and the two added sentences (`it-4`, `hk-4`), in particular whether any Annex I product law catches pool drowning-detection systems. The regulation text was not re-opened in the gap check.
+- Team: review the two draft readiness entries.
+- ISO 20380:2017 scope (150 m² limit): confirm against the ISO text; it was read on a reseller's copy.
+- Pages worth opening in a browser (blocked for the check): the ukactive drowning-detection field test, the Leonardo Plaza Cypria Maris pilot reports, Fluidra's page with the "95%" figure.
