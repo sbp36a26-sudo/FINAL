@@ -257,3 +257,5 @@ details.fold[open] > summary{margin-bottom:12px}
 .hdr.compact .hdrtop{flex-wrap:nowrap;align-items:flex-start}
 .hdr.compact .linkbtn{white-space:nowrap;flex:none}
 @media (max-width:760px){ .hdr.compact .hdrline{font-size:0.875rem} }
+.why-tools{margin:4px 0 10px}
+.why-tools p{margin:6px 0;max-width:68ch}

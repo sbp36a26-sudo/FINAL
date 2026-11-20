@@ -144,7 +144,7 @@
 
   /* Build the data model once from the embedded data. */
   function model(D) {
-    var R = D.rdy, M = { R: R, AK: AK, AREA: {}, Q: {}, BL: R.blocks, ADD: R.addons, ARCH: {}, ACODES: [], QB: {}, USES: [], UI: {}, REG: D.reg || null };
+    var R = D.rdy, M = { R: R, AK: AK, AREA: {}, Q: {}, BL: R.blocks, ADD: R.addons, ARCH: {}, ACODES: [], QB: {}, USES: [], EXCL: [], DEPTS: D.cat.depts.length, UI: {}, REG: D.reg || null };
     R.areas.forEach(function (a) { M.AREA[a.k] = a; });
     Object.keys(R.q).forEach(function (c) { var q = R.q[c]; M.Q[c] = { code: c, a: q.a, q0: q.q, ap: q.ap, gate: !!q.gate, proof: q.proof || '' }; });
     R.arch.forEach(function (a) { M.ARCH[a.c] = a; M.ACODES.push(a.c); });
@@ -154,7 +154,8 @@
     D.cat.depts.forEach(function (d) {
       d.uses.forEach(function (u, i) {
         var id = d.id + '-' + (i + 1), r = rdyUc[id];
-        if (!r || u.notTool) return;
+        if (u.notTool) { M.EXCL.push(u.n); return; }
+        if (!r) return;
         var x = { id: id, name: u.n, task: u.task, level: u.use || '', dept: d.id, deptName: d.name, int: r.int, arch: r.arch, add: r.add || [], r: r.r || {}, chk: r.chk || [], staff: !!u.staff, kw: u.kw || '', label: lab[id] || null };
         M.USES.push(x); M.UI[id] = x;
       });

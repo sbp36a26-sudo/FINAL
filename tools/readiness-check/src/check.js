@@ -154,7 +154,7 @@
       if (x) h += '<p class="meta">Now chosen: <b>' + esc(x.name) + '</b>.' + (Object.keys(st.A).length ? ' Picking another tool starts a new check; this one stays in “Your checks”.' : '') + ' <button type="button" class="linkbtn" data-act="keep-tool">Keep this tool</button></p>';
       h += '<div class="formgrid"><label class="fld"><span>Search</span><input type="search" id="q" value="' + esc(st.q) + '" placeholder="For example chatbot, pricing, rota, phone"></label>' +
         '<label class="fld"><span>Department</span><select id="dept">' + opt('', 'All departments', st.dept) + D.cat.depts.map(function (d) { return opt(d.id, d.name, st.dept); }).join('') + '</select></label></div>' +
-        '<p class="meta" id="pickcount" role="status">' + esc(pickCount(q)) + '</p><div class="list" id="picklist">' + pickList(q) + '</div>';
+        '<p class="meta" id="pickcount" role="status">' + esc(pickCount(q)) + '</p>' + whyTools() + '<div class="list" id="picklist">' + pickList(q) + '</div>';
     }
     h += '</section>';
     h += '<section class="panel' + (need('stage') ? ' missing' : '') + '" id="box-stage"><h2>3. Where are you with this tool?</h2>' + needLine('stage') + '<div class="opts stack" role="radiogroup" aria-label="Stage">' +
@@ -168,6 +168,15 @@
   }
   function startHint(miss) { return miss.length ? 'Still needed: ' + miss.map(function (m) { return m.t; }).join(' · ') : ''; }
   function found(q) { return L.search(M, q, st.dept); }
+  /* Why these tools: where the list comes from (owner request, 20 Nov 2026). Counts are computed, not typed. */
+  function whyTools() {
+    var n = M.USES.length, ex = M.EXCL, total = n + ex.length;
+    return '<details class="why-tools"><summary>Why these ' + n + ' tools?</summary>' +
+      '<p>The list is the project\'s AI use-case catalogue (the Use-Case Catalogue tab): ' + total + ' ways hotels use AI today, across ' + M.DEPTS + ' hotel departments from revenue management to housekeeping. Each entry rests on published evidence the team opened and checked: vendor product pages, hotel-group announcements, trade press and surveys.</p>' +
+      (ex.length ? '<p>' + (ex.length === 1 ? 'One entry is' : ex.length + ' entries are') + ' left out because ' + (ex.length === 1 ? 'it is' : 'they are') + ' not an AI tool you buy: ' + esc(ex.join(', ')) + '.</p>' : '') +
+      '<p>The list shows kinds of tool, not brands, and it is not a ranking. \u201cHow common\u201d comes from the catalogue; where no survey exists it is the team\'s estimate.</p>' +
+      '<p>Your tool is not listed? Choose the closest kind. The questions depend on what the tool does (for example whether it talks to guests, uses staff data or acts on its own), not on the brand.</p></details>';
+  }
   function pickCount(q) { var all = M.USES.length, n = found(q).length; return String(q || '').trim() || st.dept ? all + ' tools · ' + n + (n === 1 ? ' matches' : ' match') : all + ' tools'; }
   function pickList(q) {
     return found(q).map(function (u) { return '<button type="button" class="pick" data-act="pick" data-id="' + u.id + '"><span class="pn">' + esc(u.name) + '</span><span class="meta">' + esc(u.int) + ' effort</span><span class="meta">' + esc(u.deptName) + ' · ' + esc(typeName(u)) + ' tool</span></button>'; }).join('') ||
