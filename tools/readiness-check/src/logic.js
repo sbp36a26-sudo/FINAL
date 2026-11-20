@@ -242,9 +242,10 @@
   function paidFor(x) { return String((x.r || {}).fi || '').replace(/\s*\(see D7\)/gi, '').replace(/[.\s]+$/, ''); }
   function dedupe(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
 
-  /* Note for a must-have Yes: at least two words and eight characters ("x" does not count). Always printed as
-     self-declared: nobody checks it. (Stored under P / proofs; the word on screen is "note".) */
-  function proofOk(s) { s = String(s || '').trim(); return s.length >= 8 && s.split(/\s+/).length >= 2; }
+  /* Note for a must-have Yes: any text counts. A length rule could not stop "hello goodbye", so the tool does not
+     pretend to check: the note is printed on the report as written and labelled self-declared (owner, 20 Nov 2026).
+     (Stored under P / proofs; the word on screen is "note".) */
+  function proofOk(s) { return String(s || '').trim().length > 0; }
 
   /* One answer → its state, and its points (null when left out of the points).
      States: 'yes' (in place) | 'unconf' (a must-have Yes or way out still without its note) | 'gap' (No or Partly)
@@ -273,7 +274,7 @@
       return { state: 'yes', pts: null, ans: a, done: true };
     }
     if (a === 'y2') return { state: 'yes', pts: 2, ans: 'y', done: true };
-    if (q.gate && a === 'y' && !proofOk(P[q.code])) return { state: 'unconf', pts: 2, ans: 'y', done: true, flag: String(P[q.code] || '').trim() ? 'Note too short: add at least two words' : 'Yes, note missing' };
+    if (q.gate && a === 'y' && !proofOk(P[q.code])) return { state: 'unconf', pts: 2, ans: 'y', done: true, flag: 'Yes, note missing' };
     if (POINTS[a] == null) return { state: 'unknown', pts: null, ans: '', done: false };
     return { state: a === 'y' ? 'yes' : 'gap', pts: POINTS[a], ans: a, done: true };
   }
@@ -539,6 +540,7 @@
     'The answers “This tool uses no personal data” and “We have no staff representatives” count as in place for the must-have but give no points. Before, they gave full points.',
     '“This tool uses no personal data” is no longer offered for tools that handle sensitive data, talk to guests or callers, or are on the high-risk list. A saved check that used it there is asked again.',
     'A must-have answered Yes without a note stays a Yes, shown as “Yes, note missing”. It no longer counts as not in place, but the top verdict still needs the note.',
+    'Any note counts. There is no minimum length any more: a length rule could not tell a real note from “hello goodbye”, so the note is printed on your report as you wrote it and nobody checks it.',
     'Lists of what the tool needs: points are the share of items in place among those in place or not yet. “Don\'t know” items are left out of the points and the list counts as “to find out” until every item has an answer.',
     '“Answered” means Yes, Partly, No or Doesn\'t apply, on every screen. “Don\'t know yet” is counted on its own as “to find out”.',
     'Before a vendor is chosen, a vendor question answered “Don\'t know yet” goes on the vendor\'s list straight away.',

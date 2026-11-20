@@ -64,7 +64,7 @@ t('4: staff-representatives way out unchanged and still met', () => { [A, P] = f
 t('5 F12: rm-2 all Yes, no notes → open, "8 must-haves need a note to confirm", nothing under "Before anything else"', () => { [A, P] = fill(U('rm-2'), ind, 'y', { proof: '' }); e = L.evaluate(M, U('rm-2'), ind, A, P); return e.level === 'open' && L.summary(e, 'choose').join(' ').includes('8 must-haves need a note to confirm') && e.actions.filter(a => a.group === 'must').length === 0 && e.actions.filter(a => a.group === 'note').length === 8 && e.counts.note === 8 && e.counts.met === 0; });
 t('5: a Yes without a note keeps its 2 points and its answer', () => { const s = L.score(has('rm-2', 'P1'), { P1: 'y' }, {}); return s.state === 'unconf' && s.ans === 'y' && s.pts === 2; });
 t('5: Partly on a must-have stays not met (stop)', () => { [A, P] = fill(U('rm-2'), ind, 'y'); A.P1 = 'p'; e = L.evaluate(M, U('rm-2'), ind, A, P); return e.level === 'stop' && e.unmet.length === 1; });
-t('5: the note rule is unchanged (2 words, 8 characters)', () => !L.proofOk('x') && !L.proofOk('aaaaaaaaa') && !L.proofOk('a b') && L.proofOk('aaaa bbbb'));
+t('5: any note counts, an empty one does not (minimum length dropped 20 Nov 2026)', () => !L.proofOk('') && !L.proofOk('  ') && L.proofOk('x') && L.proofOk('aaaa bbbb'));
 // ---- item 6 (F05) ----
 const rpe = has('fo-4', 'R-pe');
 t('6 F05: fo-4 people list "in place, don\'t know" → 2 of 2 points but still to find out', () => { const AA = {}; rpe.items.forEach((_, i) => AA['R-pe#' + i] = i === 0 ? 'y' : 'k'); const s = L.score(rpe, AA, {}); return s.pts === 2 && s.done === false; });

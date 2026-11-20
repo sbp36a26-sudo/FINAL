@@ -31,11 +31,12 @@ ok(!('score' in e) && !('raw' in e), 'no 0-100 composite score');
 ok(!L.LEVELS.scale, 'no "scale" verdict');
 
 // Trial fault 1: all Yes with proof "x" on a recruiting tool gave 100, Ready to scale.
-[A, P] = fill(hr2, ind, 'y', { proof: 'x' }); e = L.evaluate(M, hr2, ind, A, P);
-// v4 (ruling item 5, F12): the old expectation was 'stop'. A Yes whose note is too short stays a Yes that is not confirmed:
-// it cannot reach the top verdict, but it is no longer reported as "not in place".
-ok(e.level === 'open' && e.counts.met < e.counts.gates && e.unmet.length === 0, 'note "x" does not count: must-haves not confirmed, top verdict out of reach');
-ok(!L.proofOk('x') && !L.proofOk('yes') && L.proofOk(GOOD), 'proof line needs a few words');
+[A, P] = fill(hr2, ind, 'y', { proof: '' }); e = L.evaluate(M, hr2, ind, A, P);
+// v4 (ruling item 5, F12): a Yes without a note stays a Yes that is not confirmed: it cannot reach the top verdict,
+// but it is not reported as "not in place". (20 Nov 2026: the owner dropped the minimum note length, so this now
+// uses an empty note; before it used "x".)
+ok(e.level === 'open' && e.counts.met < e.counts.gates && e.unmet.length === 0, 'Yes without a note: must-haves not confirmed, top verdict out of reach');
+ok(!L.proofOk('') && !L.proofOk('   ') && L.proofOk('x') && L.proofOk(GOOD), 'any note counts; an empty note does not');
 
 // Trial fault 2: must-haves Yes, everything else "Doesn't apply", AI Act item No gave 96, Ready to scale.
 [A, P] = fill(hr2, ind, 'na', { gateV: 'y', lv: 'na' }); e = L.evaluate(M, hr2, ind, A, P);

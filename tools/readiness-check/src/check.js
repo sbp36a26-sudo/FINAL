@@ -247,7 +247,7 @@
     var ask = (cur === 'none' ? q.noneAsk : q.ask) || '', ex = cur === 'none' ? 'Confirmed by our legal adviser by email on 5 Nov' : (q.ex || 'Revenue manager, 4 hours a week');
     return '<div class="proof"><label for="pf-' + q.code + '">Where is this written down? One line, for your own report.' + (ask ? ' ' + esc(ask) : '') + '</label>' +
       '<input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" aria-describedby="nh-' + q.code + '">' +
-      '<span class="notehint' + (bad ? ' bad' : '') + (ok ? ' ok' : '') + '" id="nh-' + q.code + '">' + (ok ? 'Note added.' : 'Add at least two words, for example: ' + esc(ex)) + '</span></div>';
+      '<span class="notehint' + (bad ? ' bad' : '') + (ok ? ' ok' : '') + '" id="nh-' + q.code + '">' + (ok ? 'Note added. It goes on your report as you wrote it; nobody checks it.' : 'For example: ' + esc(ex)) + '</span></div>';
   }
   /* opt.area: show a small tag naming the question's area (on the must-haves step and the update screen's must-haves).
      opt.need: this is the first unanswered must-have after a blocked "Next" (outlined, with a short line). */
@@ -836,7 +836,7 @@
     var code = el.getAttribute('data-proof'), h = $('nh-' + code); if (!h) return;
     var ok = L.proofOk(el.value), q = allQs().filter(function (x) { return x.code === code; })[0] || {};
     h.className = 'notehint' + (ok ? ' ok' : ui.touched[code] ? ' bad' : '');
-    h.textContent = ok ? 'Note added.' : 'Add at least two words, for example: ' + (st.A[code] === 'none' ? 'Confirmed by our legal adviser by email on 5 Nov' : (q.ex || 'Revenue manager, 4 hours a week'));
+    h.textContent = ok ? 'Note added. It goes on your report as you wrote it; nobody checks it.' : 'For example: ' + (st.A[code] === 'none' ? 'Confirmed by our legal adviser by email on 5 Nov' : (q.ex || 'Revenue manager, 4 hours a week'));
   }
   /* Collapsed rows of the result: remember which are open, so a re-render (sharing, notes) does not close them. */
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-row')) ui.open[d.getAttribute('data-row')] = d.open; }, true);
