@@ -1,6 +1,6 @@
 # AI readiness check (prototype) and team results
 
-Two pages, one set of rules (**v4, 20 Nov 2026**), asked **must-haves first** since the flow update of 20 Nov 2026 (see below; the rules did not change). v4 is the build pass ruled in `reports/Council - readiness check audit.md` after the three audits in `reports/audit-readiness/`; what was built item by item is in `CHANGELOG.md` and `reports/audit-readiness/4_build_notes.md`. Research behind v3: `reports/Readiness check retention and trust.md` and the three reviews in `research_notes/Hotel AI readiness check design/`. The v3 build is kept in `backup-v3/` and the six-step v4 build in `backup-v4/` as rollbacks.
+Two pages, one set of rules (**v4, 20 Nov 2026**), asked **must-haves first** since the flow update of 20 Nov 2026 (see below; the rules did not change), with the answer **"Planned, not done yet"** and an honesty line since the same day (below). v4 is the build pass ruled in `reports/Council - readiness check audit.md` after the three audits in `reports/audit-readiness/`; what was built item by item is in `CHANGELOG.md` and `reports/audit-readiness/4_build_notes.md`. Research behind v3: `reports/Readiness check retention and trust.md` and the three reviews in `research_notes/Hotel AI readiness check design/`. The v3 build is kept in `backup-v3/`, the six-step v4 build in `backup-v4/` and the must-haves-first build before "Planned" in `backup-mustfirst/` as rollbacks.
 
 | Page | Hub tab | What it does |
 |---|---|---|
@@ -22,15 +22,24 @@ Owner's request: the hardest and most important questions come first. Only the o
 
 Saved checks: an area step keeps its number internally (area 0–5), so a check saved by the six-step build at an area reopens at the same area, shown in the new numbering; a check with any unanswered must-have reopens at the must-haves step; "review" and "result" are unchanged. Storage keys, record format (`rv: 2`) and file format (`v: 3`) are unchanged. A check saved by this build at the must-haves step opens on the start screen in older builds.
 
+## "Planned, not done yet" (owner decision, 20 Nov 2026)
+
+- Every Yes/Partly/No question (must-haves included) offers **Yes · Planned, not done yet · Partly · No · Don't know yet**, so the honest answer sits next to the tempting one. Stored code `pl`.
+- It counts **exactly like Partly**: 1 point, answered; on a must-have it is not in place and keeps the verdict at "Not ready yet" until it is done. Proved for all 98 tools in `tests/planned.test.mjs`.
+- Optional **"By when?"** date (record field `By`, by question code; in the file and, as plain `YYYY-MM-DD` strings, in the shared copy as `by`).
+- Words: never "not in place" for a Planned answer. "Planned: finish before you sign" (or "…before you go on using it"); action plan "Finish: <action> (planned by <date>)."; count line "5 of 8 must-haves done · 2 planned · 1 not in place"; verdict "Not ready yet. 2 things are planned: finish them before you sign." Same on the PDF, the update screen, "since last time" (Planned → Yes counts as now done) and the team page.
+- Honesty line, on the start screen and at the end of the must-haves intro: "Nobody checks your answers. A Yes that isn't true only hides a problem you will meet after signing."
+- Rules stay v4: saved checks have no Planned answers, so no saved verdict changes.
+
 ## Rules v4
 
-- Answers: Yes 2 · Partly 1 · No 0. **"Don't know yet", "Doesn't apply" and the stated ways out are left out of the points.** Lists of what the tool needs: 2 × (in place) ÷ (in place + not yet).
+- Answers: Yes 2 · Partly 1 · Planned, not done yet 1 · No 0. **"Don't know yet", "Doesn't apply" and the stated ways out are left out of the points.** Lists of what the tool needs: 2 × (in place) ÷ (in place + not yet).
 - **Answered** means Yes, Partly, No or Doesn't apply, everywhere. Everything else is "to find out". A list counts as answered only when no item is blank or "Don't know".
-- A must-have has three states: **in place** (Yes plus a note of at least 2 words and 8 characters, or its way out), **Yes, note missing** (not confirmed) and **not in place** (No or Partly). Nobody checks the note.
+- A must-have has three states: **in place** (Yes plus a note, any text since 20 Nov 2026, or its way out), **Yes, note missing** (not confirmed) and **not in place** (No, Partly or Planned; a Planned one is worded "Planned: finish before you sign"). Nobody checks the note.
 - Ways out: "This tool uses no personal data (guests, staff, job candidates, callers)" on D5a / D5b, not offered for tools with sensitive data, a chat label or a high-risk label; "We have no staff representatives" (XG); "Checked: not required (confirmed in writing)" on the DPIA question (G2s), with a note; "We have checked: the EU AI Act does not apply to us" on XL for Switzerland, United Kingdom and Other, with a note.
 - "Doesn't apply" is never offered on must-haves or on P5, G2, G2s, G3, G4, X2a, XL, T2. A stored answer that is no longer offered is kept but asked again.
 - **Verdict** (no 0–100 score; level keys `stop` / `open` / `pilot` unchanged):
-  - **Not ready yet:** a must-have at No or Partly, or an area below 40% with at least two known answers.
+  - **Not ready yet:** a must-have at No, Partly or Planned, or an area below 40% with at least two known answers.
   - **Not enough information yet:** otherwise, if a must-have is not known or has no note, or an area has no known answer and at least one question blank or "Don't know yet".
   - **Top verdict** (name in one constant, `PILOT_NAME` in `src/logic.js`; interim "No blocker found: you can start a pilot", for tools in use "No blocker found for continued use"): every must-have in place and no area below 40%.
   - An area where every answer is "Doesn't apply" is left out. Areas are shown in words: Strong (75% or more), Gaps to close (40–74%), Weak (below 40%), Too little to say.
@@ -84,4 +93,8 @@ node tools/readiness-check/tests/v4.test.mjs
 node tools/readiness-check/tests/mustfirst.test.mjs
 ```
 
-The logic tests (35) include every scoring fault found in the trials of 18 Nov 2026. The flow tests (101) cover the page's state machines in `src/flow.js`, including the must-haves step and its guard; see `CLEANUP.md`. The must-haves-first tests (22) prove the old and new order give identical results and that saved checks reopen in the right place (fixtures saved by the six-step build: `tests/fixtures/storage-v4.json`, `check-v4.json`). The v4 tests (81) come from the audit's repros, one or more per ruling item, plus a check saved by the v3 build (`tests/fixtures/`); run them against the old rules to see them fail: `RC_LOGIC=<v3 logic.js> RC_HTML=backup-v3/index.html node tests/v4.test.mjs`. Browser proof (197 checks at 1280 and 390 px, six-step order) and the before/after measurement: `tests/browser/walk.cjs` and `measure.cjs` (Playwright; serve `tools/` on port 8805, set `SP` to a folder for screenshots). Must-haves first: `tests/browser/mustfirst.cjs` (238 checks; port 8806).
+```bash
+node tools/readiness-check/tests/planned.test.mjs
+```
+
+The logic tests (35) include every scoring fault found in the trials of 18 Nov 2026. The flow tests (101) cover the page's state machines in `src/flow.js`, including the must-haves step and its guard; see `CLEANUP.md`. The must-haves-first tests (22) prove the old and new order give identical results and that saved checks reopen in the right place (fixtures saved by the six-step build: `tests/fixtures/storage-v4.json`, `check-v4.json`). The v4 tests (81) come from the audit's repros, one or more per ruling item, plus a check saved by the v3 build (`tests/fixtures/`); run them against the old rules to see them fail: `RC_LOGIC=<v3 logic.js> RC_HTML=backup-v3/index.html node tests/v4.test.mjs`. Browser proof (197 checks at 1280 and 390 px, six-step order) and the before/after measurement: `tests/browser/walk.cjs` and `measure.cjs` (Playwright; serve `tools/` on port 8805, set `SP` to a folder for screenshots). Must-haves first: `tests/browser/mustfirst.cjs` (238 checks; port 8806). "Planned, not done yet": `tests/planned.test.mjs` (49 tests, including 3,920 Planned-vs-Partly comparisons and fixtures saved by the must-haves-first build: `tests/fixtures/storage-mustfirst.json`, `check-mustfirst.json`) and `tests/browser/planned.cjs` (86 checks; port 8807).

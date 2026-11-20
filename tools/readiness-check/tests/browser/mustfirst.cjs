@@ -68,7 +68,7 @@ const TOOLS = [
       const steps = s.steps, N = steps.length, model = await p.evaluate(() => null);
       ok(s.step === 'must' && s.stepNo === 1 && steps[0] === 'must', T(t.label + ': the first question step is the must-haves (step 1 of ' + N + ')'));
       ok(await p.evaluate(n => new RegExp('Step 1 of ' + n).test(document.getElementById('hdr').innerText) && document.querySelector('.stephead h2').textContent === 'Must-haves' &&
-        /^Start with the must-haves\. These decide the verdict, so they come first\. Every one needs an answer; if you do not know yet, choose “Don't know yet” and it goes on your list to find out\.$/.test(document.querySelector('.stephead .meta').textContent), N), T(t.label + ': header "Step 1 of ' + N + '", title and intro'));
+        /^Start with the must-haves\. These decide the verdict, so they come first\. Every one needs an answer; if you do not know yet, choose “Don't know yet” and it goes on your list to find out\. Nobody checks your answers\. A Yes that isn't true only hides a problem you will meet after signing\.$/.test(document.querySelector('.stephead .meta').textContent), N), T(t.label + ': header "Step 1 of ' + N + '", title and intro'));
       let qs = await visible(p);
       ok(qs.length >= 6 && qs.every(q => q.gate && q.area && !q.items), T(t.label + ': ' + qs.length + ' must-haves, every one with an area tag (' + qs.map(q => q.code + '·' + q.area).join(', ') + ')'));
       const AREAS = ['People', 'Skills', 'Financial investment', 'Technology infrastructure', 'Data', 'Organisation & governance'];

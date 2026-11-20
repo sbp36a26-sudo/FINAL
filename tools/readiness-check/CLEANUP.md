@@ -113,3 +113,23 @@ New check shared the earlier check's hotel object (pick another tool, "Start a n
 
 - `tests/flow.test.mjs` 101 passed (21 new: the must-haves step, its guard, skipped areas, step numbers, `placeStep`, the pure helpers); `tests/mustfirst.test.mjs` 22 passed (4,900 old-vs-new order comparisons, conditional must-haves, skipped Financial investment, fixtures from the six-step build); `tests/logic.test.mjs` 35 and `tests/v4.test.mjs` 81 unchanged and green.
 - Playwright `tests/browser/mustfirst.cjs`: 238 checks at 1280 px and 390 px (touch) for a chatbot (gx-2), a high-risk HR tool (hr-2, managed, Switzerland) and a light tool (sm-1): must-haves first with area tags, Next blocked until each has an answer, area steps without repeats, Back/forward, reload mid-flow, result identical to the six-step build for the same answers, PDF with the order line, review, local share and team page, checks and a file saved by the six-step build. No console errors, no horizontal scroll; the only external request is the existing Google Fonts link (blocked in the test).
+
+# "Planned, not done yet" (20 Nov 2026): what changed in the machines
+
+Scope: the owner's decision to add the answer "Planned, not done yet" and an honesty line. Scoring unchanged in substance (Planned is scored exactly like Partly), so the rules stay `v4 (20 Nov 2026)`. No new screen, step or event: the FLOW table, the must-haves guard and every other machine are unchanged.
+
+| Machine | Change | Why |
+|---|---|---|
+| ANSWER (per question) | New stored code **`pl`** (no code reused). `L.score()` returns `{state:'gap', pts:1, done:true, planned:true}`: the same state and points as Partly, plus a `planned` flag used only for words. `L.hasAnswer()` counts it as an answer, so the must-haves guard (`must --next-->`, `ctx.mustDone`) accepts it. | One source for the scoring; the flag cannot change a verdict |
+| RECORD | Optional **`By`** map `{code: 'YYYY-MM-DD'}` ("By when?" dates). `F.migrate()` keeps it as a string map and gives old data `{}`; still `rv: 2` and file `v: 3` (an optional field; older builds keep unknown fields). A date is removed when the answer changes away from Planned (page) and only Planned answers' well-formed dates are sent or shown (`F.plannedDates(rec)`). `F.shareSig()` adds the dates only when there is one, so copies shared before are not marked out of date. | Dates survive storage, files and the share payload; old data opens unchanged |
+| REVIEW (update open items) | `snapAnswers()` / `undo()` also keep and restore `By`. A Planned item is open (`isOpen`: state `gap`). | "Undo" must bring back the date too |
+
+## AX handles added
+
+- Answer radios `#q-<code>-pl`; the date field `#by-<code>` (`data-by`, only while Planned is chosen); `#honest` (start screen) and the must-haves intro (`.stephead .meta`, ends with the honesty line); `#planned-line` in "How this result was worked out".
+- `ReadinessCheck.record().By`; `evaluate(...)` gives `counts.planned`, `ev.planned`, and `gates[i].planned` / `.by`; action items carry `planned: true`.
+
+## Proof ("Planned, not done yet")
+
+- `tests/planned.test.mjs` 49 passed: equivalence for 98 tools × 5 hotel set-ups × 8 answer sets (3,920: same verdict, area points and words, must-have states, open items, first three, vendor questions and snapshot as Partly, apart from the words), counts add up in every case, no "not in place" for a Planned answer, verdict and summary for planned-only, mixed and none, date round-trip (storage, file, share payload, old data), checks and a file saved by the must-haves-first build (`tests/fixtures/storage-mustfirst.json`, `check-mustfirst.json`, recorded with that build before any change) open with the same verdict, count line, summary and place, the must-haves step accepts Planned.
+- Playwright `tests/browser/planned.cjs` (port 8807): 86 checks at 1280 px and 390 px (touch): honesty line on the start screen and in the must-haves intro, answer order, Planned with dates on two must-haves, 44 px targets, Next goes on, result wording and counts, "Finish: … (planned by …)", must-haves list, PDF text, saved file, share payload, reload, team page, update open items (Planned → Yes counts as now done), a mixed case. No console errors, no horizontal scroll. `tests/browser/mustfirst.cjs` still passes (238).

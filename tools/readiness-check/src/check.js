@@ -19,6 +19,8 @@
   var ROLES = [['gm', 'General manager'], ['owner', 'Owner or asset manager'], ['dept', 'Head of a department'], ['it', 'IT or CIO'], ['fin', 'Finance'], ['other', 'Other']];
   var NEXT = [['vendor', 'When the vendor has replied'], ['sign', 'Before signing'], ['trial', 'At the end of the trial'], ['budget', 'At budget time'], ['other', 'Another moment']];
   var MY = 'hftp-readiness-mychecks-v1', CUR = 'hftp-readiness-current-v1';
+  /* Honesty line (owner, 20 Nov 2026): on the start screen and in the must-haves intro, not on every question. */
+  var HONEST = 'Nobody checks your answers. A Yes that isn\'t true only hides a problem you will meet after signing.';
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmtDate(iso) { if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
   function opt(v, l, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; }
@@ -44,7 +46,7 @@
            review   the update screen's list as it was on entry, so answered questions stay in place with "Undo" */
   var F = window.RCFlow;
   function known(u) { return !!M.UI[u]; }
-  function blank() { return { id: newId(), rv: F.RV, step: 'start', hotel: { name: '', role: '', type: '', country: '' }, stage: '', useId: '', A: {}, P: {}, Who: {}, owner: { ask: '', cost: '', by: '' }, next: { when: '', date: '' }, snaps: [], share: { on: false, named: false }, sharedAt: null, sharedSig: null, sharedMode: null, created: new Date().toISOString(), q: '', dept: '' }; }
+  function blank() { return { id: newId(), rv: F.RV, step: 'start', hotel: { name: '', role: '', type: '', country: '' }, stage: '', useId: '', A: {}, P: {}, Who: {}, By: {}, owner: { ask: '', cost: '', by: '' }, next: { when: '', date: '' }, snaps: [], share: { on: false, named: false }, sharedAt: null, sharedSig: null, sharedMode: null, created: new Date().toISOString(), q: '', dept: '' }; }
   /* A saved record, validated and migrated (F.migrate), as a working check; null if it cannot be opened. */
   function fromRecord(r) { var m = F.migrate(r, known); if (!m) return null; m = Object.assign(blank(), m); m.step = placeOf(m, m.step); return m; }
   /* Question steps (must-haves first, src/flow.js) for a check: which steps are in use, and is a must-have unanswered? */
@@ -83,7 +85,7 @@
     if (st.hotel.name || st.hotel.country || st.hotel.type) writeProfile();
     lset(CUR, st.useId ? st.id : '');
   }
-  function ev() { return L.evaluate(M, M.UI[st.useId], st.hotel, st.A, st.P, st.Who, st.stage); }
+  function ev() { return L.evaluate(M, M.UI[st.useId], st.hotel, st.A, st.P, st.Who, st.stage, st.By); }
 
   var toastT;
   function toast(m) { var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 4200); }
@@ -99,7 +101,8 @@
     if (st.step === 'start') {
       return '<div class="hdrtop"><p class="meta">A student project by EHL for HFTP · prototype</p>' + link + '</div><h1>AI readiness check</h1>' +
         '<p class="sub"><strong>Is your hotel ready to adopt this AI tool?</strong> Not about how AI assistants find your hotel.</p>' +
-        '<p class="sub">One AI tool at a time. You get a verdict and a to-do list by person.</p>';
+        '<p class="sub">One AI tool at a time. You get a verdict and a to-do list by person.</p>' +
+        '<p class="meta honest" id="honest">' + esc(HONEST) + '</p>';
     }
     var where = st.step === 'prep' ? 'What you will need' : st.step === 'review' ? 'Update open items' : st.step === 'result' ? 'Result' : stepLabel(st.step);
     return '<div class="hdrtop"><p class="hdrline"><strong>AI readiness check</strong> · ' + esc(x ? L.shortName(x) : '') + ' · ' + where + '</p>' + link + '</div>';
@@ -111,9 +114,9 @@
     if (!ids.length) return '';
     var h = '<section class="panel" id="mychecks" tabindex="-1"><h2>Your checks in this browser</h2><p class="sub">Pick one up where you left it. "Update open items" shows only what is still open.</p><div>';
     ids.forEach(function (k) {
-      var r = F.migrate(mine[k], known), x = M.UI[r.useId], e = L.evaluate(M, x, r.hotel, r.A, r.P, r.Who, r.stage), cRm = ui.confirm && ui.confirm.kind === 'rm' && ui.confirm.id === k;
+      var r = F.migrate(mine[k], known), x = M.UI[r.useId], e = L.evaluate(M, x, r.hotel, r.A, r.P, r.Who, r.stage, r.By), cRm = ui.confirm && ui.confirm.kind === 'rm' && ui.confirm.id === k;
       h += '<div class="mycheck"><div class="g1"><strong>' + esc(x.name) + '</strong><span class="meta">' + esc([r.hotel.name, L.STAGES[r.stage] && L.STAGES[r.stage].name, 'last changed ' + fmtDate(r.updated)].filter(Boolean).join(' · ')) + '</span>' +
-        '<span class="btnrow">' + chipFor(e.level, r.stage) + '<span class="meta">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves done · ' + plural(e.actions.length, 'open item') + '</span></span>' +
+        '<span class="btnrow">' + chipFor(e.level, r.stage) + '<span class="meta">' + e.counts.met + ' of ' + e.counts.gates + ' must-haves done · ' + (e.counts.planned ? e.counts.planned + ' planned · ' : '') + plural(e.actions.length, 'open item') + '</span></span>' +
         (r.next && r.next.when ? '<span class="meta">Planned next look: ' + esc(nextText(r.next)) + '</span>' : '') + '</div>' +
         '<div class="btnrow"><button type="button" class="btn" data-act="open-review" data-id="' + k + '">Update open items</button><button type="button" class="btn" data-act="open-result" data-id="' + k + '">See result</button>' +
         (cRm ? '<button type="button" class="btn warn" data-act="rm-yes" data-id="' + k + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="rm-no" id="rm-no">Keep</button>' : '<button type="button" class="linkbtn" data-act="rm" data-id="' + k + '">Remove</button>') + '</div>' +
@@ -232,7 +235,8 @@
   // ---------- questions ----------
   function optsFor(q) {
     if (q.opts) return q.opts;
-    var o = [['y', 'Yes'], ['p', 'Partly'], ['n', 'No'], ['k', "Don't know yet"]];
+    /* "Planned, not done yet" sits next to Yes, so the honest answer is beside the tempting one (owner, 20 Nov 2026). */
+    var o = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['p', 'Partly'], ['n', 'No'], ['k', "Don't know yet"]];
     if (q.none) o.push(['none', q.none]);
     else if (!q.noNa) o.push(['na', "Doesn't apply"]);
     return o;
@@ -248,6 +252,11 @@
     return '<div class="proof"><label for="pf-' + q.code + '">Where is this written down? One line, for your own report.' + (ask ? ' ' + esc(ask) : '') + '</label>' +
       '<input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" aria-describedby="nh-' + q.code + '">' +
       '<span class="notehint' + (bad ? ' bad' : '') + (ok ? ' ok' : '') + '" id="nh-' + q.code + '">' + (ok ? 'Note added. It goes on your report as you wrote it; nobody checks it.' : 'For example: ' + esc(ex)) + '</span></div>';
+  }
+  /* Optional "By when?" date for a Planned answer (stored in st.By by question code). */
+  function byField(q) {
+    return '<div class="proof byfield"><label for="by-' + q.code + '">By when? (optional)</label><input type="date" id="by-' + q.code + '" data-by="' + q.code + '" value="' + esc(st.By[q.code] || '') + '">' +
+      '<span class="notehint">' + (q.gate ? 'Planned counts like Partly: on a must-have it holds the verdict back until it is done.' : 'Planned counts like Partly: 1 point.') + '</span></div>';
   }
   /* opt.area: show a small tag naming the question's area (on the must-haves step and the update screen's must-haves).
      opt.need: this is the first unanswered must-have after a blocked "Next" (outlined, with a short line). */
@@ -276,6 +285,7 @@
     if (q.vendor && isEarly && !cur) h += '<p class="meta hint">No vendor yet? Choose “Don\'t know yet”: it goes on your list of questions for the vendor.</p>';
     if (cur === 'k') h += whoSel(q.code, L.defaultWho(q, st.stage));
     if (q.gate && (cur === 'y' || (cur === 'none' && q.none && q.noneNote))) h += noteField(q, cur);
+    if (cur === 'pl') h += byField(q);
     if (q.note) h += '<p class="meta">' + esc(q.note) + '</p>';
     return h + '</fieldset>';
   }
@@ -296,7 +306,7 @@
     });
     return [done + ' of ' + qs.length + ' answered', k ? k + ' to find out' : '', note ? note + (note === 1 ? ' Yes needs a note' : ' Yes answers need a note') : ''].filter(Boolean).join(' · ');
   }
-  var MUST_INTRO = 'Start with the must-haves. These decide the verdict, so they come first. Every one needs an answer; if you do not know yet, choose “Don\'t know yet” and it goes on your list to find out.';
+  var MUST_INTRO = 'Start with the must-haves. These decide the verdict, so they come first. Every one needs an answer; if you do not know yet, choose “Don\'t know yet” and it goes on your list to find out. ' + HONEST;
   /* A question step: 'must' (every must-have, with its area tag) or an area index (that area without its must-haves). */
   function vStep(step) {
     var steps = qSteps(), n = F.stepNo(step, steps), N = steps.length, qs = stepQs(step), isMust = step === 'must', last = n === N;
@@ -323,9 +333,9 @@
   }
   function openQs() { return ev().qs.filter(isOpen); }
   function snapAnswers(codes) {
-    var o = { A: {}, P: {}, Who: {} };
+    var o = { A: {}, P: {}, Who: {}, By: {} };
     Object.keys(st.A).forEach(function (k) { if (codes.indexOf(k.split('#')[0]) >= 0) o.A[k] = st.A[k]; });
-    codes.forEach(function (c) { if (st.P[c] != null) o.P[c] = st.P[c]; if (st.Who[c] != null) o.Who[c] = st.Who[c]; });
+    codes.forEach(function (c) { if (st.P[c] != null) o.P[c] = st.P[c]; if (st.Who[c] != null) o.Who[c] = st.Who[c]; if (st.By[c] != null) o.By[c] = st.By[c]; });
     return o;
   }
   /* The update screen keeps its list as it was on entry: an answered question stays in place, greyed, with "Undo". */
@@ -341,9 +351,10 @@
     Object.keys(was.A).forEach(function (k) { if (k.split('#')[0] === code) st.A[k] = was.A[k]; });
     if (was.P[code] != null) st.P[code] = was.P[code]; else delete st.P[code];
     if (was.Who[code] != null) st.Who[code] = was.Who[code]; else delete st.Who[code];
+    if (was.By[code] != null) st.By[code] = was.By[code]; else delete st.By[code];
   }
   function doneBlock(q) {
-    var txt = q.list ? 'every item answered' : L.answerText(q, st.A[q.code]);
+    var txt = q.list ? 'every item answered' : L.answerText(q, st.A[q.code]) + (st.A[q.code] === 'pl' && L.fmtDay(st.By[q.code]) ? ', by ' + L.fmtDay(st.By[q.code]) : '');
     return '<div class="qa donerow" id="fs-' + q.code + '"><p><span class="tick" aria-hidden="true">✓</span> <span class="qtext">' + esc(q.list ? q.q + ': ' + q.items.join('; ') : q.q) + '</span></p><p class="meta">Now: ' + esc(txt) + '. <button type="button" class="linkbtn" data-act="undo" data-code="' + q.code + '" id="undo-' + q.code + '">Undo</button></p></div>';
   }
   function vReview() {
@@ -391,8 +402,11 @@
       return '<div class="brow"><span class="lbl">' + esc(r.name) + '</span><span class="track" aria-hidden="true"><i style="width:' + fill + '%;background:var(--' + r.tone + ')"></i></span><span class="word w-' + r.tone + '">' + esc(r.word) + '</span><span class="ans meta">' + r.answered + ' of ' + r.asked + ' answered</span></div>';
     }).join('') + '</div><p class="meta">Strong, gaps to close, weak: from the questions you could answer. “Too little to say” means fewer than half of an area\'s questions have an answer that counts.</p>';
   }
-  function groupTitle(g) {
-    return g === 'must' ? ['Before anything else', 'Must-haves not in place. Each one holds the verdict back.']
+  /* items: the group's actions (a 'must' group with Planned items is not called "not in place"). */
+  function groupTitle(g, items) {
+    var pl = (items || []).filter(function (a) { return a.planned; }).length, all = pl && pl === items.length;
+    return g === 'must' ? ['Before anything else', all ? 'Must-haves planned, not done yet. Finish each one ' + L.beforeWords(st.stage) + ': until then it holds the verdict back.'
+        : pl ? 'Must-haves still to put in place, some of them planned. Each one holds the verdict back until it is done.' : 'Must-haves not in place. Each one holds the verdict back.']
       : g === 'note' ? ['Add a note to confirm', 'You answered Yes. One line saying where it is written down confirms it. Nobody checks the note; it is for your own report.']
       : g === 'vendor' ? ['Confirm with the vendor ' + (st.stage === 'live' ? 'before you go on using it' : 'before signing'), 'Use the vendor questions further down.']
       : g === 'find' ? ['To find out', 'Questions you could not answer yet, by the person who knows.']
@@ -407,27 +421,27 @@
       return '<button type="button" class="btn" data-act="copy-find" data-who="' + w + '">Copy for ' + esc(L.WHO[w]) + ' (' + by[w].length + ')</button>'; }).join('') + '</div></div>';
     GROUPS.forEach(function (g) {
       var items = e.actions.filter(function (a) { return a.group === g; }); if (!items.length) return;
-      var t = groupTitle(g);
+      var t = groupTitle(g, items);
       h += '<div class="agroup" data-group="' + g + '"><h3>' + esc(t[0]) + ' <span class="meta">(' + items.length + ')</span></h3>' + (t[1] ? '<p class="meta">' + esc(g === 'close' && e.level === 'pilot' ? 'Close these during the pilot.' : t[1]) + '</p>' : '');
       if (g === 'note') {
         h += '<div>' + items.map(function (a) { return '<div class="gap"><span class="chip c-pilot">Yes, note missing</span><div class="g1"><span>' + esc(a.q.q) + '</span>' + noteField(a.q, st.A[a.q.code]) + '</div></div>'; }).join('') + '</div>' +
           '<div class="btnrow"><button type="button" class="btn" data-act="note-save" id="note-save">Save notes and update the result</button></div>';
       } else {
-        h += '<ol class="actions">' + items.map(function (a) { return '<li><span><b>' + esc(L.whoName(a.who)) + ':</b> ' + (a.must && g !== 'must' ? '<span class="musttag">Must-have</span> ' : '') + esc(a.text) + '</span><span class="meta">' + esc([a.area, a.flag, a.ans ? 'you answered ' + (L.answerText(a.q, a.ans) || a.ans) : ''].filter(Boolean).join(' · ')) + '</span></li>'; }).join('') + '</ol>';
+        h += '<ol class="actions">' + items.map(function (a) { return '<li><span><b>' + esc(L.whoName(a.who)) + ':</b> ' + (a.must && g !== 'must' ? '<span class="musttag">Must-have</span> ' : '') + esc(a.text) + '</span><span class="meta">' + esc([a.area, a.flag, a.planned ? L.plannedWords(st.stage) : a.ans ? 'you answered ' + (L.answerText(a.q, a.ans) || a.ans) : ''].filter(Boolean).join(' · ')) + '</span></li>'; }).join('') + '</ol>';
       }
       h += '</div>';
     });
     return h + '</section>';
   }
   function gateChip(g) {
-    return g.met ? '<span class="chip c-scale">In place</span>' : g.unconf ? '<span class="chip c-pilot">Yes, note missing</span>' : g.known ? '<span class="chip c-found">Not in place</span>' : '<span class="chip c-open">Not known yet</span>';
+    return g.met ? '<span class="chip c-scale">In place</span>' : g.unconf ? '<span class="chip c-pilot">Yes, note missing</span>' : g.planned ? '<span class="chip c-pilot">Planned</span>' : g.known ? '<span class="chip c-found">Not in place</span>' : '<span class="chip c-open">Not known yet</span>';
   }
   function mustCards(e) {
     return e.gates.map(function (g) {
       var q = g.q, s = g.s, p = String(st.P[q.code] || '').trim(), a = st.A[q.code];
       return '<div class="gap">' + gateChip(g) + '<div class="g1"><span>' + esc(q.q) + '</span>' +
         (g.met ? (a === 'none' ? '<span class="meta">Your answer: ' + esc(q.none) + (q.noneNote ? '. Your note (self-declared, not checked): “' + esc(p) + '”' : '') + '</span>' : '<span class="meta">Your note (self-declared, not checked): “' + esc(p) + '”</span>')
-          : '<span class="meta">' + esc([s.stale ? L.STALE : 'You answered ' + (L.answerText(q, s.ans) || 'nothing yet'), !s.stale && s.flag && s.flag !== 'Yes, note missing' ? s.flag : '', q.yes ? 'What counts as Yes: ' + q.yes : ''].filter(Boolean).join(' · ')) + '</span>') + '</div></div>';
+          : '<span class="meta">' + esc([s.stale ? L.STALE : g.planned ? L.plannedWords(st.stage) + (g.by ? ' (you planned it by ' + g.by + ')' : '') : 'You answered ' + (L.answerText(q, s.ans) || 'nothing yet'), !s.stale && s.flag && s.flag !== 'Yes, note missing' ? s.flag : '', q.yes ? 'What counts as Yes: ' + q.yes : ''].filter(Boolean).join(' · ')) + '</span>') + '</div></div>';
     }).join('');
   }
   function legalBody(x) {
@@ -456,7 +470,7 @@
       '<div class="sumtext">' + L.summary(e, st.stage).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div></section>';
     h += sinceBanner();
     h += actionPlan(e);
-    h += row('must', 'Must-haves: ' + e.counts.met + ' of ' + e.counts.gates + ' done', '<div>' + mustCards(e) + '</div>');
+    h += row('must', 'Must-haves: ' + e.counts.met + ' of ' + e.counts.gates + ' done' + (e.counts.planned ? ' · ' + e.counts.planned + ' planned' : ''), '<div>' + mustCards(e) + '</div>');
     h += row('areas', 'Your six areas: ' + e.counts.answered + ' of ' + e.counts.asked + ' answered · ' + e.counts.find + ' to find out', bars(e));
     h += row('vendor', 'Questions for the vendor (' + vq.length + ')', '<div class="btnrow"><button type="button" class="btn small" data-act="copy-vendor">Copy all</button></div><ol class="tight">' + vq.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>');
     var lg = legalBody(x); if (lg) h += row('legal', 'Legal: items to check', lg);
@@ -470,7 +484,8 @@
       '<label class="fld"><span>Date (optional)</span><input type="date" id="n-date" data-n="date" value="' + esc(st.next.date) + '"></label></div>');
     h += sharePanel();
     h += row('method', 'How this result was worked out', '<ol class="steps">' + e.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
-      '<p class="meta">Each area: points from the questions you could answer (Yes 2, Partly 1, No 0). Below 40% holds the verdict back once at least two questions in the area have a known answer; 40–74% is a gap to close; 75% or more is strong. There is no overall score. These cut-offs are the project team\'s judgement, still to be tested with hotels.</p>' +
+      '<p class="meta">Each area: points from the questions you could answer (Yes 2, Partly 1, Planned 1, No 0). Below 40% holds the verdict back once at least two questions in the area have a known answer; 40–74% is a gap to close; 75% or more is strong. There is no overall score. These cut-offs are the project team\'s judgement, still to be tested with hotels.</p>' +
+      '<p class="meta" id="planned-line">' + esc(L.PLANNED_LINE) + '</p>' +
       '<p class="meta">' + esc(ORDER_LINE) + '</p>' +
       '<h4>Changed in rules v4</h4><ul class="tight">' + L.CHANGES.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       '<p class="meta">Rules ' + esc(L.RULES) + '. Questions from the project\'s D6 readiness research, reworded after an internal wording review on 18 Nov 2026. Not yet reviewed by outside experts or tested with hotels. Must-haves are the team\'s judgement. Answers and notes are self-declared and not checked. Self-assessment, not legal or investment advice.</p>');
@@ -619,14 +634,14 @@
       if (!e.actions.length) para('Nothing is open.', 10);
       GROUPS.forEach(function (g) {
         var items = e.actions.filter(function (a) { return a.group === g; }); if (!items.length) return;
-        para(groupTitle(g)[0] + ' (' + items.length + ')', 10.5, 0, 'bold');
+        para(groupTitle(g, items)[0] + ' (' + items.length + ')', 10.5, 0, 'bold'); if (g === 'must' && items.some(function (a) { return a.planned; })) para(groupTitle(g, items)[1], 9, 0, 'normal', 90);
         items.forEach(function (a) { bullet(L.whoName(a.who) + ': ' + a.text, [a.area, a.must ? 'must-have' : '', a.flag].filter(Boolean).join(' | ')); });
         y += 1;
       });
       head('Must-haves');
       e.gates.forEach(function (g) {
         var p2 = String(st.P[g.q.code] || '').trim(), a2 = st.A[g.q.code];
-        bullet(g.q.q + ' [' + (g.met ? 'in place' : g.unconf ? 'Yes, note missing' : g.known ? 'not in place' : 'not known yet') + ']',
+        bullet(g.q.q + ' [' + (g.met ? 'in place' : g.unconf ? 'Yes, note missing' : g.planned ? L.plannedWords(st.stage).toLowerCase() + (g.by ? ', by ' + g.by : '') : g.known ? 'not in place' : 'not known yet') + ']',
           g.met ? (a2 === 'none' ? 'Your answer: ' + g.q.none + (g.q.noneNote ? '. Note (self-declared, not checked): ' + p2 : '') : 'Note (self-declared, not checked): ' + p2) : g.s.stale ? L.STALE : 'What counts as Yes: ' + (g.q.yes || '-'));
       });
       head('Questions for the vendor'); vq.forEach(function (q, i) { para((i + 1) + '. ' + q, 9.5); });
@@ -642,6 +657,7 @@
       }
       head('How this was worked out');
       e.steps.forEach(function (t) { para(t, 9); });
+      para(L.PLANNED_LINE, 9);
       para(ORDER_LINE, 9);
       para('Must-haves and cut-offs are the project team\'s judgement, not yet tested with hotels. Answers and notes are self-declared and not checked. There is no overall score.', 9, 0, 'normal', 90);
       var n = doc.getNumberOfPages();
@@ -657,6 +673,7 @@
     var d = { v: 3, rules: L.RULES, useId: st.useId, useName: x.name, stage: st.stage, role: st.hotel.role, type: st.hotel.type, country: st.hotel.country, answers: A, who: st.Who,
               level: e.level, met: e.counts.met, gates: e.counts.gates, known: e.counts.known, asked: e.counts.asked, open: e.actions.length, snaps: (st.snaps || []).map(function (s) { return { at: s.at, level: s.level, met: s.met, open: s.open }; }),
               sharedAt: new Date().toISOString(), named: named };
+    d.by = F.plannedDates(st); /* "By when?" dates, plain YYYY-MM-DD strings, only for Planned answers */
     d.proofGiven = {}; Object.keys(st.P).forEach(function (k) { if (L.proofOk(st.P[k])) d.proofGiven[k] = true; });
     if (named) { d.hotelName = st.hotel.name; d.proofs = st.P; }
     return d;
@@ -808,11 +825,13 @@
     var el = e.target;
     if (el.hasAttribute('data-q')) {
       var k = el.getAttribute('data-q'), base = k.split('#')[0]; st.A[k] = el.value;
+      if (el.value !== 'pl' && st.By[k] != null) delete st.By[k]; /* a date belongs to a Planned answer only */
       /* F17: before a vendor is chosen, "Don't know yet" on a vendor question goes to the vendor at once (not only if the box is touched). */
       if (el.value === 'k' && !st.Who[base]) { var qq = allQs().filter(function (q) { return q.code === base; })[0]; if (qq && L.defaultWho(qq, st.stage) === 'vendor') st.Who[base] = 'vendor'; }
       keep(); render(true);
       if (st.step === 'review' && (!document.activeElement || document.activeElement === document.body) && $('undo-' + base)) $('undo-' + base).focus({ preventScroll: true });
     }
+    else if (el.hasAttribute('data-by')) { var bc = el.getAttribute('data-by'); if (el.value) st.By[bc] = el.value; else delete st.By[bc]; keep(); }
     else if (el.hasAttribute('data-stage')) { st.stage = el.value; keep(); render(true); }
     else if (el.hasAttribute('data-proof')) { ui.touched[el.getAttribute('data-proof')] = true; noteHint(el); }
     else if (el.hasAttribute('data-who')) { st.Who[el.getAttribute('data-who')] = el.value; keep(); }

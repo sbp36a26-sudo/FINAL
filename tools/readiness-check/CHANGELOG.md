@@ -1,5 +1,27 @@
 # Readiness check: changelog
 
+## New answer "Planned, not done yet" and an honesty line (20 Nov 2026, rules stay v4)
+
+Owner's decision. Rollback: `backup-mustfirst/` (the must-haves-first build, before this change).
+
+| # | Item | Status |
+|---|---|---|
+| A1 | New answer **"Planned, not done yet"** (stored code `pl`), offered wherever "Partly" is (every Yes/Partly/No question, must-haves included; not on T2's own options or the lists of what the tool needs). Order: Yes · Planned, not done yet · Partly · No · Don't know yet (· Doesn't apply / way out where offered) | **Done** (`optsFor`) |
+| A2 | Scored exactly like Partly: 1 point, answered; on a must-have it is not in place, level `stop` ("Not ready yet") | **Done**: `score()` returns Partly's state and points plus a `planned` flag used only for words. Proof: 3,920 tool × hotel × answer-set comparisons in `tests/planned.test.mjs` |
+| A3 | Optional **"By when?"** date when Planned is chosen; stored in a new map `By` keyed by question code; survives save/reload, the JSON file and the share payload (`by`, plain `YYYY-MM-DD` strings); old data without it opens unchanged | **Done** (`byField`, `F.migrate`, `F.plannedDates`). The date is dropped when the answer changes away from Planned |
+| A4 | Words: never "not in place" for a Planned answer. "Planned: finish before you sign" (`beforeWords`, so "before you go on using it" when in use) on the must-haves list, PDF and team page; action items "Finish: <action>" plus " (planned by <date>)" | **Done** (`plannedWords`, `finish`). Also used for Planned on non-must-have questions (gaps to close) |
+| A5 | Counts and sentences: "5 of 8 must-haves done · 2 planned · 1 not in place · …"; "Not ready yet. 2 things are planned: finish them before you sign."; mixed: "Not ready yet. 1 thing to settle and 2 planned things to finish before you sign."; summary "2 of the 8 must-haves are planned, not done yet. Finish them before you sign: until then they hold the verdict back." | **Done** on the page, PDF, owner note, "Your checks" list, update screen, team page. The action plan's must-have group reads "Must-haves planned, not done yet…" (or "…still to put in place, some of them planned…" when mixed) |
+| A6 | Update open items: a Planned item is open; "since last time": Planned → Yes counts as now done | **Done** (no change needed in the comparison: it compares must-haves in place) |
+| A7 | "How this was worked out": "“Planned, not done yet” counts like Partly: 1 point, and on a must-have it holds the verdict back until it is done." (page and PDF); one more line in the CHANGES list; points line "Yes 2, Partly 1, Planned 1, No 0" | **Done** (`L.PLANNED_LINE`) |
+| B | Honesty line "Nobody checks your answers. A Yes that isn't true only hides a problem you will meet after signing." on the start screen (small, under the intro) and appended to the must-haves intro; not on each question | **Done** (`HONEST`) |
+| C | Earlier owner decisions kept: no score, subtitle, "Start a new check" in the result's top row, must-haves first with an answer needed (Planned counts), "Why these 98 tools?", sharing on, legal-check questions | Kept |
+
+**Rules not bumped** (stay `v4 (20 Nov 2026)`): saved checks have no Planned answers, so no verdict changes on reopen (proved with fixtures recorded by the must-haves-first build). Not changed: storage keys, record format (`rv: 2`, `By` is optional), file format (`v: 3`), level keys, hub messages, shared profile key, `#use=` hash.
+
+### Old test expectations changed
+
+`tests/browser/mustfirst.cjs`: the must-haves intro regex now ends with the honesty line (owner's item B). No Node test expectation changed; `flow`, `logic`, `mustfirst` and `v4` suites are unchanged and green.
+
 ## Flow update: must-haves first (20 Nov 2026, rules stay v4)
 
 Owner's request: "The first question section is the must-haves, with needed answers, and then like normal before, so the person answers the hardest and most important part at the start." Rollback: `backup-v4/` (the six-step build).

@@ -1,0 +1,111 @@
+{
+ "kind": "hftp-readiness-check",
+ "v": 3,
+ "rules": "v4 (20 Nov 2026)",
+ "savedAt": "2026-11-20T12:32:33.650Z",
+ "check": {
+  "id": "rcmwoylpgfy4xr",
+  "rv": 2,
+  "step": "result",
+  "hotel": {
+   "name": "",
+   "role": "",
+   "type": "independent",
+   "country": "Portugal"
+  },
+  "stage": "choose",
+  "useId": "gx-2",
+  "A": {
+   "P1": "y",
+   "P5": "y",
+   "F1": "y",
+   "F2": "p",
+   "T1": "y",
+   "D5a": "k",
+   "D5b": "y",
+   "O1": "n",
+   "P4": "k",
+   "O6": "k",
+   "X1": "y",
+   "R-pe#0": "y",
+   "R-pe#1": "n",
+   "P2": "k",
+   "P3": "y",
+   "O4": "k",
+   "R-sk#0": "y",
+   "R-sk#1": "n",
+   "F3": "y",
+   "T2": "k",
+   "T3": "p",
+   "T5": "p",
+   "R-te#0": "y",
+   "D4": "k",
+   "R-da#0": "y",
+   "R-da#1": "n",
+   "O2": "k",
+   "G1": "y",
+   "G2": "k",
+   "G3": "y",
+   "X2a": "k",
+   "X2b": "k",
+   "R-or#0": "y"
+  },
+  "P": {
+   "P1": "Revenue manager, four hours weekly",
+   "P5": "Revenue manager, four hours weekly",
+   "F1": "Revenue manager, four hours weekly",
+   "T1": "Revenue manager, four hours weekly",
+   "D5b": "Revenue manager, four hours weekly"
+  },
+  "Who": {
+   "D5a": "vendor",
+   "O4": "vendor"
+  },
+  "owner": {
+   "ask": "",
+   "cost": "",
+   "by": ""
+  },
+  "next": {
+   "when": "",
+   "date": ""
+  },
+  "snaps": [
+   {
+    "at": "2026-11-20T12:32:33.599Z",
+    "rules": "v4 (20 Nov 2026)",
+    "level": "stop",
+    "met": 5,
+    "gates": 8,
+    "known": 19,
+    "asked": 30,
+    "open": 18,
+    "note": 0,
+    "metCodes": [
+     "P1",
+     "P5",
+     "F1",
+     "T1",
+     "D5b"
+    ],
+    "areas": {
+     "pe": 88,
+     "sk": 75,
+     "fi": 83,
+     "te": 75,
+     "da": 75,
+     "or": 75
+    }
+   }
+  ],
+  "share": {
+   "on": false,
+   "named": false
+  },
+  "sharedAt": null,
+  "sharedSig": null,
+  "sharedMode": null,
+  "created": "2026-11-20T12:32:32.799Z",
+  "updated": "2026-11-20T12:32:33.600Z"
+ }
+}

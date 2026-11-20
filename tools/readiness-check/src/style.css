@@ -267,3 +267,6 @@ details.fold[open] > summary{margin-bottom:12px}
 .why-tools[open] > summary::before{transform:rotate(90deg)}
 .why-tools > summary:hover{text-decoration:underline}
 .why-hint{font-weight:400;color:var(--ink3);font-size:.92em}
+/* "Planned, not done yet" (20 Nov 2026): the date field sits under the answers like the note; the honesty line is small. */
+.byfield input[type=date]{max-width:14rem}
+.hdr .honest{margin-top:2px;max-width:66ch}

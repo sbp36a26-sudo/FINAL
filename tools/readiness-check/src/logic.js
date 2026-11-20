@@ -38,8 +38,10 @@
   var KIND = { decide: 'a decision', doc: 'a short document', vendor: 'a step with the vendor', project: 'a project' };
 
   /* Answers. Points: Yes 2, Partly 1, No 0. "Don't know yet" and "Doesn't apply" are left out of the points:
-     an unknown answer is something to find out, not a No (challenge round, 18 Nov 2026). */
-  var ANSWER = { y: 'Yes', p: 'Partly', n: 'No', k: "Don't know yet", na: "Doesn't apply", none: "Doesn't apply (see note)" };
+     an unknown answer is something to find out, not a No (challenge round, 18 Nov 2026).
+     'pl' "Planned, not done yet" (owner, 20 Nov 2026): scored exactly like Partly (1 point, answered; on a must-have it is
+     not in place, so it holds the verdict back), but worded as planned, with an optional "By when?" date (rec.By). */
+  var ANSWER = { y: 'Yes', pl: 'Planned, not done yet', p: 'Partly', n: 'No', k: "Don't know yet", na: "Doesn't apply", none: "Doesn't apply (see note)" };
   /* The words for one stored answer; the way-out answer ('none') reads as the option the hotel chose. */
   function answerText(q, a) { return a === 'none' ? (q && q.none) || ANSWER.none : a === 'y2' ? 'Yes' : ANSWER[a] || ''; }
   var STALE = 'This answer is no longer offered for this tool. Please answer again.';
@@ -47,7 +49,15 @@
   var NO_ACT = 'We have checked: the EU AI Act does not apply to us';
   var NOT_REQ = 'Checked: not required (confirmed in writing)';
   var HUMAN = 'The team treats human control as a must-have for high-risk uses.';
-  var POINTS = { y: 2, p: 1, n: 0 };
+  var POINTS = { y: 2, pl: 1, p: 1, n: 0 };
+  var PLANNED_LINE = '“Planned, not done yet” counts like Partly: 1 point, and on a must-have it holds the verdict back until it is done.';
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  /* A "By when?" date (YYYY-MM-DD) in words, or '' when it is not a real date. */
+  function fmtDay(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return '';
+    var y = +m[1], mo = +m[2], d = +m[3], dt = new Date(Date.UTC(y, mo - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d ? d + ' ' + MONTHS[mo - 1] + ' ' + y : '';
+  }
 
   /* Question wording v3: one idea per question, plain words, "what counts as Yes" shown before the answer.
      Source: review_question_wording.md (18 Nov 2026). Codes without an entry keep the D6 text. */
@@ -276,6 +286,7 @@
     if (a === 'y2') return { state: 'yes', pts: 2, ans: 'y', done: true };
     if (q.gate && a === 'y' && !proofOk(P[q.code])) return { state: 'unconf', pts: 2, ans: 'y', done: true, flag: 'Yes, note missing' };
     if (POINTS[a] == null) return { state: 'unknown', pts: null, ans: '', done: false };
+    if (a === 'pl') return { state: 'gap', pts: POINTS.pl, ans: a, done: true, planned: true };
     return { state: a === 'y' ? 'yes' : 'gap', pts: POINTS[a], ans: a, done: true };
   }
 
@@ -304,8 +315,9 @@
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
 
   /* Evaluate one check. stage changes the wording and who is asked, not the rules. */
-  function evaluate(M, x, hotel, A, P, Who, stage) {
-    A = A || {}; P = P || {}; Who = Who || {};
+  /* By (optional): the "By when?" dates of Planned answers, { code: 'YYYY-MM-DD' }. They change only the words. */
+  function evaluate(M, x, hotel, A, P, Who, stage, By) {
+    A = A || {}; P = P || {}; Who = Who || {}; By = By || {};
     var qs = selectQuestions(M, x, hotel), area = {}, gates = [], steps = [];
     AK.forEach(function (a) { area[a] = { a: a, name: M.AREA[a].name, pts: 0, max: 0, items: [], pct: null, asked: 0, known: 0, answered: 0, na: 0, todo: 0 }; });
     qs.forEach(function (q) {
@@ -315,7 +327,7 @@
       if (s.done) r.answered++; else r.todo++;
       if (s.state === 'na') r.na++;
       r.items.push({ q: q, s: s });
-      if (q.gate) gates.push({ q: q, s: s, met: s.state === 'yes', unconf: s.state === 'unconf', known: s.state !== 'unknown' });
+      if (q.gate) gates.push({ q: q, s: s, met: s.state === 'yes', unconf: s.state === 'unconf', known: s.state !== 'unknown', planned: !!s.planned, by: s.planned ? fmtDay(By[q.code]) : '' });
     });
     var scored = [], thin = [], out = [];
     AK.forEach(function (a) {
@@ -328,6 +340,7 @@
     var unmet = gates.filter(function (g) { return g.known && !g.met && !g.unconf; });
     var unconf = gates.filter(function (g) { return g.unconf; });
     var unknownGates = gates.filter(function (g) { return !g.known; });
+    var planned = unmet.filter(function (g) { return g.planned; }), hard = unmet.length - planned.length;
     /* An area holds the verdict back only when it is below 40% and at least two of its questions have a known answer. */
     var low = scored.filter(function (r) { return r.pct < LOW && r.known >= 2; });
     var level = unmet.length || low.length ? 'stop' : unknownGates.length || unconf.length || thin.length ? 'open' : 'pilot';
@@ -336,18 +349,18 @@
     var met = gates.length - unmet.length - unconf.length - unknownGates.length;
     var names = function (l) { return joinAnd(l.map(function (r) { return r.name; })); };
     steps.push('Tool "' + x.name + '": ' + (x.arch ? M.ARCH[x.arch].s : 'other') + ' tool, ' + x.int.toLowerCase() + ' effort' + (x.add.length ? ', add-ons: ' + x.add.map(function (k) { return M.ADD[k].tag.toLowerCase(); }).join(', ') : '') + '. Stage: ' + (STAGES[stage] ? STAGES[stage].name : 'not given') + '.');
-    steps.push(qs.length + ' questions (' + gates.length + ' must-haves). Yes 2 points, Partly 1, No 0; "Don\'t know yet", "Doesn\'t apply" and the stated ways out are left out of the points. A list of what the tool needs scores 2 × (in place) ÷ (in place + not yet).');
+    steps.push(qs.length + ' questions (' + gates.length + ' must-haves). Yes 2 points, Partly 1, Planned (not done yet) 1, No 0; "Don\'t know yet", "Doesn\'t apply" and the stated ways out are left out of the points. A list of what the tool needs scores 2 × (in place) ÷ (in place + not yet).');
     AK.forEach(function (a) { var r = area[a]; if (!r.asked) return; steps.push(r.name + ': ' + (r.max ? r.pts + ' of ' + r.max + ' points = ' + Math.round(r.pct * 100) + '% (' + r.word.toLowerCase() + ')' : r.todo ? 'no known answers' : 'every answer "Doesn\'t apply": left out') + ', ' + r.answered + ' of ' + r.asked + ' answered.'); });
-    steps.push('Must-haves: ' + met + ' in place, ' + unconf.length + ' Yes without a note, ' + unmet.length + ' not in place, ' + unknownGates.length + ' not known yet.');
-    steps.push(level === 'stop' ? 'Not ready yet because ' + [unmet.length ? n_(unmet.length, 'must-have is', 'must-haves are') + ' not in place' : '', low.length ? names(low) + (low.length > 1 ? ' are' : ' is') + ' below 40% with at least two known answers' : ''].filter(Boolean).join(' and ') + '.'
+    steps.push('Must-haves: ' + met + ' in place, ' + unconf.length + ' Yes without a note, ' + (planned.length ? planned.length + ' planned (not done yet), ' : '') + (hard || !planned.length ? hard + ' not in place, ' : '') + unknownGates.length + ' not known yet.');
+    steps.push(level === 'stop' ? 'Not ready yet because ' + [hard ? n_(hard, 'must-have is', 'must-haves are') + ' not in place' : '', planned.length ? n_(planned.length, 'must-have is', 'must-haves are') + ' planned but not done yet' : '', low.length ? names(low) + (low.length > 1 ? ' are' : ' is') + ' below 40% with at least two known answers' : ''].filter(Boolean).join(' and ') + '.'
       : level === 'open' ? 'Not enough information yet: ' + [unknownGates.length ? n_(unknownGates.length, 'must-have') + ' not known' : '', unconf.length ? n_(unconf.length, 'must-have') + ' answered Yes without a note' : '', thin.length ? names(thin) + ' with no known answer' : ''].filter(Boolean).join('; ') + '. A known No would settle it; the top verdict needs every must-have known, in place and with its note.'
       : levelName('pilot', stage) + ': every must-have in place with a note (the hotel\'s own answers, not checked), and no area below 40%.' + (mid.length ? ' ' + names(mid) + ' between 40% and 74%: gaps to close.' : ''));
-    var ev = { qs: qs, area: area, scored: scored, thin: thin, out: out, gates: gates, unmet: unmet, unconf: unconf, unknownGates: unknownGates, low: low, mid: mid, level: level, steps: steps, stage: stage || '' };
-    ev.actions = actions(ev, Who, A, stage);
+    var ev = { qs: qs, area: area, scored: scored, thin: thin, out: out, gates: gates, unmet: unmet, unconf: unconf, unknownGates: unknownGates, planned: planned, low: low, mid: mid, level: level, steps: steps, stage: stage || '' };
+    ev.actions = actions(ev, Who, A, stage, By);
     var answered = 0; AK.forEach(function (a) { answered += area[a].answered; });
     var oq = {}; ev.actions.forEach(function (a) { oq[a.q.code] = 1; });
     /* One definition everywhere: answered = Yes, Partly, No or Doesn't apply; everything else is "to find out". */
-    ev.counts = { asked: qs.length, answered: answered, find: qs.length - answered, known: answered, met: met, note: unconf.length, unmet: unmet.length, unknown: unknownGates.length, gates: gates.length, open: ev.actions.length, openQs: Object.keys(oq).length };
+    ev.counts = { asked: qs.length, answered: answered, find: qs.length - answered, known: answered, met: met, note: unconf.length, unmet: unmet.length, unknown: unknownGates.length, gates: gates.length, open: ev.actions.length, openQs: Object.keys(oq).length, planned: planned.length };
     return ev;
   }
 
@@ -355,11 +368,13 @@
      Groups: must (must-have not in place), note (must-have Yes still without its note), vendor (to confirm with the vendor),
      find (to find out, by person), close (gaps to close). Each group is sorted by person. */
   var WHO_ORDER = ['gm', 'owner', 'fin', 'it', 'vendor', 'dpo', 'hr', 'dept', 'staff', 'other'];
-  function actions(ev, Who, A, stage) {
+  /* A planned item: "Finish: <action>" plus " (planned by <date>)" when a date was given. */
+  function finish(q, By) { var d = fmtDay((By || {})[q.code]); return 'Finish: ' + (d ? String(q.act).replace(/\.$/, '') + ' (planned by ' + d + ').' : q.act); }
+  function actions(ev, Who, A, stage, By) {
     var out = [], seen = {};
     var areas = ev.scored.slice().sort(function (a, b) { return a.pct - b.pct; }).concat(ev.thin);
     function push(o) { if (!seen[o.key]) { seen[o.key] = 1; out.push(o); } }
-    ev.unmet.forEach(function (g) { push({ key: g.q.code, group: 'must', q: g.q, who: g.q.who, text: g.q.act, ans: g.s.ans, flag: g.s.flag || '', must: true }); });
+    ev.unmet.forEach(function (g) { push({ key: g.q.code, group: 'must', q: g.q, who: g.q.who, text: g.planned ? finish(g.q, By) : g.q.act, ans: g.s.ans, flag: g.s.flag || '', must: true, planned: g.planned }); });
     ev.unconf.forEach(function (g) { push({ key: g.q.code, group: 'note', q: g.q, who: 'you', text: 'Add a note on ' + (g.q.short || 'this must-have') + '. ' + ((g.s.ans === 'none' ? g.q.noneAsk : g.q.ask) || 'Where is this written down?'), ans: g.s.ans, flag: g.s.flag || '', must: true }); });
     areas.forEach(function (r) {
       r.items.forEach(function (it) {
@@ -372,7 +387,7 @@
           return;
         }
         if (s.state === 'unknown') push({ key: q.code + ':find', group: who === 'vendor' ? 'vendor' : 'find', q: q, who: who, text: q.q, must: q.gate, area: r.name, flag: s.flag || '' });
-        else if (s.state === 'gap' && !q.gate) push({ key: q.code, group: 'close', q: q, who: q.who, text: q.act, ans: s.ans, area: r.name });
+        else if (s.state === 'gap' && !q.gate) push({ key: q.code, group: 'close', q: q, who: q.who, text: s.planned ? finish(q, By) : q.act, ans: s.ans, area: r.name, planned: !!s.planned });
       });
     });
     var go = { must: 0, note: 1, vendor: 2, find: 3, close: 4 };
@@ -392,10 +407,17 @@
   }
 
   function beforeWords(stage) { return stage === 'live' ? 'before you go on using it' : stage === 'sign' ? 'before you sign or start the trial' : 'before you sign'; }
+  /* The status of a Planned answer (must-haves list, PDF, team page): never "not in place". */
+  function plannedWords(stage) { return 'Planned: finish ' + beforeWords(stage); }
   /* The verdict in one sentence (result page, PDF, owner note). */
   function verdict(ev, stage) {
     var c = ev.counts, live = stage === 'live';
-    if (ev.level === 'stop') { var n = c.unmet + ev.low.length; return 'Not ready yet. ' + n_(n, 'thing') + ' to settle ' + (live ? 'before you go on using it' : 'before you sign') + '.'; }
+    if (ev.level === 'stop') {
+      var pl = c.planned || 0, n = c.unmet - pl + ev.low.length, bw = live ? 'before you go on using it' : 'before you sign';
+      if (!pl) return 'Not ready yet. ' + n_(n, 'thing') + ' to settle ' + bw + '.';
+      if (!n) return 'Not ready yet. ' + (pl === 1 ? '1 thing is planned: finish it ' : pl + ' things are planned: finish them ') + bw + '.';
+      return 'Not ready yet. ' + n_(n, 'thing') + ' to settle and ' + n_(pl, 'planned thing') + ' to finish ' + bw + '.';
+    }
     if (ev.level === 'open') {
       var bits = [c.unknown ? n_(c.unknown, 'must-have') + ' to find out' : '', c.note ? c.note + ' to confirm with a note' : ''].filter(Boolean);
       return 'Not enough information yet. ' + (bits.length ? bits.join(', ') + '.' : 'Answer at least one question in ' + joinAnd(ev.thin.map(function (r) { return r.name; })) + '.');
@@ -406,16 +428,18 @@
   /* One count line: "{met} of {M} must-haves done · {c} need a note · {k} to find out" (zero parts left out). */
   function countLine(ev, was) {
     var c = ev.counts;
-    return [c.met + ' of ' + c.gates + ' must-haves done' + (was != null && was !== c.met ? ' (was ' + was + ')' : ''), c.unmet ? c.unmet + ' not in place' : '', c.note ? c.note + (c.note === 1 ? ' needs a note' : ' need a note') : '', c.unknown ? c.unknown + ' to find out' : ''].filter(Boolean).join(' · ');
+    var pl = c.planned || 0;
+    return [c.met + ' of ' + c.gates + ' must-haves done' + (was != null && was !== c.met ? ' (was ' + was + ')' : ''), pl ? pl + ' planned' : '', c.unmet - pl ? (c.unmet - pl) + ' not in place' : '', c.note ? c.note + (c.note === 1 ? ' needs a note' : ' need a note') : '', c.unknown ? c.unknown + ' to find out' : ''].filter(Boolean).join(' · ');
   }
 
   /* Plain-words summary built from what is actually open (never a fixed sentence per level). No percentages. */
   function summary(ev, stage) {
-    var n = ev.unmet.length, u = ev.unknownGates.length, c = ev.unconf.length, out = [], live = stage === 'live';
+    var pl = (ev.planned || []).length, n = ev.unmet.length - pl, u = ev.unknownGates.length, c = ev.unconf.length, out = [], live = stage === 'live';
     var before = beforeWords(stage), names = function (l) { return joinAnd(l.map(function (r) { return r.name; })); };
     var wayOut = ev.gates.some(function (g) { return g.met && g.s.ans === 'none'; });
     if (ev.level === 'stop') {
       if (n) out.push(n + ' of the ' + ev.gates.length + ' must-haves ' + (n > 1 ? 'are' : 'is') + ' not in place. Each one on its own is reason enough to wait ' + before + '.');
+      if (pl) out.push(pl + ' of the ' + ev.gates.length + ' must-haves ' + (pl > 1 ? 'are planned, not done yet. Finish them ' : 'is planned, not done yet. Finish it ') + before + ': until then ' + (pl > 1 ? 'they hold' : 'it holds') + ' the verdict back.');
       if (u) out.push(n_(u, 'must-have is', 'must-haves are') + ' not known yet.');
       if (c) out.push(n_(c, 'must-have needs', 'must-haves need') + ' a note to confirm.');
       if (ev.low.length) out.push(names(ev.low) + (ev.low.length > 1 ? ' are' : ' is') + ' weak on what you told us, which also holds the verdict back.');
@@ -549,13 +573,14 @@
     'The written two-way link to your systems is a must-have for every tool that needs a link. Only tools that need no link are exempt. Before, all “Light” tools were exempt.',
     'The two guest questions (reaching a person, guest feedback) are asked for tools that deal with guests directly, not for every front-office or guest-experience tool.',
     'The data protection impact assessment question has one more answer: “Checked: not required (confirmed in writing)”, with a note.',
-    'The top verdict has a new name that says what was found, not what the hotel is. Results worked out with earlier rules stay in your history and are not compared line by line.'
+    'The top verdict has a new name that says what was found, not what the hotel is. Results worked out with earlier rules stay in your history and are not compared line by line.',
+    'New answer “Planned, not done yet”, offered wherever “Partly” is, with an optional date. It counts like Partly: 1 point, and on a must-have it holds the verdict back until it is done. Saved checks without it give the same result as before.'
   ];
 
   var api = { RULES: RULES, AK: AK, STAGES: STAGES, LEVELS: LEVELS, WHO: WHO, KIND: KIND, ANSWER: ANSWER, POINTS: POINTS, LOW: LOW, HIGH: HIGH, W: W, CHANGES: CHANGES, STALE: STALE,
     model: model, selectQuestions: selectQuestions, evaluate: evaluate, score: score, hasAnswer: hasAnswer, proofOk: proofOk, summary: summary, verdict: verdict, countLine: countLine, first3: first3, compare: compare, snapshot: snapshot,
     legal: legal, vendorQs: vendorQs, tickItems: tickItems, levelName: levelName, answerText: answerText, whoName: whoName, defaultWho: defaultWho, search: search, shortName: shortName, joinAnd: joinAnd,
-    paidFor: paidFor, beforeWords: beforeWords, outsideEU: outsideEU, cleanLegal: cleanLegal };
+    paidFor: paidFor, beforeWords: beforeWords, outsideEU: outsideEU, cleanLegal: cleanLegal, PLANNED_LINE: PLANNED_LINE, fmtDay: fmtDay, plannedWords: plannedWords };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RCLogic = api;
 })(typeof self !== 'undefined' ? self : (typeof globalThis !== 'undefined' ? globalThis : this));

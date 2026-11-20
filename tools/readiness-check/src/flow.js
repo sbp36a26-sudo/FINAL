@@ -25,7 +25,9 @@
       Events: refresh, loaded(n), failed, select, ask-del, cancel-del, yes-del, deleted, del-failed
    6. RECORD (persisted checks): migrate() validates a saved check (browser or file) and returns a
       safe record at the current record version, or null. Version 1 = everything before 19 Nov 2026
-      (no rv field); version 2 adds rv and sharedSig. Nothing is removed, so older builds can still read it. */
+      (no rv field); version 2 adds rv and sharedSig. Nothing is removed, so older builds can still read it.
+      20 Nov 2026: optional By { code: 'YYYY-MM-DD' } (dates of "Planned, not done yet" answers); still rv 2, because
+      the field is optional and older builds keep unknown fields. */
 (function (root) {
   'use strict';
 
@@ -127,7 +129,16 @@
   function shareSettled(rec) { return rec && rec.sharedAt ? 'shared' : 'none'; }
   /* What a shared copy depends on; when it changes the copy is out of date. */
   function shareSig(rec) {
-    return JSON.stringify([rec.useId, rec.stage, rec.hotel && rec.hotel.role, rec.hotel && rec.hotel.type, rec.hotel && rec.hotel.country, sortObj(rec.A), sortObj(rec.Who), !!(rec.share && rec.share.named)]);
+    var sig = [rec.useId, rec.stage, rec.hotel && rec.hotel.role, rec.hotel && rec.hotel.type, rec.hotel && rec.hotel.country, sortObj(rec.A), sortObj(rec.Who), !!(rec.share && rec.share.named)];
+    /* "By when?" dates count only once there is one, so copies shared before the Planned answer are not marked out of date. */
+    var by = plannedDates(rec); if (Object.keys(by).length) sig.push(sortObj(by));
+    return JSON.stringify(sig);
+  }
+  /* The "By when?" dates sent and shown: only for questions answered Planned ('pl'), only well-formed YYYY-MM-DD strings. */
+  function plannedDates(rec) {
+    var A = (rec && rec.A) || {}, B = (rec && rec.By) || {}, r = {};
+    Object.keys(B).forEach(function (k) { if (A[k] === 'pl' && typeof B[k] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(B[k])) r[k] = B[k]; });
+    return r;
   }
   function sortObj(o) { var r = {}; Object.keys(o || {}).sort().forEach(function (k) { r[k] = o[k]; }); return r; }
   function shareStale(rec) { return !!(rec && rec.sharedAt && rec.sharedSig && rec.sharedSig !== shareSig(rec)); }
@@ -169,6 +180,7 @@
     if (o.useId && known && !known(o.useId)) return null;
     var h = obj(o.hotel); o.hotel = { name: str(h.name), role: str(h.role), type: str(h.type), country: str(h.country) };
     o.stage = str(o.stage); o.A = strMap(o.A); o.P = strMap(o.P); o.Who = strMap(o.Who);
+    o.By = strMap(o.By); /* "By when?" dates of Planned answers (20 Nov 2026); absent in older data → {}. Older builds keep it as an unknown field. */
     var ow = obj(o.owner); o.owner = { ask: str(ow.ask), cost: str(ow.cost), by: str(ow.by) };
     var nx = obj(o.next); o.next = { when: str(nx.when), date: str(nx.date) };
     o.snaps = Array.isArray(o.snaps) ? o.snaps.filter(function (s) { return s && typeof s === 'object' && typeof s.level === 'string'; }) : [];
@@ -184,7 +196,7 @@
 
   var api = { STEPS: STEPS, QSTEPS: QSTEPS, FLOW: FLOW, isStep: isStep, flowNext: flowNext, safeStep: safeStep, stepNo: stepNo, placeStep: placeStep,
     stepQuestions: stepQuestions, questionSteps: questionSteps, firstOpenMust: firstOpenMust, confirmNext: confirmNext,
-    SHARE: SHARE, shareNext: shareNext, shareSettled: shareSettled, shareSig: shareSig, shareStale: shareStale,
+    SHARE: SHARE, shareNext: shareNext, shareSettled: shareSettled, shareSig: shareSig, shareStale: shareStale, plannedDates: plannedDates,
     BRIDGE: BRIDGE, bridgeNext: bridgeNext, teamNext: teamNext, RV: RV, migrate: migrate };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RCFlow = api;
