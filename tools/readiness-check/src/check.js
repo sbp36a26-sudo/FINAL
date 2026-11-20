@@ -171,7 +171,7 @@
   /* Why these tools: where the list comes from (owner request, 20 Nov 2026). Counts are computed, not typed. */
   function whyTools() {
     var n = M.USES.length, ex = M.EXCL, total = n + ex.length;
-    return '<details class="why-tools"><summary>Why these ' + n + ' tools?</summary>' +
+    return '<details class="why-tools"><summary>Why these ' + n + ' tools? <span class="why-hint">Where the list comes from, and what to do if your tool is not in it</span></summary>' +
       '<p>The list is the project\'s AI use-case catalogue (the Use-Case Catalogue tab): ' + total + ' ways hotels use AI today, across ' + M.DEPTS + ' hotel departments from revenue management to housekeeping. Each entry rests on published evidence the team opened and checked: vendor product pages, hotel-group announcements, trade press and surveys.</p>' +
       (ex.length ? '<p>' + (ex.length === 1 ? 'One entry is' : ex.length + ' entries are') + ' left out because ' + (ex.length === 1 ? 'it is' : 'they are') + ' not an AI tool you buy: ' + esc(ex.join(', ')) + '.</p>' : '') +
       '<p>The list shows kinds of tool, not brands, and it is not a ranking. \u201cHow common\u201d comes from the catalogue; where no survey exists it is the team\'s estimate.</p>' +

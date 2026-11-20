@@ -270,6 +270,12 @@ details.fold[open] > summary{margin-bottom:12px}
 @media (max-width:760px){ .hdr.compact .hdrline{font-size:0.875rem} }
 .why-tools{margin:4px 0 10px}
 .why-tools p{margin:6px 0;max-width:68ch}
+.why-tools > summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;color:var(--accent)}
+.why-tools > summary::-webkit-details-marker{display:none}
+.why-tools > summary::before{content:"\25B8";display:inline-block;width:1em;transition:transform .15s}
+.why-tools[open] > summary::before{transform:rotate(90deg)}
+.why-tools > summary:hover{text-decoration:underline}
+.why-hint{font-weight:400;color:var(--ink3);font-size:.92em}
 
 </style>
 </head>
