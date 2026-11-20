@@ -1,0 +1,22 @@
+{
+ "note": "localStorage exactly as written by the v4 build (six area steps; backup-v4/index.html, rules v4 (20 Nov 2026)) on 20 Nov 2026, before the must-haves-first change. Check A (rcmwoxta5l7ybq): tool gx-2, every must-have answered, saved at area step 3 (Technology infrastructure). Check B (rcmwoxtaz5zbm0): tool hr-2, Switzerland, managed, saved at area step 2 (Financial investment) with must-haves of later areas unanswered; it is the current check.",
+ "seenInV4": {
+  "A": {
+   "id": "rcmwoxta5l7ybq",
+   "step": 3,
+   "result": {
+    "verdict": "Not ready yet. 1 thing to settle before you sign.",
+    "count": "6 of 8 must-haves done · 1 not in place · 1 to find out"
+   }
+  },
+  "B": {
+   "id": "rcmwoxtaz5zbm0",
+   "step": 2
+  }
+ },
+ "storage": {
+  "hftp-readiness-mychecks-v1": "{\"rcmwoxta5l7ybq\":{\"id\":\"rcmwoxta5l7ybq\",\"rv\":2,\"step\":3,\"hotel\":{\"name\":\"\",\"role\":\"\",\"type\":\"independent\",\"country\":\"Portugal\"},\"stage\":\"choose\",\"useId\":\"gx-2\",\"A\":{\"P1\":\"y\",\"P5\":\"y\",\"P4\":\"k\",\"O6\":\"p\",\"X1\":\"k\",\"R-pe#0\":\"n\",\"R-pe#1\":\"y\",\"P2\":\"k\",\"P3\":\"p\",\"O4\":\"y\",\"R-sk#0\":\"n\",\"R-sk#1\":\"y\",\"F1\":\"y\",\"F2\":\"p\",\"F3\":\"p\",\"T1\":\"y\",\"T2\":\"k\",\"T3\":\"p\",\"T5\":\"k\",\"R-te#0\":\"n\",\"D5a\":\"k\",\"D5b\":\"y\",\"D4\":\"k\",\"R-da#0\":\"n\",\"R-da#1\":\"y\",\"O1\":\"y\",\"O2\":\"y\",\"G1\":\"y\",\"G2\":\"y\",\"G3\":\"p\",\"X2a\":\"k\",\"X2b\":\"k\",\"R-or#0\":\"n\"},\"P\":{\"P1\":\"Revenue manager, four hours weekly\",\"P5\":\"Revenue manager, four hours weekly\",\"F1\":\"Revenue manager, four hours weekly\",\"T1\":\"Revenue manager, four hours weekly\",\"D5b\":\"Revenue manager, four hours weekly\",\"O1\":\"Revenue manager, four hours weekly\"},\"Who\":{\"D5a\":\"vendor\"},\"owner\":{\"ask\":\"\",\"cost\":\"\",\"by\":\"\"},\"next\":{\"when\":\"\",\"date\":\"\"},\"snaps\":[{\"at\":\"2026-11-20T12:10:27.390Z\",\"rules\":\"v4 (20 Nov 2026)\",\"level\":\"stop\",\"met\":6,\"gates\":8,\"known\":21,\"asked\":30,\"open\":20,\"note\":0,\"metCodes\":[\"P1\",\"P5\",\"F1\",\"T1\",\"D5b\",\"O1\"],\"areas\":{\"pe\":75,\"sk\":67,\"fi\":67,\"te\":50,\"da\":75,\"or\":75}}],\"share\":{\"on\":false,\"named\":false},\"sharedAt\":null,\"sharedSig\":null,\"sharedMode\":null,\"created\":\"2026-11-20T12:10:26.601Z\",\"updated\":\"2026-11-20T12:10:27.570Z\"},\"rcmwoxtaz5zbm0\":{\"id\":\"rcmwoxtaz5zbm0\",\"rv\":2,\"step\":2,\"hotel\":{\"name\":\"\",\"role\":\"\",\"type\":\"managed\",\"country\":\"Switzerland\"},\"stage\":\"sign\",\"useId\":\"hr-2\",\"A\":{\"P1\":\"y\",\"P5\":\"y\",\"P4\":\"p\",\"O6\":\"p\",\"X1\":\"p\",\"R-pe#0\":\"y\",\"P2\":\"p\",\"P3\":\"p\",\"O4\":\"p\",\"R-sk#0\":\"y\",\"R-sk#1\":\"y\"},\"P\":{\"P1\":\"Revenue manager, four hours weekly\",\"P5\":\"Revenue manager, four hours weekly\"},\"Who\":{},\"owner\":{\"ask\":\"\",\"cost\":\"\",\"by\":\"\"},\"next\":{\"when\":\"\",\"date\":\"\"},\"snaps\":[],\"share\":{\"on\":false,\"named\":false},\"sharedAt\":null,\"sharedSig\":null,\"sharedMode\":null,\"created\":\"2026-11-20T12:10:27.665Z\",\"updated\":\"2026-11-20T12:10:28.069Z\"}}",
+  "hftp-readiness-current-v1": "\"rcmwoxtaz5zbm0\"",
+  "hftp-hotel-profile-v1": "{\"type\":\"managed\",\"updatedAt\":\"2026-11-20T12:10:28.069Z\",\"from\":\"readiness\",\"country\":\"CH\"}"
+ }
+}

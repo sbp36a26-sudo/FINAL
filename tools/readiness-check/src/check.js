@@ -1,6 +1,6 @@
 /* AI readiness check v4: the client-facing guided flow.
    Journey: start (who fills it in, privacy, hotel, tool, stage) → what you will need (preparation list by person)
-   → six steps → result (verdict, action plan by person, vendor questions, legal flag, owner note) → come back:
+   → must-haves (step 1) → the six areas without them (steps 2–7; an area with no question left is skipped) → result (verdict, action plan by person, vendor questions, legal flag, owner note) → come back:
    "since last time" and a re-check of open items only. History lives in this browser and in a file the hotel keeps. */
 (function () {
   'use strict';
@@ -38,6 +38,7 @@
            pdf      true while a PDF is being made
            file     a check read from a file, waiting for the 'file' confirmation
            missing  true after "Next" was pressed on the start screen with something missing (the missing items are outlined)
+           mustMissing true after "Next" was pressed on the must-haves step with a must-have unanswered (the first one is outlined)
            open     which collapsed rows of the result are open (kept across re-renders)
            touched  note fields the person has left (the hint turns red only then)
            review   the update screen's list as it was on entry, so answered questions stay in place with "Undo" */
@@ -45,11 +46,19 @@
   function known(u) { return !!M.UI[u]; }
   function blank() { return { id: newId(), rv: F.RV, step: 'start', hotel: { name: '', role: '', type: '', country: '' }, stage: '', useId: '', A: {}, P: {}, Who: {}, owner: { ask: '', cost: '', by: '' }, next: { when: '', date: '' }, snaps: [], share: { on: false, named: false }, sharedAt: null, sharedSig: null, sharedMode: null, created: new Date().toISOString(), q: '', dept: '' }; }
   /* A saved record, validated and migrated (F.migrate), as a working check; null if it cannot be opened. */
-  function fromRecord(r) { var m = F.migrate(r, known); return m ? Object.assign(blank(), m) : null; }
+  function fromRecord(r) { var m = F.migrate(r, known); if (!m) return null; m = Object.assign(blank(), m); m.step = placeOf(m, m.step); return m; }
+  /* Question steps (must-haves first, src/flow.js) for a check: which steps are in use, and is a must-have unanswered? */
+  function stepCtx(r) {
+    var x = M.UI[r.useId]; if (!x) return { tool: false, steps: [], mustOpen: false };
+    var qs = L.selectQuestions(M, x, r.hotel);
+    return { tool: true, steps: F.questionSteps(qs, L.AK), mustOpen: !!F.firstOpenMust(qs, function (q) { return L.hasAnswer(q, r.A, r.P); }) };
+  }
+  /* Where a restored check (storage, file, history) reopens: an area step at the same area; any unanswered must-have → 'must'. */
+  function placeOf(r, step) { return F.placeStep(step, stepCtx(r)); }
   var mine = lget(MY, {}); if (!mine || typeof mine !== 'object' || Array.isArray(mine)) mine = {};
   /* Records that cannot be opened by this build (tool no longer in the catalogue, damaged) stay in storage untouched. */
   function openable(k) { var r = mine[k]; return !!(r && r.id === k && F.migrate(r, known) && M.UI[r.useId]); }
-  var ui = { confirm: null, share: null, choosing: false, pdf: false, file: null, missing: false, open: {}, touched: {}, review: null, more: false };
+  var ui = { confirm: null, share: null, choosing: false, pdf: false, file: null, missing: false, mustMissing: false, open: {}, touched: {}, review: null, more: false };
   var st = (openable(lget(CUR, '')) && fromRecord(mine[lget(CUR, '')])) || blank();
   /* Shared hotel profile (key hftp-hotel-profile-v1), also used by the AI Register in this browser. */
   var PROFILE = 'hftp-hotel-profile-v1';
@@ -92,7 +101,7 @@
         '<p class="sub"><strong>Is your hotel ready to adopt this AI tool?</strong> Not about how AI assistants find your hotel.</p>' +
         '<p class="sub">One AI tool at a time. You get a verdict and a to-do list by person.</p>';
     }
-    var where = st.step === 'prep' ? 'What you will need' : st.step === 'review' ? 'Update open items' : st.step === 'result' ? 'Result' : 'Step ' + (st.step + 1) + ' of 6';
+    var where = st.step === 'prep' ? 'What you will need' : st.step === 'review' ? 'Update open items' : st.step === 'result' ? 'Result' : stepLabel(st.step);
     return '<div class="hdrtop"><p class="hdrline"><strong>AI readiness check</strong> · ' + esc(x ? L.shortName(x) : '') + ' · ' + where + '</p>' + link + '</div>';
   }
 
@@ -202,7 +211,7 @@
     var isEarly = st.stage === 'explore' || st.stage === 'choose', whos = Object.keys(L.WHO).filter(function (w) { return g[w]; });
     var h = '<div class="prog"><div class="bar"><i style="width:4%"></i></div></div>';
     h += '<section class="panel"><h2>What you will need</h2><p class="sub"><b>' + qs.length + ' questions, ' + gates.length + ' of them must-haves.</b> You will probably need to ask colleagues or the vendor.</p>' +
-      '<p class="sub">One must-have at No means “Not ready yet”, so get those answers first. Weak areas can also hold the verdict back.</p>' +
+      '<p class="sub">The check starts with the must-haves, because one must-have at No means “Not ready yet”. Then come the areas, without the must-haves. Weak areas can also hold the verdict back.</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="begin" id="begin-top">Start now</button><button type="button" class="btn" data-act="back">Back</button></div></section>';
     h += '<section class="panel"><h3>Who to ask</h3><p class="sub">You will probably need: ' + esc(whos.map(function (w) { return L.WHO[w] + ' (' + g[w].length + ')'; }).join(', ')) + '. Copy each person\'s questions and send them now.</p><div class="wholist">' + whos.map(function (w) {
       var m = g[w].filter(function (q) { return q.gate; }).length;
@@ -240,7 +249,10 @@
       '<input type="text" id="pf-' + q.code + '" data-proof="' + q.code + '" value="' + esc(st.P[q.code] || '') + '" aria-describedby="nh-' + q.code + '">' +
       '<span class="notehint' + (bad ? ' bad' : '') + (ok ? ' ok' : '') + '" id="nh-' + q.code + '">' + (ok ? 'Note added.' : 'Add at least two words, for example: ' + esc(ex)) + '</span></div>';
   }
-  function qBlock(q) {
+  /* opt.area: show a small tag naming the question's area (on the must-haves step and the update screen's must-haves).
+     opt.need: this is the first unanswered must-have after a blocked "Next" (outlined, with a short line). */
+  function qBlock(q, opt) {
+    opt = opt || {};
     var isEarly = st.stage === 'explore' || st.stage === 'choose', h;
     if (q.list) {
       h = '<fieldset class="qa" id="fs-' + q.code + '"><legend><span class="qtext">' + esc(q.q) + '</span></legend><div class="items">';
@@ -255,7 +267,8 @@
       return h;
     }
     var cur = st.A[q.code] || '', name = 'q-' + q.code, s = L.score(q, st.A, st.P);
-    h = '<fieldset class="qa' + (q.gate ? ' must' : '') + '" id="fs-' + q.code + '"><legend>' + (q.gate ? '<span class="musttag">Must-have</span> ' : '') + '<span class="qtext">' + esc(q.q) + '</span></legend>' +
+    h = '<fieldset class="qa' + (q.gate ? ' must' : '') + (opt.need ? ' missing' : '') + '" id="fs-' + q.code + '"><legend>' + (q.gate ? '<span class="musttag">Must-have</span> ' : '') + (opt.area ? '<span class="areatag">' + esc(M.AREA[q.a].name) + '</span> ' : '') + '<span class="qtext">' + esc(q.q) + '</span></legend>' +
+      (opt.need ? '<p class="needline" role="alert">Answer this to continue (“Don\'t know yet” is fine).</p>' : '') +
       (q.help ? '<p class="meta">' + esc(q.help) + '</p>' : '') +
       (q.gate && q.yes ? '<p class="yesline">What counts as Yes: ' + esc(q.yes) + '</p>' : '') +
       (s.stale ? '<p class="staleline" role="status">' + esc(L.STALE) + '</p>' : '') +
@@ -267,7 +280,11 @@
     return h + '</fieldset>';
   }
   function allQs() { return L.selectQuestions(M, M.UI[st.useId], st.hotel); }
-  function areaQs(a) { return allQs().filter(function (q) { return q.a === a; }); }
+  /* Must-haves first: the question steps in use for this check ('must', then area indexes 0..5 that still have questions). */
+  function qSteps() { return F.questionSteps(allQs(), L.AK); }
+  function stepQs(step) { return F.stepQuestions(allQs(), step, L.AK); }
+  function stepLabel(step) { var n = qSteps(); return 'Step ' + F.stepNo(step, n) + ' of ' + n.length; }
+  function firstOpenMust() { return F.firstOpenMust(allQs(), function (q) { return L.hasAnswer(q, st.A, st.P); }); }
   /* Step footer: one definition of "answered" (Yes, Partly, No or Doesn't apply), "Don't know" on its own, notes still missing. */
   function footText(qs) {
     var done = 0, k = 0, note = 0;
@@ -279,12 +296,25 @@
     });
     return [done + ' of ' + qs.length + ' answered', k ? k + ' to find out' : '', note ? note + (note === 1 ? ' Yes needs a note' : ' Yes answers need a note') : ''].filter(Boolean).join(' · ');
   }
-  function vStep(i) {
-    var a = L.AK[i], area = M.AREA[a], qs = areaQs(a);
-    var h = '<div class="prog"><div class="bar" role="img" aria-label="Step ' + (i + 1) + ' of 6"><i style="width:' + Math.round((i + 1) / 7 * 100) + '%"></i></div></div>';
-    h += '<section class="panel"><div class="stephead"><h2>' + esc(area.name) + '</h2><p class="meta">' + esc(area.one) + '</p></div><div>' + qs.map(qBlock).join('') + '</div></section>';
-    h += '<div class="navrow"><button type="button" class="btn back" data-act="back">Back</button><button type="button" class="btn primary" data-act="next">' + (i === 5 ? 'See my result' : 'Next') + '</button><span class="meta"><span id="stepfoot">' + esc(footText(qs)) + '</span>. Anything left open goes on your “to find out” list.</span></div>';
+  var MUST_INTRO = 'Start with the must-haves. These decide the verdict, so they come first. Every one needs an answer; if you do not know yet, choose “Don\'t know yet” and it goes on your list to find out.';
+  /* A question step: 'must' (every must-have, with its area tag) or an area index (that area without its must-haves). */
+  function vStep(step) {
+    var steps = qSteps(), n = F.stepNo(step, steps), N = steps.length, qs = stepQs(step), isMust = step === 'must', last = n === N;
+    var need = isMust && ui.mustMissing ? firstOpenMust() : null;
+    var h = '<div class="prog"><div class="bar" role="img" aria-label="Step ' + n + ' of ' + N + '"><i style="width:' + Math.round(n / (N + 1) * 100) + '%"></i></div></div>';
+    h += '<section class="panel"><div class="stephead"><h2>' + (isMust ? 'Must-haves' : esc(M.AREA[L.AK[step]].name)) + '</h2><p class="meta">' + (isMust ? esc(MUST_INTRO) : esc(M.AREA[L.AK[step]].one)) + '</p></div><div>' +
+      qs.map(function (q) { return qBlock(q, { area: isMust, need: q.code === need }); }).join('') + '</div></section>';
+    h += '<div class="navrow"><button type="button" class="btn back" data-act="back">Back</button><button type="button" class="btn primary" data-act="next" id="next">' + (last ? 'See my result' : 'Next') + '</button><span class="meta"><span id="stepfoot">' + esc(footText(qs)) + '</span>. ' + (isMust ? 'Every must-have needs an answer to go on.' : 'Anything left open goes on your “to find out” list.') + '</span></div>';
     return h;
+  }
+  /* "Next" on the must-haves step is always enabled. With a must-have unanswered it does not move on: it outlines the
+     first one, says "Answer this to continue", scrolls to it and focuses its first answer (same pattern as the start screen). */
+  function pointToMust() {
+    var c = firstOpenMust(); if (!c) return false;
+    ui.mustMissing = true; render();
+    var box = $('fs-' + c), f = box && box.querySelector('input');
+    try { if (box) box.scrollIntoView({ block: 'center' }); if (f) f.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    return true;
   }
   function isOpen(q) {
     var s = L.score(q, st.A, st.P);
@@ -323,7 +353,7 @@
     h += '<section class="panel"><h2>' + (n ? plural(n, 'thing is', 'things are') + ' still holding the verdict back. ' : 'No must-have is open. ') + (m ? plural(m, 'smaller gap is', 'smaller gaps are') + ' below.' : '') + '</h2>' +
       '<p class="sub">' + plural(e.counts.open, 'open item') + ' in ' + plural(e.counts.openQs, 'question') + '. Change what has moved on since ' + esc(fmtDate(lastSnap() && lastSnap().at || st.updated)) + '; leave the rest.' + (e.low.length ? ' Weak on what you told us: ' + esc(L.joinAnd(e.low.map(function (r) { return r.name; }))) + '.' : '') + '</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="to-result">See updated result</button><button type="button" class="btn" data-act="edit">Go through all questions</button></div></section>';
-    var blk = function (q) { return isOpen(q) ? qBlock(q) : doneBlock(q); };
+    var blk = function (q) { return isOpen(q) ? qBlock(q, { area: q.gate }) : doneBlock(q); };
     if (must.length) h += '<section class="panel"><h3>Must-haves</h3><div>' + must.map(blk).join('') + '</div></section>';
     L.AK.forEach(function (a) { var g = rest.filter(function (q) { return q.a === a; }); if (g.length) h += '<section class="panel"><h3>' + esc(M.AREA[a].name) + ' <span class="meta">smaller gaps</span></h3><div>' + g.map(blk).join('') + '</div></section>'; });
     if (!list.length) h += '<section class="panel"><p>Nothing is open.</p></section>';
@@ -441,15 +471,18 @@
     h += sharePanel();
     h += row('method', 'How this result was worked out', '<ol class="steps">' + e.steps.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>' +
       '<p class="meta">Each area: points from the questions you could answer (Yes 2, Partly 1, No 0). Below 40% holds the verdict back once at least two questions in the area have a known answer; 40–74% is a gap to close; 75% or more is strong. There is no overall score. These cut-offs are the project team\'s judgement, still to be tested with hotels.</p>' +
+      '<p class="meta">' + esc(ORDER_LINE) + '</p>' +
       '<h4>Changed in rules v4</h4><ul class="tight">' + L.CHANGES.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       '<p class="meta">Rules ' + esc(L.RULES) + '. Questions from the project\'s D6 readiness research, reworded after an internal wording review on 18 Nov 2026. Not yet reviewed by outside experts or tested with hotels. Must-haves are the team\'s judgement. Answers and notes are self-declared and not checked. Self-assessment, not legal or investment advice.</p>');
     h += '<section class="panel more"><h3>More</h3>' +
       '<div class="morerow"><button type="button" class="btn" data-act="file">Save as file</button><span class="meta">A copy you keep and can open again here, on any computer.</span></div>' +
       '<div class="morerow"><button type="button" class="btn" data-act="to-register">Add to the AI Register</button><span class="meta">Opens the team\'s AI Register with this tool, to list your hotel\'s AI tools.</span></div>' +
-      '<div class="morerow"><button type="button" class="btn" data-act="edit">Go through all questions</button><span class="meta">From step 1, with your answers filled in.</span></div>' +
+      '<div class="morerow"><button type="button" class="btn" data-act="edit">Go through all questions</button><span class="meta">From the must-haves (step 1), with your answers filled in.</span></div>' +
       '<p class="meta">Your check is kept in this browser. Come back when answers arrive: “Your checks” at the top of the page lists it.</p></section>';
     return h;
   }
+  /* One line on the question order (20 Nov 2026), on the result page and in the PDF. */
+  var ORDER_LINE = 'The must-haves were asked first (step 1), then each area without them. The order does not change the result: the same answers give the same verdict.';
   function sharePhase() { return ui.share && ui.share.id === st.id ? ui.share.phase : F.shareSettled(st); }
   function sharePanel() {
     var mode = S.state(), ph = sharePhase(), busy = ph === 'sending' || ph === 'withdrawing', stale = F.shareStale(st), where = st.sharedMode || mode;
@@ -609,6 +642,7 @@
       }
       head('How this was worked out');
       e.steps.forEach(function (t) { para(t, 9); });
+      para(ORDER_LINE, 9);
       para('Must-haves and cut-offs are the project team\'s judgement, not yet tested with hotels. Answers and notes are self-declared and not checked. There is no overall score.', 9, 0, 'normal', 90);
       var n = doc.getNumberOfPages();
       for (var i = 1; i <= n; i++) { doc.setPage(i); f('normal', 7.5, 120); doc.text(pdfSafe('AI readiness check (student prototype), EHL SBP Group 36 for HFTP. Self-assessment, not legal or investment advice.'), Mg, H - 12); doc.text(pdfSafe('Rules ' + L.RULES + '. Answers and notes are self-declared and not checked.'), Mg, H - 8); doc.text('Page ' + i + ' of ' + n, W - Mg, H - 8, { align: 'right' }); }
@@ -632,6 +666,7 @@
   function render(keepFocus) {
     var act = document.activeElement, fid = keepFocus && act && act.id ? act.id : null;
     if (!F.isStep(st.step) || (st.step !== 'start' && !M.UI[st.useId])) st.step = 'start'; // never show an impossible screen
+    else if (F.QSTEPS.indexOf(st.step) >= 0 && !F.stepNo(st.step, qSteps())) st.step = placeOf(st, st.step); // a step with no question left (hotel details changed)
     var html = st.step === 'start' ? vStart() : st.step === 'prep' ? vPrep() : st.step === 'review' ? vReview() : st.step === 'result' ? vResult() : vStep(st.step);
     var v = $('view');
     $('hdr').innerHTML = header(); $('hdr').className = st.step === 'start' ? 'hdr' : 'hdr compact';
@@ -645,12 +680,12 @@
   }
   /* Move to a step. Only send(), openCheck(), openFile() and the confirm handlers call this; any navigation closes a confirmation. */
   function go(step, replace) {
-    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.file = null; ui.choosing = false; ui.missing = false; ui.open = {}; ui.touched = {}; ui.review = null;
+    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.file = null; ui.choosing = false; ui.missing = false; ui.mustMissing = false; ui.open = {}; ui.touched = {}; ui.review = null;
     st.step = step; if (step === 'result') takeSnap(); else keep();
     try { history[replace ? 'replaceState' : 'pushState']({ rc: step, id: st.id }, ''); } catch (e) { /* ignore */ }
     render(); try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } $('view').focus({ preventScroll: true });
   }
-  function flowCtx() { var t = !!M.UI[st.useId]; return { tool: t, ready: !!(t && st.hotel.type && st.stage && !ui.choosing) }; }
+  function flowCtx() { var t = !!M.UI[st.useId]; return { tool: t, ready: !!(t && st.hotel.type && st.stage && !ui.choosing), steps: t ? qSteps() : [], mustDone: t && !firstOpenMust() }; }
   /* The only way the journey moves: an event from the FLOW table (src/flow.js). Returns false if not allowed here. */
   function send(ev) {
     var to = F.flowNext(st.step, ev, flowCtx());
@@ -665,8 +700,8 @@
       var r = openable(s.id) && fromRecord(mine[s.id]);
       if (r) st = r; else rc = 'start';
     }
-    ui.confirm = null; ui.file = null; ui.choosing = false; ui.missing = false; ui.open = {}; ui.touched = {}; ui.review = null;
-    st.step = F.safeStep(rc, flowCtx()); if (st.step === 'result') takeSnap(); else keep(); render();
+    ui.confirm = null; ui.file = null; ui.choosing = false; ui.missing = false; ui.mustMissing = false; ui.open = {}; ui.touched = {}; ui.review = null;
+    st.step = placeOf(st, rc); if (st.step === 'result') takeSnap(); else keep(); render();
   });
   function openCheck(id, step) { var r = openable(id) && fromRecord(mine[id]); if (!r) { toast('This check cannot be opened here.'); return; } st = r; go(step); }
   /* "Next" on the start screen is always enabled. With something missing it points to the first missing item
@@ -688,6 +723,7 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b || b.disabled) return;
     var a = b.getAttribute('data-act'), id = b.getAttribute('data-id');
+    if (a === 'next' && st.step === 'must' && pointToMust()) return;
     if (ACT_EVENT[a]) { send(ACT_EVENT[a]); return; }
     if (a === 'prep') { if (!pointToMissing()) send('prep'); return; }
     if (a === 'home') { if (st.step === 'start') scrollToId('mychecks'); else if (send('home')) scrollToId('mychecks'); return; }
@@ -697,7 +733,7 @@
     if (a === 'undo') { var uc = b.getAttribute('data-code'); undo(uc); keep(); render(); var fs = $('fs-' + uc), fi = fs && fs.querySelector('input,select'); if (fi) fi.focus({ preventScroll: true }); return; }
     if (a === 'pick') {
       if (!M.UI[id]) return;
-      if (st.useId && st.useId !== id && Object.keys(st.A).length) { st = Object.assign(blank(), { hotel: st.hotel, stage: st.stage }); toast('New tool, new check. The earlier one stays in “Your checks”.'); }
+      if (st.useId && st.useId !== id && Object.keys(st.A).length) { st = Object.assign(blank(), { hotel: Object.assign({}, st.hotel), stage: st.stage }); toast('New tool, new check. The earlier one stays in “Your checks”.'); }
       st.useId = id; ui.choosing = false; keep(); render();
       /* Say what happened and what comes next: focus the "Selected" card, bring the stage question into view. */
       try { var pk = $('picked'), sg = $('box-stage'); if (pk) pk.focus({ preventScroll: true }); if (sg && !st.stage) sg.scrollIntoView({ block: 'center' }); else if (pk) pk.scrollIntoView({ block: 'nearest' }); } catch (e3) { /* ignore */ }
@@ -713,13 +749,13 @@
     else if (a === 'rm-yes') {
       if (!confirmed('rm', id)) { render(); return; }
       delete mine[id]; lset(MY, mine);
-      if (st.id === id) { var h0 = st.hotel; st = blank(); st.hotel = h0; }
+      if (st.id === id) { var h0 = Object.assign({}, st.hotel); st = blank(); st.hotel = h0; }
       keep(); render(); toast('Removed from this browser.');
     }
     else if (a === 'new') { if (st.step === 'result') { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'new').c; render(); } }
     else if (a === 'new-yes') {
       if (!confirmed('new') || st.step !== 'result') { render(); return; }
-      var h = st.hotel; st = blank(); st.hotel = h; go('start');
+      var h = Object.assign({}, st.hotel); st = blank(); st.hotel = h; go('start');
     }
     else if (a === 'copy-prep') { var w = b.getAttribute('data-who'), qs = byWho(L.selectQuestions(M, M.UI[st.useId], st.hotel))[w] || []; copy(prepText(w, qs), 'Questions'); }
     else if (a === 'copy-find') copy(findText(b.getAttribute('data-who')), 'Questions');
@@ -792,7 +828,7 @@
     if (el.id === 'q') { st.q = el.value; refreshPick(); }
     else if (el.hasAttribute('data-h')) { st.hotel[el.getAttribute('data-h')] = el.value; keep(); var nw = $('name-warn'); if (nw) nw.textContent = nameWarn(); }
     else if (el.hasAttribute('data-o')) { st.owner[el.getAttribute('data-o')] = el.value; keep(); }
-    else if (el.hasAttribute('data-proof')) { st.P[el.getAttribute('data-proof')] = el.value; keep(); noteHint(el); var sf = $('stepfoot'); if (sf && typeof st.step === 'number') sf.textContent = footText(areaQs(L.AK[st.step])); }
+    else if (el.hasAttribute('data-proof')) { st.P[el.getAttribute('data-proof')] = el.value; keep(); noteHint(el); var sf = $('stepfoot'); if (sf && F.QSTEPS.indexOf(st.step) >= 0) sf.textContent = footText(stepQs(st.step)); }
   });
   function refreshPick() { var pl = $('picklist'), pc = $('pickcount'); if (pl) pl.innerHTML = pickList(st.q || ''); if (pc) pc.textContent = pickCount(st.q || ''); }
   /* The note hint is updated in place (no re-render while typing): grey until the field has been left with too little. */
@@ -811,7 +847,7 @@
   /* Coming from the AI Register: #use=<use id> starts a check for that tool. */
   function fromHash() {
     var m = /(?:^|[#&])use=([a-z]+-\d+)/.exec(location.hash || ''); if (!m || !M.UI[m[1]]) return;
-    if (st.useId !== m[1]) { var h0 = st.hotel; st = blank(); st.hotel = h0; adoptProfile(); st.useId = m[1]; }
+    if (st.useId !== m[1]) { var h0 = Object.assign({}, st.hotel); st = blank(); st.hotel = h0; adoptProfile(); st.useId = m[1]; }
     ui.confirm = null; ui.file = null; ui.choosing = false; ui.missing = false;
     st.step = 'start'; keep();
     return true;
@@ -827,7 +863,8 @@
     state: function () {
       return { step: st.step, id: st.id, useId: st.useId, confirm: ui.confirm ? { kind: ui.confirm.kind, id: ui.confirm.id } : null, choosing: ui.choosing,
                share: sharePhase(), shareStale: F.shareStale(st), sharedAt: st.sharedAt, store: S.state(), bridge: host.state, pdf: ui.pdf,
-               snaps: (st.snaps || []).length, checks: Object.keys(mine).filter(openable), missing: st.step === 'start' ? missing().map(function (m) { return m.k; }) : [], sharing: SHARING_ON, rules: L.RULES };
+               snaps: (st.snaps || []).length, checks: Object.keys(mine).filter(openable), missing: st.step === 'start' ? missing().map(function (m) { return m.k; }) : [], sharing: SHARING_ON, rules: L.RULES,
+               steps: M.UI[st.useId] ? qSteps() : [], stepNo: F.QSTEPS.indexOf(st.step) >= 0 ? F.stepNo(st.step, qSteps()) : 0, mustOpen: st.step === 'must' ? firstOpenMust() : null, mustMissing: ui.mustMissing };
     },
     record: function () { return JSON.parse(JSON.stringify(st)); },
     send: send,

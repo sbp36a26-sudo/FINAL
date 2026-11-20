@@ -3,9 +3,14 @@
    the pages hold the current value and only change it through these functions.
 
    1. FLOW (check page, st.step): where the hotel is in its journey.
-      States: 'start' | 'prep' | 0..5 (the six steps) | 'review' (open items only) | 'result'
+      States: 'start' | 'prep' | 'must' (the must-haves, step 1) | 0..5 (the six areas, without their must-haves)
+              | 'review' (open items only) | 'result'
       Events: prep, back, begin, next, review, result, edit, new, home (v4: header link "Your checks", any screen → start)
-      Guards: 'prep' needs a tool, how the hotel is run and a stage; every state but 'start' needs a known tool.
+      Guards: 'prep' needs a tool, how the hotel is run and a stage; every state but 'start' needs a known tool;
+              'next' from 'must' needs every must-have answered (ctx.mustDone; "Don't know yet" counts as an answer).
+      Must-haves first (20 Nov 2026): the question steps in use (ctx.steps, from questionSteps()) are 'must' then
+      each area that still has a question once its must-haves moved to step 1; an area with none is skipped.
+      An area step keeps its number (area index 0..5), so a check saved by the six-step build reopens at the same area.
    2. CONFIRM (check page): at most one confirmation open at a time; any navigation closes it.
       States: null | {kind:'new'} | {kind:'rm', id} | {kind:'file', id}
       Events: ask(kind, id), cancel, yes, nav
@@ -25,27 +30,39 @@
   'use strict';
 
   // ---------- 1. FLOW ----------
-  var STEPS = ['start', 'prep', 0, 1, 2, 3, 4, 5, 'review', 'result'];
+  var QSTEPS = ['must', 0, 1, 2, 3, 4, 5]; // question steps, in screen order
+  var STEPS = ['start', 'prep'].concat(QSTEPS, ['review', 'result']);
   function isStep(s) { return STEPS.indexOf(s) >= 0; }
+  /* '@first', '@next', '@prev' are resolved against the question steps in use (ctx.steps). */
   var FLOW = {
     start: { prep: 'prep' },
-    prep: { back: 'start', begin: 0 },
-    review: { result: 'result', edit: 0 },
-    result: { review: 'review', edit: 0, new: 'start' }
+    prep: { back: 'start', begin: '@first' },
+    review: { result: 'result', edit: '@first' },
+    result: { review: 'review', edit: '@first', new: 'start' }
   };
-  [0, 1, 2, 3, 4, 5].forEach(function (i) { FLOW[i] = { back: i === 0 ? 'prep' : i - 1, next: i === 5 ? 'result' : i + 1 }; });
+  QSTEPS.forEach(function (s) { FLOW[s] = { back: '@prev', next: '@next' }; });
   /* 'home' (v4): the "Your checks" link in the header. From any screen but start, back to the start screen; the check is kept. */
-  ['prep', 0, 1, 2, 3, 4, 5, 'review', 'result'].forEach(function (s) { FLOW[s].home = 'start'; });
-  /* ctx: { tool: bool (a known tool is chosen), ready: bool (tool + hotel type + stage) }.
+  STEPS.forEach(function (s) { if (s !== 'start') FLOW[s].home = 'start'; });
+  function inUse(ctx) { return Array.isArray(ctx.steps) ? ctx.steps.filter(function (s) { return QSTEPS.indexOf(s) >= 0; }) : QSTEPS; }
+  function stepAfter(step, steps) { var i = QSTEPS.indexOf(step); for (var k = 0; k < steps.length; k++) if (QSTEPS.indexOf(steps[k]) > i) return steps[k]; return null; }
+  function stepBefore(step, steps) { var i = QSTEPS.indexOf(step), r = null; steps.forEach(function (s) { if (QSTEPS.indexOf(s) < i) r = s; }); return r; }
+  /* ctx: { tool: bool (a known tool is chosen), ready: bool (tool + hotel type + stage),
+            steps: question steps in use (default all seven), mustDone: bool (every must-have has an answer) }.
      Returns the next step, or null when the event is not allowed in this state. */
   function flowNext(step, ev, ctx) {
     ctx = ctx || {};
     var row = FLOW[step]; if (!row || !Object.prototype.hasOwnProperty.call(row, ev)) return null;
-    var to = row[ev];
+    var to = row[ev], steps = inUse(ctx), n;
     if (ev === 'prep' && !ctx.ready) return null;
+    if (step === 'must' && ev === 'next' && !ctx.mustDone) return null;
+    if (to === '@first') to = steps.length ? steps[0] : 'result';
+    else if (to === '@next') { n = stepAfter(step, steps); to = n === null ? 'result' : n; }
+    else if (to === '@prev') { n = stepBefore(step, steps); to = n === null ? 'prep' : n; }
     if (to !== 'start' && !ctx.tool) return null;
     return to;
   }
+  /* "Step n of N": n for a step in use (1-based), 0 if the step is not in use. */
+  function stepNo(step, steps) { return steps.indexOf(step) + 1; }
   /* A step coming from storage, a file or browser history: keep it if it can be shown, else a safe one. */
   function safeStep(step, ctx) {
     ctx = ctx || {};
@@ -53,6 +70,33 @@
     if (!isStep(step)) return 'start';
     if (step !== 'start' && !ctx.tool) return 'start';
     return step;
+  }
+  /* Where a restored check reopens (pure). ctx: { tool, steps (in use), mustOpen (a must-have has no answer) }.
+     A question step with a must-have unanswered → 'must'; an area step reopens at the same area, or the next
+     step in use if that area has no question left (else the last one); other steps as safeStep. */
+  function placeStep(step, ctx) {
+    ctx = ctx || {};
+    var s = safeStep(step, ctx), steps = inUse(ctx);
+    if (QSTEPS.indexOf(s) < 0) return s;
+    if (ctx.mustOpen && steps.indexOf('must') >= 0) return 'must';
+    if (steps.indexOf(s) >= 0) return s;
+    var n = stepAfter(s, steps); if (n !== null) return n;
+    return steps.length ? steps[steps.length - 1] : 'review';
+  }
+  /* Which questions go on which step. qs: the selected questions in area order ({code, a, gate}); ak: the area keys. */
+  function stepQuestions(qs, step, ak) {
+    if (step === 'must') return qs.filter(function (q) { return q.gate; });
+    return qs.filter(function (q) { return !q.gate && q.a === ak[step]; });
+  }
+  function questionSteps(qs, ak) {
+    var out = qs.some(function (q) { return q.gate; }) ? ['must'] : [];
+    ak.forEach(function (a, i) { if (stepQuestions(qs, i, ak).length) out.push(i); });
+    return out;
+  }
+  /* The first must-have without an answer (screen order), or null. answered(q) says whether q has an answer. */
+  function firstOpenMust(qs, answered) {
+    var g = qs.filter(function (q) { return q.gate && !answered(q); });
+    return g.length ? g[0].code : null;
   }
 
   // ---------- 2. CONFIRM ----------
@@ -138,7 +182,8 @@
     return o;
   }
 
-  var api = { STEPS: STEPS, FLOW: FLOW, isStep: isStep, flowNext: flowNext, safeStep: safeStep, confirmNext: confirmNext,
+  var api = { STEPS: STEPS, QSTEPS: QSTEPS, FLOW: FLOW, isStep: isStep, flowNext: flowNext, safeStep: safeStep, stepNo: stepNo, placeStep: placeStep,
+    stepQuestions: stepQuestions, questionSteps: questionSteps, firstOpenMust: firstOpenMust, confirmNext: confirmNext,
     SHARE: SHARE, shareNext: shareNext, shareSettled: shareSettled, shareSig: shareSig, shareStale: shareStale,
     BRIDGE: BRIDGE, bridgeNext: bridgeNext, teamNext: teamNext, RV: RV, migrate: migrate };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

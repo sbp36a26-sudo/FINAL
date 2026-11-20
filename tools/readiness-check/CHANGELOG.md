@@ -1,5 +1,28 @@
 # Readiness check: changelog
 
+## Flow update: must-haves first (20 Nov 2026, rules stay v4)
+
+Owner's request: "The first question section is the must-haves, with needed answers, and then like normal before, so the person answers the hardest and most important part at the start." Rollback: `backup-v4/` (the six-step build).
+
+| # | Item | Status |
+|---|---|---|
+| 1 | New step 1 **Must-haves** before the area steps: every question `selectQuestions` marks `gate` (6 to 12 by tool, conditional ones included), in area order, each with a small area tag, its "What counts as Yes", note field and behaviour; the owner's intro line | **Done** (`vStep('must')`, `.areatag`) |
+| 2 | "With needed answers": Next stays enabled; with a must-have unanswered it outlines the first one, says "Answer this to continue (“Don't know yet” is fine).", scrolls to it, focuses it and does not move on. "Don't know yet" counts as an answer; a blank or an answer no longer offered does not. Other steps unchanged | **Done** (FLOW guard `mustDone`, `pointToMust()`, `L.hasAnswer`) |
+| 3 | The six area steps without the must-haves; an area with no question left is skipped; "Step n of 7" (or fewer) | **Done** (`F.questionSteps`, `F.stepQuestions`). Financial investment is skipped for most tools (its questions are must-haves) |
+| 4 | Scoring, verdicts, area words and results unchanged; proof for old vs new order | **Done**: `tests/mustfirst.test.mjs` walks both orders for 98 tools × 5 hotel set-ups × 10 answer sets (4,900) and finds identical evaluation, verdict, counts, summary, first three, vendor questions and snapshot; the browser walk compares the result with the six-step build for a chatbot, a high-risk HR tool and a light tool |
+| 5 | Texts mentioning six steps or step numbers | **Done**: header, progress, "More" ("From the must-haves (step 1)"), one line on the order in "How this result was worked out" on the page and in the PDF. **Rules not bumped** (stay `v4 (20 Nov 2026)`): nothing in the scoring changed, and a new version would have marked every saved v4 result as "worked out with earlier rules" and stopped the "since last time" comparison. "Changed in rules v4" is unchanged for the same reason. The team page had no step text |
+| 6 | Saved data | **Done**: area steps keep their internal number (area 0–5), so a check saved at area step k reopens at the same area in the new numbering; any unanswered must-have → the must-haves step; "review"/"result" unchanged; an area with no question left → the next step in use (`F.placeStep`). Fixtures written by the six-step build before any change: `tests/fixtures/storage-v4.json`, `check-v4.json`. v3 fixtures still open |
+| 7 | Prep screen | **Done**: must-haves section and "Start now" kept; one sentence says the check starts with the must-haves |
+| 8 | Earlier owner decisions | Kept: header subtitle, "Start a new check" in the result's top row, "Why these 98 tools?", aligned hotel fields, sharing on, no score, legal-check questions |
+
+Also fixed: a new check (picking another tool, "Start a new check", `#use=` from the AI Register) shared the earlier check's hotel object in memory, so changing how the hotel is run in the new check also rewrote the earlier check's saved hotel (and so its questions). Each check now gets its own copy. Found while writing the fixture.
+
+Not changed: storage keys, record format (`rv: 2`), file format (`v: 3`), answer codes, level keys, hub messages, the shared profile key, the `#use=` hash.
+
+### Old test expectations changed (each encoded the old step order)
+
+In `tests/flow.test.mjs`: `prep --begin-->` was `0`, now `'must'`; `0 --back-->` was `'prep'`, now `'must'`; `result --edit-->` and `review --edit-->` were `0`, now `'must'`. The "every other event is refused" loop now runs with every must-have answered, so `must --next-->` counts as a table entry. `logic.test.mjs` and `v4.test.mjs` are unchanged and green. `tests/browser/walk.cjs` encodes the six-step order; it is kept as the v4 record (run it against `backup-v4/`), and `tests/browser/mustfirst.cjs` is the new browser proof.
+
 ## v4 (20 Nov 2026)
 
 Build pass after three audits (`reports/audit-readiness/1_fact_logic.md`, `2_journey_visual.md`, `3_benchmark.md`) and the build ruling in `reports/Council - readiness check audit.md`, section A, with the owner's overrides (sharing stays on; the header sentence stays; "Start a new check" stays in the result's top row; verdict name in one constant; legal-check questions stay). Notes for people: `reports/audit-readiness/4_build_notes.md`. Rollback: `backup-v3/`.

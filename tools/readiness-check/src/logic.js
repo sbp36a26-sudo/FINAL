@@ -278,6 +278,17 @@
     return { state: a === 'y' ? 'yes' : 'gap', pts: POINTS[a], ans: a, done: true };
   }
 
+  /* Has the question an answer the page still offers? "Don't know yet" counts; blank, a stale answer (no longer
+     offered) or an unknown value does not. Used by the must-haves step (Next needs one on every must-have) and when a
+     saved check reopens. Not used for scoring. */
+  function hasAnswer(q, A, P) {
+    A = A || {};
+    if (q.list) return q.items.every(function (_, i) { return !!A[q.code + '#' + i]; });
+    var a = A[q.code] || ''; if (!a) return false;
+    if (a === 'k') return true;
+    return score(q, A, P).state !== 'unknown';
+  }
+
   /* Words for an area instead of a percentage (rules v4, J21). */
   function areaWord(r, low) {
     if (!r.max) return r.todo ? { word: 'Too little to say', tone: 'na' } : { word: "Doesn't apply", tone: 'na' };
@@ -540,7 +551,7 @@
   ];
 
   var api = { RULES: RULES, AK: AK, STAGES: STAGES, LEVELS: LEVELS, WHO: WHO, KIND: KIND, ANSWER: ANSWER, POINTS: POINTS, LOW: LOW, HIGH: HIGH, W: W, CHANGES: CHANGES, STALE: STALE,
-    model: model, selectQuestions: selectQuestions, evaluate: evaluate, score: score, proofOk: proofOk, summary: summary, verdict: verdict, countLine: countLine, first3: first3, compare: compare, snapshot: snapshot,
+    model: model, selectQuestions: selectQuestions, evaluate: evaluate, score: score, hasAnswer: hasAnswer, proofOk: proofOk, summary: summary, verdict: verdict, countLine: countLine, first3: first3, compare: compare, snapshot: snapshot,
     legal: legal, vendorQs: vendorQs, tickItems: tickItems, levelName: levelName, answerText: answerText, whoName: whoName, defaultWho: defaultWho, search: search, shortName: shortName, joinAnd: joinAnd,
     paidFor: paidFor, beforeWords: beforeWords, outsideEU: outsideEU, cleanLegal: cleanLegal };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

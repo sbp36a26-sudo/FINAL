@@ -1,4 +1,4 @@
-// Browser proof for readiness check v4. node walk.cjs  (server on 8805 serving tools/)
+// Browser proof for readiness check v4: the six-step order (before must-haves first, 20 Nov 2026). Run it against backup-v4/ to replay; the must-haves-first proof is mustfirst.cjs. node walk.cjs  (server on 8805 serving tools/)
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 const SP = process.env.SP, OUT = SP + '/v4', BASE = 'http://127.0.0.1:8805/readiness-check/';
 const FX = '/home/user/final/tools/readiness-check/tests/fixtures/';

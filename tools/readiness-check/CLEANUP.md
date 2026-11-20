@@ -79,3 +79,37 @@ Scope: the build ruling in `reports/Council - readiness check audit.md`, section
 - `tests/logic.test.mjs` 35 passed; `tests/flow.test.mjs` 80 passed; `tests/v4.test.mjs` 81 passed (65 of them fail on the v3 rules, which is the point).
 - Playwright, `tests/browser/walk.cjs`: 197 checks at 1280 px and 390 px (touch): start gate, search, prep, steps, notes, result for each verdict, review with Undo, new check, return visit, a record and a file saved by the **v3 build**, share and withdraw in local mode, the fake hub frame (one `db:set` despite a double click, one `db:delete`, shapes unchanged), PDF, team page. No console errors, no horizontal scroll, no control under 44 px on the phone, the only external request is the existing Google Fonts link.
 - Still left alone: two tabs overwriting each other's `mine` map.
+
+---
+
+# Must-haves first (20 Nov 2026): what changed in the machines
+
+Scope: the owner's request to ask the must-haves first. Scoring unchanged (rules stay v4). The clean-up rules were followed: one table, one writer, guards tested, saved data placed by a pure function, browser proof including a check saved by the old build.
+
+| Machine | Change | Why |
+|---|---|---|
+| FLOW | New state **`'must'`** (step 1) before the area states `0`–`5`. Area rows and `prep.begin`, `review.edit`, `result.edit` now resolve `@first` / `@next` / `@prev` against `ctx.steps`, the question steps in use (`questionSteps()`: `'must'` then every area that still has a question). **Guard:** `must --next-->` needs `ctx.mustDone` (every must-have has an answer; "Don't know yet" counts). `send()` is still the only writer of `st.step`. | Must-haves first, no repeats, skipped empty areas, "with needed answers" |
+| MUST GATE (like the start gate) | `ui.mustMissing`: set only by pressing "Next" on the must-haves step with one unanswered, cleared by any navigation. While set, the first unanswered must-have is outlined with "Answer this to continue"; the outline moves on as answers come in. | Same pattern as the v4 start screen; Next is never a grey dead button |
+| RESTORE (storage, file, history) | `F.placeStep(step, {tool, steps, mustOpen})`, used by `fromRecord` and `popstate`: an area step reopens at the same area; with any unanswered must-have → `'must'`; an area with no question left → the next step in use; `review`/`result`/`prep` unchanged; unknown → start. `render()` also re-places a step that lost its questions. | Checks saved by the six-step build; hotel details that change the questions |
+| RECORD | Unchanged (`rv: 2`). No renumbering needed: area steps keep their area index. | Old JSON files open as before |
+
+Pure helpers added to `src/flow.js`: `QSTEPS`, `stepNo`, `placeStep`, `stepQuestions`, `questionSteps`, `firstOpenMust`; to `src/logic.js` (not used for scoring): `hasAnswer(q, A, P)`.
+
+## AX handles added
+
+- `#view[data-state]` can be `must`. `ReadinessCheck.state()` also returns `steps` (question steps in use, e.g. `['must',0,1,3,4,5]`), `stepNo` (1-based, 0 off the question steps), `mustOpen` (code of the first unanswered must-have, on the must-haves step) and `mustMissing`. `send('next')` returns false on the must-haves step while one is unanswered.
+- Stable ids: `next` (the step's Next button), `fs-<code>` (`.missing` when outlined), `.areatag` in a must-have's legend.
+
+## Bug found and fixed
+
+New check shared the earlier check's hotel object (pick another tool, "Start a new check", `#use=`): changing how the hotel is run in the new check rewrote the earlier check. Repro: check A for gx-2 (independent), open `#use=hr-2` in the same page, choose "Managed or franchised": A's saved hotel became managed too. Each new check now copies the hotel.
+
+## Left alone
+
+- A same-page hash navigation fires `popstate` (state null) before `hashchange`, so the open check is saved at "start" just before the `#use=` check replaces it. Harmless (it is listed in "Your checks"), noted.
+- Two tabs overwriting each other's `mine` map (unchanged).
+
+## Proof (must-haves first)
+
+- `tests/flow.test.mjs` 101 passed (21 new: the must-haves step, its guard, skipped areas, step numbers, `placeStep`, the pure helpers); `tests/mustfirst.test.mjs` 22 passed (4,900 old-vs-new order comparisons, conditional must-haves, skipped Financial investment, fixtures from the six-step build); `tests/logic.test.mjs` 35 and `tests/v4.test.mjs` 81 unchanged and green.
+- Playwright `tests/browser/mustfirst.cjs`: 238 checks at 1280 px and 390 px (touch) for a chatbot (gx-2), a high-risk HR tool (hr-2, managed, Switzerland) and a light tool (sm-1): must-haves first with area tags, Next blocked until each has an answer, area steps without repeats, Back/forward, reload mid-flow, result identical to the six-step build for the same answers, PDF with the order line, review, local share and team page, checks and a file saved by the six-step build. No console errors, no horizontal scroll; the only external request is the existing Google Fonts link (blocked in the test).
