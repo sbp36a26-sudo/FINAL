@@ -270,14 +270,15 @@
       ? '<p><b>What it means:</b> ' + esc(it.def) + '</p><p><b>What good looks like:</b> ' + esc(it.good) + '</p><div><b>Warning signs</b><ul>' + it.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>'
       : '<p><b>What good looks like:</b> ' + esc(w.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
     more += evidence(it.ev);
-    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + '</h3>' +
-      (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
-      '<p class="qhint">' + esc(isFactor ? it.def : w.plain) + '</p>' +
-      (w.ex ? '' : glossP(it.id, w.gloss)) +
+    /* Owner, 23 Nov 2026: only the question shows; the explanation, examples, glosses and evidence notes sit in the fold. */
+    var lead = (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
+      (isFactor ? '' : '<p><b>What it means:</b> ' + esc(w.plain) + '</p>') +
+      (w.ex ? '<p class="qex" id="ex-' + it.id + '">' + esc(w.ex) + '</p>' : '') + glossP(it.id, w.gloss);
+    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '">' +
+      '<p class="itemname">' + esc(it.name) + '</p>' +
       '<p class="qtext" id="t-' + it.id + '">' + esc(w.check) + '</p>' +
-      (w.ex ? '<p class="qex" id="ex-' + it.id + '">' + esc(w.ex) + '</p>' + glossP(it.id, w.gloss) : '') +
       radios(it.id, C.ANSWERS, rec.A[it.id]) + byField(it.id) + needLine(it.id) +
-      fold('more-' + it.id, isFactor ? 'What good looks like, warning signs and evidence' : 'What good looks like and evidence', more) + '</fieldset>';
+      fold('more-' + it.id, 'More: what it means, examples and evidence', lead + more) + '</fieldset>';
   }
   function glossP(id, g) { return g ? '<p class="gloss" id="gloss-' + id + '">' + esc(g) + '</p>' : ''; }
   function vNeeds() {

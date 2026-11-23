@@ -4,6 +4,7 @@
 // Screenshots go to OUT (env R2_SHOTS, default ./shots-v12).
 const { chromium } = require('playwright');
 const fs = require('fs');
+const openMore = async (p, id) => p.evaluate(i => { const d = document.querySelector('#f-' + i + ' details'); if (d) d.open = true; }, id); // owner 23 Nov: details live in the fold
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8811/', OUT = process.env.R2_SHOTS || __dirname + '/shots-v12';
 fs.mkdirSync(OUT, { recursive: true });
 const FIX = JSON.parse(fs.readFileSync(process.env.R2_FIXTURE || __dirname + '/../fixtures/v1.1-saved.json', 'utf8')).records;
@@ -90,6 +91,7 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
       await p.$$eval('details', ds => ds.forEach(d => { d.open = true; }));
       const tn = await text(p);
       ok(!CODE.test(tn), T + ': BUILD NOW 4 no question codes on step 2, folds open ' + (tn.match(CODE) || [''])[0]);
+      await openMore(p, 'b1'); await openMore(p, 'b5');
       ok(await p.isVisible('#gloss-b1') && (await p.textContent('#gloss-b1')).startsWith('PMS:') && await p.isVisible('#gloss-b5') && /DPIA/.test(await p.textContent('#gloss-b5')), T + ': BUILD NOW 7 PMS, DPA and DPIA glossed');
       ok(tn.indexOf('PMS') >= tn.indexOf('PMS:') - 400, T + ': the PMS gloss sits at its first use on the page');
       for (const id of ['b1', 'b3', 'b5', 'b8', 'b9', 'b2', 'b4', 'b6', 'b7', 'b10']) await p.click(`label[for="a-${id}-k"]`);
@@ -98,6 +100,7 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
       await p.click('#next');
       // success: weak evidence notes, works council gloss, codes hidden
       ok(JSON.stringify(await p.$$eval('.steps3 span', s => s.map(x => x.className))) === '["done","done","now"]', T + ': L3 progress on step 3');
+      for (const id of ['c2', 'c4', 'c9']) await openMore(p, id);
       for (const id of ['c2', 'c4', 'c9']) ok(await p.isVisible('#weak-' + id) && /^Evidence here is thin/.test(await p.textContent('#weak-' + id)), T + ': BUILD NOW 5 evidence note visible on ' + id);
       ok((await p.$$('.weak')).length === 3, T + ': only three evidence notes');
       ok(await p.isVisible('#gloss-c9') && /works council/.test(await p.textContent('#gloss-c9')), T + ': BUILD NOW 7 works council glossed');
