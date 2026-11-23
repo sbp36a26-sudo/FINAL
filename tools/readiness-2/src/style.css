@@ -210,3 +210,6 @@ details.more[open] > summary::before{transform:rotate(90deg)}
 .hdrtop .linkbtn{flex:none;white-space:nowrap;min-height:44px;margin-top:-11px}
 @media (max-width:760px){ .hdrline{font-size:0.875rem} }
 .itemname{font-size:0.8125rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink3);margin:0 0 2px}
+.intro ul.tight{margin:6px 0 8px;padding-left:1.2em}
+.intro ul.tight li{margin:4px 0}
+.panel.intro+.panel.intro{margin-top:12px}

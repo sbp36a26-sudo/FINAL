@@ -221,6 +221,9 @@ details.more[open] > summary::before{transform:rotate(90deg)}
 .hdrtop .linkbtn{flex:none;white-space:nowrap;min-height:44px;margin-top:-11px}
 @media (max-width:760px){ .hdrline{font-size:0.875rem} }
 .itemname{font-size:0.8125rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink3);margin:0 0 2px}
+.intro ul.tight{margin:6px 0 8px;padding-left:1.2em}
+.intro ul.tight li{margin:4px 0}
+.panel.intro+.panel.intro{margin-top:12px}
 
 </style>
 </head>
@@ -1703,11 +1706,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   // ---------- screens ----------
   function vStart() {
-    return '<section class="panel"><h2>Three steps, then a summary</h2><ol class="journey">' +
-      '<li><b>Where is the problem?</b><span>Five yes/no questions: is AI the right kind of tool for it? Then find where it sits in your hotel among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
-      '<li><b>What you need to implement AI</b><span>Ten things every hotel needs in place, such as systems that can talk to each other and the data protection paperwork.</span></li>' +
-      '<li><b>What makes it succeed</b><span>Nine factors, from budget and leadership to change management.</span></li></ol>' +
-      '<p class="sub">The summary has no score. It shows what is in place, the three weakest points and what to do next.' + (storage === 'ok' ? ' Your answers stay in this browser.' : '') + '</p>' +
+    /* Owner, 23 Nov 2026: the first page explains why the tool, how to use it and what it brings. */
+    return '<section class="panel intro" id="intro-why"><h2>Why this tool</h2>' +
+      '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, where does it sit in your hotel, and are the basics in place?</p>' +
+      '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (69.89%) and systems that do not fit together (45.91%). Source: Eurostat, ICT usage survey, early 2025.</p></section>' +
+      '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
+      '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through three steps:</p><ol class="journey">' +
+      '<li><b>Is it a job for AI, and where is it?</b><span>Five yes/no questions, then pick the area and department, and see real examples among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
+      '<li><b>What you need to implement AI</b><span>Ten things every hotel needs in place, such as systems that can talk to each other and a budget for running costs.</span></li>' +
+      '<li><b>What makes it succeed</b><span>Nine factors, from leadership and workflow to culture and change management.</span></li></ol>' +
+      '<p class="sub">Answer honestly; “Don’t know yet” is a fine answer and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
+      '<section class="panel intro" id="intro-get"><h2>What you get</h2><ul class="tight">' +
+      '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
+      '<li><b>Where it sits</b> in your hotel, with real examples of how other hotels use AI for it.</li>' +
+      '<li><b>What is missing:</b> the three things to start with, and who usually does them.</li>' +
+      '<li><b>A summary and a PDF</b> to share with your owner or team. No score: just what is in place and what to do next.</li>' +
+      '<li><b>A next step:</b> check one specific AI tool in detail in the Readiness check.</li></ul>' +
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>';
   }
   function vQ() {
