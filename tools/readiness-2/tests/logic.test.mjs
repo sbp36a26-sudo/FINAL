@@ -51,7 +51,7 @@ ok(C.QUESTIONS[0].outcome === 'Not suitable for AI: rules or ordinary automation
 ok(C.QUESTIONS[3].outcome.startsWith('AI as an assistant only'), 'Q4 No adds "AI as an assistant only"');
 ok(C.QUESTIONS.map(q => q.q).join('|') === [
   'Is this job too varied to write down as fixed rules (if this, then that)?',
-  'Does the job come up often enough, or cost enough, that doing it better would be worth real money or staff hours every month?',
+  'Is this task frequent or costly enough to be worth improving?',
   'Is the information the tool needs already kept somewhere digital and up to date?',
   'If the tool gets it wrong now and then, can the mistake be spotted and put right before it hurts a guest, a staff member or the hotel?',
   'Can you name the one number that should get better, and do you know today’s figure?'].join('|'), 'exact question wording');
