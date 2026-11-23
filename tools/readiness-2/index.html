@@ -238,6 +238,9 @@ details.more[open] > summary::before{transform:rotate(90deg)}
 .yn-unsure .yn-head{color:var(--na)}
 .yn-unsure p{margin:4px 0}
 .yn-more{margin-top:6px}
+.crisp{font-family:var(--display);font-size:2rem;font-weight:700;letter-spacing:.12em;color:var(--accent);margin:4px 0 0;line-height:1.1}
+.crisp-key{font-size:.875rem;color:var(--ink3);margin:2px 0 8px}
+.crisp-key b{color:var(--accent)}
 
 </style>
 </head>
@@ -1739,7 +1742,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>';
   }
   function vQ() {
-    var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 1 · Part 1 of 2</p><h2>Is this an AI problem?</h2>' +
+    var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 1 · Part 1 of 2</p>' +
+      /* Owner, 23 Nov 2026: the five questions spell C-R-I-S-P (their titles). */
+      '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
+      '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
+      '<h2>Is this an AI problem?</h2>' +
       '<p class="sub">Think of one problem in your hotel. Five questions; each Yes points towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +

@@ -200,7 +200,11 @@
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>';
   }
   function vQ() {
-    var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 1 · Part 1 of 2</p><h2>Is this an AI problem?</h2>' +
+    var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 1 · Part 1 of 2</p>' +
+      /* Owner, 23 Nov 2026: the five questions spell C-R-I-S-P (their titles). */
+      '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
+      '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
+      '<h2>Is this an AI problem?</h2>' +
       '<p class="sub">Think of one problem in your hotel. Five questions; each Yes points towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +

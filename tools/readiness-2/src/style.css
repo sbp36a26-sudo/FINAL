@@ -227,3 +227,6 @@ details.more[open] > summary::before{transform:rotate(90deg)}
 .yn-unsure .yn-head{color:var(--na)}
 .yn-unsure p{margin:4px 0}
 .yn-more{margin-top:6px}
+.crisp{font-family:var(--display);font-size:2rem;font-weight:700;letter-spacing:.12em;color:var(--accent);margin:4px 0 0;line-height:1.1}
+.crisp-key{font-size:.875rem;color:var(--ink3);margin:2px 0 8px}
+.crisp-key b{color:var(--accent)}
