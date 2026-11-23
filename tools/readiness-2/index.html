@@ -1392,7 +1392,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return list.map(function (it) {
       var v = L.A_OK[rec.A[it.id]] ? rec.A[it.id] : 'k', by = v === 'pl' ? L.fmtDate(rec.By[it.id]) : '';
       var a = v === 'y' ? null : L.action(it.id, v, rec.By[it.id], rec), w = L.itemText(it.id, rec);
-      return { k: 'item', id: it.id, name: it.name + (it.key ? ' (must-have in the readiness check)' : ''), check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
+      return { k: 'item', id: it.id, name: it.name, check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
         answer: 'Your answer: ' + AWORD[v] + (by ? ' (planned by ' + by + ')' : ''),
         action: a ? 'To do: ' + a.text + ' Usually: ' + a.who + '.' : 'In place: nothing to do.' };
     });
@@ -1791,7 +1791,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       ? '<p><b>What it means:</b> ' + esc(it.def) + '</p><p><b>What good looks like:</b> ' + esc(it.good) + '</p><div><b>Warning signs</b><ul>' + it.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>'
       : '<p><b>What good looks like:</b> ' + esc(w.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
     more += evidence(it.ev);
-    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + (it.key ? ' <span class="keytag">Must-have in the readiness check</span>' : '') + '</h3>' +
+    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + '</h3>' +
       (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
       '<p class="qhint">' + esc(isFactor ? it.def : w.plain) + '</p>' +
       (w.ex ? '' : glossP(it.id, w.gloss)) +
@@ -1803,7 +1803,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function glossP(id, g) { return g ? '<p class="gloss" id="gloss-' + id + '">' + esc(g) + '</p>' : ''; }
   function vNeeds() {
     return '<div class="stephead"><p class="kicker">Step 2 of 3</p><h2>What you need to implement AI</h2>' +
-      '<p class="sub">Ten things every hotel needs before an AI tool can work, whatever the tool. The first five matter most: they are must-haves in the readiness check. Answer each for the problem you have in mind (“Don’t know yet” is fine).</p></div>' +
+      '<p class="sub">Ten things every hotel needs before an AI tool can work, whatever the tool. Answer each for the problem you have in mind (“Don’t know yet” is fine).</p></div>' +
       '<section class="panel">' + C.NEEDS.map(function (it) { return itemBlock(it, false); }).join('') + '</section>' + sources('needs') + nav('Back', 'Next: what makes it succeed');
   }
   function vSuccess() {

@@ -29,7 +29,7 @@
     return list.map(function (it) {
       var v = L.A_OK[rec.A[it.id]] ? rec.A[it.id] : 'k', by = v === 'pl' ? L.fmtDate(rec.By[it.id]) : '';
       var a = v === 'y' ? null : L.action(it.id, v, rec.By[it.id], rec), w = L.itemText(it.id, rec);
-      return { k: 'item', id: it.id, name: it.name + (it.key ? ' (must-have in the readiness check)' : ''), check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
+      return { k: 'item', id: it.id, name: it.name, check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
         answer: 'Your answer: ' + AWORD[v] + (by ? ' (planned by ' + by + ')' : ''),
         action: a ? 'To do: ' + a.text + ' Usually: ' + a.who + '.' : 'In place: nothing to do.' };
     });

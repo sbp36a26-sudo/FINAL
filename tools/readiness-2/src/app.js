@@ -270,7 +270,7 @@
       ? '<p><b>What it means:</b> ' + esc(it.def) + '</p><p><b>What good looks like:</b> ' + esc(it.good) + '</p><div><b>Warning signs</b><ul>' + it.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>'
       : '<p><b>What good looks like:</b> ' + esc(w.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
     more += evidence(it.ev);
-    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + (it.key ? ' <span class="keytag">Must-have in the readiness check</span>' : '') + '</h3>' +
+    return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + '</h3>' +
       (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
       '<p class="qhint">' + esc(isFactor ? it.def : w.plain) + '</p>' +
       (w.ex ? '' : glossP(it.id, w.gloss)) +
@@ -282,7 +282,7 @@
   function glossP(id, g) { return g ? '<p class="gloss" id="gloss-' + id + '">' + esc(g) + '</p>' : ''; }
   function vNeeds() {
     return '<div class="stephead"><p class="kicker">Step 2 of 3</p><h2>What you need to implement AI</h2>' +
-      '<p class="sub">Ten things every hotel needs before an AI tool can work, whatever the tool. The first five matter most: they are must-haves in the readiness check. Answer each for the problem you have in mind (“Don’t know yet” is fine).</p></div>' +
+      '<p class="sub">Ten things every hotel needs before an AI tool can work, whatever the tool. Answer each for the problem you have in mind (“Don’t know yet” is fine).</p></div>' +
       '<section class="panel">' + C.NEEDS.map(function (it) { return itemBlock(it, false); }).join('') + '</section>' + sources('needs') + nav('Back', 'Next: what makes it succeed');
   }
   function vSuccess() {

@@ -66,7 +66,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
   const b3 = s3.find(b => b.id === 'b3');
   ok(b3.answer === 'Your answer: Planned, not done yet (planned by 3 Feb 2027)', 'mixed: planned-by date ' + b3.answer);
   ok(b3.action === 'To do: Finish: List the systems that hold the data the tool needs, and name the person who checks that data at set times (planned by 3 Feb 2027). Usually: Department head / IT.', 'mixed: planned action ' + b3.action);
-  ok(s3.find(b => b.id === 'b1').action === 'In place: nothing to do.' && s3.find(b => b.id === 'b1').name === 'Systems that can talk to each other (must-have in the readiness check)', 'mixed: Yes item, must-have tag');
+  ok(s3.find(b => b.id === 'b1').action === 'In place: nothing to do.' && s3.find(b => b.id === 'b1').name === 'Systems that can talk to each other', 'mixed: Yes item, must-have tag');
   // v1.3 (owner): b2 now names the systems, with the Front Office examples (was the PMS-only question, no examples line)
   ok(s3.find(b => b.id === 'b2').action === 'To do: Find out: “' + L.ITEM.b2.check + '” For example: your PMS (booking system), door locks and guest messaging. Usually: IT.', 'mixed: Don’t know yet → Find out');
   const s4 = after(m, '4. What makes it succeed');
