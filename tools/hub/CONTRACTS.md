@@ -6,10 +6,10 @@ Four contracts cross app boundaries. Their shapes are frozen: change a shape onl
 
 | Contract | Owner (answers) | Callers | Where |
 |---|---|---|---|
-| postMessage bridge (`ping`, `download`, `db`, `open`) | hub bar | register, ai-act-guide, readiness-check (`index.html`, `team.html`) | `hub/hub-bar.html` (bridge section) |
+| postMessage bridge (`ping`, `download`, `db`, `open`) | hub bar | register, ai-act-guide, readiness-check (`index.html`, `team.html`), readiness-2 (`open` only) | `hub/hub-bar.html` (bridge section) |
 | Hub tabs (which tool shows) | hub bar | user, Back/forward, `open` messages | `hub/hub-bar.html` (machine block) |
-| Shared hotel profile `localStorage['hftp-hotel-profile-v1']` | nobody (shared) | register, ai-act-guide, readiness-check | each app |
-| Hash links `#use=` and `#add=` | the receiving app | register → readiness-check, readiness-check / ai-act-guide → register | each app |
+| Shared hotel profile `localStorage['hftp-hotel-profile-v1']` | nobody (shared) | register, ai-act-guide, readiness-check (read and write); readiness-2 (reads `name` only, never writes) | each app |
+| Hash links `#use=` and `#add=` | the receiving app | register / readiness-2 → readiness-check, readiness-check / ai-act-guide → register | each app |
 
 All messages are `window.postMessage(msg, location.origin)`. The hub reads a message only if `event.origin === location.origin`, `msg` is a plain object with a string `hub` field, and `event.source` is one of the hub's own frames. Frames read a reply only if `event.source === window.parent`.
 
@@ -17,10 +17,12 @@ All messages are `window.postMessage(msg, location.origin)`. The hub reads a mes
 
 ## 1. Hub tabs
 
+Tab order: AI Assessment · Use-Case Catalogue · **Readiness 2.0** (added 23 Nov 2026, tooltip "Start here: is AI the answer, and where?") · Readiness check · AI Act guide · AI Register · Team: readiness results. `readiness-2` loads `readiness-2/index.html` (the default `<tool>/index.html` path).
+
 State, held only by `send()` in `hub-bar.html` (pure transition `hubNext`, tested in `hub/tests/hub.test.mjs`):
 
 ```
-{ tool:    'assessment' | 'use-case-catalogue' | 'readiness-check' | 'ai-act-guide' | 'register' | 'team',
+{ tool:    'assessment' | 'use-case-catalogue' | 'readiness-2' | 'readiness-check' | 'ai-act-guide' | 'register' | 'team',
   access:  'unknown' | 'local' | 'editor' | 'viewer',
   pending: 'team' | null }
 ```
@@ -112,10 +114,12 @@ Ids are cleaned to `[A-Za-z0-9_-]`. `data` must be a plain object.
 ### open (no reply)
 
 ```
-frame → hub   { hub: 'open', tool: 'readiness-check' | 'register' | 'ai-act-guide', hash?: string }
+frame → hub   { hub: 'open', tool: 'readiness-check' | 'register' | 'ai-act-guide' | 'readiness-2' | 'use-case-catalogue', hash?: string }
 ```
 
 The hub keeps only `[A-Za-z0-9_=&%.-]` of `hash`, loads `<tool>/index.html#<hash>` in that tool's frame (creating it if needed, otherwise `location.replace` so the frame adds no history entry), and sends `select(tool)`. Other tools are ignored. Callers send `open` only when they are in a frame.
+
+Added 23 Nov 2026 (nothing existing changed): `readiness-2` and `use-case-catalogue` are openable too. Readiness 2.0 sends `{ hub: 'open', tool: 'readiness-check', hash: 'use=<use id>' }` from its summary and `{ hub: 'open', tool: 'use-case-catalogue', hash: '<dept id>' }` from "Sources in the Use-Case Catalogue" (the catalogue's own department route, e.g. `#fo`). Outside the hub both are plain links (`../readiness-check/index.html#use=<id>`, `../use-case-catalogue/index.html#<dept id>`).
 
 ---
 
@@ -136,7 +140,7 @@ State machine per app: `absent` → (the app's hotel form is filled) → `writte
 
 | Link | Sent by | Received by | Receiver does |
 |---|---|---|---|
-| `#use=<use id>` (e.g. `use=gx-2`) | AI Register (tool page: "Check readiness") | Readiness check | starts a check for that use case (keeps the hotel), then clears the hash with `history.replaceState` |
+| `#use=<use id>` (e.g. `use=gx-2`) | AI Register (tool page: "Check readiness"), Readiness 2.0 (summary: "Check one tool in detail") | Readiness check | starts a check for that use case (keeps the hotel), then clears the hash with `history.replaceState` |
 | `#add=<use id>&name=<url-encoded tool name>` | Readiness check (result page), AI Act guide | AI Register | adds the tool once (an existing tool with that use id is opened, not duplicated), opens it, clears the hash |
 
 `<use id>` matches `[a-z]+-\d+` and must exist in the receiver's use-case list, else the link is ignored. Links arrive two ways: inside the hub through an `open` message (the hub sets the frame's hash, the receiver's `hashchange` handler runs), or as a plain URL when a tool is opened on its own.

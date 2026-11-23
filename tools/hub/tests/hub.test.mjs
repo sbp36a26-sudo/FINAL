@@ -54,4 +54,35 @@ t('no reachable state shows team to a viewer (exhaustive walk)', () => {
   }
   assert.ok(seen.size > 10);
 });
+// Readiness 2.0 (23 Nov 2026): a new tab before the Readiness check; nothing existing changes.
+t('readiness-2 is a hub tool, placed just before readiness-check; the old tools keep their order', () => {
+  assert.ok(HUB_TOOLS.includes('readiness-2'));
+  assert.equal(HUB_TOOLS.indexOf('readiness-2') + 1, HUB_TOOLS.indexOf('readiness-check'));
+  assert.deepEqual(HUB_TOOLS.filter(x => x !== 'readiness-2'), ['assessment', 'use-case-catalogue', 'readiness-check', 'ai-act-guide', 'register', 'team']);
+});
+t('readiness-2 can be selected in every access state, and leaving it works', () => {
+  for (const access of ['unknown', 'local', 'editor', 'viewer']) {
+    assert.deepEqual(hubNext(S('assessment', access), { type: 'select', tool: 'readiness-2' }), S('readiness-2', access));
+    assert.deepEqual(hubNext(S('readiness-2', access), { type: 'select', tool: 'readiness-check' }), S('readiness-check', access));
+  }
+});
+t('the bar has the Readiness 2.0 button before the Readiness check button, with its tooltip', () => {
+  const nav = src.slice(src.indexOf('<nav'), src.indexOf('</nav>'));
+  const i2 = nav.indexOf('data-tool="readiness-2"'), ic = nav.indexOf('data-tool="readiness-check"');
+  assert.ok(i2 > 0 && ic > i2, 'button order');
+  assert.match(nav, /data-tool="readiness-2"[^>]*title="Start here: is AI the answer, and where\?"[^>]*>Readiness 2\.0</);
+  const btns = [...nav.matchAll(/data-tool="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(btns, HUB_TOOLS, 'one button per hub tool, in machine order');
+});
+t('open messages: the old targets stay openable; readiness-2 and use-case-catalogue are added; others are not', () => {
+  const m = src.match(/var OPENABLE = (\{[^}]*\});/); assert.ok(m, 'OPENABLE found');
+  const OPENABLE = new Function('return ' + m[1])();
+  for (const k of ['readiness-check', 'register', 'ai-act-guide', 'readiness-2', 'use-case-catalogue']) assert.ok(OPENABLE[k], k);
+  for (const k of ['assessment', 'team', 'nope']) assert.ok(!OPENABLE[k], k);
+});
+t('the hash filter still keeps use=<id> and a bare department id', () => {
+  const clean = h => h.replace(/[^\w=&%.\-]/g, '');
+  assert.match(src, /m\.hash\.replace\(\/\[\^\\w=&%\.\\-\]\/g, ''\)/);
+  assert.equal(clean('use=fo-3'), 'use=fo-3'); assert.equal(clean('fo'), 'fo'); assert.equal(clean('use=fo-3"><x'), 'use=fo-3x');
+});
 console.log(n + ' hub machine tests passed');

@@ -42,6 +42,7 @@
   <nav aria-label="Tools">
     <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
+    <button type="button" data-tool="readiness-2" aria-pressed="false" title="Start here: is AI the answer, and where?">Readiness 2.0</button>
     <button type="button" data-tool="readiness-check" aria-pressed="false">Readiness check</button>
     <button type="button" data-tool="ai-act-guide" aria-pressed="false">AI Act guide</button>
     <button type="button" data-tool="register" aria-pressed="false">AI Register</button>
@@ -55,14 +56,14 @@
   /* machine:start  (pure: tools/hub/tests/hub.test.mjs runs this block in Node)
      Hub tab machine.
      State: { tool, access, pending }
-       tool    'assessment' (this page) | 'use-case-catalogue' | 'readiness-check' | 'ai-act-guide' | 'register' | 'team' (a frame)
+       tool    'assessment' (this page) | 'use-case-catalogue' | 'readiness-2' | 'readiness-check' | 'ai-act-guide' | 'register' | 'team' (a frame)
        access  'unknown' (not asked yet) | 'local' (no claude.ai: everything shows) | 'editor' | 'viewer'
        pending 'team' while the team tab was asked for before access is known, else null
      Events (send):
        { type: 'select', tool }  a hub button, Back/forward (popstate) or a frame's { hub: 'open' }
        { type: 'access', access } the user capability answered
      Guards: unknown tool names are ignored; 'team' is never shown to a 'viewer' and waits while access is 'unknown'. */
-  var HUB_TOOLS = ['assessment', 'use-case-catalogue', 'readiness-check', 'ai-act-guide', 'register', 'team'];
+  var HUB_TOOLS = ['assessment', 'use-case-catalogue', 'readiness-2', 'readiness-check', 'ai-act-guide', 'register', 'team'];
   var HUB_ACCESS = ['unknown', 'local', 'editor', 'viewer'];
   function hubInitial() { return { tool: 'assessment', access: 'unknown', pending: null }; }
   function hubNext(s, ev) {
@@ -88,7 +89,8 @@
   /* machine:end */
 
   var SRC = { 'readiness-check': 'readiness-check/index.html', team: 'readiness-check/team.html' };
-  var OPENABLE = { 'readiness-check': 1, register: 1, 'ai-act-guide': 1 };
+  /* Tools a frame may open with { hub: 'open' }. 23 Nov 2026: + 'readiness-2' and 'use-case-catalogue' (Readiness 2.0 links to a department's sources). */
+  var OPENABLE = { 'readiness-check': 1, register: 1, 'ai-act-guide': 1, 'readiness-2': 1, 'use-case-catalogue': 1 };
   var TIMEOUT_MS = 6000; // capability lookups and db calls answer before the frames' own 8 s / 12 s timeouts
   var bar = document.getElementById('hubBar');
   var box = document.getElementById('hubFrame');
