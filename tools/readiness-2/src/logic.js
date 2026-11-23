@@ -1,4 +1,4 @@
-/* AI starting point (formerly "Readiness 2.0"): the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
+/* AI starting point: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
    Content and orders come from src/content.js (R2Content); the rules are research_notes/AI starting point/research.md,
    part A "Verdict logic" and part D "Summary". No score of any kind (owner's decision). */
 (function (root) {

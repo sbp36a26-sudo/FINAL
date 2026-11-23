@@ -1,4 +1,4 @@
-/* AI starting point (formerly "Readiness 2.0"): the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* AI starting point: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    Built the way the readiness check, the AI Register and the AI Act guide make their PDFs: jsPDF and the "Register Sans"
    font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs, so nothing is loaded from the internet.
    1. model(rec, cat, o) → the document as plain blocks, in the summary's own words (R2Logic shares them with the screen):

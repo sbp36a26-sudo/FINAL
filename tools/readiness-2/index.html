@@ -637,7 +637,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 </script>
 <script>
-/* AI starting point (formerly "Readiness 2.0"; folder tools/readiness-2): every word a hotel reads about the questions, the prerequisites and the success factors.
+/* AI starting point (folder tools/readiness-2): every word a hotel reads about the questions, the prerequisites and the success factors.
    Source of all content: research_notes/AI starting point/research.md (23 Nov 2026). Section letters there:
    A = the five questions (step 1a here), B = prerequisites (step 2), C = success factors (step 3), D = scale and summary.
    Rules kept (CLAUDE.md): no source the project bans; every figure carries its source and base;
@@ -961,7 +961,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);
 
-/* AI starting point (formerly "Readiness 2.0"): the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
+/* AI starting point: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
    Content and orders come from src/content.js (R2Content); the rules are research_notes/AI starting point/research.md,
    part A "Verdict logic" and part D "Summary". No score of any kind (owner's decision). */
 (function (root) {
@@ -1121,7 +1121,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);
 
-/* AI starting point (formerly "Readiness 2.0"; folder, ids and storage key unchanged): the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
+/* AI starting point (folder, ids and storage key keep the name readiness-2): the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
    See CLEANUP.md for the inventory.
 
    1. FLOW (rec.step): where the person is.
@@ -1362,7 +1362,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);
 
-/* AI starting point (formerly "Readiness 2.0"): the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* AI starting point: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    Built the way the readiness check, the AI Register and the AI Act guide make their PDFs: jsPDF and the "Register Sans"
    font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs, so nothing is loaded from the internet.
    1. model(rec, cat, o) → the document as plain blocks, in the summary's own words (R2Logic shares them with the screen):
@@ -1520,7 +1520,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 </script>
 <script>
-/* AI starting point (formerly "Readiness 2.0"; folder, tool id 'readiness-2' and storage key unchanged): the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
+/* AI starting point (folder, tool id and storage key keep the name readiness-2): the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
    words in src/content.js (R2Content). This file only draws the current state and turns clicks into send(event).
    rec = the record (saved in localStorage['hftp-readiness2-v1']); ui = what is on screen now, never saved:
      confirm  CONFIRM machine: null | 'restart'
@@ -1641,7 +1641,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
 
   // ---------- pieces ----------
-  var NAME = 'AI starting point'; // v1.2 (owner B1): the visible name; was "Readiness 2.0"
+  var NAME = 'AI starting point'; // v1.2 (owner B1): the visible name
   var STEP_LINE = { q: ['Step 1 of 3', 'Is this an AI problem?'], stop: ['Result', 'Not suitable for AI'], where: ['Step 1 of 3', 'Where in the hotel?'],
     needs: ['Step 2 of 3', 'What you need'], success: ['Step 3 of 3', 'What makes it succeed'], summary: ['Summary', ''] };
   /* Storage notices (v1.2, clean-up M3 and L2): on every screen while they apply. */
