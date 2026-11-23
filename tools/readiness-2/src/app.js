@@ -196,7 +196,7 @@
         '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' + (q.hint ? '<p class="qhint">' + esc(q.hint) + '</p>' : '') +
         (q.guard ? '<p class="qhint qguard" id="guard-' + q.id + '">' + esc(q.guard) + '</p>' : '') +
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + needLine(q.id) +
-        fold('why-' + q.id, 'Why we ask, and an example', '<p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
+        fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p><p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
     if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is No.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
@@ -265,18 +265,21 @@
       '<span class="meta">Planned is not in place yet: it stays on your to-do list until it is done.</span></div>';
   }
   function itemBlock(it, isFactor) {
+    var w = L.itemText(it.id, rec); // v1.3: b1/b2 name the systems by the department chosen in step 1b
     var more = isFactor
       ? '<p><b>What it means:</b> ' + esc(it.def) + '</p><p><b>What good looks like:</b> ' + esc(it.good) + '</p><div><b>Warning signs</b><ul>' + it.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>'
-      : '<p><b>What good looks like:</b> ' + esc(it.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
+      : '<p><b>What good looks like:</b> ' + esc(w.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
     more += evidence(it.ev);
     return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + (it.key ? ' <span class="keytag">Must-have in the readiness check</span>' : '') + '</h3>' +
       (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
-      '<p class="qhint">' + esc(isFactor ? it.def : it.plain) + '</p>' +
-      (it.gloss ? '<p class="gloss" id="gloss-' + it.id + '">' + esc(it.gloss) + '</p>' : '') +
-      '<p class="qtext" id="t-' + it.id + '">' + esc(it.check) + '</p>' +
+      '<p class="qhint">' + esc(isFactor ? it.def : w.plain) + '</p>' +
+      (w.ex ? '' : glossP(it.id, w.gloss)) +
+      '<p class="qtext" id="t-' + it.id + '">' + esc(w.check) + '</p>' +
+      (w.ex ? '<p class="qex" id="ex-' + it.id + '">' + esc(w.ex) + '</p>' + glossP(it.id, w.gloss) : '') +
       radios(it.id, C.ANSWERS, rec.A[it.id]) + byField(it.id) + needLine(it.id) +
       fold('more-' + it.id, isFactor ? 'What good looks like, warning signs and evidence' : 'What good looks like and evidence', more) + '</fieldset>';
   }
+  function glossP(id, g) { return g ? '<p class="gloss" id="gloss-' + id + '">' + esc(g) + '</p>' : ''; }
   function vNeeds() {
     return '<div class="stephead"><p class="kicker">Step 2 of 3</p><h2>What you need to implement AI</h2>' +
       '<p class="sub">Ten things every hotel needs before an AI tool can work, whatever the tool. The first five matter most: they are must-haves in the readiness check. Answer each for the problem you have in mind (“Don’t know yet” is fine).</p></div>' +
@@ -308,11 +311,11 @@
       '<p id="overall" data-overall="' + ov.key + '"><strong>' + esc(ov.text) + '</strong></p></section>';
     if (top.length) {
       h += '<section class="panel first" id="first3"><h3>' + esc(L.firstLabel(top.length)) + '</h3><ol>' + top.map(function (x) {
-        var a = L.action(x.id, x.v, rec.By[x.id]);
+        var a = L.action(x.id, x.v, rec.By[x.id], rec);
         return '<li data-item="' + x.id + '">' + esc(a.text) + '<span>' + esc(a.name + ' · your answer: ' + ANS_WORD[x.v] + ' · usually: ' + a.who) + '</span></li>';
       }).join('') + '</ol></section>';
     }
-    var all = L.actions(A, rec.By);
+    var all = L.actions(A, rec.By, null, rec);
     h += '<section class="panel" id="todo"><h3>What to do next, item by item</h3>' + (all.length ? ['needs', 'success'].map(function (step) {
       var rows = all.filter(function (a) { return a.step === step; }); if (!rows.length) return '';
       return '<p class="meta">' + (step === 'needs' ? 'What you need' : 'What makes it succeed') + '</p><div class="todo">' + rows.map(function (a) {
@@ -343,8 +346,8 @@
     out.push('What makes it succeed (step 3): ' + L.countLine(L.counts(A, L.FACTOR_IDS)));
     out.push(L.overall(A).text);
     var top = L.weakest(A, 3);
-    if (top.length) { out.push('', 'Start with these:'); top.forEach(function (x, i) { var a = L.action(x.id, x.v, rec.By[x.id]); out.push((i + 1) + '. ' + a.text + ' (' + a.who + ')'); }); }
-    var all = L.actions(A, rec.By);
+    if (top.length) { out.push('', 'Start with these:'); top.forEach(function (x, i) { var a = L.action(x.id, x.v, rec.By[x.id], rec); out.push((i + 1) + '. ' + a.text + ' (' + a.who + ')'); }); }
+    var all = L.actions(A, rec.By, null, rec);
     if (all.length) { out.push('', 'What to do next, item by item:'); all.forEach(function (a) { out.push('- ' + a.name + ' [' + ANS_WORD[a.v] + ']: ' + a.text + ' (' + a.who + ')'); }); }
     var ho = handover(); out.push('', 'Next step: ' + ho.text + (ho.mode !== 'blocked' ? ' ' + L.HANDOVER_NOTE : ''));
     out.push('', 'Student prototype by EHL SBP Group 36 for HFTP, not legal advice. Content as of ' + C.AS_OF + '.');

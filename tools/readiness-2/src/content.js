@@ -13,6 +13,7 @@
       q: 'Is this job too varied to write down as fixed rules (if this, then that)?',
       hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
       guard: 'Judge the job, not how you handle it today. If you use rules now only because nothing better was available, for example price rules, answer Not sure.', // v1.2, council BUILD NOW 1
+      whyShort: 'AI only helps when a job needs judgement; if fixed rules can do it, ordinary software is cheaper and more reliable.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
       yes: 'Reading guest emails in five languages and drafting replies.',
       no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
@@ -21,6 +22,7 @@
     { id: 'q2', short: 'Worth real money or hours',
       q: 'Does the job come up often enough, or cost enough, that doing it better would be worth real money or staff hours every month?',
       hint: '',
+      whyShort: 'AI costs money to set up, run and check, so a rare or small job will not pay that back.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'AI tools have set-up, subscription, checking and training costs. A rare or small task seldom repays them.',
       yes: 'About 400 guest emails a week at front office.',
       no: 'A 12-room guesthouse with 10 email enquiries a week.',
@@ -29,6 +31,7 @@
     { id: 'q3', short: 'Information is digital and current',
       q: 'Is the information the tool needs already kept somewhere digital and up to date?',
       hint: 'Examples: bookings, past guest messages, rates, your hotel’s facts and menus.',
+      whyShort: 'AI works from your data; if it is missing or out of date, the tool gives confident wrong answers.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'If the facts sit on paper, in one person’s head or in five systems that disagree, the tool gives wrong answers with confidence.',
       yes: 'One up-to-date fact sheet (rooms, hours, policies) for a guest chatbot.',
       no: 'Allergen information only in the chef’s binder.',
@@ -37,6 +40,7 @@
     { id: 'q4', short: 'Mistakes can be caught',
       q: 'If the tool gets it wrong now and then, can the mistake be spotted and put right before it hurts a guest, a staff member or the hotel?',
       hint: '',
+      whyShort: 'AI is never right every time, so you need a way to catch mistakes before they hurt anyone.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'AI works on probabilities, so it is never right every time. Where a mistake would be costly, unsafe or unfair, AI can still help, but only as a draft a person checks.',
       yes: 'Draft replies to reviews that a manager approves before they go out.',
       no: 'Answering guests’ allergen questions on its own.',
@@ -46,6 +50,7 @@
     { id: 'q5', short: 'Success has a number',
       q: 'Can you name the one number that should get better, and do you know today’s figure?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
+      whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Without a starting figure nobody can tell whether the tool worked, and the decision to keep or stop it turns into opinion.',
       yes: '“Average reply time to email enquiries: 9 hours today; target under 1 hour.”',
       no: '“We want to be more innovative.”',
@@ -83,14 +88,15 @@
      key: true for those five. also: further readiness-check questions on the same point (shown folded). */
   var NEEDS = [
     { id: 'b1', key: true, name: 'Systems that can talk to each other',
-      plain: 'The AI tool must read from and write back to your booking system (PMS) and other software, or staff end up copying data by hand.',
-      good: 'The vendor confirms in writing a two-way link to your PMS version, and you have seen it work on your own systems.',
-      check: 'Has it been confirmed in writing that the tool can read from and write back to your hotel systems?', rc: 'T1',
-      gloss: 'PMS: the property management system, the booking system that holds reservations, rooms and guest records.',
+      plain: 'The AI tool must read from and write back to your hotel systems, or staff end up copying data by hand.',
+      good: 'The vendor confirms in writing a two-way link to each hotel system the tool needs, in the version you run, and you have seen it work on your own systems.',
+      check: 'Has it been confirmed in writing that the tool can read from and write back to the systems you want to connect it to?', rc: 'T1',
+      ex: true, // v1.3: "For example: <typical systems for the chosen department>" on its own line (R2Logic.systemsFor)
+      gloss: 'PMS: the property management system, the booking system that holds reservations, rooms and guest records.', // v1.3: shown only when "PMS" is among the examples
       also: [['T4', 'Do you have a written list of the software your hotel uses that shows which ones share data?']],
       ev: [['45.91% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
-      act: 'Ask the vendor to confirm in writing that the tool reads from and writes back to your PMS, and see it work on your own systems.', who: 'IT / vendor' },
+      act: 'Ask the vendor to confirm in writing that the tool reads from and writes back to the systems you want to connect it to (for example {ex}), and see it work on your own systems.', who: 'IT / vendor' },
     { id: 'b3', key: true, name: 'Data you can reach, trust and own',
       plain: 'The tool is only as good as the bookings, guest records and hotel facts it reads. Someone must keep them right, and the hotel must keep the rights to them.',
       good: 'You can name where each piece of data sits. One up-to-date source holds the hotel’s facts. A named person checks the data at set times. The contract says the data stays yours.',
@@ -123,11 +129,13 @@
            ['35% of hotels named high set-up costs as a barrier.', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in Austria, France, Germany, Greece, Italy and Switzerland, Jan–Apr 2025.']],
       act: 'Write a 12-month budget with all costs and agree who pays.', who: 'GM / finance' },
     { id: 'b2', name: 'Older systems',
-      plain: 'An older booking system installed in the hotel often has no open connection. Many AI tools then cannot plug in, or need a costly custom bridge.',
-      good: 'You know what kind of PMS you have. If it is old, you have a plan: an interface from the vendor, an upgrade date, or a tool that works without a link.',
-      check: 'Do you know what kind of booking system (PMS) you have and, if it is old and hard to connect, is there a plan?', rc: 'new (from T2)', also: [['T2', 'Which describes your main hotel system (PMS)? (online system other software can connect to / all-in-one system that already includes this tool / older system in the hotel, hard to connect)']],
+      plain: 'An older system installed in the hotel often has no open connection. Many AI tools then cannot plug in, or need a costly custom bridge.',
+      good: 'You know which systems the tool must connect to and which of them are old. For an old one you have a plan: an interface from the vendor, an upgrade date, or a tool that works without a link.',
+      check: 'Do you know which systems the tool must connect to and, if one of them is old and hard to connect, is there a plan?', rc: 'new (from T2)',
+      ex: true, // v1.3: same department examples line as b1
+      also: [['T2', 'Which describes your main hotel system (PMS)? (online system other software can connect to / all-in-one system that already includes this tool / older system in the hotel, hard to connect)']],
       ev: [['“Concerns over data privacy and integration hurdles are also prominent, particularly among larger hotels with complex legacy systems.”', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in six European countries, Jan–Apr 2025.']],
-      act: 'Find out which PMS you run and whether other software can connect to it; if not, ask the vendor for an interface or an upgrade date.', who: 'IT' },
+      act: 'Find out which systems the tool must connect to (for example {ex}) and whether other software can connect to them; if one cannot, ask the vendor for an interface or an upgrade date.', who: 'IT' },
     { id: 'b4', name: 'Internet and devices where the work happens',
       plain: 'Cloud AI tools stop when the Wi-Fi or mobile signal drops: in the kitchen, the basement laundry, a remote wing. Staff also need devices that can run the tool.',
       good: 'A stable connection, tested in each place the tool is used, and enough tablets or phones for the shift.',
@@ -229,6 +237,30 @@
       act: 'Set a date after launch to ask staff what works, and tell staff representatives in time where you have them.', who: 'GM / HR' }
   ];
 
+  /* v1.3 (owner): typical systems by department: the team's own list, based on the catalogue's use cases, not a survey.
+     Shown as "For example: …" under the two systems questions (b1, b2) and inside their actions. Keyed by the catalogue's
+     department ids (tests/v13.test.mjs checks the keys against the inlined catalogue). SYSTEMS_FALLBACK: no department, or "None of these fits".
+     "PMS" appears only as one example among others; the PMS gloss shows only where it does. */
+  var SYSTEMS = {
+    rm: 'your PMS (booking system), revenue management system and channel manager',
+    res: 'your PMS (booking system), channel manager, booking engine and phone system',
+    sm: 'your CRM (guest database), email marketing tool, website and booking engine',
+    fo: 'your PMS (booking system), door locks and guest messaging',
+    gx: 'your PMS (booking system), guest messaging, CRM (guest database) and review sites',
+    fb: 'your POS (tills), table reservations, sales and catering system and PMS (booking system)',
+    hk: 'your PMS (booking system and room status), housekeeping app and staff messaging',
+    me: 'your building management system (heating, cooling, energy) and maintenance work orders',
+    kc: 'your POS (tills), inventory and recipe costing',
+    pr: 'your purchasing system, inventory, accounting system and supplier catalogues',
+    fa: 'your accounting system, PMS (booking system) and bank feeds',
+    hr: 'your payroll, HR records and staff scheduling',
+    gm: 'your PMS (booking system), accounting system, reporting dashboards and shared documents',
+    it: 'your network and firewall, email system, staff accounts and security cameras',
+    lg: 'your energy and utility meters, accounting system, HR records and contract files'
+  };
+  var SYSTEMS_FALLBACK = 'your PMS (booking system), POS (tills), accounting or HR systems';
+  var SYSTEMS_NOTE = 'Typical systems by department (the examples under the two systems questions): the team’s own list, based on the catalogue’s use cases, not a survey.';
+
   /* Weakest-three ranking (research D): by answer No > Partly > Don't know yet > Planned; ties by this fixed order. */
   var ANSWER_RANK = { n: 0, p: 1, k: 2, pl: 3 };
   var TIE_ORDER = ['b1', 'b3', 'b5', 'b8', 'b9', 'b2', 'b6', 'b7', 'b10', 'b4', 'c3', 'c1', 'c2', 'c8', 'c7', 'c6', 'c5', 'c9', 'c4'];
@@ -263,7 +295,7 @@
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).',
       'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019); UK AI Playbook (10 Feb 2025).'
     ],
-    needsNote: 'Most self-check questions reuse the readiness check’s wording (rules v4). A few are new in the project’s research and have not been reviewed yet.',
+    needsNote: 'Most self-check questions reuse the readiness check’s wording (rules v4). A few are new in the project’s research and have not been reviewed yet. ' + SYSTEMS_NOTE,
     success: [
       'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
@@ -286,6 +318,6 @@
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, NEEDS: NEEDS, FACTORS: FACTORS,
     ANSWER_RANK: ANSWER_RANK, TIE_ORDER: TIE_ORDER, KEY_NEEDS: KEY_NEEDS, OVERALL: OVERALL, SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF,
-    USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER };
+    USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK, SYSTEMS_NOTE: SYSTEMS_NOTE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

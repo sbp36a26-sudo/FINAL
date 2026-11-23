@@ -93,6 +93,7 @@ button{font:inherit;color:inherit}
 .rc{font-family:var(--mono);font-size:0.75rem;color:var(--ink3);white-space:nowrap}
 .qguard{color:var(--ink);border-left:3px solid var(--line);padding-left:10px}
 .gloss{font-size:0.875rem;color:var(--ink2);max-width:66ch;margin-top:2px}
+.qex{font-size:1rem;color:var(--ink);max-width:66ch;margin-top:-2px} /* v1.3: "For example: <systems>" under the b1/b2 question, on its own line */
 .weak{font-size:0.8125rem;color:var(--md);background:var(--md-s);border-radius:4px;padding:3px 8px;margin:2px 0 4px;max-width:66ch;width:fit-content}
 .savewarn{font-size:0.9375rem;font-weight:600;color:var(--md);background:var(--md-s);border-radius:6px;padding:8px 12px;margin:8px 0 0;max-width:68ch}
 .keytag{display:inline-block;font-size:0.75rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 7px;vertical-align:2px;white-space:nowrap}

@@ -28,8 +28,8 @@
   function items(list, rec) {
     return list.map(function (it) {
       var v = L.A_OK[rec.A[it.id]] ? rec.A[it.id] : 'k', by = v === 'pl' ? L.fmtDate(rec.By[it.id]) : '';
-      var a = v === 'y' ? null : L.action(it.id, v, rec.By[it.id]);
-      return { k: 'item', id: it.id, name: it.name + (it.key ? ' (must-have in the readiness check)' : ''), check: it.check,
+      var a = v === 'y' ? null : L.action(it.id, v, rec.By[it.id], rec), w = L.itemText(it.id, rec);
+      return { k: 'item', id: it.id, name: it.name + (it.key ? ' (must-have in the readiness check)' : ''), check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
         answer: 'Your answer: ' + AWORD[v] + (by ? ' (planned by ' + by + ')' : ''),
         action: a ? 'To do: ' + a.text + ' Usually: ' + a.who + '.' : 'In place: nothing to do.' };
     });
@@ -71,7 +71,7 @@
     var top = L.weakest(A, 3);
     b.push({ k: 'h', t: top.length ? L.firstLabel(top.length) : 'In short' }, { k: 'lead', t: L.overall(A).text, id: 'overall' });
     top.forEach(function (x, i) {
-      var a = L.action(x.id, x.v, rec.By[x.id]);
+      var a = L.action(x.id, x.v, rec.By[x.id], rec);
       b.push({ k: 'num', n: i + 1, t: a.text, sub: a.name + ' · your answer: ' + L.ANS_WORD[x.v] + ' · usually: ' + a.who });
     });
     var ho = L.handover(rec, u);
@@ -131,8 +131,8 @@
           f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); y += 2; break;
         }
         case 'item': {
-          f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + doc.splitTextToSize(safe(b.action), TW - 3).length + 2) * LH(9.6) + 6; room(Math.min(ih, 60));
-          y += 1.5; text(b.name, M, 10, 'bold', 25); y += 0.6; text(b.check, M + 3, 9.2, 'normal', 95); y += 0.6;
+          f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + (b.ex ? doc.splitTextToSize(safe(b.ex), TW - 3).length : 0) + doc.splitTextToSize(safe(b.action), TW - 3).length + 2) * LH(9.6) + 6; room(Math.min(ih, 60));
+          y += 1.5; text(b.name, M, 10, 'bold', 25); y += 0.6; text(b.check, M + 3, 9.2, 'normal', 95); if (b.ex) { y += 0.3; text(b.ex, M + 3, 9.2, 'normal', 95); } y += 0.6;
           text(b.answer, M + 3, 9.6, 'bold', 35); y += 0.4; text(b.action, M + 3, 9.6, 'normal', 35); y += 2.2; break;
         }
         case 'num': {

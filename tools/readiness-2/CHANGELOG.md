@@ -1,5 +1,21 @@
 # AI starting point (formerly "Readiness 2.0"): changelog
 
+## v1.3 (23 Nov 2026): systems named by department, "Why this matters" on step 1a
+
+Owner requests. Answers storage (`hftp-readiness2-v1`, version 1), verdict logic, counts, ranking and the overall line are unchanged; records saved by v1.1 (`tests/fixtures/v1.1-saved.json`) still open.
+
+**Systems questions (b1 "Systems that can talk to each other", b2 "Older systems") no longer talk only about the PMS.**
+- b1 asks: "Has it been confirmed in writing that the tool can read from and write back to the systems you want to connect it to?" and b2: "Do you know which systems the tool must connect to and, if one of them is old and hard to connect, is there a plan?". Each is followed on its own line by "For example: <systems>." (`#ex-b1`, `#ex-b2`).
+- The examples fit the department chosen in step 1b: new `SYSTEMS` map in `content.js`, keyed by the catalogue's 15 department ids (the test checks the keys against the inlined catalogue). No department, or "None of these fits": "your PMS (booking system), POS (tills), accounting or HR systems". Marked in code and in step 2's "Where this comes from" (screen and PDF) as "typical systems by department: the team's own list, based on the catalogue's use cases, not a survey".
+- b1 and b2 plain text and "What good looks like" now say "your hotel systems" / "which systems the tool must connect to". The PMS gloss shows only when "PMS" is among the examples shown (it now sits under the examples line, its first use).
+- The b1/b2 actions on the summary ("Start with these three" and item by item), in Copy summary and in the PDF read "Ask the vendor to confirm in writing that the tool reads from and writes back to the systems you want to connect it to (for example …), and see it work on your own systems." and "Find out which systems the tool must connect to (for example …) and whether …". "Don't know yet" adds the examples line after the question. The PDF item block prints the examples line under the question.
+- New pure functions `R2Logic.systemsFor(rec)` and `R2Logic.itemText(id, rec)`; `action()`/`actions()` take the record as an optional last argument (no record → fallback examples).
+- Left as is, on purpose: the quoted readiness-check question under "The readiness check also asks" in b2's fold ("Which describes your main hotel system (PMS)? …") is the readiness check's own T2 wording, which this change does not touch; catalogue use-case texts that mention the PMS are the catalogue's.
+
+**Step 1a: "Why this matters".** The fold under each of the five questions is now labelled "Why this matters" (was "Why we ask, and an example"; same `<details>` fold: arrow, keyboard, 44 px target). Its first line is a new one-sentence reason (`whyShort` in `content.js`, at most 25 words; the field `short` already held the "to find out" label, so it was not reused), then the longer `why`, then the Yes/No examples.
+
+**Tests.** New `tests/v13.test.mjs` (137 checks): the table by hand per department and the fallback (also for "None of these fits" under a department, unknown ids), b1/b2 wording, the gloss only where PMS is shown, actions by hand, the PDF blocks, no PMS-only sentence in content, actions or the PDF (one documented exception: the T2 quote), and the "Why this matters" lines. `walk.cjs` checks the new fold label. Changed expectations (wording changed by the owner): `pdf.test.mjs` (b2 "find out" action now carries the Front Office examples; the random check passes the record) and `v12.test.mjs` (b1's action text holds the examples slot).
+
 ## v1.2 (23 Nov 2026): new name, the council's BUILD NOW items, eight clean-up fixes
 
 Sources: owner decisions B1–B5 on `reports/Council - Readiness 2.0.md` (owner decisions win over the council) and the fix list in `reports/audit-readiness-2/cleanup_inventory.md` (each bug was re-checked against the v1.1 code first: all eight still applied). Tests were written first (`tests/v12.test.mjs`, `tests/browser/v12.cjs`). Before any change, four records saved by v1.1 were captured from the real page into `tests/fixtures/v1.1-saved.json`; they all open unchanged.

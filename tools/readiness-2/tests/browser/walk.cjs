@@ -38,6 +38,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     ok((await p.getAttribute('#app', 'data-state')) === 'q', tag + ': step 1a');
     ok(!(await p.isVisible('#honest')), tag + ': honesty line only on the start screen');
     ok((await p.$$('details[data-fold^="why-"]')).length === 5 && (await p.$$('details[data-fold^="why-"][open]')).length === 0, tag + ': five why/example folds, closed');
+    ok((await p.textContent('details[data-fold="why-q1"] > summary')).trim() === 'Why this matters', tag + ': v1.3 fold label');
     await p.click('details[data-fold="why-q1"] > summary');
     await check(p, tag + ' q'); await shot(p, tag + '-1-questions');
     await p.click('details[data-fold="why-q1"] > summary');

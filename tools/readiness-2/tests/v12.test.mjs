@@ -168,7 +168,7 @@ ok(C.NOT_SAVED === 'This browser is not keeping your answers. Use Copy summary, 
   ok(F.reduce(at, 'by', { id: 'b1', date: '2026-12-01' }, CAT).rec.By.b1 === '2026-12-01', 'reduce keeps 2026-12-01');
   ['2026-02-31', '2026-13-45', '0000-00-00'].forEach(d => ok(!('b1' in F.migrate({ v: 1, step: 'needs', Q: allQ('y'), use: 'none', A: { b1: 'pl' }, By: { b1: d } }, CAT).By), 'migrate drops ' + d));
   ok(L.fmtDate('2026-12-01') === '1 Dec 2026' && L.fmtDate('2026-13-45') === '' && L.fmtDate('0000-00-00') === '' && L.fmtDate('2026-02-31') === '', 'fmtDate prints real dates only');
-  ok(L.action('b1', 'pl', '2026-13-45').text === 'Finish: ' + L.ITEM.b1.act, 'an impossible date is never printed');
+  ok(L.action('b1', 'pl', '2026-13-45').text === 'Finish: ' + L.itemText('b1').act, /* v1.3: act holds the {ex} slot */ 'an impossible date is never printed');
   ok(L.localIso(new Date(2026, 10, 23, 0, 30)) === '2026-11-23' && L.localIso(new Date(2026, 0, 5, 23, 59)) === '2026-01-05', 'dates on screen and in the PDF use the local day, not UTC');
 }
 

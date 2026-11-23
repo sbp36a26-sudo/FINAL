@@ -80,15 +80,31 @@
     dt = dt || new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; };
     return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
   }
-  /* One plain task per item, by its answer, in the readiness check's style. */
-  function action(id, v, by) {
+  /* v1.3 (owner): the systems examples for the two systems questions (b1, b2), by the department chosen in step 1b.
+     No department, or "None of these fits" → the fallback. Returns { text, line: 'For example: … .', dept, fallback, pms }. */
+  function systemsFor(rec) {
+    var d = rec && rec.use !== 'none' && typeof rec.dept === 'string' && Object.prototype.hasOwnProperty.call(C.SYSTEMS, rec.dept) ? rec.dept : '';
+    var t = d ? C.SYSTEMS[d] : C.SYSTEMS_FALLBACK;
+    return { text: t, line: 'For example: ' + t + '.', dept: d, fallback: !d, pms: /\bPMS\b/.test(t) };
+  }
+  /* An item's words for this record: { plain, good, check, ex ('' or the "For example" line), gloss ('' unless shown), act }.
+     Only b1/b2 (ex: true) change with the department; the PMS gloss shows only when "PMS" is among the examples shown. */
+  function itemText(id, rec) {
     var it = ITEM[id]; if (!it) return null;
-    var text = v === 'pl' ? 'Finish: ' + (fmtDate(by) ? it.act.replace(/\.$/, '') + ' (planned by ' + fmtDate(by) + ').' : it.act)
-      : v === 'k' ? 'Find out: “' + it.check + '”'
-      : it.act;
+    var sy = systemsFor(rec), gloss = it.gloss || '';
+    if (it.ex && /^PMS:/.test(gloss) && !sy.pms) gloss = '';
+    return { plain: it.plain || it.def, good: it.good, check: it.check, ex: it.ex ? sy.line : '', gloss: gloss, act: it.act.replace('{ex}', sy.text) };
+  }
+  /* One plain task per item, by its answer, in the readiness check's style. rec (v1.3, optional): picks the systems examples. */
+  function action(id, v, by, rec) {
+    var it = ITEM[id]; if (!it) return null;
+    var w = itemText(id, rec), act = w.act;
+    var text = v === 'pl' ? 'Finish: ' + (fmtDate(by) ? act.replace(/\.$/, '') + ' (planned by ' + fmtDate(by) + ').' : act)
+      : v === 'k' ? 'Find out: “' + it.check + '”' + (w.ex ? ' ' + w.ex : '')
+      : act;
     return { id: id, v: v, name: it.name, step: it.step, text: text, who: it.who };
   }
-  function actions(A, By, ids) { return ranked(A, ids).map(function (x) { return action(x.id, x.v, By && By[x.id]); }); }
+  function actions(A, By, ids, rec) { return ranked(A, ids).map(function (x) { return action(x.id, x.v, By && By[x.id], rec); }); }
 
   /* ---------- shared by the summary screen, Copy summary and the PDF (src/pdf.js), so all three say the same ---------- */
   var ANS_WORD = { y: 'Yes', n: 'No', p: 'Partly', k: 'Don’t know yet', pl: 'Planned' };
@@ -135,7 +151,7 @@
   }
   function firstLabel(n) { return n === 1 ? 'Start with this one' : 'Start with these ' + (n === 3 ? 'three' : 'two'); } // v1.1: was "these one"
 
-  var api = { handover: handover, HANDOVER_NOTE: HANDOVER_NOTE, realDate: realDate, localIso: localIso, ANS_WORD: ANS_WORD, verdictText: verdictText, pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, checkWhyNot: checkWhyNot, firstLabel: firstLabel,
+  var api = { systemsFor: systemsFor, itemText: itemText, handover: handover, HANDOVER_NOTE: HANDOVER_NOTE, realDate: realDate, localIso: localIso, ANS_WORD: ANS_WORD, verdictText: verdictText, pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, checkWhyNot: checkWhyNot, firstLabel: firstLabel,
     QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, Q_OK: Q_OK, A_OK: A_OK, ITEM: ITEM, QBY: QBY,
     verdict: verdict, counts: counts, countLine: countLine, ranked: ranked, weakest: weakest, overall: overall, action: action, actions: actions, fmtDate: fmtDate };
   root.R2Logic = api;
