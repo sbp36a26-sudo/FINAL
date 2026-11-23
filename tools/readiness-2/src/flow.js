@@ -1,4 +1,4 @@
-/* Readiness 2.0: the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
+/* AI starting point (formerly "Readiness 2.0"; folder, ids and storage key unchanged): the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
    See CLEANUP.md for the inventory.
 
    1. FLOW (rec.step): where the person is.
@@ -15,7 +15,11 @@
       at version V, or null. Unknown fields are dropped; a step that cannot be shown is placed back (placeStep).
    3. reduce(rec, ev, arg, cat): the only function that changes the record (answers, choices, navigation, restart).
       Returns { rec, ok }; ok false means the event was refused and rec is unchanged.
-   4. CONFIRM (confirmNext), BRIDGE (bridgeNext) and DOWNLOAD (dlNext): page-only machines, never saved (see below). */
+   4. CONFIRM (confirmNext), BRIDGE (bridgeNext) and DOWNLOAD (dlNext): page-only machines, never saved (see below).
+   5. HISTORY (v1.2, histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list.
+      Our entries are { r2: step, d: how many of our entries lie below, prev: the step of the entry below or null }.
+      Forward events push; in-app Back goes back in history when the entry below is that step and nobody pushed since,
+      else replaces; Start again replaces; an entry that is not ours (a hash change, a hub entry) is never read as a step. */
 (function (root) {
   'use strict';
   var V = 1, KEY = 'hftp-readiness2-v1';
@@ -36,14 +40,23 @@
   var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var DATE = /^\d{4}-\d{2}-\d{2}$/;
+  /* v1.2 (clean-up L1): the pattern was not enough ("2026-02-31", "0000-00-00" were kept). A real calendar day, 2000 to 2100. */
+  function validDate(s) {
+    if (typeof s !== 'string' || !DATE.test(s)) return false;
+    var y = +s.slice(0, 4), m = +s.slice(5, 7), d = +s.slice(8, 10), t = new Date(Date.UTC(y, m - 1, d));
+    return y >= 2000 && y <= 2100 && t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+  }
 
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
-  function blank() { return { v: V, step: 'start', Q: {}, cat: '', dept: '', use: '', A: {}, By: {} }; }
-  function copy(r) { return { v: V, step: r.step, Q: Object.assign({}, r.Q), cat: r.cat, dept: r.dept, use: r.use, A: Object.assign({}, r.A), By: Object.assign({}, r.By) }; }
+  /* useName (v1.2, clean-up M2): the catalogue name of the chosen use case. Use-case ids are positions ('<dept>-<n>'), so a
+     catalogue insert would silently re-point a saved id; the name lets migrate() notice and ask again. Optional: version stays 1. */
+  function blank() { return { v: V, step: 'start', Q: {}, cat: '', dept: '', use: '', useName: '', A: {}, By: {} }; }
+  function copy(r) { return { v: V, step: r.step, Q: Object.assign({}, r.Q), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', A: Object.assign({}, r.A), By: Object.assign({}, r.By) }; }
 
   /* cat: the catalogue model { depts: [{ id, cat, uses: [{ id }] }] }. */
   function deptOf(cat, id) { return (cat && cat.depts || []).filter(function (d) { return d.id === id; })[0] || null; }
   function useIn(cat, deptId, useId) { var d = deptOf(cat, deptId); return !!(d && d.uses.some(function (u) { return u.id === useId; })); }
+  function useName(cat, deptId, useId) { var d = deptOf(cat, deptId), u = d && d.uses.filter(function (x) { return x.id === useId; })[0]; return u ? u.n : ''; }
 
   function ctxOf(rec, cat) {
     var Q = rec.Q || {}, A = rec.A || {};
@@ -88,20 +101,30 @@
   function events(step, c) { return Object.keys(FLOW[step] || {}).filter(function (e) { return flowNext(step, e, c) !== null; }); }
 
   function obj(v) { return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
-  /* Any saved value (parsed JSON) → a clean record or null. */
-  function migrate(raw, cat) {
+  /* Any saved value (parsed JSON) → a clean record or null. info (optional, v1.2) is filled with what the page must say:
+     info.useChanged  the saved use case's name differs from the catalogue's (the catalogue moved): use case cleared, back on 1b
+     info.newer       the record was saved by a newer version: the page shows it but must not save over it (clean-up L2) */
+  function migrate(raw, cat, info) {
+    info = info || {};
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     var r = raw;
     /* Migration stub: version 1 is the first. A record without v is treated as version 1; a later version is read for what this build understands. */
     if (r.v == null) r = Object.assign({}, r, { v: 1 });
     if (typeof r.v !== 'number' || r.v < 1) return null;
+    if (r.v > V) info.newer = true;
     var o = blank(), Q = obj(r.Q), A = obj(r.A), By = obj(r.By);
     QIDS.forEach(function (id) { if (Q_OK[Q[id]]) o.Q[id] = Q[id]; });
     NEED_IDS.concat(FACTOR_IDS).forEach(function (id) { if (A_OK[A[id]]) o.A[id] = A[id]; });
-    Object.keys(o.A).forEach(function (id) { if (o.A[id] === 'pl' && typeof By[id] === 'string' && DATE.test(By[id])) o.By[id] = By[id]; });
+    Object.keys(o.A).forEach(function (id) { if (o.A[id] === 'pl' && validDate(By[id])) o.By[id] = By[id]; });
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(cat, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
     o.use = r.use === 'none' ? 'none' : (typeof r.use === 'string' && o.dept && useIn(cat, o.dept, r.use) ? r.use : '');
+    if (o.use && o.use !== 'none') {
+      var now = useName(cat, o.dept, o.use);
+      /* A record saved before v1.2 has no name: it takes the catalogue's name now, so later catalogue moves are caught. */
+      if (typeof r.useName === 'string' && r.useName && r.useName !== now) { o.use = ''; info.useChanged = true; }
+      else o.useName = now;
+    }
     o.step = placeStep(typeof r.step === 'string' ? r.step : 'start', ctxOf(o, cat));
     return o;
   }
@@ -121,25 +144,25 @@
         return { rec: r, ok: true };
       }
       case 'by': {
-        if (!arg || rec.A[arg.id] !== 'pl' || (rec.step !== 'needs' && rec.step !== 'success') || typeof arg.date !== 'string' || (arg.date && !DATE.test(arg.date))) return no;
+        if (!arg || rec.A[arg.id] !== 'pl' || (rec.step !== 'needs' && rec.step !== 'success') || typeof arg.date !== 'string' || (arg.date && !validDate(arg.date))) return no;
         r = copy(rec); if (arg.date) r.By[arg.id] = arg.date; else delete r.By[arg.id];
         return { rec: r, ok: true };
       }
       case 'cat': {
         if (CATS.indexOf(arg) < 0 || rec.step !== 'where') return no;
         r = copy(rec); r.cat = arg;
-        var d0 = deptOf(cat, r.dept); if (!d0 || d0.cat !== arg) { r.dept = ''; if (r.use !== 'none') r.use = ''; }
+        var d0 = deptOf(cat, r.dept); if (!d0 || d0.cat !== arg) { r.dept = ''; if (r.use !== 'none') { r.use = ''; r.useName = ''; } }
         return { rec: r, ok: true };
       }
       case 'dept': {
         var d = deptOf(cat, arg); if (!d || d.cat !== rec.cat || rec.step !== 'where') return no;
-        r = copy(rec); r.dept = d.id; if (r.use !== 'none' && !useIn(cat, d.id, r.use)) r.use = '';
+        r = copy(rec); r.dept = d.id; if (r.use !== 'none' && !useIn(cat, d.id, r.use)) { r.use = ''; r.useName = ''; }
         return { rec: r, ok: true };
       }
       case 'use': {
         if (rec.step !== 'where') return no;
         if (arg !== 'none' && !(rec.dept && useIn(cat, rec.dept, arg))) return no;
-        r = copy(rec); r.use = arg; return { rec: r, ok: true };
+        r = copy(rec); r.use = arg; r.useName = arg === 'none' ? '' : useName(cat, rec.dept, arg); return { rec: r, ok: true };
       }
       case 'restart': {
         if (!flowNext(rec.step, 'restart', ctxOf(rec, cat))) return no;
@@ -185,7 +208,32 @@
     return to;
   }
 
-  var api = { BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext, V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, CATS: CATS,
+  /* HISTORY machine (v1.2, clean-up M1). h = what the page knows of the current entry: { d, prev, len } (len: history.length
+     when the page last wrote or read it). Returns how a step change from event ev to step `to` is written:
+       'push'    begin, next, change, edit (forward: a new Back/forward entry)
+       'back'    in-app Back when the entry below is `to` and nobody (the hub, a hash change) pushed since: history.back()
+       'replace' in-app Back otherwise, and Start again (no new entry, so Back/forward and the in-app Back never disagree) */
+  function histAction(ev, h, to, lenNow) {
+    if (ev === 'restart') return 'replace';
+    if (ev === 'back') return h && h.d > 0 && h.prev === to && h.len === lenNow ? 'back' : 'replace';
+    return 'push';
+  }
+  function histEntry(act, h, to, from) {
+    var d = h && typeof h.d === 'number' && h.d >= 0 ? h.d : 0;
+    return act === 'push' ? { r2: to, d: d + 1, prev: from || null } : { r2: to, d: d, prev: null };
+  }
+  /* Reads history.state: our entry → { ours: true, step, d, prev }; anything else (null after a hash change, a hub entry) → { ours: false }. */
+  function histRead(st) {
+    if (!st || typeof st !== 'object' || STEPS.indexOf(st.r2) < 0) return { ours: false };
+    return { ours: true, step: st.r2, d: typeof st.d === 'number' && st.d >= 0 ? st.d : 0, prev: STEPS.indexOf(st.prev) >= 0 ? st.prev : null };
+  }
+  /* Progress bar (v1.2, clean-up L3): three segments for steps 1–3; the current one is 'now'; all done on the summary; none on start/stop. */
+  function progress(step) {
+    var n = { q: 1, where: 1, needs: 2, success: 3, summary: 4 }[step]; if (!n) return null;
+    return [1, 2, 3].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
+  }
+
+  var api = { validDate: validDate, histAction: histAction, histEntry: histEntry, histRead: histRead, progress: progress, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext, V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, CATS: CATS,
     blank: blank, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events, migrate: migrate, reduce: reduce, confirmNext: confirmNext };
   root.R2Flow = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

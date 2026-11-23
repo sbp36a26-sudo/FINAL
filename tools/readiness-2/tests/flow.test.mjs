@@ -131,7 +131,10 @@ ok(F.KEY === 'hftp-readiness2-v1' && F.V === 1, 'storage key and version');
 const store = rec => JSON.parse(JSON.stringify(Object.assign({}, rec, { updated: '2026-11-23T10:00:00.000Z' })));
 const recs = [full, F.blank(), R({ step: 'stop', Q: { q1: 'n', q2: 'u' } }), R({ step: 'where', Q: allQ('u'), cat: 'Administrative', dept: 'lg', use: 'lg-4' }),
   R({ step: 'success', Q: allQ('y'), use: 'none', A: Object.assign(allA('pl'), { c1: undefined }), By: { b1: '2027-02-01' } })];
-recs.forEach((x, i) => { const back = F.migrate(store(x), CAT); const want = JSON.parse(JSON.stringify(x)); ok(eq(back, want), 'round trip #' + i); });
+/* v1.2 (clean-up M2): a record now carries the chosen use case's catalogue name (useName); a record saved without it
+   (before v1.2) gets the name filled in on load. Records saved by this build carry it, so the round trip adds it here. */
+const nameOf = id => (CAT.depts.flatMap(d => d.uses).find(u => u.id === id) || { n: '' }).n;
+recs.forEach((x, i) => { const y = Object.assign({}, x, { useName: x.use && x.use !== 'none' ? nameOf(x.use) : '' }); const back = F.migrate(store(y), CAT); const want = JSON.parse(JSON.stringify(y)); ok(eq(back, want), 'round trip #' + i); });
 [null, 'text', 42, [], { v: 'one' }, { v: 0 }, { v: -1 }].forEach((x, i) => ok(F.migrate(x, CAT) === null, 'corrupt value refused #' + i));
 const junk = F.migrate({ v: 1, step: 'summary', Q: { q1: 'y', q2: 'maybe', q9: 'y' }, cat: 'Spa', dept: 'fo', use: 'fo-1', A: { b1: 'yes', b3: 'y', zz: 'y' }, By: { b3: '2027-01-01' }, extra: 1 }, CAT);
 ok(junk && junk.Q.q1 === 'y' && !('q2' in junk.Q) && !('q9' in junk.Q), 'bad answers dropped, good ones kept');

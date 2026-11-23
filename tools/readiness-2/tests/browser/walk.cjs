@@ -1,4 +1,4 @@
-// Browser walk for Readiness 2.0 (desktop 1280 + phone 390, standalone and inside the hub). Serve tools/ with: python3 -m http.server 8808 --bind 127.0.0.1; screenshots go to OUT (env R2_SHOTS, default ./shots).
+// Browser walk for AI starting point (formerly Readiness 2.0; folder readiness-2) (desktop 1280 + phone 390, standalone and inside the hub). Serve tools/ with: python3 -m http.server 8808 --bind 127.0.0.1; screenshots go to OUT (env R2_SHOTS, default ./shots).
 const { chromium } = require('playwright');
 const OUT = process.env.R2_SHOTS || __dirname + '/shots', BASE = process.env.R2_BASE || 'http://127.0.0.1:8808/';
 let pass = 0, fail = 0; const fails = [];
@@ -49,7 +49,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     ok((await p.textContent('#next')).includes('See the result'), tag + ': Q1 No: the button says "See the result"');
     await p.click('#next');
     ok((await p.getAttribute('#app', 'data-state')) === 'stop', tag + ': Q1 No stops');
-    ok((await p.textContent('#stop-head')) === 'This is not an AI problem.', tag + ': stop heading');
+    ok((await p.textContent('#stop-head')) === 'This is not suitable for AI.', tag + ': stop heading (v1.2, owner B2: was "This is not an AI problem.")');
     const btns = await p.$$eval('#view button, #view a.btn', els => els.map(e => e.id));
     // v1.1 (owner's request): a secondary "Download (PDF)" joins the two buttons; still nothing that moves past the stop screen
     ok(JSON.stringify(btns) === JSON.stringify(['change', 'restart', 'pdf']), tag + ': stop screen: Change my answers, Start again, Download (PDF) ' + btns);
@@ -122,7 +122,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     if (!touch) {
       await p.click('#copy'); await p.waitForTimeout(200);
       const clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-      ok(clip.startsWith('Readiness 2.0: summary') && clip.includes('Start with these:'), tag + ': summary copied');
+      ok(clip.startsWith('AI starting point: summary') && clip.includes('Start with these:'), tag + ': summary copied (v1.2: renamed)');
     }
     // Print view
     await p.emulateMedia({ media: 'print' });
@@ -153,7 +153,8 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     await p.click('label[for="u-none"]'); await p.click('#next');
     for (const id of Object.keys(PLAN2)) await p.click(`label[for="a-${id}-k"]`); await p.click('#next');
     for (const id of Object.keys(PLAN3)) await p.click(`label[for="a-${id}-y"]`); await p.click('#next');
-    ok((await state(p)).step === 'summary' && (await p.isDisabled('#check-one')) && /None of these fits/.test(await p.textContent('#check-why')), tag + ': none fits: check button disabled with the reason');
+    // v1.2 (council BUILD NOW 3): "None of these fits" no longer ends on a disabled button; it opens the readiness check's start screen
+    ok((await state(p)).step === 'summary' && !(await p.isDisabled('#check-one')) && (await p.textContent('#check-one')) === 'Open the readiness check' && (await p.getAttribute('#check-one', 'href')) === '../readiness-check/index.html' && /No use case in the catalogue matches/.test(await p.textContent('#check-why')), tag + ': none fits: "Open the readiness check" (was a disabled button)');
     ok((await p.textContent('#sum-where')).includes('None of these fits'), tag + ': summary says none fits');
     ok((await p.textContent('#sum-verdict')).includes('Fix the data first.') && (await p.textContent('#sum-verdict')).includes('To find out'), tag + ': conditions carried to the summary');
     await shot(p, tag + '-8-summary-nonefits');
@@ -189,7 +190,9 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     await p.waitForFunction(() => window.HFTPHub.state().tool === 'readiness-2');
     let fr; for (let i = 0; i < 50 && !fr; i++) { fr = p.frames().find(f => /readiness-2\/index\.html/.test(f.url())); if (!fr) await p.waitForTimeout(100); }
     await fr.waitForFunction(() => window.Readiness2);
-    ok((await fr.evaluate(() => window.Readiness2.state().inHub)) === true, tag + ': knows it is in the hub');
+    // v1.2 (clean-up L4): "in the hub" is known once the hub answers the ping, not from merely being framed
+    await fr.waitForFunction(() => window.Readiness2.state().inHub === true, null, { timeout: 5000 }).catch(() => {});
+    ok((await fr.evaluate(() => window.Readiness2.state().inHub)) === true, tag + ': knows it is in the hub (after the hub\'s pong)');
     await fr.click('#begin');
     for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await fr.click(`label[for="a-${q}-y"]`);
     await fr.click('#next'); await fr.click('#cat-guestfacing'); await fr.click('#dept-fo'); await fr.click('label[for="u-fo-3"]');
@@ -200,7 +203,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     let cf; for (let i = 0; i < 50 && !(cf && /#fo$/.test(cf.url())); i++) { cf = p.frames().find(f => /use-case-catalogue/.test(f.url())); if (!(cf && /#fo$/.test(cf.url()))) await p.waitForTimeout(100); }
     ok(cf && /#fo$/.test(cf.url()), tag + ': catalogue opened at Front Office ' + (cf && cf.url()));
     await p.goBack(); await p.waitForFunction(() => window.HFTPHub.state().tool === 'readiness-2');
-    ok(true, tag + ': Back returns to Readiness 2.0');
+    ok(true, tag + ': Back returns to AI starting point');
     await fr.click('#next');
     for (const id of Object.keys(PLAN2)) await fr.click(`label[for="a-${id}-${PLAN2[id]}"]`); await fr.click('#next');
     for (const id of Object.keys(PLAN3)) await fr.click(`label[for="a-${id}-${PLAN3[id]}"]`); await fr.click('#next');

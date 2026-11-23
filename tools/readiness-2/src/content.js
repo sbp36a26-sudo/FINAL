@@ -1,4 +1,4 @@
-/* Readiness 2.0: every word a hotel reads about the questions, the prerequisites and the success factors.
+/* AI starting point (formerly "Readiness 2.0"; folder tools/readiness-2): every word a hotel reads about the questions, the prerequisites and the success factors.
    Source of all content: research_notes/AI starting point/research.md (23 Nov 2026). Section letters there:
    A = the five questions (step 1a here), B = prerequisites (step 2), C = success factors (step 3), D = scale and summary.
    Rules kept (CLAUDE.md): no source the project bans; every figure carries its source and base;
@@ -12,10 +12,11 @@
     { id: 'q1', short: 'Needs judgement, not fixed rules',
       q: 'Is this job too varied to write down as fixed rules (if this, then that)?',
       hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
+      guard: 'Judge the job, not how you handle it today. If you use rules now only because nothing better was available, for example price rules, answer Not sure.', // v1.2, council BUILD NOW 1
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
       yes: 'Reading guest emails in five languages and drafting replies.',
       no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
-      outcome: 'Not an AI problem: rules or ordinary automation will do it.',
+      outcome: 'Not suitable for AI: rules or ordinary automation will do it.', // v1.2 (owner B2): was "Not an AI problem: …"
       who: 'the vendor or IT' },
     { id: 'q2', short: 'Worth real money or hours',
       q: 'Does the job come up often enough, or cost enough, that doing it better would be worth real money or staff hours every month?',
@@ -53,11 +54,13 @@
   ];
   var Q_ANSWERS = [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']];
 
-  /* The stop screen (owner's hard rule: Q1 No ends the journey). */
+  /* The stop screen (owner's hard rule: Q1 No ends the journey). Reads: headline, why, instead, then the "Not sure" line.
+     v1.2 (owner B2): the headline was "This is not an AI problem."; unsure: council BUILD NOW 2. */
   var STOP = {
-    head: 'This is not an AI problem.',
+    head: 'This is not suitable for AI.',
     why: 'The job follows rules a person can write down, so rules or ordinary automation will do it, and a simpler tool is cheaper, easier to explain and easier to fix.',
-    instead: 'Instead: set up a rule, a report or an automatic message in the software you already have, or change the process. Ask your current software vendor whether a rule or report can do it.'
+    instead: 'Instead: set up a rule, a report or an automatic message in the software you already have, or change the process. Ask your current software vendor whether a rule or report can do it.',
+    unsure: 'If a vendor offers you an AI tool for this job, ask what the AI does that a rule could not. If you are unsure, change your answer to Not sure: it becomes something to find out.'
   };
 
   /* Verdict headlines (research A, "Verdict logic"). */
@@ -83,6 +86,7 @@
       plain: 'The AI tool must read from and write back to your booking system (PMS) and other software, or staff end up copying data by hand.',
       good: 'The vendor confirms in writing a two-way link to your PMS version, and you have seen it work on your own systems.',
       check: 'Has it been confirmed in writing that the tool can read from and write back to your hotel systems?', rc: 'T1',
+      gloss: 'PMS: the property management system, the booking system that holds reservations, rooms and guest records.',
       also: [['T4', 'Do you have a written list of the software your hotel uses that shows which ones share data?']],
       ev: [['45.91% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
@@ -99,6 +103,7 @@
       plain: 'If the tool handles guest or staff data, the vendor works with that data for you. The GDPR requires a written contract with it, and your data protection contact must agree.',
       good: 'A signed data processing agreement (DPA) that covers instructions, security, sub-processors, returning or deleting data at the end, and whether the vendor may train on your data. A written OK from your data protection contact, and a data protection impact assessment (DPIA) where the risk is high.',
       check: 'Have you signed a data processing agreement with the vendor of this tool?', rc: 'D5a',
+      gloss: 'A data processing agreement (DPA) is the contract that says what the vendor may do with your guests’ and staff’s data. A DPIA (data protection impact assessment) is a written check of the risks to people’s data.',
       also: [['D5b', 'Has your data protection contact confirmed in writing that you may use guest or staff data in this tool?'], ['G2s', 'Has a data protection impact assessment (DPIA) been done for this tool?']],
       ev: [['52.36% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['“Such legal act must be in writing, including in electronic form.” (on the contract between a hotel and a vendor that processes its personal data, GDPR Art. 28(3))', 'EDPB Guidelines 07/2020 on the concepts of controller and processor, version 2.1.']],
@@ -164,6 +169,7 @@
       good: 'A one-page before/after for the task, such as email handling, agreed with the staff who do it.',
       warn: ['The tool is bought “to see what it can do”.', 'Staff run the old and the new process side by side for months.'],
       check: 'Have you written down, step by step, who does what once the tool is in use?', rc: 'O2',
+      weak: 'Evidence here is thinner: one worldwide survey of 107 hotel company leaders (State of Hotel AI, Fall 2026); no European hotel survey yet.',
       ev: [['32% of hotel company leaders credited workflow redesign for their success with AI.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
       act: 'Write a one-page before/after of the task together with the staff who do it.', who: 'Department head' },
     { id: 'c3', name: 'Leadership',
@@ -179,6 +185,7 @@
       good: 'Staff tried the tool before the decision. There is a known person to tell when it errs. Managers talk openly about what happens to the time saved.',
       warn: ['Staff override every suggestion.', 'Rumours about job cuts.', 'Nobody reports errors.'],
       check: 'Have the staff who will use the tool tried it or watched a demo?', rc: 'X1',
+      weak: 'Evidence here is thin: one hotelier’s quote and academic studies; no European hotel survey measures culture yet.',
       ev: [['“AI is not the problem – change is.” (a hotelier quoted by the authors). No large European hotel survey measures culture directly.', 'Schegg & Fux, Hotel Yearbook 2025 Technology Edition, 23 Jun 2025.']],
       act: 'Let the staff who will use the tool try a demo, and tell them whom to report errors to.', who: 'Department head' },
     { id: 'c5', name: 'Workforce readiness',
@@ -215,8 +222,10 @@
       good: 'Staff briefed before launch. A pilot with feedback. The works council told in time. A review date set.',
       warn: ['Launch by email.', 'No pilot.', 'Adoption measured only by logins.'],
       check: 'Is there a date, after launch, when you will ask staff what works and change the set-up?', rc: 'new',
+      gloss: 'Staff representatives: a works council, staff committee or union delegates, where your hotel has them.',
+      weak: 'Evidence here is thinner: one worldwide survey of 107 hotel company leaders (State of Hotel AI, Fall 2026) and one change-management consultancy’s survey across industries (Prosci); no European hotel survey yet.',
       ev: [['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.'],
-           ['63% of organisations cite human factors as a primary challenge in AI implementation.', 'Prosci, AI adoption (undated page, read 23 Nov 2026). Base: 1,107 professionals across several industries, not only hotels.']],
+           ['63% of organisations cite human factors as a primary challenge in AI implementation.', 'Prosci, a change-management consultancy, AI adoption (undated page, read 23 Nov 2026). Base: 1,107 professionals across several industries, not only hotels.']],
       act: 'Set a date after launch to ask staff what works, and tell staff representatives in time where you have them.', who: 'GM / HR' }
   ];
 
@@ -254,7 +263,7 @@
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).',
       'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019); UK AI Playbook (10 Feb 2025).'
     ],
-    needsNote: 'The self-check questions reuse the readiness check’s wording (rules v4); its question code is shown with each one. Two are new and marked so.',
+    needsNote: 'Most self-check questions reuse the readiness check’s wording (rules v4). A few are new in the project’s research and have not been reviewed yet.',
     success: [
       'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
@@ -262,16 +271,21 @@
       'Eurostat, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
       'European Commission, AI literacy: Questions & Answers (page as of 23 Nov 2026).',
       'Schegg & Fux, Hotel Yearbook 2025 Technology Edition (23 Jun 2025).',
-      'Prosci, AI adoption (undated page, read 23 Nov 2026).',
+      'Prosci (a change-management consultancy), AI adoption (undated page, read 23 Nov 2026).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023); Google PAIR, People + AI Guidebook (read 23 Nov 2026); GOV.UK (10 Jun 2019).'
     ],
-    successNote: 'Culture has the weakest evidence of the nine: no large European hotel survey measures it directly. On leadership the sources differ in emphasis, so both are shown.'
+    successNote: 'Culture has the weakest evidence of the nine: no large European hotel survey measures it directly. Workflow and change management rest mainly on one worldwide survey of hotel leaders. On leadership the sources differ in emphasis, so both are shown.'
   };
 
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
   var AS_OF = '23 Nov 2026';
+  /* v1.2: notices (clean-up M2, M3, L2) and the hand-over */
+  var USE_CHANGED = 'The catalogue changed: please pick your use case again.';
+  var NOT_SAVED = 'This browser is not keeping your answers. Use Copy summary, Print or Download before you close the page.';
+  var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, NEEDS: NEEDS, FACTORS: FACTORS,
-    ANSWER_RANK: ANSWER_RANK, TIE_ORDER: TIE_ORDER, KEY_NEEDS: KEY_NEEDS, OVERALL: OVERALL, SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF };
+    ANSWER_RANK: ANSWER_RANK, TIE_ORDER: TIE_ORDER, KEY_NEEDS: KEY_NEEDS, OVERALL: OVERALL, SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF,
+    USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

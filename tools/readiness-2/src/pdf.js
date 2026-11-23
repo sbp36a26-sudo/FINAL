@@ -1,18 +1,18 @@
-/* Readiness 2.0: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* AI starting point (formerly "Readiness 2.0"): the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    Built the way the readiness check, the AI Register and the AI Act guide make their PDFs: jsPDF and the "Register Sans"
    font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs, so nothing is loaded from the internet.
    1. model(rec, cat, o) → the document as plain blocks, in the summary's own words (R2Logic shares them with the screen):
         o = { hotel: '' | name from the shared profile, today: 'YYYY-MM-DD' }
         blocks: { k: 'title' | 'meta' | 'h' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'item' | 'num' | 'src', ... }
       Q1 No → the one-page stop version (why, the instead line, the five answers). No score anywhere.
-   2. fileName(hotel, today) → "Readiness-2.0_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII.
+   2. fileName(hotel, today) → "AI-starting-point_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII (v1.2; was "Readiness-2.0_…").
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4, the footer on every page with "page n of N". */
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'Readiness 2.0: is AI the answer, and where?';
+  var TITLE = 'AI starting point: is AI the answer, and where?';
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
-  var FOOT = 'Readiness 2.0 · student prototype, not legal advice · page ';
+  var FOOT = 'AI starting point · student prototype, not legal advice · page ';
   var QWORD = {}; C.Q_ANSWERS.forEach(function (a) { QWORD[a[0]] = a[1]; });
   var AWORD = {}; C.ANSWERS.forEach(function (a) { AWORD[a[0]] = a[1]; });
 
@@ -49,7 +49,7 @@
     var v = L.verdict(rec.Q), b = head(o);
     if (v.stop) {
       var q1 = L.QBY.q1;
-      return { stop: true, blocks: b.concat([{ k: 'h', t: C.STOP.head }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead },
+      return { stop: true, blocks: b.concat([{ k: 'h', t: C.STOP.head }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
         { k: 'p', t: 'Because you answered No to: “' + q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(rec)) };
     }
     var t = L.verdictText(v, true), A = rec.A, u = L.useOf(rec, cat);
@@ -74,9 +74,10 @@
       var a = L.action(x.id, x.v, rec.By[x.id]);
       b.push({ k: 'num', n: i + 1, t: a.text, sub: a.name + ' · your answer: ' + L.ANS_WORD[x.v] + ' · usually: ' + a.who });
     });
-    var why = L.checkWhyNot(rec, u);
-    b.push({ k: 'h', t: 'Next step' }, { k: 'lead', t: 'Check one tool in detail in the Readiness check' + (why ? '.' : ': “' + u.n + '”.') });
-    b.push({ k: 'p', t: why || 'The readiness check asks the detailed questions for “' + u.n + '” and gives a verdict and a to-do list by person. It is the next tab in the project hub.' });
+    var ho = L.handover(rec, u);
+    b.push({ k: 'h', t: 'Next step' }, { k: 'lead', t: ho.mode === 'search' ? 'Open the readiness check.' : 'Check one tool in detail in the Readiness check' + (ho.mode === 'use' ? ': “' + u.n + '”.' : '.') });
+    b.push({ k: 'p', t: ho.text + (ho.mode === 'use' ? ' It is the next tab in the project hub.' : '') });
+    if (ho.mode !== 'blocked') b.push({ k: 'p', t: L.HANDOVER_NOTE, small: true });
     return { stop: false, blocks: b.concat(sources()) };
   }
 
@@ -88,8 +89,8 @@
     return s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
   }
   function fileName(hotel, today) {
-    var d = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : new Date().toISOString().slice(0, 10);
-    return 'Readiness-2.0_' + (slug(hotel) || 'assessment') + '_' + d + '.pdf';
+    var d = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : L.localIso(); // v1.2: local day
+    return 'AI-starting-point_' + (slug(hotel) || 'assessment') + '_' + d + '.pdf';
   }
   function footer(i, n) { return FOOT + i + ' of ' + n; }
   /* Characters the embedded font can print (Latin, Latin-1, Extended-A/-B, general punctuation, euro, arrows); others → '?'. */

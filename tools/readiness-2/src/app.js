@@ -1,4 +1,4 @@
-/* Readiness 2.0: the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
+/* AI starting point (formerly "Readiness 2.0"; folder, tool id 'readiness-2' and storage key unchanged): the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
    words in src/content.js (R2Content). This file only draws the current state and turns clicks into send(event).
    rec = the record (saved in localStorage['hftp-readiness2-v1']); ui = what is on screen now, never saved:
      confirm  CONFIRM machine: null | 'restart'
@@ -6,7 +6,13 @@
      copy     true while the copy box (clipboard fallback) is open
      open     which folded explanations are open (kept across re-renders)
      dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; the PDF buttons are disabled unless 'idle'
-   host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?) */
+     notice   v1.2: 'useChanged' after a restore whose use case moved in the catalogue (cleared by a pick or by moving on); else null
+   host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
+   host.pong  v1.2 (clean-up L4): true once the hub bar has answered our ping. Only then do links become hub messages; a page
+              framed by anything else (no pong) keeps plain links, so a click is never lost.
+   storage    v1.2 (clean-up M3, L2): 'ok' | 'blocked' (nothing can be kept: shown on every screen) | 'newer' (saved by a newer
+              version: shown, never written over)
+   hist       v1.2 HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -16,26 +22,36 @@
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The catalogue data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
   var USE = {}, DEPT = {};
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
-  var IN_HUB = window.parent !== window;
+  var IN_FRAME = window.parent !== window; // framed; whether by the hub is known only after its pong (host.pong)
+  /* A parent on another origin cannot be the hub (it is served next to this page): no ping, plain links and plain downloads.
+     location.ancestorOrigins exists in Chromium and Safari; elsewhere the 12 s ping timeout decides. */
+  var FOREIGN_PARENT = IN_FRAME && (function () { try { var a = location.ancestorOrigins; return !!(a && a.length && a[0] !== location.origin); } catch (e) { return false; } })();
   var PROFILE = 'hftp-hotel-profile-v1';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function plural(n, a, b) { return n + ' ' + (n === 1 ? a : (b || a + 's')); }
 
   // ---------- storage (versioned record, see F.migrate) ----------
-  var storage = 'ok'; // 'ok' | 'blocked' (private window, blocked site data: the page still works, nothing is kept)
+  var storage = 'ok'; // 'ok' | 'blocked' (private window, blocked site data: the page still works, nothing is kept) | 'newer'
+  var loadInfo = {};
   function load() {
-    try { var s = localStorage.getItem(F.KEY); if (!s) return null; return F.migrate(JSON.parse(s), CAT); }
-    catch (e) { if (e && e.name === 'SecurityError') storage = 'blocked'; return null; }
+    var s, info = {};
+    try { s = localStorage.getItem(F.KEY); } catch (e) { storage = 'blocked'; return null; } // storage itself refused
+    if (!s) return null;
+    var raw; try { raw = JSON.parse(s); } catch (e) { return null; } // corrupt: start fresh, the first save replaces it
+    var r = F.migrate(raw, CAT, info); loadInfo = info;
+    if (r && info.newer) storage = 'newer'; // clean-up L2: show it, never save over it
+    return r;
   }
   function save() {
+    if (storage === 'newer') return;
     try { var r = JSON.parse(JSON.stringify(rec)); r.updated = new Date().toISOString(); localStorage.setItem(F.KEY, JSON.stringify(r)); storage = 'ok'; }
     catch (e) { storage = 'blocked'; }
   }
   function hotelName() { try { var p = JSON.parse(localStorage.getItem(PROFILE) || 'null'); return p && typeof p.name === 'string' ? p.name.trim().slice(0, 120) : ''; } catch (e) { return ''; } }
 
   var rec = load() || F.blank();
-  var ui = { confirm: null, missing: null, copy: false, open: {}, dl: 'idle' };
+  var ui = { confirm: null, missing: null, copy: false, open: {}, dl: 'idle', notice: loadInfo.useChanged ? 'useChanged' : null };
   function ctx() { return F.ctxOf(rec, CAT); }
 
   // ---------- send: the only way anything changes ----------
@@ -45,6 +61,23 @@
     var ids = step === 'needs' ? C.NEEDS.map(function (x) { return x.id; }) : step === 'success' ? F.FACTOR_IDS : [];
     return ids.filter(function (id) { return !L.A_OK[rec.A[id]]; })[0] || null;
   }
+  // ---------- HISTORY machine (F.histAction): the only writer of history entries ----------
+  var hist = (function () { var h = F.histRead(history.state); return { d: h.ours ? h.d : 0, prev: h.ours && h.step === rec.step ? h.prev : null, len: history.length }; })();
+  function histWrite(act, entry) {
+    try {
+      if (act === 'back') history.back(); // its popstate brings an entry of the step we already show: no change
+      else history[act === 'push' ? 'pushState' : 'replaceState'](entry, '');
+    } catch (e) { /* sandboxed: steps just do not join Back/forward */ }
+    if (act !== 'back') { hist.d = entry.d; hist.prev = entry.prev; }
+    else { hist.d = Math.max(0, hist.d - 1); hist.prev = null; }
+    hist.len = history.length;
+  }
+  function histMove(ev, from) {
+    var act = F.histAction(ev, hist, rec.step, history.length);
+    histWrite(act, act === 'back' ? null : F.histEntry(act, hist, rec.step, from));
+  }
+  function histAssert() { histWrite('replace', { r2: rec.step, d: hist.d, prev: hist.prev }); }
+
   function send(ev, arg) {
     var prev = rec.step, c;
     if (ev === 'restart') { c = F.confirmNext(ui.confirm, 'ask'); ui.confirm = c.c; render(); var y = $('restart-yes'); if (y) y.focus(); return true; }
@@ -53,7 +86,7 @@
       c = F.confirmNext(ui.confirm, 'yes'); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
       var rr = F.reduce(rec, 'restart', null, CAT); if (!rr.ok) { render(); return false; }
-      rec = rr.rec; ui.open = {}; afterMove(prev, true); return true;
+      rec = rr.rec; ui.open = {}; afterMove(prev, 'restart'); return true;
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
       /* Refused "Next": point at the first open question (Q1 No always goes on to the stop screen, so never here). */
@@ -62,34 +95,49 @@
       return false;
     }
     var r = F.reduce(rec, ev, arg, CAT);
-    if (ev === 'pop') { rec = r.rec; if (!r.ok) { try { history.replaceState({ r2: rec.step }, ''); } catch (e) { /* ignore */ } } afterMove(prev, false); return r.ok; }
+    if (ev === 'pop') {
+      rec = r.rec;
+      /* Placed elsewhere than the entry says (Q1 changed, answers missing): the entry is corrected, and its "previous step" forgotten. */
+      if (!r.ok) histWrite('replace', { r2: rec.step, d: hist.d, prev: null });
+      afterMove(prev, null); return r.ok;
+    }
     if (!r.ok) return false;
     rec = r.rec;
-    if (rec.step !== prev) { afterMove(prev, true); return true; }
+    if (rec.step !== prev) { afterMove(prev, ev); return true; }
+    if (ev === 'use') ui.notice = null;
     if (ui.missing && (ev === 'answer' || ev === 'use')) ui.missing = firstOpen(rec.step) === ui.missing ? ui.missing : null;
     save(); render();
     return true;
   }
-  function afterMove(prev, push) {
+  /* ev: the FLOW event that moved the step (written into history by the HISTORY machine), or null for a pop (already in history). */
+  function afterMove(prev, ev) {
     ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = false;
-    if (push && rec.step !== prev) { try { history.pushState({ r2: rec.step }, ''); } catch (e) { /* sandboxed */ } }
+    if (rec.step !== prev) ui.notice = rec.step === 'where' ? ui.notice : null;
+    if (ev && rec.step !== prev) histMove(ev, prev);
     save(); render();
     if (rec.step !== prev) { window.scrollTo(0, 0); $('view').focus({ preventScroll: true }); }
   }
 
   // ---------- pieces ----------
-  var STEP_LINE = { q: ['Step 1 of 3', 'Is this an AI problem?'], stop: ['Result', 'Not an AI problem'], where: ['Step 1 of 3', 'Where in the hotel?'],
+  var NAME = 'AI starting point'; // v1.2 (owner B1): the visible name; was "Readiness 2.0"
+  var STEP_LINE = { q: ['Step 1 of 3', 'Is this an AI problem?'], stop: ['Result', 'Not suitable for AI'], where: ['Step 1 of 3', 'Where in the hotel?'],
     needs: ['Step 2 of 3', 'What you need'], success: ['Step 3 of 3', 'What makes it succeed'], summary: ['Summary', ''] };
+  /* Storage notices (v1.2, clean-up M3 and L2): on every screen while they apply. */
+  function storeLine() {
+    if (storage === 'blocked') return '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
+    if (storage === 'newer') return '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
+    return '';
+  }
   function header() {
     if (rec.step === 'start') {
-      return '<div class="hdrtop"><p class="meta">A student project by EHL for HFTP · prototype</p></div><h1>Readiness 2.0</h1>' +
+      return '<div class="hdrtop"><p class="meta">A student project by EHL for HFTP · prototype</p></div><h1>' + esc(NAME) + '</h1>' +
         '<p class="sub"><strong>Start here: is AI the answer, and where?</strong></p>' +
-        '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>';
+        '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' + storeLine();
     }
-    var s = STEP_LINE[rec.step], n = { q: 1, where: 1, needs: 2, success: 3 }[rec.step] || (rec.step === 'summary' ? 4 : 0);
-    var bar = rec.step === 'stop' ? '' : '<div class="steps3" aria-hidden="true">' + [1, 2, 3].map(function (i) { return '<span class="' + (i < n ? 'done' : i === n ? (rec.step === 'q' ? 'now' : 'done') : '') + '"></span>'; }).join('') + '</div>';
-    return '<div class="hdrtop"><p class="hdrline"><strong>Readiness 2.0</strong> · ' + esc(s[0]) + (s[1] ? ' · ' + esc(s[1]) : '') + '</p>' +
-      (rec.step === 'stop' ? '' : '<button type="button" class="linkbtn" data-act="restart" id="restart-top">Start again</button>') + '</div>' + bar; // the stop screen has its own two buttons only
+    var s = STEP_LINE[rec.step], pr = F.progress(rec.step); // clean-up L3: the current step is 'now'
+    var bar = pr ? '<div class="steps3" aria-hidden="true">' + pr.map(function (c) { return '<span class="' + c + '"></span>'; }).join('') + '</div>' : '';
+    return '<div class="hdrtop"><p class="hdrline"><strong>' + esc(NAME) + '</strong> · ' + esc(s[0]) + (s[1] ? ' · ' + esc(s[1]) : '') + '</p>' +
+      (rec.step === 'stop' ? '' : '<button type="button" class="linkbtn" data-act="restart" id="restart-top">Start again</button>') + '</div>' + bar + storeLine(); // the stop screen has its own buttons only
   }
   function confirmBox() {
     if (ui.confirm !== 'restart') return '';
@@ -137,7 +185,7 @@
       '<li><b>Where is the problem?</b><span>Five yes/no questions: is AI the right kind of tool for it? Then find where it sits in your hotel among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>What you need to implement AI</b><span>Ten things every hotel needs in place, such as systems that can talk to each other and the data protection paperwork.</span></li>' +
       '<li><b>What makes it succeed</b><span>Nine factors, from budget and leadership to change management.</span></li></ol>' +
-      '<p class="sub">The summary has no score. It shows what is in place, the three weakest points and what to do next. Your answers stay in this browser.</p>' +
+      '<p class="sub">The summary has no score. It shows what is in place, the three weakest points and what to do next.' + (storage === 'ok' ? ' Your answers stay in this browser.' : '') + '</p>' +
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>';
   }
   function vQ() {
@@ -146,6 +194,7 @@
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' + (q.hint ? '<p class="qhint">' + esc(q.hint) + '</p>' : '') +
+        (q.guard ? '<p class="qhint qguard" id="guard-' + q.id + '">' + esc(q.guard) + '</p>' : '') +
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + needLine(q.id) +
         fold('why-' + q.id, 'Why we ask, and an example', '<p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
         '</div></div></fieldset>';
@@ -160,19 +209,20 @@
   function vStop() {
     var q1 = L.QBY.q1;
     return '<section class="verdict v-stop stopcard" id="stopcard" data-verdict="stop"><h1 id="stop-head">' + esc(C.STOP.head) + '</h1>' +
-      '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p>' +
+      '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p><p id="stop-unsure">' + esc(C.STOP.unsure) + '</p>' +
       '<p class="meta">Because you answered No to: “' + esc(q1.q) + '”</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="restart" id="restart">Start again</button>' +
       pdfButton('Download (PDF)') + '</div></section>' + sources('q');
   }
   var useLevel = L.useLevel;
   function catLink(d) {
-    return '<a href="../use-case-catalogue/index.html#' + esc(d.id) + '" data-act="catalogue" data-dept="' + esc(d.id) + '"' + (IN_HUB ? '' : ' target="_blank" rel="noopener"') + '>Sources in the Use-Case Catalogue</a>';
+    return '<a href="../use-case-catalogue/index.html#' + esc(d.id) + '" data-act="catalogue" data-dept="' + esc(d.id) + '"' + (host.pong ? '' : ' target="_blank" rel="noopener"') + '>Sources in the Use-Case Catalogue</a>';
   }
   function vWhere() {
     var h = '<div class="stephead"><p class="kicker">Step 1 · Part 2 of 2</p><h2>Where in the hotel?</h2>' +
       '<p class="sub">Pick the area, then the department. If one of its use cases matches your problem, choose it. If none does, say so: steps 2 and 3 still apply.</p>' +
-      '<p class="meta">' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments, from the hub’s Use-Case Catalogue.') + '</p></div>';
+      '<p class="meta">' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments, from the hub’s Use-Case Catalogue.') + '</p></div>' +
+      (ui.notice === 'useChanged' ? '<p class="savewarn" id="use-changed" role="status">' + esc(C.USE_CHANGED) + '</p>' : '');
     h += '<section class="panel' + (ui.missing === 'where' ? ' missing' : '') + '" id="where"><h3>1. Area</h3><div class="tiles" role="group" aria-label="Area">' + CAT.cats.map(function (c) {
       var ds = CAT.depts.filter(function (d) { return d.cat === c.name; }), n = ds.reduce(function (a, d) { return a + d.uses.length; }, 0);
       return '<button type="button" class="tile" data-act="cat" data-cat="' + esc(c.name) + '" id="cat-' + esc(c.name.toLowerCase().replace(/[^a-z]/g, '')) + '" aria-pressed="' + (rec.cat === c.name) + '"><b>' + esc(c.name) + '</b>' +
@@ -217,11 +267,13 @@
   function itemBlock(it, isFactor) {
     var more = isFactor
       ? '<p><b>What it means:</b> ' + esc(it.def) + '</p><p><b>What good looks like:</b> ' + esc(it.good) + '</p><div><b>Warning signs</b><ul>' + it.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>'
-      : '<p><b>What good looks like:</b> ' + esc(it.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + ' <span class="rc">' + esc(a[0]) + '</span></li>'; }).join('') + '</ul></div>' : '');
+      : '<p><b>What good looks like:</b> ' + esc(it.good) + '</p>' + (it.also.length ? '<div><b>The readiness check also asks</b><ul>' + it.also.map(function (a) { return '<li>' + esc(a[1]) + '</li>'; }).join('') + '</ul></div>' : ''); // v1.2: question codes hidden (kept in content.js)
     more += evidence(it.ev);
     return '<fieldset class="qa' + (ui.missing === it.id ? ' missing' : '') + '" id="f-' + it.id + '" aria-labelledby="t-' + it.id + '"><h3>' + esc(it.name) + (it.key ? ' <span class="keytag">Must-have in the readiness check</span>' : '') + '</h3>' +
+      (it.weak ? '<p class="weak" id="weak-' + it.id + '">' + esc(it.weak) + '</p>' : '') +
       '<p class="qhint">' + esc(isFactor ? it.def : it.plain) + '</p>' +
-      '<p class="qtext" id="t-' + it.id + '">' + esc(it.check) + ' <span class="rc" title="Readiness check question code">' + esc(it.rc === 'new' ? 'new question' : it.rc) + '</span></p>' +
+      (it.gloss ? '<p class="gloss" id="gloss-' + it.id + '">' + esc(it.gloss) + '</p>' : '') +
+      '<p class="qtext" id="t-' + it.id + '">' + esc(it.check) + '</p>' +
       radios(it.id, C.ANSWERS, rec.A[it.id]) + byField(it.id) + needLine(it.id) +
       fold('more-' + it.id, isFactor ? 'What good looks like, warning signs and evidence' : 'What good looks like and evidence', more) + '</fieldset>';
   }
@@ -239,12 +291,12 @@
   // ---------- summary ----------
   var ANS_WORD = L.ANS_WORD;
   function canCheck() { var u = USE[rec.use]; return !!(u && !u.notTool); }
-  function checkWhyNot() { return L.checkWhyNot(rec, USE[rec.use]); }
-  function checkHref() { return '../readiness-check/index.html#use=' + encodeURIComponent(rec.use); }
+  function handover() { return L.handover(rec, USE[rec.use]); }
+  function checkHref() { var h = handover(); return '../readiness-check/index.html' + (h.mode === 'use' ? '#use=' + encodeURIComponent(rec.use) : ''); }
   function vSummary() {
     var v = L.verdict(rec.Q), name = hotelName(), A = rec.A;
     var cN = L.counts(A, L.NEED_IDS), cF = L.counts(A, L.FACTOR_IDS), ov = L.overall(A), top = L.weakest(A, 3);
-    var h = '<div class="printhead"><p class="meta">Readiness 2.0 · summary · printed ' + esc(L.fmtDate(new Date().toISOString().slice(0, 10))) + '</p></div>';
+    var h = '<div class="printhead"><p class="meta">' + esc(NAME) + ' · summary · printed ' + esc(L.fmtDate(L.localIso())) + '</p></div>';
     h += '<div class="stephead"><h2>Your summary' + (name ? ': ' + esc(name) : '') + '</h2><p class="sub">No score: what you said, what is missing and what to do next.</p></div>';
     h += '<section class="verdict ' + vClass(v.key) + '" id="sum-verdict" data-verdict="' + v.key + '"><p class="kicker">Is this an AI problem?</p>' + verdictBody(v, true) + '</section>';
     var u = USE[rec.use];
@@ -267,10 +319,12 @@
         return '<div class="row" data-item="' + a.id + '"><div><span class="nm">' + esc(a.name) + ' <span class="chip a-' + a.v + '">' + esc(ANS_WORD[a.v]) + '</span></span>' + esc(a.text) + '</div><span class="who">' + esc(a.who) + '</span></div>';
       }).join('') + '</div>';
     }).join('') : '<p>Everything in steps 2 and 3 is in place.</p>') + '</section>';
-    h += '<section class="panel handover noprint" id="handover"><h3>Next: check one tool in detail</h3>' +
-      (canCheck() ? '<p class="sub">The readiness check asks the detailed questions for “' + esc(u.n) + '” and gives a verdict and a to-do list by person.</p>' : '<p class="sub" id="check-why">' + esc(checkWhyNot()) + '</p>') +
-      '<div class="btnrow">' + (canCheck() ? '<a class="btn primary" id="check-one" data-act="check-one" href="' + esc(checkHref()) + '">Check one tool in detail</a>'
-        : '<button type="button" class="btn primary" id="check-one" disabled aria-describedby="check-why">Check one tool in detail</button>') +
+    var ho = handover(); // v1.2: 'use' | 'search' ("None of these fits": the readiness check's start screen) | 'blocked'
+    h += '<section class="panel handover noprint" id="handover" data-handover="' + ho.mode + '"><h3>Next: check one tool in detail</h3>' +
+      '<p class="sub" id="check-why">' + esc(ho.text) + '</p>' +
+      (ho.mode !== 'blocked' ? '<p class="meta" id="carry-note">' + esc(L.HANDOVER_NOTE) + '</p>' : '') +
+      '<div class="btnrow">' + (ho.mode !== 'blocked' ? '<a class="btn primary" id="check-one" data-act="check-one" href="' + esc(checkHref()) + '">' + esc(ho.label) + '</a>'
+        : '<button type="button" class="btn primary" id="check-one" disabled aria-describedby="check-why">' + esc(ho.label) + '</button>') +
       pdfButton('Download the assessment (PDF)') + '<button type="button" class="btn" data-act="copy" id="copy">Copy summary</button><button type="button" class="btn" data-act="print" id="print">Print</button>' +
       '<button type="button" class="btn" data-act="restart" id="restart">Start again</button></div>' +
       (ui.copy ? '<div class="copybox" id="copybox"><label for="copytext" class="meta">Copying is blocked here. Select the text and copy it yourself:</label><textarea id="copytext" readonly>' + esc(summaryText()) + '</textarea></div>' : '') + '</section>';
@@ -280,7 +334,7 @@
   /* The summary as plain text (Copy summary). */
   function summaryText() {
     var v = L.verdict(rec.Q), A = rec.A, name = hotelName(), out = [];
-    out.push('Readiness 2.0: summary' + (name ? ' for ' + name : '') + ' (' + L.fmtDate(new Date().toISOString().slice(0, 10)) + ')');
+    out.push(NAME + ': summary' + (name ? ' for ' + name : '') + ' (' + L.fmtDate(L.localIso()) + ')');
     out.push('', 'Is this an AI problem? ' + (v.key === 'go' ? C.VERDICT.goDone : v.head) + (v.second ? ' ' + v.second : ''));
     v.carried.forEach(function (c) { out.push('- ' + c.text + (c.add ? ' ' + c.add : '')); });
     v.find.forEach(function (f) { out.push('- To find out: ' + f.text + ' (ask ' + f.who + ')'); });
@@ -292,6 +346,7 @@
     if (top.length) { out.push('', 'Start with these:'); top.forEach(function (x, i) { var a = L.action(x.id, x.v, rec.By[x.id]); out.push((i + 1) + '. ' + a.text + ' (' + a.who + ')'); }); }
     var all = L.actions(A, rec.By);
     if (all.length) { out.push('', 'What to do next, item by item:'); all.forEach(function (a) { out.push('- ' + a.name + ' [' + ANS_WORD[a.v] + ']: ' + a.text + ' (' + a.who + ')'); }); }
+    var ho = handover(); out.push('', 'Next step: ' + ho.text + (ho.mode !== 'blocked' ? ' ' + L.HANDOVER_NOTE : ''));
     out.push('', 'Student prototype by EHL SBP Group 36 for HFTP, not legal advice. Content as of ' + C.AS_OF + '.');
     return out.join('\n');
   }
@@ -320,7 +375,7 @@
   }
   /* BRIDGE machine (F.bridgeNext). Each download sent to the hub is in flight until its 'download-result', or 2 minutes
      (the hub may be showing the person a save dialog), which arrives as a 'fail' event. */
-  var host = { state: IN_HUB ? 'pending' : 'none', waiters: [], seq: 0, calls: {} };
+  var host = { state: IN_FRAME && !FOREIGN_PARENT ? 'pending' : 'none', pong: false, waiters: [], seq: 0, calls: {} };
   function hostSend(ev) {
     var to = F.bridgeNext(host.state, ev); if (to === host.state) return;
     host.state = to; $('app').setAttribute('data-bridge', to); host.waiters.splice(0).forEach(function (f) { f(); });
@@ -330,7 +385,7 @@
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data) return;
       var m = e.data;
-      if (m.hub === 'pong') hostSend(m.downloads ? 'yes' : 'no');
+      if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); } // links become hub messages
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
@@ -357,7 +412,7 @@
   }
   var PDF_FONT = null;
   function pdfFont() { return PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('r2-font').textContent); } catch (e) { return null; } })()); }
-  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  function todayIso() { return L.localIso(); } // v1.2: the local day (was UTC)
   /* Click → 'making' at once (the button is disabled and says so), then the PDF is built on the next task, so a double
      click finds the machine busy and is refused: one download at a time. */
   function downloadPdf() {
@@ -381,6 +436,8 @@
     var a = document.activeElement, keep = a && a.id && a !== document.body ? a.id : null;
     $('app').setAttribute('data-state', rec.step);
     $('app').setAttribute('data-verdict', L.verdict(rec.Q).key);
+    $('app').setAttribute('data-storage', storage);
+    var fk = $('foot-keep'); if (fk) fk.hidden = storage !== 'ok'; // "Your answers stay in this browser" only when they do
     $('hdr').innerHTML = header();
     $('view').innerHTML = confirmBox() + VIEWS[rec.step]();
     if (keep && $(keep) && keep !== 'view') $(keep).focus({ preventScroll: true });
@@ -396,10 +453,12 @@
     else if (act === 'print') window.print();
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
     else if (act === 'check-one') {
-      if (!canCheck()) { e.preventDefault(); return; }
-      if (IN_HUB) { e.preventDefault(); try { window.parent.postMessage({ hub: 'open', tool: 'readiness-check', hash: 'use=' + rec.use }, location.origin); } catch (err) { location.href = checkHref(); } }
+      var ho = handover();
+      if (ho.mode === 'blocked' || rec.step !== 'summary') { e.preventDefault(); return; }
+      /* Hub message only once the hub has answered (clean-up L4); else the plain link does it. 'search' sends no hash: the start screen. */
+      if (host.pong) { e.preventDefault(); try { window.parent.postMessage(ho.hash ? { hub: 'open', tool: 'readiness-check', hash: ho.hash } : { hub: 'open', tool: 'readiness-check' }, location.origin); } catch (err) { location.href = checkHref(); } }
     } else if (act === 'catalogue') {
-      if (IN_HUB) { e.preventDefault(); try { window.parent.postMessage({ hub: 'open', tool: 'use-case-catalogue', hash: t.getAttribute('data-dept') }, location.origin); } catch (err) { /* ignore */ } }
+      if (host.pong) { e.preventDefault(); try { window.parent.postMessage({ hub: 'open', tool: 'use-case-catalogue', hash: t.getAttribute('data-dept') }, location.origin); } catch (err) { window.open(t.getAttribute('href'), '_blank', 'noopener'); } }
     } else send(act);
   }
   document.addEventListener('click', onClick);
@@ -410,20 +469,30 @@
     else if (t.matches('input[data-by]')) send('by', { id: t.getAttribute('data-by'), date: t.value || '' });
   });
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold')) ui.open[d.getAttribute('data-fold')] = d.open; }, true);
-  window.addEventListener('popstate', function (e) { var s = e.state && typeof e.state.r2 === 'string' ? e.state.r2 : 'start'; send('pop', s); });
-  /* Another tab of this browser changed the saved record: follow it, so two tabs never overwrite each other silently. */
-  window.addEventListener('storage', function (e) { if (e.key !== F.KEY) return; var r = load(); if (r) { rec = r; ui.confirm = null; ui.missing = null; render(); } });
+  /* Back/forward. Our own entry → pop to its step. Anything else (a hash change: state null; a hub entry) is not ours: the step
+     stays and the entry is marked as ours (clean-up M1: it used to send the person to the start screen, and save that). */
+  window.addEventListener('popstate', function (e) {
+    var h = F.histRead(e.state);
+    if (!h.ours) { hist.d += 1; hist.prev = rec.step; histAssert(); return; }
+    hist.d = h.d; hist.prev = h.prev; hist.len = history.length;
+    send('pop', h.step);
+  });
+  /* Another tab of this browser changed the saved record: follow it, so two tabs never overwrite each other silently.
+     v1.2 (clean-up L5): the history entry follows too, and a page restored from the back-forward cache re-reads the record. */
+  function follow() { var r = load(); if (!r) return; rec = r; ui.confirm = null; ui.missing = null; ui.notice = loadInfo.useChanged ? 'useChanged' : null; hist.prev = null; histAssert(); render(); }
+  window.addEventListener('storage', function (e) { if (e.key === F.KEY) follow(); });
+  window.addEventListener('pageshow', function (e) { if (e.persisted) follow(); });
 
-  try { history.replaceState({ r2: rec.step }, ''); } catch (e) { /* ignore */ }
+  histAssert();
   render();
 
   /* AX: read the state without scraping the page; drive it with the same events the buttons send. */
   window.Readiness2 = {
     state: function () {
       var v = L.verdict(rec.Q), c = ctx();
-      return { step: rec.step, Q: Object.assign({}, rec.Q), verdict: v.key, carried: v.carried.map(function (x) { return x.id; }), find: v.find.map(function (x) { return x.id; }),
+      return { handover: rec.step === 'summary' ? handover().mode : null, notice: ui.notice, history: { d: hist.d, prev: hist.prev }, step: rec.step, Q: Object.assign({}, rec.Q), verdict: v.key, carried: v.carried.map(function (x) { return x.id; }), find: v.find.map(function (x) { return x.id; }),
         cat: rec.cat, dept: rec.dept, use: rec.use, A: Object.assign({}, rec.A), By: Object.assign({}, rec.By), ctx: c, events: F.events(rec.step, c),
-        confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, storage: storage, inHub: IN_HUB, canCheck: canCheck(), download: ui.dl, bridge: host.state,
+        confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, storage: storage, inHub: host.pong, inFrame: IN_FRAME, canCheck: canCheck(), download: ui.dl, bridge: host.state,
         counts: rec.step === 'summary' ? { needs: L.counts(rec.A, L.NEED_IDS), success: L.counts(rec.A, L.FACTOR_IDS) } : null,
         weakest: rec.step === 'summary' ? L.weakest(rec.A, 3).map(function (x) { return x.id; }) : null };
     },

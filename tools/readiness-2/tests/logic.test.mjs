@@ -46,8 +46,8 @@ ok(combos === 243 && stops === 81, 'all 243 combinations checked, 81 of them sto
 ok(C.VERDICT.worth === 'Probably not worth it.' && C.VERDICT.data === 'Fix the data first.' && C.VERDICT.success === 'Define success first.', 'verdict words from the research');
 ok(C.VERDICT.assist === 'Worth exploring, as an assistant only: a person checks every result before it counts.', 'Q4 modifier wording');
 ok(C.VERDICT.go === 'Worth exploring with AI. Next: find where it sits in your hotel.', 'all-Yes wording');
-ok(C.STOP.head === 'This is not an AI problem.', 'stop heading (owner)');
-ok(C.QUESTIONS[0].outcome === 'Not an AI problem: rules or ordinary automation will do it.', 'Q1 outcome wording');
+ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading (owner, v1.2 decision B2: was "This is not an AI problem.")');
+ok(C.QUESTIONS[0].outcome === 'Not suitable for AI: rules or ordinary automation will do it.', 'Q1 outcome wording (v1.2, owner B2: was "Not an AI problem: …")');
 ok(C.QUESTIONS[3].outcome.startsWith('AI as an assistant only'), 'Q4 No adds "AI as an assistant only"');
 ok(C.QUESTIONS.map(q => q.q).join('|') === [
   'Is this job too varied to write down as fixed rules (if this, then that)?',

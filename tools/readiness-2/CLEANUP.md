@@ -1,4 +1,4 @@
-# Readiness 2.0: state machines (built explicit from the start)
+# AI starting point (formerly Readiness 2.0): state machines (built explicit from the start)
 
 Built to `.claude/skills/clean-up/SKILL.md`. Every flow has one transition table, there is one `send()`, the state is exposed in `data-state`, the record is versioned, and tests cover the flows. There was no earlier code, so there are no old bugs. The table lists the impossible states that were designed out.
 
@@ -14,6 +14,11 @@ Built to `.claude/skills/clean-up/SKILL.md`. Every flow has one transition table
 | Missing pointer | `src/app.js` (`ui.missing`) | `null`, or the id of the first open item | Named only | Derived after a refused Next and cleared on navigation or when answered |
 | Copy box | `src/app.js` (`ui.copy`) | `false`, `true` | Named only | Shown only when the clipboard refuses; closed on navigation |
 | Folds | `src/app.js` (`ui.open`) | which `details` are open | Left | Display only; kept across re-renders |
+| HISTORY (v1.2) | `src/flow.js` (`histAction`, `histEntry`, `histRead`); `src/app.js` (`hist`, `histWrite`, popstate) | entries `{ r2, d, prev }`; actions `push`, `back`, `replace` | Explicit | Was implicit in `afterMove`, popstate and the first replace; two confirmed bugs (M1) |
+| Storage availability (v1.2) | `src/app.js` (`storage`) | `ok`, `blocked`, `newer` | Named, now visible (`#app[data-storage]`, `#not-saved`) | `blocked` was invisible (M3); `newer` records were downgraded (L2) |
+| Use-case identity (v1.2) | `src/flow.js` (`migrate` with `info`, `reduce('use')`) | `use` + `useName`; `info.useChanged` | Named | Ids are positions; a catalogue insert re-pointed saved choices (M2) |
+| Hub presence (v1.2) | `src/app.js` (`host.pong`, `FOREIGN_PARENT`) | unknown, hub (pong), not hub | Named | "In a frame" was taken for "in the hub": dead clicks in a foreign frame (L4) |
+| Notice (v1.2) | `src/app.js` (`ui.notice`) | `null`, `'useChanged'` | Named only | Set by a restore, cleared by a pick or by leaving step 1b |
 
 ## FLOW table
 
@@ -46,8 +51,27 @@ Designed out (each is tested):
 - A stale restart confirmation that fires later.
 - Two PDF downloads at once (v1.1): `start` is refused in every state but `idle`, and the buttons are disabled there; 3,000 random walks never hold two and always return to `idle`.
 
+## v1.2 clean-up (23 Nov 2026): the eight bugs of `reports/audit-readiness-2/cleanup_inventory.md`
+
+Each was re-checked against the v1.1 code (all eight still applied), given a failing test first, then fixed. Records saved by v1.1 (`tests/fixtures/v1.1-saved.json`, captured from the real page) open unchanged.
+
+| Bug | Reproduction (before) | Fix | Proof |
+|---|---|---|---|
+| 1 Hash change → start screen, saved | `location.hash = 'x'` on the summary → `start`, still after reload | popstate reads only our own entries (`histRead`); a foreign entry keeps the step and is marked as ours | `v12.test.mjs`; `browser/v12.cjs` (standalone and in the hub frame) |
+| 2 In-app Back vs browser Back | Next, in-app Back, browser Back → went forward to 1b; history grew by 4 per 3 cycles | HISTORY machine: in-app Back uses `history.back()` when the entry below is that step and nothing was pushed since, else replaces; Start again replaces | simulated in Node; in the browser: Back → start, 3 cycles add 0 entries; in the hub Back from the start leaves the tab |
+| 3 Blocked storage invisible | `getItem`/`setItem` throwing: no text said so, the page promised to keep answers | `NOT_SAVED` line on every screen, promises hidden, `data-storage` | `browser/v12.cjs` |
+| 4 Impossible dates | `2026-13-45` printed "45 undefined 2026" | `validDate` / `realDate`: a real day, 2000–2100, in `reduce`, `migrate`, `fmtDate` | `v12.test.mjs`, browser |
+| 5 Use-case ids are positions | a catalogue insert sent the wrong tool to the readiness check | `useName` saved; mismatch → use case cleared, 1b, notice | Node (shifted catalogue), browser |
+| 6 Newer record downgraded | a v2 record with `notes` was rewritten as v1 | `storage = 'newer'`: shown, never saved | browser: byte-identical after an answer |
+| 7 Progress bar | step 2 showed `["done","done",""]` | `R2Flow.progress` | Node and browser on every step |
+| 8 Dead click in a foreign frame | framed from another origin, `#check-one` did nothing | hub messages only after the pong; no ping to a foreign parent | browser, framed from `localhost` |
+| L5 Cross-tab history | after a restart in tab B, tab A's history said `needs` | follow also replaces the history entry; `pageshow` (persisted) re-reads | browser, two tabs |
+
+Also found: dates used the UTC day (now local), and a foreign frame was pinged (console error, 12 s wait). BRIDGE and DOWNLOAD audited against the readiness check's tables: unchanged, correct.
+
 ## AX handles
 
+- v1.2: `#app[data-storage]` (`ok`, `blocked`, `newer`); `state()` adds `handover` (`use`, `search`, `blocked` on the summary), `notice`, `history { d, prev }`, `inFrame`; `inHub` is now true only after the hub's pong. New ids: `#guard-q1`, `#stop-unsure`, `#gloss-<item>`, `#weak-<item>`, `#carry-note`, `#not-saved`, `#use-changed`; `#handover[data-handover]`.
 - `#app[data-dl]` holds the DOWNLOAD state and `#app[data-bridge]` the BRIDGE state (v1.1).
 - `#app[data-state]` holds the FLOW state; `#app[data-verdict]` holds the 1a verdict key (`stop`, `worth`, `data`, `success`, `find`, `assist`, `go` or `open`).
 - `window.Readiness2.state()` returns `{ step, Q, verdict, carried, find, cat, dept, use, A, By, ctx: { q1No, qDone, whereDone, needsDone, successDone }, events, confirm, missing, copyBox, storage, inHub, canCheck, download, bridge, counts, weakest }`.
@@ -72,6 +96,7 @@ Designed out (each is tested):
 - `tests/flow.test.mjs` (13,936 checks).
 - `tests/catalogue.test.mjs` (131 checks).
 - `tests/pdf.test.mjs` (1,110 checks, v1.1).
+- `tests/v12.test.mjs` (100 checks, v1.2) and `tests/browser/v12.cjs` (172 checks, v1.2: standalone, in the hub and framed from another origin; 1280 and 390 px).
 - Browser PDF proof `tests/browser/pdf.cjs` (138 checks, v1.1): download from the summary and the stop screen, standalone and inside the hub (link fallback and the hub's save path), 1280 and 390 px; PDF words equal the summary screen; one file for a double click; no external requests; no console errors.
 - Browser walk `tests/browser/walk.cjs` (161 checks):
   - At 1280 px and 390 px.

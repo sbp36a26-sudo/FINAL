@@ -1,4 +1,4 @@
-/* Readiness 2.0: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
+/* AI starting point (formerly "Readiness 2.0"): the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
    Content and orders come from src/content.js (R2Content); the rules are research_notes/AI starting point/research.md,
    part A "Verdict logic" and part D "Summary". No score of any kind (owner's decision). */
 (function (root) {
@@ -64,10 +64,21 @@
     return { key: 'good', text: C.OVERALL.good };
   }
 
+  /* v1.2 (clean-up L1): a real calendar day from 2000 to 2100, the same test as R2Flow.validDate; anything else prints as ''. */
+  function realDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof iso === 'string' ? iso : ''); if (!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3], t = new Date(Date.UTC(y, mo - 1, d));
+    return y >= 2000 && y <= 2100 && t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d ? { y: y, m: mo, d: d } : null;
+  }
   function fmtDate(iso) {
     var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
-    return (+m[3]) + ' ' + M[+m[2] - 1] + ' ' + m[1];
+    var r = realDate(iso); if (!r) return '';
+    return r.d + ' ' + M[r.m - 1] + ' ' + r.y;
+  }
+  /* v1.2: today as the person's local day (was the UTC day, one day off around midnight in Europe). */
+  function localIso(dt) {
+    dt = dt || new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
   }
   /* One plain task per item, by its answer, in the readiness check's style. */
   function action(id, v, by) {
@@ -89,7 +100,7 @@
       carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Carried to your summary') : '',
       carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
       find: v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }),
-      q1Unsure: v.q1Unsure ? 'If question 1 turns out to be No, this is not an AI problem: rules or ordinary automation will do it.' : '' };
+      q1Unsure: v.q1Unsure ? 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.' : '' };
   }
   /* "Guest-facing › Front Office › <use case>" parts, or "… › None of these fits". cat: the catalogue model. */
   function pathParts(rec, cat) {
@@ -103,16 +114,28 @@
   function useOf(rec, cat) { var d = (cat && cat.depts || []).filter(function (x) { return x.id === rec.dept; })[0]; return (d && d.uses.filter(function (x) { return x.id === rec.use; })[0]) || null; }
   function useLevel(u) { return u && u.use ? u.use : 'not rated'; }
   function noneLine(nUses) { return 'None of the catalogue’s ' + nUses + ' use cases matches your problem. That is worth telling the project team; steps 2 and 3 still apply.'; }
-  /* Why "Check one tool in detail" cannot run, or '' when it can. */
+  /* Why "Check one tool in detail" cannot run for a chosen use case, or '' when it can. */
   function checkWhyNot(rec, u) {
-    if (rec.use === 'none') return 'You chose “None of these fits”. The readiness check looks at one specific tool, so pick a use case in step 1 (Back) to use it.';
+    if (rec.use === 'none') return HANDOVER_NONE;
     if (u && u.notTool) return '“' + u.n + '” is a document, not an AI tool, so the readiness check has no check for it.';
     if (u) return '';
     return 'Choose a use case in step 1 to check one tool in detail.';
   }
+  /* v1.2: the hand-over to the readiness check, one answer for the summary screen, Copy summary and the PDF.
+     mode 'use'     a use case the readiness check can check: "Check one tool in detail", hub hash 'use=<id>'
+          'search'  "None of these fits" (council BUILD NOW 3): "Open the readiness check" on its start screen (tool search), no hash
+          'blocked' a use case that is not a tool (lg-4), or nothing chosen: no button, the reason instead */
+  var HANDOVER_NONE = 'No use case in the catalogue matches. The readiness check needs a tool: when a vendor offers you one, search for it there.';
+  var HANDOVER_NOTE = 'Your answers here are not carried over to the Readiness check yet.';
+  function handover(rec, u) {
+    if (rec.use === 'none') return { mode: 'search', label: 'Open the readiness check', hash: '', text: HANDOVER_NONE };
+    var why = checkWhyNot(rec, u);
+    if (why) return { mode: 'blocked', label: 'Check one tool in detail', hash: '', text: why };
+    return { mode: 'use', label: 'Check one tool in detail', hash: 'use=' + rec.use, text: 'The readiness check asks the detailed questions for “' + u.n + '” and gives a verdict and a to-do list by person.' };
+  }
   function firstLabel(n) { return n === 1 ? 'Start with this one' : 'Start with these ' + (n === 3 ? 'three' : 'two'); } // v1.1: was "these one"
 
-  var api = { ANS_WORD: ANS_WORD, verdictText: verdictText, pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, checkWhyNot: checkWhyNot, firstLabel: firstLabel,
+  var api = { handover: handover, HANDOVER_NOTE: HANDOVER_NOTE, realDate: realDate, localIso: localIso, ANS_WORD: ANS_WORD, verdictText: verdictText, pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, checkWhyNot: checkWhyNot, firstLabel: firstLabel,
     QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, Q_OK: Q_OK, A_OK: A_OK, ITEM: ITEM, QBY: QBY,
     verdict: verdict, counts: counts, countLine: countLine, ranked: ranked, weakest: weakest, overall: overall, action: action, actions: actions, fmtDate: fmtDate };
   root.R2Logic = api;

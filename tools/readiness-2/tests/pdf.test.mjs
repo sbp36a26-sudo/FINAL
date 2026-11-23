@@ -1,4 +1,6 @@
-// Readiness 2.0 v1.1: the PDF of the assessment. The text builder (R2Pdf.model) against hand-worked expectations and the
+// AI starting point (formerly Readiness 2.0) v1.1: the PDF
+// v1.2 changed expectations (owner B1/B2, council BUILD NOW 3): title, footer and file-name prefix renamed to "AI starting point";
+// the stop heading is "This is not suitable for AI."; "None of these fits" now has a next step (open the readiness check). of the assessment. The text builder (R2Pdf.model) against hand-worked expectations and the
 // summary's own functions; the stop version; the drawing with the real jsPDF and font (pages, footer, no line wider than the
 // page); file-name sanitising; and the BRIDGE and DOWNLOAD machines.
 // Run: node tools/readiness-2/tests/pdf.test.mjs   (after node tools/readiness-2/build.mjs)
@@ -45,7 +47,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
   const r = rec({ Q: { q1: 'y', q2: 'y', q3: 'n', q4: 'n', q5: 'u' }, cat: 'Guest-facing', dept: 'fo', use: 'fo-1', A, By: { b3: '2027-02-03' } });
   const m = P.model(r, cat, { hotel: 'Hôtel Les Mélèzes', today: TODAY });
   ok(m.stop === false, 'mixed: full version');
-  ok(eq(B(m).slice(0, 4).map(b => b.t), ['Readiness 2.0: is AI the answer, and where?', 'Hotel: Hôtel Les Mélèzes', 'Date: 23 Nov 2026',
+  ok(eq(B(m).slice(0, 4).map(b => b.t), ['AI starting point: is AI the answer, and where?', 'Hotel: Hôtel Les Mélèzes', 'Date: 23 Nov 2026',
     'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of 23 Nov 2026.']), 'mixed: title, hotel, date, prototype line');
   ok(eq(heads(m), ['1. Is this an AI problem?', '2. Where it sits', '3. What you need', '4. What makes it succeed', 'Start with these three', 'Next step', 'Sources']), 'mixed: sections in order');
   const s1 = after(m, '1. Is this an AI problem?');
@@ -82,7 +84,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
   ok(!/score|\/ ?100|\d+ ?%(?! of)/i.test(texts(m).replace(/\d+(\.\d+)?% of/g, '')), 'mixed: no score');
   const { r: d, log } = drawn(m);
   ok(d.pages >= 3 && d.footers.length === d.pages, 'mixed: drawn on ' + d.pages + ' pages, one footer each');
-  ok(d.footers.every((f, i) => f === 'Readiness 2.0 · student prototype, not legal advice · page ' + (i + 1) + ' of ' + d.pages), 'mixed: footer wording and page n of N');
+  ok(d.footers.every((f, i) => f === 'AI starting point · student prototype, not legal advice · page ' + (i + 1) + ' of ' + d.pages), 'mixed: footer wording and page n of N');
   noOverflow(log, 'mixed');
   ok(log.some(l => l.line.includes('›')) && log.some(l => l.line.includes('“')) && log.some(l => l.line.includes('Mélèzes')), 'mixed: ›, “ ” and accents reach the PDF unchanged');
 }
@@ -113,7 +115,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
   ok(after(m, 'Start with these three')[0].t === C.OVERALL.find, 'none: overall "Find out these first."');
   ok(eq(after(m, 'Start with these three').filter(b => b.k === 'num').map(b => b.sub.split(' · ')[0]), [L.ITEM.b1.name, L.ITEM.b3.name, L.ITEM.b5.name]), 'none: weakest three by tie order');
   const s6 = after(m, 'Next step');
-  ok(s6[0].t === 'Check one tool in detail in the Readiness check.' && s6[1].t.startsWith('You chose “None of these fits”'), 'none: next step says why it cannot run yet');
+  ok(s6[0].t === 'Open the readiness check.' && s6[1].t.startsWith('No use case in the catalogue matches.') && s6[2].t === L.HANDOVER_NOTE, 'none: next step opens the readiness check (v1.2: was "why it cannot run yet")');
   const r2 = rec({ Q: ALLY, cat: 'Administrative', dept: 'lg', use: 'lg-4', A: Object.assign(all('y'), { c4: 'pl' }) });
   const m2 = P.model(r2, cat, { today: TODAY });
   ok(after(m2, 'Next step')[1].t.includes('is a document, not an AI tool'), 'lg-4: next step explains it is not a tool');
@@ -128,7 +130,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
     const r = Object.assign(F.blank(), { step: 'stop', Q });
     const m = P.model(r, cat, { hotel: 'Grand Hotel Zürich', today: TODAY });
     ok(m.stop === true, 'stop ' + tag + ': stop version');
-    ok(eq(heads(m), ['This is not an AI problem.']), 'stop ' + tag + ': one heading, no other sections');
+    ok(eq(heads(m), ['This is not suitable for AI.']), 'stop ' + tag + ': one heading, no other sections');
     ok(B(m).some(b => b.t === C.STOP.why) && B(m).some(b => b.k === 'lead' && b.t === C.STOP.instead), 'stop ' + tag + ': why and the instead line');
     ok(B(m).some(b => b.t === 'Because you answered No to: “' + L.QBY.q1.q + '”'), 'stop ' + tag + ': because line as on screen');
     const qs = B(m).filter(b => b.k === 'q');
@@ -137,7 +139,7 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
     else ok(eq(qs.map(b => b.a.replace('Your answer: ', '')), ['No', 'Yes', 'Not sure', 'No', 'Yes']), 'stop: answers as given');
     ok(B(m)[1].t === 'Hotel: Grand Hotel Zürich', 'stop ' + tag + ': hotel line');
     const { r: d, log } = drawn(m);
-    ok(d.pages === 1 && eq(d.footers, ['Readiness 2.0 · student prototype, not legal advice · page 1 of 1']), 'stop ' + tag + ': exactly one page with its footer');
+    ok(d.pages === 1 && eq(d.footers, ['AI starting point · student prototype, not legal advice · page 1 of 1']), 'stop ' + tag + ': exactly one page with its footer');
     noOverflow(log, 'stop ' + tag);
   }
 }
@@ -171,18 +173,18 @@ const all = v => Object.fromEntries(L.NEED_IDS.concat(L.FACTOR_IDS).map(id => [i
 }
 
 // ---------- 6. File names ----------
-for (const [hotel, want] of [['', 'Readiness-2.0_assessment_2026-11-23.pdf'], [null, 'Readiness-2.0_assessment_2026-11-23.pdf'],
-  ['Hôtel Les Mélèzes', 'Readiness-2.0_Hotel-Les-Melezes_2026-11-23.pdf'], ['Grand Hotel Zürich', 'Readiness-2.0_Grand-Hotel-Zurich_2026-11-23.pdf'],
-  ['Ørsted Strand & Spa', 'Readiness-2.0_Orsted-Strand-Spa_2026-11-23.pdf'], ['Hotel Łucja', 'Readiness-2.0_Hotel-Lucja_2026-11-23.pdf'],
-  ['../../etc/passwd', 'Readiness-2.0_etc-passwd_2026-11-23.pdf'], ['a/b\\c:d*e?f"g<h>i|j', 'Readiness-2.0_a-b-c-d-e-f-g-h-i-j_2026-11-23.pdf'],
-  ['東京ホテル', 'Readiness-2.0_assessment_2026-11-23.pdf'], ['   --- ', 'Readiness-2.0_assessment_2026-11-23.pdf'], ['Straße 5', 'Readiness-2.0_Strasse-5_2026-11-23.pdf']]) {
+for (const [hotel, want] of [['', 'AI-starting-point_assessment_2026-11-23.pdf'], [null, 'AI-starting-point_assessment_2026-11-23.pdf'],
+  ['Hôtel Les Mélèzes', 'AI-starting-point_Hotel-Les-Melezes_2026-11-23.pdf'], ['Grand Hotel Zürich', 'AI-starting-point_Grand-Hotel-Zurich_2026-11-23.pdf'],
+  ['Ørsted Strand & Spa', 'AI-starting-point_Orsted-Strand-Spa_2026-11-23.pdf'], ['Hotel Łucja', 'AI-starting-point_Hotel-Lucja_2026-11-23.pdf'],
+  ['../../etc/passwd', 'AI-starting-point_etc-passwd_2026-11-23.pdf'], ['a/b\\c:d*e?f"g<h>i|j', 'AI-starting-point_a-b-c-d-e-f-g-h-i-j_2026-11-23.pdf'],
+  ['東京ホテル', 'AI-starting-point_assessment_2026-11-23.pdf'], ['   --- ', 'AI-starting-point_assessment_2026-11-23.pdf'], ['Straße 5', 'AI-starting-point_Strasse-5_2026-11-23.pdf']]) {
   const n = P.fileName(hotel, TODAY);
   ok(n === want, 'file name for ' + JSON.stringify(hotel) + ': ' + n);
 }
 {
   const n = P.fileName('A very long hotel name '.repeat(10), TODAY);
-  ok(/^Readiness-2\.0_[A-Za-z0-9-]{1,60}_2026-11-23\.pdf$/.test(n) && !/-_/.test(n), 'file name: long names cut to 60 safe characters ' + n);
-  ok(/^Readiness-2\.0_assessment_\d{4}-\d{2}-\d{2}\.pdf$/.test(P.fileName('', 'not a date')), 'file name: a bad date falls back to today');
+  ok(/^AI-starting-point_[A-Za-z0-9-]{1,60}_2026-11-23\.pdf$/.test(n) && !/-_/.test(n), 'file name: long names cut to 60 safe characters ' + n);
+  ok(/^AI-starting-point_assessment_\d{4}-\d{2}-\d{2}\.pdf$/.test(P.fileName('', 'not a date')), 'file name: a bad date falls back to today');
   ok(P.safe('Tōkyō 東京 › “x” €') === 'Tōkyō ?? › “x” €', 'PDF text: characters the font lacks print as ?');
 }
 
