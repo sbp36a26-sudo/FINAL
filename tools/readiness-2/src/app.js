@@ -4,11 +4,13 @@
      confirm  CONFIRM machine: null | 'restart'
      missing  after a refused "Next": the id of the first unanswered question ('where' on step 1b), outlined; else null
      copy     true while the copy box (clipboard fallback) is open
-     open     which folded explanations are open (kept across re-renders) */
+     open     which folded explanations are open (kept across re-renders)
+     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; the PDF buttons are disabled unless 'idle'
+   host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?) */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow;
+  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf;
   var D, CAT;
   try { D = JSON.parse($('r2-data').textContent); CAT = D.cat; }
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The catalogue data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
@@ -33,7 +35,7 @@
   function hotelName() { try { var p = JSON.parse(localStorage.getItem(PROFILE) || 'null'); return p && typeof p.name === 'string' ? p.name.trim().slice(0, 120) : ''; } catch (e) { return ''; } }
 
   var rec = load() || F.blank();
-  var ui = { confirm: null, missing: null, copy: false, open: {} };
+  var ui = { confirm: null, missing: null, copy: false, open: {}, dl: 'idle' };
   function ctx() { return F.ctxOf(rec, CAT); }
 
   // ---------- send: the only way anything changes ----------
@@ -121,11 +123,11 @@
   function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' || key === 'assist' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
   /* onSummary: the all-Yes headline drops its "Next: find where it sits" (already done by then). */
   function verdictBody(v, onSummary) {
-    var h = '<p class="vsent" id="verdict-head">' + esc(onSummary && v.key === 'go' ? C.VERDICT.goDone : v.head) + '</p>' + (v.second ? '<p><strong>' + esc(v.second) + '</strong></p>' : '');
-    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q5: 'success' }[c.id]] === v.head); });
-    if (v.carried.length) h += '<div><p><strong>' + (also.length < v.carried.length ? 'What this means' : 'Carried to your summary') + '</strong></p><ul>' + v.carried.map(function (c) { return '<li>' + esc(c.text) + (c.add ? ' ' + esc(c.add) : '') + '</li>'; }).join('') + '</ul></div>';
-    if (v.find.length) h += '<div><p><strong>To find out</strong></p><ul>' + v.find.map(function (f) { return '<li>' + esc(f.text) + ': ask ' + esc(f.who) + '.</li>'; }).join('') + '</ul></div>';
-    if (v.q1Unsure) h += '<p>If question 1 turns out to be No, this is not an AI problem: rules or ordinary automation will do it.</p>';
+    var t = L.verdictText(v, onSummary); // the same words as Copy summary and the PDF
+    var h = '<p class="vsent" id="verdict-head">' + esc(t.head) + '</p>' + (t.second ? '<p><strong>' + esc(t.second) + '</strong></p>' : '');
+    if (t.carried.length) h += '<div><p><strong>' + esc(t.carriedLabel) + '</strong></p><ul>' + t.carried.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>';
+    if (t.find.length) h += '<div><p><strong>To find out</strong></p><ul>' + t.find.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul></div>';
+    if (t.q1Unsure) h += '<p>' + esc(t.q1Unsure) + '</p>';
     return h;
   }
 
@@ -160,10 +162,10 @@
     return '<section class="verdict v-stop stopcard" id="stopcard" data-verdict="stop"><h1 id="stop-head">' + esc(C.STOP.head) + '</h1>' +
       '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p>' +
       '<p class="meta">Because you answered No to: “' + esc(q1.q) + '”</p>' +
-      '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="restart" id="restart">Start again</button></div></section>' +
-      sources('q');
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="restart" id="restart">Start again</button>' +
+      pdfButton('Download (PDF)') + '</div></section>' + sources('q');
   }
-  function useLevel(u) { return u.use ? u.use : 'not rated'; }
+  var useLevel = L.useLevel;
   function catLink(d) {
     return '<a href="../use-case-catalogue/index.html#' + esc(d.id) + '" data-act="catalogue" data-dept="' + esc(d.id) + '"' + (IN_HUB ? '' : ' target="_blank" rel="noopener"') + '>Sources in the Use-Case Catalogue</a>';
   }
@@ -201,14 +203,7 @@
     return h;
   }
   /* "Guest-facing › Front Office › <use case>" or "… › None of these fits". */
-  function pathParts() {
-    var p = [];
-    if (rec.cat) p.push(rec.cat);
-    if (rec.dept && DEPT[rec.dept]) p.push(DEPT[rec.dept].name);
-    if (rec.use === 'none') p.push('None of these fits');
-    else if (USE[rec.use]) p.push(USE[rec.use].n);
-    return p;
-  }
+  function pathParts() { return L.pathParts(rec, CAT); }
   function pathText(html) {
     var p = pathParts();
     if (!p.length) return html ? 'Nothing chosen yet.' : 'Nothing chosen.';
@@ -242,13 +237,9 @@
   }
 
   // ---------- summary ----------
-  var ANS_WORD = { n: 'No', p: 'Partly', k: 'Don’t know yet', pl: 'Planned' };
+  var ANS_WORD = L.ANS_WORD;
   function canCheck() { var u = USE[rec.use]; return !!(u && !u.notTool); }
-  function checkWhyNot() {
-    if (rec.use === 'none') return 'You chose “None of these fits”. The readiness check looks at one specific tool, so pick a use case in step 1 (Back) to use it.';
-    var u = USE[rec.use]; if (u && u.notTool) return '“' + u.n + '” is a document, not an AI tool, so the readiness check has no check for it.';
-    return 'Choose a use case in step 1 to check one tool in detail.';
-  }
+  function checkWhyNot() { return L.checkWhyNot(rec, USE[rec.use]); }
   function checkHref() { return '../readiness-check/index.html#use=' + encodeURIComponent(rec.use); }
   function vSummary() {
     var v = L.verdict(rec.Q), name = hotelName(), A = rec.A;
@@ -259,12 +250,12 @@
     var u = USE[rec.use];
     h += '<section class="panel" id="sum-where"><h3>Where it sits</h3><p class="pathline">' + esc(pathText(false)) + '</p>' +
       (u ? '<p class="sub">What AI does: ' + esc(u.task) + '</p><p class="meta">How common in hotels: ' + esc(useLevel(u)) + ' (Use-Case Catalogue rating).</p>'
-        : '<p class="sub">None of the catalogue’s ' + esc(CAT.nUses) + ' use cases matches your problem. That is worth telling the project team; steps 2 and 3 still apply.</p>') + '</section>';
+        : '<p class="sub">' + esc(L.noneLine(CAT.nUses)) + '</p>') + '</section>';
     h += '<section class="panel" id="sum-counts"><div class="sumgrid"><div><h3>What you need (step 2)</h3><p class="countline" id="count-needs">' + esc(L.countLine(cN)) + '</p></div>' +
       '<div><h3>What makes it succeed (step 3)</h3><p class="countline" id="count-success">' + esc(L.countLine(cF)) + '</p></div></div>' +
       '<p id="overall" data-overall="' + ov.key + '"><strong>' + esc(ov.text) + '</strong></p></section>';
     if (top.length) {
-      h += '<section class="panel first" id="first3"><h3>Start with these ' + (top.length === 3 ? 'three' : top.length === 2 ? 'two' : 'one') + '</h3><ol>' + top.map(function (x) {
+      h += '<section class="panel first" id="first3"><h3>' + esc(L.firstLabel(top.length)) + '</h3><ol>' + top.map(function (x) {
         var a = L.action(x.id, x.v, rec.By[x.id]);
         return '<li data-item="' + x.id + '">' + esc(a.text) + '<span>' + esc(a.name + ' · your answer: ' + ANS_WORD[x.v] + ' · usually: ' + a.who) + '</span></li>';
       }).join('') + '</ol></section>';
@@ -280,7 +271,7 @@
       (canCheck() ? '<p class="sub">The readiness check asks the detailed questions for “' + esc(u.n) + '” and gives a verdict and a to-do list by person.</p>' : '<p class="sub" id="check-why">' + esc(checkWhyNot()) + '</p>') +
       '<div class="btnrow">' + (canCheck() ? '<a class="btn primary" id="check-one" data-act="check-one" href="' + esc(checkHref()) + '">Check one tool in detail</a>'
         : '<button type="button" class="btn primary" id="check-one" disabled aria-describedby="check-why">Check one tool in detail</button>') +
-      '<button type="button" class="btn" data-act="copy" id="copy">Copy summary</button><button type="button" class="btn" data-act="print" id="print">Print</button>' +
+      pdfButton('Download the assessment (PDF)') + '<button type="button" class="btn" data-act="copy" id="copy">Copy summary</button><button type="button" class="btn" data-act="print" id="print">Print</button>' +
       '<button type="button" class="btn" data-act="restart" id="restart">Start again</button></div>' +
       (ui.copy ? '<div class="copybox" id="copybox"><label for="copytext" class="meta">Copying is blocked here. Select the text and copy it yourself:</label><textarea id="copytext" readonly>' + esc(summaryText()) + '</textarea></div>' : '') + '</section>';
     h += '<div class="navrow noprint"><button type="button" class="btn back" data-act="back" id="back">Back</button><span class="spacer"></span><button type="button" class="linkbtn" data-act="edit" id="edit">Change answers from the start</button></div>';
@@ -315,6 +306,75 @@
   var toastT;
   function toast(m) { var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3500); }
 
+  // ---------- PDF download (the readiness check's way: hub bridge, plain link outside the hub) ----------
+  var DL_LABEL = { making: 'Preparing the PDF…', waiting: 'Preparing the PDF…', saving: 'Saving the PDF…' };
+  function pdfButton(label) {
+    var busy = ui.dl !== 'idle';
+    return '<button type="button" class="btn" data-act="pdf" id="pdf"' + (busy ? ' disabled aria-busy="true"' : '') + '>' + esc(busy ? DL_LABEL[ui.dl] : label) + '</button>';
+  }
+  function dlSend(ev) {
+    var to = F.dlNext(ui.dl, ev, host.state); if (to === null) return false;
+    ui.dl = to; $('app').setAttribute('data-dl', to);
+    var b = $('pdf'); if (b) { b.disabled = to !== 'idle'; if (to !== 'idle') { b.setAttribute('aria-busy', 'true'); b.textContent = DL_LABEL[to]; } else render(); }
+    return true;
+  }
+  /* BRIDGE machine (F.bridgeNext). Each download sent to the hub is in flight until its 'download-result', or 2 minutes
+     (the hub may be showing the person a save dialog), which arrives as a 'fail' event. */
+  var host = { state: IN_HUB ? 'pending' : 'none', waiters: [], seq: 0, calls: {} };
+  function hostSend(ev) {
+    var to = F.bridgeNext(host.state, ev); if (to === host.state) return;
+    host.state = to; $('app').setAttribute('data-bridge', to); host.waiters.splice(0).forEach(function (f) { f(); });
+  }
+  $('app').setAttribute('data-bridge', host.state); $('app').setAttribute('data-dl', ui.dl);
+  if (host.state === 'pending') {
+    window.addEventListener('message', function (e) {
+      if (e.source !== window.parent || !e.data) return;
+      var m = e.data;
+      if (m.hub === 'pong') hostSend(m.downloads ? 'yes' : 'no');
+      else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
+    });
+    try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
+    setTimeout(function () { hostSend('timeout'); }, 12000);
+  }
+  function saveFile(name, blob) {
+    function viaLink() {
+      try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
+      catch (e) { toast('This browser could not save the file.'); dlSend('fail'); }
+    }
+    function go2() {
+      dlSend('bridge');
+      if (host.state !== 'yes') { viaLink(); return; }
+      var id = 'r2d' + (++host.seq), t = setTimeout(function () { if (host.calls[id]) host.calls[id]({ ok: false, code: 'timeout' }); delete host.calls[id]; }, 120000);
+      host.calls[id] = function (m) {
+        clearTimeout(t);
+        toast(m.ok ? 'Saved ' + name : m.code === 'declined' ? 'Download cancelled.' : m.code === 'timeout' ? 'No answer about the download. Try again.' : 'The file could not be saved here.');
+        dlSend(m.ok ? 'done' : 'fail');
+      };
+      try { window.parent.postMessage({ hub: 'download', id: id, filename: name, data: blob }, location.origin); }
+      catch (e) { var cb = host.calls[id]; delete host.calls[id]; cb({ ok: false, code: 'unavailable' }); }
+    }
+    if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(go2); } else go2();
+  }
+  var PDF_FONT = null;
+  function pdfFont() { return PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('r2-font').textContent); } catch (e) { return null; } })()); }
+  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  /* Click → 'making' at once (the button is disabled and says so), then the PDF is built on the next task, so a double
+     click finds the machine busy and is refused: one download at a time. */
+  function downloadPdf() {
+    if (rec.step !== 'summary' && rec.step !== 'stop') return false;
+    if (!dlSend('start')) { toast('The PDF is still being prepared.'); return false; }
+    var model = P.model(rec, CAT, { hotel: hotelName(), today: todayIso() }), name = P.fileName(hotelName(), todayIso());
+    setTimeout(function () {
+      var blob;
+      try {
+        if (!window.jspdf) throw new Error('jsPDF not bundled');
+        blob = P.draw(model, window.jspdf, pdfFont()).doc.output('blob');
+      } catch (e) { dlSend('fail'); toast('The PDF could not be made here. Use “Copy summary” or “Print” instead.'); return; }
+      dlSend('made'); saveFile(name, blob);
+    }, 30);
+    return true;
+  }
+
   // ---------- render ----------
   var VIEWS = { start: vStart, q: vQ, stop: vStop, where: vWhere, needs: vNeeds, success: vSuccess, summary: vSummary };
   function render() {
@@ -334,6 +394,7 @@
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
     else if (act === 'copy') copySummary();
     else if (act === 'print') window.print();
+    else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
     else if (act === 'check-one') {
       if (!canCheck()) { e.preventDefault(); return; }
       if (IN_HUB) { e.preventDefault(); try { window.parent.postMessage({ hub: 'open', tool: 'readiness-check', hash: 'use=' + rec.use }, location.origin); } catch (err) { location.href = checkHref(); } }
@@ -362,13 +423,15 @@
       var v = L.verdict(rec.Q), c = ctx();
       return { step: rec.step, Q: Object.assign({}, rec.Q), verdict: v.key, carried: v.carried.map(function (x) { return x.id; }), find: v.find.map(function (x) { return x.id; }),
         cat: rec.cat, dept: rec.dept, use: rec.use, A: Object.assign({}, rec.A), By: Object.assign({}, rec.By), ctx: c, events: F.events(rec.step, c),
-        confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, storage: storage, inHub: IN_HUB, canCheck: canCheck(),
+        confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, storage: storage, inHub: IN_HUB, canCheck: canCheck(), download: ui.dl, bridge: host.state,
         counts: rec.step === 'summary' ? { needs: L.counts(rec.A, L.NEED_IDS), success: L.counts(rec.A, L.FACTOR_IDS) } : null,
         weakest: rec.step === 'summary' ? L.weakest(rec.A, 3).map(function (x) { return x.id; }) : null };
     },
     record: function () { return JSON.parse(JSON.stringify(rec)); },
     send: send,
     summaryText: summaryText,
+    pdfModel: function () { return P.model(rec, CAT, { hotel: hotelName(), today: todayIso() }); },
+    pdfName: function () { return P.fileName(hotelName(), todayIso()); },
     catalogue: { uses: CAT.nUses, depts: CAT.nDepts }
   };
 })();

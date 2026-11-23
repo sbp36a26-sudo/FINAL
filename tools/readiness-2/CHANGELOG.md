@@ -1,5 +1,22 @@
 # Readiness 2.0: changelog
 
+## v1.1 (23 Nov 2026): download the assessment as a PDF
+
+Owner's request: "add the option to download the assessment as a PDF at the end".
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Summary: **Download the assessment (PDF)** next to the other actions; "Check one tool in detail" stays primary | Done |
+| 2 | Stop screen: secondary **Download (PDF)**, a one-page "This is not an AI problem." PDF (why, instead, the five answers) | Done. Nothing on the stop screen moves past it (browser walk updated: three buttons now) |
+| 3 | PDF content: title, hotel (shared profile, read-only), date, prototype line; sections 1–4, the three to start with, next step, sources per step; footer with page n of N; no score | Done (`src/pdf.js`), in the summary's own words through shared `R2Logic` helpers |
+| 4 | Built the readiness check's / register's way: jsPDF and the "Register Sans" OFL subset inlined by `build.mjs`; hub bridge `ping` / `download` with a plain-link fallback; one download in flight | Done. No hub contract shape changed; `CONTRACTS.md` lists Readiness 2.0 as a `ping`/`download` caller |
+| 5 | File name `Readiness-2.0_<hotel or assessment>_<YYYY-MM-DD>.pdf`, safe ASCII | Done |
+| 6 | Tests: `tests/pdf.test.mjs` (1,110 checks); `tests/browser/pdf.cjs` (138 checks: standalone, hub with link fallback, hub with the save capability; 1280 and 390 px) | Done |
+
+### Fixed on the way
+
+- With exactly one weak point the summary headed it "Start with these one". It now reads "Start with this one".
+
 ## v1 (23 Nov 2026): first build
 
 Built to the owner's spec, with all content from `research_notes/AI starting point/research.md`.

@@ -10,11 +10,11 @@ All content comes from `research_notes/AI starting point/research.md` (23 Nov 20
 |---|---|---|
 | Start | `start` | Three steps explained, the honesty line ("Nobody checks your answers. An answer that isn't true only hides a problem you will meet later.", start screen only), **Start**. |
 | 1a Is this an AI problem? | `q` | The five questions, exact research wording. Each has an example line where the research gives one, plus a closed "Why we ask, and an example" fold (why + a Yes and a No hotel example). Answers: **Yes / No / Not sure**. Once all five are answered, a live verdict shows below. **Next** needs all five answered, except when Q1 is No. |
-| Stop | `stop` | **Owner's hard rule:** Q1 = No → "This is not an AI problem." One sentence why (the Q1 outcome), one line on what to do instead (a rule, a report or message in existing software, ordinary automation, a process change, ask the current vendor). Only two buttons: **Change my answers** and **Start again**. No event, history entry or saved record can move past it. |
+| Stop | `stop` | **Owner's hard rule:** Q1 = No → "This is not an AI problem." One sentence why (the Q1 outcome), one line on what to do instead (a rule, a report or message in existing software, ordinary automation, a process change, ask the current vendor). Buttons: **Change my answers**, **Start again** and, since v1.1, the secondary **Download (PDF)** (a one-page PDF). None of them moves past the stop: no event, history entry or saved record can. |
 | 1b Where in the hotel? | `where` | 4 categories → their departments → the department's use cases from the Use-Case Catalogue: name, "What AI does" (task), "How common in hotels" (catalogue rating), and the link **Sources in the Use-Case Catalogue**. Pick one, or **None of these fits my problem**. Counts are computed from the catalogue ("99 use cases in 15 departments" today). |
 | 2 What you need | `needs` | Ten prerequisites (research B). The five that match readiness must-haves come first and are tagged (B1, B3, B5, B8, B9, then B2, B4, B6, B7, B10). Each has a plain explanation, a self-check question with its readiness-check code, and a closed fold with what good looks like, the other readiness questions on the point, and the evidence (source and base). |
 | 3 What makes it succeed | `success` | Nine factors (research C): budget, workflow clarity, leadership, culture, workforce readiness, governance, risk, data and content, change management. Each has a definition, the self-check question, and a closed fold with what good looks like, warning signs and evidence. |
-| Summary | `summary` | The 1a verdict with every carried condition and every "to find out"; where it sits (category › department › use case, or "None of these fits"); per step "n in place · n planned · n gaps · n to find out"; the overall line; **Start with these three** (the weakest, ranked as in research D); **What to do next, item by item** (one plain action and who usually does it). Buttons: **Check one tool in detail** (primary), **Copy summary**, **Print**, **Start again**. The hotel name is shown if the shared hotel profile has one. |
+| Summary | `summary` | The 1a verdict with every carried condition and every "to find out"; where it sits (category › department › use case, or "None of these fits"); per step "n in place · n planned · n gaps · n to find out"; the overall line; **Start with these three** (the weakest, ranked as in research D); **What to do next, item by item** (one plain action and who usually does it). Buttons: **Check one tool in detail** (primary), **Download the assessment (PDF)** (v1.1), **Copy summary**, **Print**, **Start again**. The hotel name is shown if the shared hotel profile has one. |
 
 Steps 2 and 3 use the readiness check's scale unchanged: **Yes · Planned, not done yet · Partly · No · Don't know yet**, with an optional **By when?** date for Planned. Every item needs an answer ("Don't know yet" is fine): a refused **Next** outlines the first open item and says so. No notes are asked.
 
@@ -57,6 +57,16 @@ Steps 2 and 3 use the readiness check's scale unchanged: **Yes · Planned, not d
   - On its own it opens `../use-case-catalogue/index.html#<dept id>` in a new tab.
 - **Hotel profile:** reads `localStorage['hftp-hotel-profile-v1'].name` only, and never writes it.
 
+## PDF download (v1.1)
+
+Built the way the readiness check, the AI Register and the AI Act guide make theirs:
+- **Pieces reused, nothing new loaded.** `build.mjs` inlines jsPDF (`tools/assessment/lib/jspdf.umd.min.js`) and the register's "Register Sans" font subset (`tools/register/fonts`, SIL OFL 1.1, see its README) as `<script id="r2-font">`. No request leaves the page; it works from `file://` and inside the hub frame. Characters the font lacks print as `?`; ›, “ ”, accents, ł, ø and € print as typed.
+- **Content** (`src/pdf.js`, `R2Pdf.model()`): A4, plain, no score, in the summary's own words (the summary screen and the PDF share `R2Logic.verdictText`, `pathParts`, `noneLine`, `checkWhyNot`, `firstLabel`). Title "Readiness 2.0: is AI the answer, and where?", the hotel name if the shared profile has one, the date, the prototype line; 1. Is this an AI problem? (verdict, carried conditions, to find out, the five questions with the answers); 2. Where it sits (category › department › use case or "None of these fits", what AI does, how common); 3. What you need and 4. What makes it succeed (the count line, then every item with its question, the answer, any "planned by" date and the action, or "In place: nothing to do."); Start with these three (with the overall line; "In short" when nothing is weak); Next step (the readiness check, naming the use case, or why it cannot run); Sources (each step's "Where this comes from"). Footer on every page: "Readiness 2.0 · student prototype, not legal advice · page n of N".
+- **Stop version:** with Q1 No the PDF is one page: "This is not an AI problem.", the why, the instead line, the "because" line and the five answers ("Not answered" where blank).
+- **File name:** `Readiness-2.0_<hotel or assessment>_<YYYY-MM-DD>.pdf`; the hotel part is ASCII only (accents dropped, anything else one hyphen, at most 60 characters).
+- **Saving:** inside the hub the page pings the hub (`{ hub: 'ping' }`) and, when the hub can save files, sends `{ hub: 'download', id, filename, data: Blob }` and waits for `download-result` (2-minute limit); otherwise, and outside the hub, a plain download link. Shapes as in `tools/hub/CONTRACTS.md`, unchanged.
+- **One at a time:** the DOWNLOAD machine (`R2Flow.dlNext`) disables both PDF buttons ("Preparing the PDF…") from the click until the file is handed over; a double click is refused.
+
 ## Storage
 
 `localStorage['hftp-readiness2-v1']` holds `{ v: 1, step, Q, cat, dept, use, A, By, updated }`.
@@ -72,16 +82,18 @@ Steps 2 and 3 use the readiness check's scale unchanged: **Yes · Planned, not d
 |---|---|
 | `src/content.js` | All words: questions, outcomes, items, actions, evidence, sources per step. |
 | `src/logic.js` | Verdict, counts, ranking, overall line, actions (pure). |
-| `src/flow.js` | FLOW table, guards, `reduce()`, `migrate()`, CONFIRM (pure). |
+| `src/flow.js` | FLOW table, guards, `reduce()`, `migrate()`, CONFIRM, BRIDGE, DOWNLOAD (pure). |
+| `src/pdf.js` | The PDF: text builder `model()`, `fileName()`, `draw()` with jsPDF (pure apart from jsPDF). |
 | `src/app.js` | Rendering and events only. |
 | `src/page.html`, `src/style.css` | Shell and styles (the readiness check's design tokens; print stylesheet). |
-| `build.mjs` | Reads the catalogue's `<script id="data">`, plus the register's `uc-labels.json` for the "not a tool" flag, and inlines everything into `index.html`. **Run `node tools/readiness-2/build.mjs` after editing `src/` or after the catalogue changes.** The hub needs no rebuild for this: it loads the page in a frame. |
+| `build.mjs` | Reads the catalogue's `<script id="data">`, plus the register's `uc-labels.json` for the "not a tool" flag, and inlines everything (with jsPDF and the PDF font) into `index.html`. **Run `node tools/readiness-2/build.mjs` after editing `src/` or after the catalogue changes.** The hub needs no rebuild for this: it loads the page in a frame. |
 
 Tests:
 - `node tools/readiness-2/tests/logic.test.mjs`: the verdict for all 3^5 = 243 answer combinations against an independent reading of the research, plus wording, counts, ranking, overall line and actions.
 - `node tools/readiness-2/tests/flow.test.mjs`: every transition and guard, exhaustive walks proving nothing past 1a is reachable after Q1 No, Back/forward, restart, and storage round-trip and corrupt data.
 - `node tools/readiness-2/tests/catalogue.test.mjs`: the inlined data equals the catalogue now (4 categories, 15 departments, 99 use cases, ids `<dept>-<n>`), and every use case except `lg-4` opens in the readiness check.
-- `tests/browser/walk.cjs` (Playwright): run it with the server described in its first line.
+- `node tools/readiness-2/tests/pdf.test.mjs`: the PDF text builder against hand-worked answer sets and the summary's functions (160 random sets), the stop version, the drawing with the real jsPDF and font (pages, footers, no line past the margins), file names, and the BRIDGE and DOWNLOAD machines.
+- `tests/browser/walk.cjs` and `tests/browser/pdf.cjs` (Playwright): run them with the server described in their first line (`R2_BASE` sets another address).
 
 ## Still open
 

@@ -9,6 +9,8 @@ Built to `.claude/skills/clean-up/SKILL.md`. Every flow has one transition table
 | FLOW | `src/flow.js` (`FLOW`, `flowNext`, `reachable`, `placeStep`) | `start`, `q`, `stop`, `where`, `needs`, `success`, `summary` | Explicit, with guards | 7 states, a hard stop rule, history and restore |
 | RECORD | `src/flow.js` (`reduce`, `migrate`, `blank`) | `{ v, step, Q, cat, dept, use, A, By }` | Explicit: `reduce()` is the only writer; `migrate()` runs on every load | Persisted; a choice must stay consistent with its parent (dept ⊂ cat, use ⊂ dept) |
 | CONFIRM | `src/flow.js` (`confirmNext`) | `null`, `'restart'` | Explicit | A destructive action needs a confirmation that cannot be double-fired or left stale |
+| BRIDGE | `src/flow.js` (`bridgeNext`, v1.1) | `none`, `pending`, `yes`, `no` | Explicit, the readiness check's table | Does the hub save files for us; the 12 s timeout is an event |
+| DOWNLOAD | `src/flow.js` (`dlNext`, v1.1) | `idle`, `making`, `waiting`, `saving` | Explicit | Async, two save paths, and a double click must not make two files |
 | Missing pointer | `src/app.js` (`ui.missing`) | `null`, or the id of the first open item | Named only | Derived after a refused Next and cleared on navigation or when answered |
 | Copy box | `src/app.js` (`ui.copy`) | `false`, `true` | Named only | Shown only when the clipboard refuses; closed on navigation |
 | Folds | `src/app.js` (`ui.open`) | which `details` are open | Left | Display only; kept across re-renders |
@@ -42,31 +44,35 @@ Designed out (each is tested):
 - A department outside the chosen category, or a use case outside the chosen department, from a click or from storage.
 - A "By when?" date without a Planned answer, or a malformed date.
 - A stale restart confirmation that fires later.
+- Two PDF downloads at once (v1.1): `start` is refused in every state but `idle`, and the buttons are disabled there; 3,000 random walks never hold two and always return to `idle`.
 
 ## AX handles
 
+- `#app[data-dl]` holds the DOWNLOAD state and `#app[data-bridge]` the BRIDGE state (v1.1).
 - `#app[data-state]` holds the FLOW state; `#app[data-verdict]` holds the 1a verdict key (`stop`, `worth`, `data`, `success`, `find`, `assist`, `go` or `open`).
-- `window.Readiness2.state()` returns `{ step, Q, verdict, carried, find, cat, dept, use, A, By, ctx: { q1No, qDone, whereDone, needsDone, successDone }, events, confirm, missing, copyBox, storage, inHub, canCheck, counts, weakest }`.
+- `window.Readiness2.state()` returns `{ step, Q, verdict, carried, find, cat, dept, use, A, By, ctx: { q1No, qDone, whereDone, needsDone, successDone }, events, confirm, missing, copyBox, storage, inHub, canCheck, download, bridge, counts, weakest }`.
 - `window.Readiness2.send(event, arg)` takes the same events the page uses:
   - `begin`, `next`, `back`, `change`, `edit`
   - `restart`, then `restart-yes` or `restart-no`
   - `answer {id, value}`, `by {id, date}`
   - `cat <name>`, `dept <id>`, `use <id | 'none'>`
   - `pop <step>`
-- `window.Readiness2.record()` returns a copy of the saved record; `summaryText()` returns the copied text.
+- `window.Readiness2.record()` returns a copy of the saved record; `summaryText()` returns the copied text; `pdfModel()` returns the PDF's blocks and `pdfName()` its file name (v1.1).
 - Stable ids:
   - Navigation and the stop screen: `#begin`, `#next`, `#back`, `#change`, `#restart`, `#restart-top`, `#restart-yes`, `#restart-no`.
-  - Summary actions: `#check-one`, `#copy`, `#print`, `#edit`.
+  - Summary actions: `#check-one`, `#pdf`, `#copy`, `#print`, `#edit` (`#pdf` is also on the stop screen).
   - Step 1b: `#cat-commercial`, `#cat-guestfacing`, `#cat-operational`, `#cat-administrative`, `#dept-<id>`, `#u-<use id>`, `#u-none`.
   - Answers: `label[for="a-<item>-<value>"]`.
   - Summary sections: `#verdict` (1a), `#stop-head`, `#sum-verdict`, `#count-needs`, `#count-success`, `#overall[data-overall]`, `#first3`, `#todo`.
-- No timers change state. The only timer hides the "copied" toast.
+- Timers: one hides the toasts. For the PDF, a 30 ms pause lets the disabled button paint before jsPDF runs, then sends `made`; the bridge's 12 s and the hub's 2-minute limits arrive as `timeout` / `fail` events.
 
 ## Proof
 
 - `tests/logic.test.mjs` (5,273 checks).
 - `tests/flow.test.mjs` (13,936 checks).
 - `tests/catalogue.test.mjs` (131 checks).
+- `tests/pdf.test.mjs` (1,110 checks, v1.1).
+- Browser PDF proof `tests/browser/pdf.cjs` (138 checks, v1.1): download from the summary and the stop screen, standalone and inside the hub (link fallback and the hub's save path), 1280 and 390 px; PDF words equal the summary screen; one file for a double click; no external requests; no console errors.
 - Browser walk `tests/browser/walk.cjs` (161 checks):
   - At 1280 px and 390 px.
   - The stop screen and its two buttons, and that nothing moves past it.

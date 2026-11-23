@@ -1,6 +1,6 @@
 // Browser walk for Readiness 2.0 (desktop 1280 + phone 390, standalone and inside the hub). Serve tools/ with: python3 -m http.server 8808 --bind 127.0.0.1; screenshots go to OUT (env R2_SHOTS, default ./shots).
 const { chromium } = require('playwright');
-const OUT = process.env.R2_SHOTS || __dirname + '/shots', BASE = 'http://127.0.0.1:8808/';
+const OUT = process.env.R2_SHOTS || __dirname + '/shots', BASE = process.env.R2_BASE || 'http://127.0.0.1:8808/';
 let pass = 0, fail = 0; const fails = [];
 const ok = (c, n) => { if (c) pass++; else { fail++; fails.push(n); console.log('FAIL  ' + n); } };
 async function mk(b, w, touch, init) {
@@ -51,7 +51,8 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     ok((await p.getAttribute('#app', 'data-state')) === 'stop', tag + ': Q1 No stops');
     ok((await p.textContent('#stop-head')) === 'This is not an AI problem.', tag + ': stop heading');
     const btns = await p.$$eval('#view button, #view a.btn', els => els.map(e => e.id));
-    ok(JSON.stringify(btns) === JSON.stringify(['change', 'restart']), tag + ': stop screen has exactly two buttons ' + btns);
+    // v1.1 (owner's request): a secondary "Download (PDF)" joins the two buttons; still nothing that moves past the stop screen
+    ok(JSON.stringify(btns) === JSON.stringify(['change', 'restart', 'pdf']), tag + ': stop screen: Change my answers, Start again, Download (PDF) ' + btns);
     ok((await p.textContent('#stopcard')).includes('ordinary automation') && (await p.textContent('#stopcard')).includes('existing') === false || true, tag + ': stop text');
     ok(/rules|automation|process|software/.test(await p.textContent('#stopcard')), tag + ': what to do instead');
     await check(p, tag + ' stop'); await shot(p, tag + '-2-stop');

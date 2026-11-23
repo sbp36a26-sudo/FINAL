@@ -1,4 +1,5 @@
 // Builds Readiness 2.0 (index.html) from src/ and the Use-Case Catalogue's data.
+// It also inlines jsPDF (tools/assessment/lib) and the register's "Register Sans" PDF font (tools/register/fonts, OFL) for the PDF download.
 // The catalogue's <script id="data"> is read here at build time, never copied by hand: rebuild after the catalogue changes.
 // Run after editing anything in src/ or the catalogue:   node tools/readiness-2/build.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -35,10 +36,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const cat = catalogueModel(read('../use-case-catalogue/index.html'), labels);
   const data = { cat, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
+  /* PDF (v1.1): jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it,
+     so the PDF needs nothing from the internet and works from file:// and inside the hub frame. */
+  const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
+  const fontBlock = `<script type="application/json" id="r2-font">${JSON.stringify(font)}</script>`;
   const safe = s => s.replace(/<\/script/gi, '<\\/script');
   let html = read('src/page.html');
-  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block], ['/*__CONTENT__*/', safe(read('src/content.js'))],
-    ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
+  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))],
+    ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
     if (!html.includes(mark)) throw new Error('src/page.html: missing ' + mark);
     html = html.replace(mark, () => text);
   }

@@ -6,7 +6,7 @@ Four contracts cross app boundaries. Their shapes are frozen: change a shape onl
 
 | Contract | Owner (answers) | Callers | Where |
 |---|---|---|---|
-| postMessage bridge (`ping`, `download`, `db`, `open`) | hub bar | register, ai-act-guide, readiness-check (`index.html`, `team.html`), readiness-2 (`open` only) | `hub/hub-bar.html` (bridge section) |
+| postMessage bridge (`ping`, `download`, `db`, `open`) | hub bar | register, ai-act-guide, readiness-check (`index.html`, `team.html`), readiness-2 (`open`; `ping` and `download` since v1.1, 23 Nov 2026) | `hub/hub-bar.html` (bridge section) |
 | Hub tabs (which tool shows) | hub bar | user, Back/forward, `open` messages | `hub/hub-bar.html` (machine block) |
 | Shared hotel profile `localStorage['hftp-hotel-profile-v1']` | nobody (shared) | register, ai-act-guide, readiness-check (read and write); readiness-2 (reads `name` only, never writes) | each app |
 | Hash links `#use=` and `#add=` | the receiving app | register / readiness-2 → readiness-check, readiness-check / ai-act-guide → register | each app |
@@ -62,7 +62,7 @@ frame → hub   { hub: 'ping' }
 hub → frame   { hub: 'pong', downloads: true | false }
 ```
 
-Frame side (register, ai-act-guide, readiness-check): `host = 'pending'` → `'yes'` (pong, downloads true) | `'no'` (pong false, or no pong in 12 s, or not in a frame: `'none'`). `'no'` means the frame falls back to its own download link.
+Frame side (register, ai-act-guide, readiness-check, readiness-2): `host = 'pending'` → `'yes'` (pong, downloads true) | `'no'` (pong false, or no pong in 12 s, or not in a frame: `'none'`). `'no'` means the frame falls back to its own download link.
 
 Hub side: `downloads` is whether `window.claude.use('downloads')` gave a capability (false locally, false after 6 s without an answer).
 

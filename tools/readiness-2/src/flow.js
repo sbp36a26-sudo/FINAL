@@ -14,7 +14,8 @@
    2. RECORD (persisted in localStorage['hftp-readiness2-v1']): migrate() validates any saved value and returns a clean record
       at version V, or null. Unknown fields are dropped; a step that cannot be shown is placed back (placeStep).
    3. reduce(rec, ev, arg, cat): the only function that changes the record (answers, choices, navigation, restart).
-      Returns { rec, ok }; ok false means the event was refused and rec is unchanged. */
+      Returns { rec, ok }; ok false means the event was refused and rec is unchanged.
+   4. CONFIRM (confirmNext), BRIDGE (bridgeNext) and DOWNLOAD (dlNext): page-only machines, never saved (see below). */
 (function (root) {
   'use strict';
   var V = 1, KEY = 'hftp-readiness2-v1';
@@ -163,7 +164,28 @@
     return { c: c, fire: false };
   }
 
-  var api = { V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, CATS: CATS,
+  /* BRIDGE machine (page only), the readiness check's own: does the hub bar save files for us?
+     'none' (not in a frame: plain download link) | 'pending' (asked the hub with ping) | 'yes' (pong, downloads true)
+     | 'no' (pong false, cannot post, or no pong in 12 s: an explicit 'timeout' event). Only 'pending' moves. */
+  var BRIDGE = { pending: { yes: 'yes', no: 'no', timeout: 'no', error: 'no' } };
+  function bridgeNext(s, ev) { var row = BRIDGE[s]; return row && row[ev] ? row[ev] : s; }
+
+  /* DOWNLOAD machine (page only, never saved): one PDF at a time; the buttons are disabled in every state but 'idle'.
+     'idle' --start--> 'making' (jsPDF builds the file)
+     'making' --made--> 'waiting' while BRIDGE is 'pending' (the hub has not answered the ping yet), else 'saving'
+     'waiting' --bridge--> 'saving' (BRIDGE settled)
+     'saving' --done | fail--> 'idle' (hub reply, plain link clicked, or the 2-minute hub timeout as a 'fail' event)
+     'making' | 'waiting' --fail--> 'idle'.  Anything else is refused (returns null): a second click cannot start a second download. */
+  var DL = { idle: { start: 'making' }, making: { made: '@made', fail: 'idle' }, waiting: { bridge: 'saving', fail: 'idle' }, saving: { done: 'idle', fail: 'idle' } };
+  function dlNext(s, ev, bridge) {
+    var row = DL[s]; if (!row || !own(row, ev)) return null;
+    var to = row[ev];
+    if (to === '@made') to = bridge === 'pending' ? 'waiting' : 'saving';
+    if (s === 'waiting' && ev === 'bridge' && bridge === 'pending') return null;
+    return to;
+  }
+
+  var api = { BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext, V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, CATS: CATS,
     blank: blank, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events, migrate: migrate, reduce: reduce, confirmNext: confirmNext };
   root.R2Flow = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

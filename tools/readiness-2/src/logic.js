@@ -79,7 +79,41 @@
   }
   function actions(A, By, ids) { return ranked(A, ids).map(function (x) { return action(x.id, x.v, By && By[x.id]); }); }
 
-  var api = { QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, Q_OK: Q_OK, A_OK: A_OK, ITEM: ITEM, QBY: QBY,
+  /* ---------- shared by the summary screen, Copy summary and the PDF (src/pdf.js), so all three say the same ---------- */
+  var ANS_WORD = { y: 'Yes', n: 'No', p: 'Partly', k: 'Don’t know yet', pl: 'Planned' };
+  /* The 1a verdict as the summary words it. onSummary: the all-Yes headline drops "Next: find where it sits". */
+  function verdictText(v, onSummary) {
+    var head = onSummary && v.key === 'go' ? C.VERDICT.goDone : v.head;
+    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q5: 'success' }[c.id]] === v.head); });
+    return { head: head, second: v.second,
+      carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Carried to your summary') : '',
+      carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
+      find: v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }),
+      q1Unsure: v.q1Unsure ? 'If question 1 turns out to be No, this is not an AI problem: rules or ordinary automation will do it.' : '' };
+  }
+  /* "Guest-facing › Front Office › <use case>" parts, or "… › None of these fits". cat: the catalogue model. */
+  function pathParts(rec, cat) {
+    var p = [], d = (cat && cat.depts || []).filter(function (x) { return x.id === rec.dept; })[0], u = d && d.uses.filter(function (x) { return x.id === rec.use; })[0];
+    if (rec.cat) p.push(rec.cat);
+    if (d) p.push(d.name);
+    if (rec.use === 'none') p.push('None of these fits');
+    else if (u) p.push(u.n);
+    return p;
+  }
+  function useOf(rec, cat) { var d = (cat && cat.depts || []).filter(function (x) { return x.id === rec.dept; })[0]; return (d && d.uses.filter(function (x) { return x.id === rec.use; })[0]) || null; }
+  function useLevel(u) { return u && u.use ? u.use : 'not rated'; }
+  function noneLine(nUses) { return 'None of the catalogue’s ' + nUses + ' use cases matches your problem. That is worth telling the project team; steps 2 and 3 still apply.'; }
+  /* Why "Check one tool in detail" cannot run, or '' when it can. */
+  function checkWhyNot(rec, u) {
+    if (rec.use === 'none') return 'You chose “None of these fits”. The readiness check looks at one specific tool, so pick a use case in step 1 (Back) to use it.';
+    if (u && u.notTool) return '“' + u.n + '” is a document, not an AI tool, so the readiness check has no check for it.';
+    if (u) return '';
+    return 'Choose a use case in step 1 to check one tool in detail.';
+  }
+  function firstLabel(n) { return n === 1 ? 'Start with this one' : 'Start with these ' + (n === 3 ? 'three' : 'two'); } // v1.1: was "these one"
+
+  var api = { ANS_WORD: ANS_WORD, verdictText: verdictText, pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, checkWhyNot: checkWhyNot, firstLabel: firstLabel,
+    QIDS: QIDS, NEED_IDS: NEED_IDS, FACTOR_IDS: FACTOR_IDS, Q_OK: Q_OK, A_OK: A_OK, ITEM: ITEM, QBY: QBY,
     verdict: verdict, counts: counts, countLine: countLine, ranked: ranked, weakest: weakest, overall: overall, action: action, actions: actions, fmtDate: fmtDate };
   root.R2Logic = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
