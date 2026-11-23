@@ -213,3 +213,17 @@ details.more[open] > summary::before{transform:rotate(90deg)}
 .intro ul.tight{margin:6px 0 8px;padding-left:1.2em}
 .intro ul.tight li{margin:4px 0}
 .panel.intro+.panel.intro{margin-top:12px}
+/* Why this matters: Yes and No side by side (owner, 23 Nov 2026) */
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+@media (max-width:560px){.yn{grid-template-columns:1fr}}
+.yn-box{border-radius:8px;padding:10px 12px;border-left:4px solid}
+.yn-box p{margin:4px 0}
+.yn-yes{background:var(--hi-s);border-color:var(--hi)}
+.yn-no{background:var(--lo-s);border-color:var(--lo)}
+.yn-head{font-weight:700;font-size:.8125rem;letter-spacing:.03em;text-transform:uppercase;margin:0 0 4px}
+.yn-yes .yn-head{color:var(--hi)}.yn-no .yn-head{color:var(--lo)}
+.yn-ex{font-size:.9375rem;color:var(--ink2)}
+.yn-unsure{background:var(--na-s);border-left:4px solid var(--na);border-radius:8px;padding:10px 12px;margin:0 0 10px}
+.yn-unsure .yn-head{color:var(--na)}
+.yn-unsure p{margin:4px 0}
+.yn-more{margin-top:6px}

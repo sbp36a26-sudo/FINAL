@@ -209,9 +209,11 @@
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + needLine(q.id) +
         /* Owner, 23 Nov 2026: a title per question; the grey explanation and the guard note sit in the fold. */
         fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p>' +
-          (q.hint ? '<p><b>How to answer:</b> ' + esc(q.hint) + '</p>' : '') +
-          (q.guard ? '<p class="qguard" id="guard-' + q.id + '">' + esc(q.guard) + '</p>' : '') +
-          '<p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
+          /* Owner, 23 Nov 2026: Yes and No side by side, so the difference is seen at once. */
+          '<div class="yn"><div class="yn-box yn-yes" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
+          '<div class="yn-box yn-no" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
+          (q.guard ? '<div class="yn-unsure"><p class="yn-head">Not sure?</p><p id="guard-' + q.id + '">' + esc(q.guard) + '</p></div>' : '') +
+          '<p class="meta yn-more">' + esc(q.why) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
     if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is No.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';

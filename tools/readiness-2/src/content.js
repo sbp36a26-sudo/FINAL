@@ -9,7 +9,7 @@
 
   /* ---------- Step 1a: is this an AI problem? (research A) ---------- */
   var QUESTIONS = [
-    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Judgement, not fixed rules',
+    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Judgement, not fixed rules', yesIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.', noIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
       q: 'Is this job too varied to write down as fixed rules (if this, then that)?',
       hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
       guard: 'Judge the job, not how you handle it today. If you use rules now only because nothing better was available, for example price rules, answer Not sure.', // v1.2, council BUILD NOW 1
@@ -19,7 +19,7 @@
       no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
       outcome: 'Not suitable for AI: rules or ordinary automation will do it.', // v1.2 (owner B2): was "Not an AI problem: …"
       who: 'the vendor or IT' },
-    { id: 'q2', short: 'Worth real money or hours', title: 'Worth the money',
+    { id: 'q2', short: 'Worth real money or hours', title: 'Worth the money', yesIf: 'It happens often or costs a lot: many cases a week, or real staff hours or revenue at stake.', noIf: 'It is rare or small, so doing it better would save little.',
       q: 'Does the job come up often enough, or cost enough, that doing it better would be worth real money or staff hours every month?',
       hint: '',
       whyShort: 'AI costs money to set up, run and check, so a rare or small job will not pay that back.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
@@ -28,7 +28,7 @@
       no: 'A 12-room guesthouse with 10 email enquiries a week.',
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
-    { id: 'q3', short: 'Information is digital and current', title: 'Data is ready',
+    { id: 'q3', short: 'Information is digital and current', title: 'Data is ready', yesIf: 'The facts it needs are digital, in one place and kept up to date, such as bookings, past guest messages, rates or menus.', noIf: 'The facts are on paper, in one person’s head, or spread over systems that disagree.',
       q: 'Is the information the tool needs already kept somewhere digital and up to date?',
       hint: 'Examples: bookings, past guest messages, rates, your hotel’s facts and menus.',
       whyShort: 'AI works from your data; if it is missing or out of date, the tool gives confident wrong answers.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
@@ -37,7 +37,7 @@
       no: 'Allergen information only in the chef’s binder.',
       outcome: 'Fix the data first.', add: 'Put the facts in one place and name who keeps them right. Then ask again.',
       who: 'IT or the department head' },
-    { id: 'q4', short: 'Mistakes can be caught', title: 'Mistakes can be caught',
+    { id: 'q4', short: 'Mistakes can be caught', title: 'Mistakes can be caught', yesIf: 'A person can check the result before it counts, or a mistake is easy to put right.', noIf: 'A mistake would reach a guest or staff member straight away and could hurt them.',
       q: 'If the tool gets it wrong now and then, can the mistake be spotted and put right before it hurts a guest, a staff member or the hotel?',
       hint: '',
       whyShort: 'AI is never right every time, so you need a way to catch mistakes before they hurt anyone.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
@@ -47,7 +47,7 @@
       outcome: 'AI as an assistant only: a person checks every result before it counts.',
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
-    { id: 'q5', short: 'Success has a number', title: 'Success can be measured',
+    { id: 'q5', short: 'Success has a number', title: 'Success can be measured', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
       q: 'Can you name the one number that should get better, and do you know today’s figure?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)

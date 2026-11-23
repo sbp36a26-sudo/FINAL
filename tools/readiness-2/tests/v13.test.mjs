@@ -118,8 +118,10 @@ ok(eq(L.actions({ b1: 'n', b2: 'n' }, {}, null, KC).filter(a => a.id === 'b1' ||
     ok(q.why && q.why !== q.whyShort && q.yes && q.no, 'longer why and the Yes/No examples kept: ' + q.id);
     ok(typeof q.short === 'string' && q.short.length < 40, 'the to-find-out label `short` is unchanged in kind: ' + q.id);
   });
-  ok(/fold\('why-' \+ q\.id, 'Why this matters', '<p class="whyshort"[^]*?esc\(q\.whyShort\)[^]*?esc\(q\.why\)[^]*?Yes, for example[^]*?No, for example/.test(app), 'fold label "Why this matters": short line first, then why, then the examples');
+  ok(/fold\('why-' \+ q\.id, 'Why this matters', '<p class="whyshort"[^]*?esc\(q\.whyShort\)[^]*?Answer Yes if[^]*?esc\(q\.yesIf\)[^]*?esc\(q\.yes\)[^]*?Answer No if[^]*?esc\(q\.noIf\)[^]*?esc\(q\.no\)/.test(app), 'fold "Why this matters": short line first, then Yes-if and No-if side by side with examples (owner, 23 Nov 2026; was a running text)');
   ok(!/Why we ask, and an example/.test(app), 'old fold label gone');
 }
 
+// owner 23 Nov 2026: every question has a Yes-if and a No-if
+ok(C.QUESTIONS.every(q => q.yesIf && q.noIf && q.yes && q.no), 'every question has Yes-if, No-if and both examples');
 done();
