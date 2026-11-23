@@ -1,4 +1,4 @@
-/* AI starting point (folder, ids and storage key keep the name readiness-2): the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
+/* Do you need AI? (folder, ids and storage key keep the name readiness-2): the explicit state machines (pure, no DOM). Runs in the page and in the Node tests.
    See CLEANUP.md for the inventory.
 
    1. FLOW (rec.step): where the person is.

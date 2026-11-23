@@ -1,4 +1,4 @@
-/* AI starting point (folder tools/readiness-2): every word a hotel reads about the questions, the prerequisites and the success factors.
+/* Do you need AI? (folder tools/readiness-2): every word a hotel reads about the questions, the prerequisites and the success factors.
    Source of all content: research_notes/AI starting point/research.md (23 Nov 2026). Section letters there:
    A = the five questions (step 1a here), B = prerequisites (step 2), C = success factors (step 3), D = scale and summary.
    Rules kept (CLAUDE.md): no source the project bans; every figure carries its source and base;

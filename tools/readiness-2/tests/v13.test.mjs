@@ -1,4 +1,4 @@
-// AI starting point v1.3 (owner): the two systems questions (b1 "Systems that can talk to each other", b2 "Older systems")
+// Do you need AI? v1.3 (owner): the two systems questions (b1 "Systems that can talk to each other", b2 "Older systems")
 // name "the systems you want to connect the tool to" and give examples that fit the department chosen in step 1b.
 // Run: node tools/readiness-2/tests/v13.test.mjs (after node tools/readiness-2/build.mjs, which inlines the catalogue).
 import { load, catalogue, tester } from './load.mjs';

@@ -1,4 +1,4 @@
-/* AI starting point (folder, tool id and storage key keep the name readiness-2): the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
+/* Do you need AI? (folder, tool id and storage key keep the name readiness-2): the page. State machines and the record live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic),
    words in src/content.js (R2Content). This file only draws the current state and turns clicks into send(event).
    rec = the record (saved in localStorage['hftp-readiness2-v1']); ui = what is on screen now, never saved:
      confirm  CONFIRM machine: null | 'restart'
@@ -119,7 +119,7 @@
   }
 
   // ---------- pieces ----------
-  var NAME = 'AI starting point'; // v1.2 (owner B1): the visible name
+  var NAME = 'Do you need AI?'; // v1.2 (owner B1): the visible name
   var STEP_LINE = { q: ['Step 1 of 3', 'Is this an AI problem?'], stop: ['Result', 'Not suitable for AI'], where: ['Step 1 of 3', 'Where in the hotel?'],
     needs: ['Step 2 of 3', 'What you need'], success: ['Step 3 of 3', 'What makes it succeed'], summary: ['Summary', ''] };
   /* Storage notices (v1.2, clean-up M3 and L2): on every screen while they apply. */
@@ -342,7 +342,7 @@
   /* The summary as plain text (Copy summary). */
   function summaryText() {
     var v = L.verdict(rec.Q), A = rec.A, name = hotelName(), out = [];
-    out.push(NAME + ': summary' + (name ? ' for ' + name : '') + ' (' + L.fmtDate(L.localIso()) + ')');
+    out.push(NAME + ' Summary' + (name ? ' for ' + name : '') + ' (' + L.fmtDate(L.localIso()) + ')');
     out.push('', 'Is this an AI problem? ' + (v.key === 'go' ? C.VERDICT.goDone : v.head) + (v.second ? ' ' + v.second : ''));
     v.carried.forEach(function (c) { out.push('- ' + c.text + (c.add ? ' ' + c.add : '')); });
     v.find.forEach(function (f) { out.push('- To find out: ' + f.text + ' (ask ' + f.who + ')'); });

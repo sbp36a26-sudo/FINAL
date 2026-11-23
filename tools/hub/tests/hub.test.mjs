@@ -66,12 +66,12 @@ t('readiness-2 can be selected in every access state, and leaving it works', () 
     assert.deepEqual(hubNext(S('readiness-2', access), { type: 'select', tool: 'readiness-check' }), S('readiness-check', access));
   }
 });
-// v1.2 (owner B1): the tab's visible name is "AI starting point" (was "Readiness 2.0"); the tool id stays 'readiness-2'.
-t('the bar has the AI starting point button before the Readiness check button, with its tooltip', () => {
+// v1.2 (owner B1): the tab's visible name is "Do you need AI?" (was "Readiness 2.0"); the tool id stays 'readiness-2'.
+t('the bar has the Do you need AI? button before the Readiness check button, with its tooltip', () => {
   const nav = src.slice(src.indexOf('<nav'), src.indexOf('</nav>'));
   const i2 = nav.indexOf('data-tool="readiness-2"'), ic = nav.indexOf('data-tool="readiness-check"');
   assert.ok(i2 > 0 && ic > i2, 'button order');
-  assert.match(nav, /data-tool="readiness-2"[^>]*title="Start here: is AI the answer, and where\?"[^>]*>AI starting point</);
+  assert.match(nav, /data-tool="readiness-2"[^>]*title="Start here: is AI the answer, and where\?"[^>]*>Do you need AI\?</);
   assert.ok(!/Readiness 2\.0/.test(nav), 'the old name is not shown');
   const btns = [...nav.matchAll(/data-tool="([^"]+)"/g)].map(m => m[1]);
   assert.deepEqual(btns, HUB_TOOLS, 'one button per hub tool, in machine order');

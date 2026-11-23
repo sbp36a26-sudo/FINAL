@@ -1,4 +1,4 @@
-// AI starting point (formerly Readiness 2.0) v1.1 PDF proof; v1.2: file names start with AI-starting-point_ (owner B1) (Playwright): standalone and inside the hub (local link fallback, and a fake downloads capability for the hub's save path), 1280 and 390 px; summary and stop screen. Serve tools/ with: python3 -m http.server 8809 --bind 127.0.0.1; PDFs and screenshots go to OUT (env R2_PDF_OUT, default ./pdf-out).
+// Do you need AI? (formerly Readiness 2.0) v1.1 PDF proof; v1.2: file names start with Do-you-need-AI_ (owner B1) (Playwright): standalone and inside the hub (local link fallback, and a fake downloads capability for the hub's save path), 1280 and 390 px; summary and stop screen. Serve tools/ with: python3 -m http.server 8809 --bind 127.0.0.1; PDFs and screenshots go to OUT (env R2_PDF_OUT, default ./pdf-out).
 const { chromium } = require('playwright');
 const fs = require('fs');
 const OUT = process.env.R2_PDF_OUT || __dirname + '/pdf-out', BASE = process.env.R2_BASE || 'http://127.0.0.1:8809/';
@@ -91,7 +91,7 @@ async function run(b, w, touch, inHub, viaCap) {
     name = d.suggestedFilename(); file = OUT + '/' + tag + '-summary.pdf'; await d.saveAs(file);
   }
   const today = new Date().toISOString().slice(0, 10);
-  ok(name === 'AI-starting-point_Hotel-Les-Melezes-Zurich_' + today + '.pdf', tag + ': file name ' + name);
+  ok(name === 'Do-you-need-AI_Hotel-Les-Melezes-Zurich_' + today + '.pdf', tag + ': file name ' + name);
   ok(fs.readFileSync(file).slice(0, 5).toString() === '%PDF-', tag + ': a PDF file');
   await f.waitForFunction(() => window.Readiness2.state().download === 'idle');
   const seen = await f.evaluate(() => window.__dlNow());
@@ -113,7 +113,7 @@ async function run(b, w, touch, inHub, viaCap) {
     const wait = p.waitForEvent('download', { timeout: 15000 }); await f.click('#pdf'); const d = await wait;
     name = d.suggestedFilename(); file = OUT + '/' + tag + '-stop.pdf'; await d.saveAs(file);
   }
-  ok(/^AI-starting-point_Hotel-Les-Melezes-Zurich_\d{4}-\d{2}-\d{2}\.pdf$/.test(name), tag + ': stop file name ' + name);
+  ok(/^Do-you-need-AI_Hotel-Les-Melezes-Zurich_\d{4}-\d{2}-\d{2}\.pdf$/.test(name), tag + ': stop file name ' + name);
   ok((await f.evaluate(() => window.Readiness2.state().step)) === 'stop', tag + ': still on the stop screen after the download');
   ok(await f.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), tag + ': no horizontal scroll on the stop screen');
   const small = await f.$$eval('#stopcard .btnrow > *', els => els.filter(e => e.getBoundingClientRect().height < 43.5).length);

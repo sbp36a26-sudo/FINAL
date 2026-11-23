@@ -1,18 +1,18 @@
-/* AI starting point: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* Do you need AI?: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    Built the way the readiness check, the AI Register and the AI Act guide make their PDFs: jsPDF and the "Register Sans"
    font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs, so nothing is loaded from the internet.
    1. model(rec, cat, o) → the document as plain blocks, in the summary's own words (R2Logic shares them with the screen):
         o = { hotel: '' | name from the shared profile, today: 'YYYY-MM-DD' }
         blocks: { k: 'title' | 'meta' | 'h' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'item' | 'num' | 'src', ... }
       Q1 No → the one-page stop version (why, the instead line, the five answers). No score anywhere.
-   2. fileName(hotel, today) → "AI-starting-point_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII (v1.2; was "Readiness-2.0_…").
+   2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII (v1.2; was "Readiness-2.0_…").
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4, the footer on every page with "page n of N". */
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'AI starting point: is AI the answer, and where?';
+  var TITLE = 'Do you need AI? Where it fits in your hotel';
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
-  var FOOT = 'AI starting point · student prototype, not legal advice · page ';
+  var FOOT = 'Do you need AI? · student prototype, not legal advice · page ';
   var QWORD = {}; C.Q_ANSWERS.forEach(function (a) { QWORD[a[0]] = a[1]; });
   var AWORD = {}; C.ANSWERS.forEach(function (a) { AWORD[a[0]] = a[1]; });
 
@@ -90,7 +90,7 @@
   }
   function fileName(hotel, today) {
     var d = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : L.localIso(); // v1.2: local day
-    return 'AI-starting-point_' + (slug(hotel) || 'assessment') + '_' + d + '.pdf';
+    return 'Do-you-need-AI_' + (slug(hotel) || 'assessment') + '_' + d + '.pdf';
   }
   function footer(i, n) { return FOOT + i + ' of ' + n; }
   /* Characters the embedded font can print (Latin, Latin-1, Extended-A/-B, general punctuation, euro, arrows); others → '?'. */

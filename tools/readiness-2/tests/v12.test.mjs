@@ -1,4 +1,4 @@
-// AI starting point v1.2 (folder tools/readiness-2): owner decisions B1/B2, the council's BUILD NOW items, and the eight
+// Do you need AI? v1.2 (folder tools/readiness-2): owner decisions B1/B2, the council's BUILD NOW items, and the eight
 // clean-up bugs from reports/audit-readiness-2/cleanup_inventory.md. Written before the fixes (tests first).
 // Run: node tools/readiness-2/tests/v12.test.mjs   (after node tools/readiness-2/build.mjs)
 import { readFileSync } from 'node:fs';
@@ -30,11 +30,11 @@ const TODAY = '2026-11-23';
   }
 }
 
-// ---------- B1. Visible name "AI starting point" (ids and storage key unchanged) ----------
+// ---------- B1. Visible name "Do you need AI?" (ids and storage key unchanged) ----------
 ok(F.KEY === 'hftp-readiness2-v1' && F.V === 1, 'B1: storage key and version unchanged');
-ok(P.TITLE === 'AI starting point: is AI the answer, and where?', 'B1: PDF title');
-ok(P.footer(2, 5) === 'AI starting point · student prototype, not legal advice · page 2 of 5', 'B1: PDF footer');
-ok(P.fileName('Hôtel Les Mélèzes', TODAY) === 'AI-starting-point_Hotel-Les-Melezes_2026-11-23.pdf' && P.fileName('', TODAY) === 'AI-starting-point_assessment_2026-11-23.pdf', 'B1: PDF file name prefix');
+ok(P.TITLE === 'Do you need AI? Where it fits in your hotel', 'B1: PDF title');
+ok(P.footer(2, 5) === 'Do you need AI? · student prototype, not legal advice · page 2 of 5', 'B1: PDF footer');
+ok(P.fileName('Hôtel Les Mélèzes', TODAY) === 'Do-you-need-AI_Hotel-Les-Melezes_2026-11-23.pdf' && P.fileName('', TODAY) === 'Do-you-need-AI_assessment_2026-11-23.pdf', 'B1: PDF file name prefix');
 {
   const src = ['src/app.js', 'src/pdf.js', 'src/content.js', 'src/page.html'].map(f => readFileSync(join(root, f), 'utf8')).join('\n');
   // every user-visible string: quoted text in the sources (comments are not shown)

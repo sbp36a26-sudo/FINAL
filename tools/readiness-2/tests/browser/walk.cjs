@@ -1,4 +1,4 @@
-// Browser walk for AI starting point (formerly Readiness 2.0; folder readiness-2) (desktop 1280 + phone 390, standalone and inside the hub). Serve tools/ with: python3 -m http.server 8808 --bind 127.0.0.1; screenshots go to OUT (env R2_SHOTS, default ./shots).
+// Browser walk for Do you need AI? (formerly Readiness 2.0; folder readiness-2) (desktop 1280 + phone 390, standalone and inside the hub). Serve tools/ with: python3 -m http.server 8808 --bind 127.0.0.1; screenshots go to OUT (env R2_SHOTS, default ./shots).
 const { chromium } = require('playwright');
 const OUT = process.env.R2_SHOTS || __dirname + '/shots', BASE = process.env.R2_BASE || 'http://127.0.0.1:8808/';
 let pass = 0, fail = 0; const fails = [];
@@ -123,7 +123,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     if (!touch) {
       await p.click('#copy'); await p.waitForTimeout(200);
       const clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-      ok(clip.startsWith('AI starting point: summary') && clip.includes('Start with these:'), tag + ': summary copied (v1.2: renamed)');
+      ok(clip.startsWith('Do you need AI? Summary') && clip.includes('Start with these:'), tag + ': summary copied (v1.2: renamed)');
     }
     // Print view
     await p.emulateMedia({ media: 'print' });
@@ -204,7 +204,7 @@ async function answer(p, plan) { for (const [id, v] of Object.entries(plan)) awa
     let cf; for (let i = 0; i < 50 && !(cf && /#fo$/.test(cf.url())); i++) { cf = p.frames().find(f => /use-case-catalogue/.test(f.url())); if (!(cf && /#fo$/.test(cf.url()))) await p.waitForTimeout(100); }
     ok(cf && /#fo$/.test(cf.url()), tag + ': catalogue opened at Front Office ' + (cf && cf.url()));
     await p.goBack(); await p.waitForFunction(() => window.HFTPHub.state().tool === 'readiness-2');
-    ok(true, tag + ': Back returns to AI starting point');
+    ok(true, tag + ': Back returns to Do you need AI?');
     await fr.click('#next');
     for (const id of Object.keys(PLAN2)) await fr.click(`label[for="a-${id}-${PLAN2[id]}"]`); await fr.click('#next');
     for (const id of Object.keys(PLAN3)) await fr.click(`label[for="a-${id}-${PLAN3[id]}"]`); await fr.click('#next');

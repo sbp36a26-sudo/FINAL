@@ -1,4 +1,4 @@
-// AI starting point v1.2 browser proof (Playwright): owner decisions B1/B2, the council's BUILD NOW items and the eight clean-up
+// Do you need AI? v1.2 browser proof (Playwright): owner decisions B1/B2, the council's BUILD NOW items and the eight clean-up
 // fixes, standalone and inside the hub, at 1280 and 390 px. Serve tools/ with: python3 -m http.server 8811 --bind 127.0.0.1
 // (R2_BASE sets another address; the not-hub frame test uses the same server under "localhost" as a second origin).
 // Screenshots go to OUT (env R2_SHOTS, default ./shots-v12).
@@ -49,8 +49,8 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
       const { ctx, p } = await mk(b, w, touch); const T = dev + ' standalone';
       await p.goto(BASE + 'readiness-2/index.html');
       // B1 name
-      ok((await p.title()) === 'AI starting point', T + ': B1 page title');
-      ok((await p.textContent('#hdr h1')) === 'AI starting point' && (await p.textContent('#hdr')).includes('Start here: is AI the answer, and where?'), T + ': B1 header and the kept subtitle');
+      ok((await p.title()) === 'Do you need AI?', T + ': B1 page title');
+      ok((await p.textContent('#hdr h1')) === 'Do you need AI?' && (await p.textContent('#hdr')).includes('Start here: is AI the answer, and where?'), T + ': B1 header and the kept subtitle');
       ok(!/Readiness 2\.0/.test(await text(p)), T + ': B1 no "Readiness 2.0" on the start screen');
       ok((await p.getAttribute('#app', 'data-storage')) === 'ok' && !(await p.$('#not-saved')) && (await text(p)).includes('Your answers stay in this browser'), T + ': M3 storage ok: no warning, the promise is kept');
       await shot(p, dev + '-0-start');
@@ -119,7 +119,7 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
       ok((await p.textContent('#carry-note')) === 'Your answers here are not carried over to the Readiness check yet.', T + ': BUILD NOW 6 hand-over line');
       ok(!CODE.test(await text(p)), T + ': no codes on the summary');
       const copy = await p.evaluate(() => window.Readiness2.summaryText());
-      ok(copy.startsWith('AI starting point: summary') && copy.includes('not carried over') && !CODE.test(copy), T + ': copy text renamed, hand-over line, no codes');
+      ok(copy.startsWith('Do you need AI? Summary') && copy.includes('not carried over') && !CODE.test(copy), T + ': copy text renamed, hand-over line, no codes');
       await shot(p, dev + '-6b-summary-nonefits');
       await p.click('#check-one');
       await p.waitForFunction(() => window.ReadinessCheck, null, { timeout: 8000 });
@@ -214,7 +214,7 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
     {
       const { ctx, p } = await mk(b, w, touch); const T = dev + ' hub';
       await p.goto(BASE + 'index.html');
-      ok((await p.textContent('#hubBar button[data-tool="readiness-2"]')).trim() === 'AI starting point' && (await p.getAttribute('#hubBar button[data-tool="readiness-2"]', 'title')) === 'Start here: is AI the answer, and where?', T + ': B1 tab label, tooltip kept');
+      ok((await p.textContent('#hubBar button[data-tool="readiness-2"]')).trim() === 'Do you need AI?' && (await p.getAttribute('#hubBar button[data-tool="readiness-2"]', 'title')) === 'Start here: is AI the answer, and where?', T + ': B1 tab label, tooltip kept');
       ok((await p.getAttribute('#hubBar button[data-tool="readiness-check"]', 'title')) === 'Check one AI tool in detail before you sign', T + ': BUILD NOW 9 Readiness check tooltip');
       const order = await p.$$eval('#hubBar nav button', els => els.map(e => e.dataset.tool));
       ok(order.indexOf('readiness-2') + 1 === order.indexOf('readiness-check'), T + ': B5 tab stays before the Readiness check');
