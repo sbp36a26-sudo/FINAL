@@ -241,8 +241,8 @@ details.more[open] > summary::before{transform:rotate(90deg)}
   /* ---------- Step 1a: is this an AI problem? (research A) ---------- */
   var QUESTIONS = [
     { id: 'q1', short: 'Needs judgement, not fixed rules',
-      q: 'Does the job need judgement on varied input that you could not write down as fixed if-then rules?',
-      hint: 'Examples of varied input: free-text messages, speech, photos, or a forecast that has to learn from past patterns.',
+      q: 'Is this job too varied to write down as fixed rules (if this, then that)?',
+      hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
       yes: 'Reading guest emails in five languages and drafting replies.',
       no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
