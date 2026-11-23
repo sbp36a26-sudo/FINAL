@@ -56,6 +56,7 @@ async function shot(p, name, full = true) { await p.screenshot({ path: `${OUT}/$
       await shot(p, dev + '-0-start');
       // 1a with the Q1 hint
       await p.click('#begin');
+      await openMore(p, 'q1'); // owner 23 Nov: the guard note sits in the fold
       ok(await p.isVisible('#guard-q1') && (await p.textContent('#guard-q1')).startsWith('Judge the job, not how you handle it today.'), T + ': BUILD NOW 1 Q1 hint visible');
       ok(JSON.stringify(await p.$$eval('.steps3 span', s => s.map(x => x.className))) === '["now","",""]', T + ': L3 progress on 1a');
       await shot(p, dev + '-1-questions');

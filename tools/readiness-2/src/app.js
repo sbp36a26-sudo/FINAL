@@ -193,10 +193,14 @@
       '<p class="sub">Think of one problem in your hotel. Five questions; each Yes points towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
-        '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' + (q.hint ? '<p class="qhint">' + esc(q.hint) + '</p>' : '') +
-        (q.guard ? '<p class="qhint qguard" id="guard-' + q.id + '">' + esc(q.guard) + '</p>' : '') +
+        '<p class="itemname" id="title-' + q.id + '">' + esc(q.title) + '</p>' +
+        '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' +
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + needLine(q.id) +
-        fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p><p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
+        /* Owner, 23 Nov 2026: a title per question; the grey explanation and the guard note sit in the fold. */
+        fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p>' +
+          (q.hint ? '<p><b>How to answer:</b> ' + esc(q.hint) + '</p>' : '') +
+          (q.guard ? '<p class="qguard" id="guard-' + q.id + '">' + esc(q.guard) + '</p>' : '') +
+          '<p>' + esc(q.why) + '</p><p><b>Yes, for example:</b> ' + esc(q.yes) + '</p><p><b>No, for example:</b> ' + esc(q.no) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
     if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is No.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
