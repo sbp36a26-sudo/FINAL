@@ -1,0 +1,2 @@
+Source: github.com/emilkowalski/skills, folder `skills/apple-design`, commit 64eb3deb9a5fbfa041faf783e0bc3fd635872e9c, installed 24 Nov 2026 (MIT, see `LICENSE`). Markdown only, unmodified.
+Renamed: upstream calls this skill `apple-design`. That name is taken here by another skill, so the folder and the frontmatter `name:` are `emil-apple-design`. Nothing else is changed. Where Emil's other skills say `apple-design`, they mean this folder.
