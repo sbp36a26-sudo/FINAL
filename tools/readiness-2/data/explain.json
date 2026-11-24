@@ -1,0 +1,398 @@
+{
+ "rm-1": {
+  "does": "Forecasts how many rooms guests would want if nothing were sold out, how new bookings come in, cancellations and how guests react to price, to guide pricing and which rooms to sell.",
+  "how": "It learns patterns from your past data to predict what will happen next."
+ },
+ "rm-2": {
+  "does": "Recommends the best room rates and booking conditions, or publishes them automatically, many times a day, always between the lowest and highest prices the owner sets.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "rm-3": {
+  "does": "Collects competitors' rates and market demand. The AI matches rates and room types that can fairly be compared and flags unusual prices for the pricing team.",
+  "how": "It learns patterns from your past data to predict what will happen next."
+ },
+ "rm-4": {
+  "does": "Lets the revenue team ask questions about performance in everyday language and get an explanation of why a price is recommended.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "rm-5": {
+  "does": "Software agents scan the data all the time, flag risks and recommend actions. Agents that change rates on their own have been announced but not yet shown working.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "rm-6": {
+  "does": "Forecasts revenue, budgets and demand from groups and meeting space, and helps decide which group or event to accept and at what price. No source shows forecasting for food and drink, spa or parking revenue.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "rm-7": {
+  "does": "Sets changing prices for room upgrades and extras, based on the gaps between rates or on the revenue system's forecast.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "rm-8": {
+  "does": "Forecasts demand for the spa, changes treatment prices and the times offered, and avoids gaps in the schedule that nobody can book.",
+  "how": "It learns patterns from your past data to predict what will happen next. The provider says this, but it is not proven."
+ },
+ "rm-9": {
+  "does": "Checks the hotel's own rates on every booking channel, flags channels that sell cheaper than the hotel's website, and matches a lower public rate on the website.",
+  "how": "Spotting the price difference is said to use AI, method not described; the price matching itself follows fixed rules, which is not AI."
+ },
+ "res-1": {
+  "does": "Answers calls to the hotel and to central reservations day and night in many languages, takes or changes bookings, answers front-desk questions and passes calls to staff with notes, so fewer calls are missed.",
+  "how": "It understands speech, replies with a large language model (AI trained on huge amounts of text), and AI agents make the bookings."
+ },
+ "res-2": {
+  "does": "Reads booking emails and messages from online travel agencies (booking websites), checks live availability and rates, and drafts priced offers and replies for staff to check, or makes the booking directly.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "res-3": {
+  "does": "Recommends rates and promotions for each sales channel, checks that prices match across channels, and sends rates and availability to the best channels.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "res-4": {
+  "does": "A chat assistant and suggestions based on how each visitor behaves in the hotel's booking engine, to turn more visits into bookings and sell more extras. Follow-up emails on unfinished bookings use fixed rules, not AI.",
+  "how": "A large language model (AI trained on huge amounts of text) chats with guests, and pattern learning from past data shapes the suggestions."
+ },
+ "res-5": {
+  "does": "Forecasts how many bookings will be cancelled for each room type and sets how many extra rooms to sell to cover them.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "res-6": {
+  "does": "Turns group rooming lists into room blocks, creates rate codes and rate plans, changes many reservations at once and turns booking comments into tasks for staff.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "res-7": {
+  "does": "An app or link gives AI chat assistants the hotel's live rates and availability, so travellers can search and sometimes book direct. Most still send the guest to the hotel website to pay.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "res-8": {
+  "does": "Writes down and scores reservation calls against the hotel's service standards, and flags what staff could learn and which bookings were lost.",
+  "how": "It understands speech and uses a large language model (AI trained on huge amounts of text) to score and summarise the call."
+ },
+ "sm-1": {
+  "does": "Drafts and rewrites campaign text, newsletters, website and offer text, social media posts and adverts, and translates or adapts them for each country.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "sm-2": {
+  "does": "Turns group, meeting and event enquiries from email, phone, online request platforms and the website into organised leads, and drafts priced proposals and answers for the sales team to approve, so the hotel replies among the first.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "sm-3": {
+  "does": "Builds guest groups and profiles, predicts when or what a guest will book, times and tailors emails and loyalty offers, and lets software agents answer replies to campaigns.",
+  "how": "It learns from past data to predict guest behaviour, a large language model writes summaries, AI agents answer replies; grouping mostly follows fixed rules."
+ },
+ "sm-4": {
+  "does": "Creates or edits campaign pictures, social media images and short videos, instead of or alongside photo and video shoots.",
+  "how": "AI trained on huge numbers of pictures and videos creates new images and video from a written description."
+ },
+ "sm-5": {
+  "does": "Automatically manages bids, budgets, audiences and ad placements across search engines, price comparison sites, websites and social media, to win more direct bookings or more revenue per euro spent on adverts.",
+  "how": "It works out the best spend within your limits, predicts which audiences to target and writes ad text; some providers do not explain their AI."
+ },
+ "sm-6": {
+  "does": "Measures and improves how often AI chat assistants recommend the hotel, fixes content and price differences, and lets those assistants show rates and take bookings. Some tools check that listings are accurate and consistent across booking channels.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "sm-7": {
+  "does": "Ranks group and business leads by value and chance of booking, collects missing details, and finds or researches new prospects, so the sales team works on the best leads first.",
+  "how": "A large language model pulls out details and AI agents make qualifying calls; the scoring itself is not shown to be AI."
+ },
+ "fo-1": {
+  "does": "The guest scans a passport or ID card before arrival or at a kiosk; the software reads it and fills in the registration and the police report required by law, so staff no longer type it in.",
+  "how": "It reads the text on the ID document from a photo; the kiosk steps themselves follow fixed rules, which is not AI."
+ },
+ "fo-2": {
+  "does": "Chooses or suggests a room for each guest from the reservation details, guest preferences and past stays, to make check-in faster.",
+  "how": "The provider says it uses AI but does not explain how it works."
+ },
+ "fo-3": {
+  "does": "Confirms that the guest is the person on the ID by matching a selfie to the ID photo and checking it is a live person, remotely or at a kiosk, instead of staff checking by eye.",
+  "how": "It compares the face in a selfie with the ID photo and checks that a real, live person is in front of the camera."
+ },
+ "fo-4": {
+  "does": "Staff ask the property management system (PMS) questions about procedures and reports in everyday language; software agents draft replies or do PMS tasks, such as creating or changing a reservation from an email.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "fo-5": {
+  "does": "Offers each guest a suitable upgrade or extra, such as a better room, early check-in or breakfast, at the desk, at a kiosk or before arrival, and records the sale in the PMS (property management system).",
+  "how": "The provider says it uses AI but does not explain how it works."
+ },
+ "fo-6": {
+  "does": "Scores each booking before arrival using ID checks, behaviour data and past stays, and flags high-risk guests for staff to review.",
+  "how": "It learns from past data to give each booking a risk score, and checks that the guest's identity document is real."
+ },
+ "fo-7": {
+  "does": "A life-sized digital character on a kiosk screen talks to guests, checks them in and issues key cards.",
+  "how": "It understands what guests say and answers through an animated on-screen character."
+ },
+ "fo-8": {
+  "does": "Staff photograph a found item with a phone; the software writes a description and compares the item with claims guests send in. No independent hotel source or measured hotel result was found.",
+  "how": "Image recognition writes the item description; the matching is called AI but not explained, and shipping and payment are ordinary software."
+ },
+ "gx-1": {
+  "does": "Reads reviews, surveys and guest messages to find the mood and main topics, flags urgent complaints and summarises what to improve first. Sending review requests after the stay is automation, not AI.",
+  "how": "It understands the tone and topics of written text, and a large language model (AI trained on huge amounts of text) writes the summaries."
+ },
+ "gx-2": {
+  "does": "Answers repeated guest questions before booking and during the stay, day and night, on web chat, WhatsApp, social media and booking-site inboxes in many languages, using the hotel's own information, wins direct bookings and passes complex cases to staff.",
+  "how": "A large language model (AI trained on huge amounts of text) writes answers based on the hotel's own information."
+ },
+ "gx-3": {
+  "does": "Drafts personal replies to online reviews in the hotel's tone, many at once, for staff to approve.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "gx-4": {
+  "does": "First merges duplicate guest records into one profile, then tailors replies, offers and service to each guest's past stays, preferences and loyalty level, and spots VIPs, birthdays and special requests.",
+  "how": "It learns from past stays to suggest what suits each guest and writes personal replies with a large language model; methods are often unexplained."
+ },
+ "gx-5": {
+  "does": "Answers guest questions during the stay, such as menus, spa or activities, and recommends or books hotel services or local experiences by app, WhatsApp or phone.",
+  "how": "A large language model (AI trained on huge amounts of text) writes the answers and speech recognition handles calls; providers do not name their models."
+ },
+ "gx-6": {
+  "does": "Guests ask by voice in the room for room service, housekeeping, hotel information or to control the room.",
+  "how": "It understands spoken requests and turns them into actions; the hotel versions do not use a large language model."
+ },
+ "fb-1": {
+  "does": "Turns event enquiries into leads and proposals, drafts contracts and forecasts event demand. No source shows AI writing banquet event orders or costing menus.",
+  "how": "A large language model (AI trained on huge amounts of text) writes the documents; forecasting from past data is claimed but not proven."
+ },
+ "fb-2": {
+  "does": "Guests order room service or food and drink through a messaging or voice assistant, which passes the order to the outlet.",
+  "how": "It understands written or spoken orders, using a large language model (AI trained on huge amounts of text); this is claimed, not proven."
+ },
+ "fb-3": {
+  "does": "Analyses how profitable and popular each dish is and sets prices or the mix of dishes on the menu for each outlet.",
+  "how": "Pattern learning from past sales and calculation of the best prices are claimed in the market but not verified."
+ },
+ "fb-4": {
+  "does": "Guests order by phone or QR code at the pool, bar or room, with personal suggestions for extras and changing prices to raise food and drink revenue.",
+  "how": "One provider says it uses machine learning for suggestions but does not explain it; changing menu prices with AI is not shown."
+ },
+ "fb-5": {
+  "does": "Robots bring amenities, drinks and snacks to rooms, replacing the minibar, or carry plates in restaurants and bars.",
+  "how": "A robot finds its way with lasers and 3D cameras; the sources do not show machine learning."
+ },
+ "fb-6": {
+  "does": "A voice agent answers restaurant calls and books, changes or cancels tables, and software assigns the tables.",
+  "how": "It understands speech to handle the call, and a calculation works out the best table plan."
+ },
+ "hk-1": {
+  "does": "Staff report problems or requests by voice or chat in their own language; the software translates and creates a task that can be followed up. Staff messages, and live speech for guests and staff, are translated too.",
+  "how": "It understands speech and uses a large language model (AI trained on huge amounts of text) to translate and create tasks."
+ },
+ "hk-2": {
+  "does": "Robots vacuum and clean floors on their own in corridors, public areas and rooms.",
+  "how": "A robot finds its way with sensors; the provider calls this AI-supported navigation without more detail."
+ },
+ "hk-3": {
+  "does": "Tracks towels, sheets and uniforms through the laundry with radio tags (RFID), and forecasts how much linen is needed and the stock to keep.",
+  "how": "It learns from past data to predict linen needs; the tag tracking itself is sensor technology, not AI."
+ },
+ "hk-4": {
+  "does": "Door-lock and room sensors show which rooms are empty, Do Not Disturb or Make Up Room, and which public areas need cleaning. They can also flag noise, smoking or parties; an alert should start a staff check, not a charge.",
+  "how": "Most of these sensors work on fixed thresholds or rules, which is not AI; a few providers claim AI without published tests."
+ },
+ "hk-5": {
+  "does": "Checks photos of cleaned rooms to flag faults and missing amenities and confirm the room is ready for the next guest.",
+  "how": "It recognises what is in photos or camera images."
+ },
+ "hk-6": {
+  "does": "Builds the daily cleaning plan from property management system (PMS) data, predicts how long each room takes, assigns rooms in order and re-plans for Do Not Disturb or late check-out; reports each attendant's minutes per room against the standard.",
+  "how": "At one provider it predicts cleaning times from past data and works out the best plan; most others follow fixed rules, not AI."
+ },
+ "hk-7": {
+  "does": "A small sensor by the bed attracts insects and photographs them; the software decides whether it is a bed bug and sends the hotel the room number and photo. Results so far are measured by the provider only.",
+  "how": "Image recognition decides what insect is in the photo; camera traps where a person looks at the photo are not AI."
+ },
+ "me-1": {
+  "does": "Reads data from the building management system (BMS) and adjusts heating, cooling and ventilation settings and schedules, spots faults to cut energy use, and forecasts each hotel's energy and water use against actual use.",
+  "how": "It learns from past data to predict energy use and works out the best settings; some providers do not explain their AI."
+ },
+ "me-2": {
+  "does": "Turns photos, voice notes or chat messages into organised repair jobs and predicts when they are due. Engineers can also photograph equipment and its label, and the software fills in the equipment record.",
+  "how": "A large language model reads text and speech, image recognition reads equipment photos, and past data predicts due times."
+ },
+ "me-3": {
+  "does": "A detailed virtual copy of the hotel, checked against real readings, predicts energy and water demand, tests different control settings and helps plan maintenance before things break.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "me-4": {
+  "does": "Detects empty guest rooms and turns down heating, cooling and lights, and prepares rooms before arrival using check-in data from the property management system (PMS).",
+  "how": "Mostly fixed rules set by people, which is not AI; a few providers claim AI without explaining it."
+ },
+ "me-5": {
+  "does": "The equipment maker watches lifts, escalators and doors remotely, predicts faults before a breakdown and sends a technician.",
+  "how": "It learns patterns from your past data to predict what will happen next. The method is not described."
+ },
+ "me-6": {
+  "does": "Predicts faults across the hotel's own equipment, such as heating, cooling and kitchen machines, from sensor data and past repair tickets, so work can be planned instead of reacting to breakdowns. This has only been announced.",
+  "how": "It learns patterns from your past data to predict what will happen next. This is announced, not yet shown."
+ },
+ "me-7": {
+  "does": "Analyses water meter or fixture data to find leaks and unusual water use and alerts the engineering team.",
+  "how": "It learns what normal looks like in your data and flags anything unusual. Providers claim this but do not explain it."
+ },
+ "kc-1": {
+  "does": "A camera and scale record which food is thrown away, how much and when; reports help cut overproduction and food cost.",
+  "how": "Image recognition identifies the discarded food, and analysis of past data shows where waste comes from."
+ },
+ "kc-2": {
+  "does": "Finds the 14 EU allergens in the menu text, labels the dishes and translates the menus.",
+  "how": "It reads the menu text to find allergens; the provider says this is AI but does not explain how."
+ },
+ "kc-3": {
+  "does": "Combination ovens recognise the food placed inside and start the right cooking programme.",
+  "how": "A camera in the oven recognises the food; the maker calls this AI without more detail."
+ },
+ "kc-4": {
+  "does": "Predicts guest numbers and demand for each dish from occupancy and the hotel's own history, to set preparation and purchase quantities and cut overproduction, including at the breakfast buffet.",
+  "how": "It learns patterns from your past data to predict what will happen next; one tool also estimates leftovers from photos."
+ },
+ "kc-5": {
+  "does": "Creates recipes and menus, finds uses for surplus ingredients and suggests menu changes.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "kc-6": {
+  "does": "A robot portions, cooks and plates dishes such as bowls and salads at any hour, without a cook at the station.",
+  "how": "A robot follows set cooking steps; the sources do not say it uses AI."
+ },
+ "pr-1": {
+  "does": "Suggests order quantities and fills supplier shopping baskets automatically, using approved suppliers first, with a person approving each order.",
+  "how": "The provider says it uses AI but does not explain how it works. No system orders on its own."
+ },
+ "pr-2": {
+  "does": "Predicts use and stock levels for each kitchen, bar and banqueting outlet from sales, recipes, stock and occupancy, so buyers do not order too much or too little fresh food.",
+  "how": "It learns patterns from your past data to predict what will happen next. This is claimed, not proven."
+ },
+ "pr-3": {
+  "does": "Matches supplier invoices line by line to purchase orders and delivery records, flags price or quantity differences and sends only the problems to staff.",
+  "how": "Matching follows fixed rules, not AI; AI is claimed for reading and coding invoices and spotting errors."
+ },
+ "pr-4": {
+  "does": "Analyses spending and stock movements across outlets and hotels and alerts staff to differences, losses and waste.",
+  "how": "It learns what normal looks like in your data and flags anything unusual. Providers claim this but do not explain it."
+ },
+ "pr-5": {
+  "does": "Compares invoice and order prices with agreed contracts and price lists, and flags overcharges, creeping prices and buying outside contracts.",
+  "how": "It learns what normal looks like in your data and flags anything unusual. Providers claim this but do not explain it."
+ },
+ "pr-6": {
+  "does": "Forecasts price changes for key purchases so buyers can time and prepare negotiations with suppliers.",
+  "how": "It learns patterns from your past data to predict what will happen next."
+ },
+ "fa-1": {
+  "does": "Reads supplier invoices in any layout or language, picks out the details and each line, assigns the accounting codes and sends them for approval, so most invoices are booked without typing.",
+  "how": "It reads the invoice from an image and learns from past coding how to code new invoices; some steps are done by AI agents."
+ },
+ "fa-2": {
+  "does": "Scores online card payments, payment links and booking payments as they happen to block fraud and disputed payments, and flags duplicate or risky supplier invoices.",
+  "how": "It learns from past payments what fraud looks like and gives each new payment a risk score."
+ },
+ "fa-3": {
+  "does": "Matches payments, payouts, booking site reservations and commissions, and supplier statements to bookings and the accounts, and reports only what does not match.",
+  "how": "One provider says it uses AI; another states its tool uses no AI."
+ },
+ "fa-4": {
+  "does": "Forecasts revenue, cost and profit lines, suggests budgets and flags differences and lost margin early.",
+  "how": "Prediction from past data is claimed but unclear; one tool forecasts with fixed rules and uses AI to flag differences."
+ },
+ "fa-5": {
+  "does": "Runs several steps of supplier invoice work (splitting, reading, matching and coding) for a person to approve. No source shows finance questions answered in everyday language.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "fa-6": {
+  "does": "Automates the nightly checks of the night audit and matches the day's revenue each night.",
+  "how": "One provider says it uses AI to match figures; automatic posting to the accounts is not shown."
+ },
+ "fa-7": {
+  "does": "Collects disputed card payments from the payment provider, reads the guest's bill and builds and submits the evidence to fight the dispute.",
+  "how": "It learns from past cases, and a large language model (AI trained on huge amounts of text) reads the guest's bill."
+ },
+ "hr-1": {
+  "does": "Forecasts how many staff each department and shift needs from occupancy, departures, guest numbers in outlets and events, including housekeeping hours, and builds or adjusts the rotas.",
+  "how": "It learns patterns from your past data to predict what will happen next, then works out the best option within the limits you set."
+ },
+ "hr-2": {
+  "does": "Answers job candidates, takes applications and books interviews for roles with many applicants, reads CVs and suggests candidates for open shifts or roles, and runs first-round AI interviews that rate language and communication.",
+  "how": "It understands written and spoken language, learns from past data to match candidates to roles, and AI agents send alerts."
+ },
+ "hr-3": {
+  "does": "Turns standard procedures and handbooks into short lessons and on-shift guidance, links problems from guest reviews to training, and lets staff practise handling complaints with an AI coach.",
+  "how": "A large language model (AI trained on huge amounts of text) creates lessons and plays the guest, and speech is turned into text."
+ },
+ "hr-4": {
+  "does": "Predicts which staff are likely to leave.",
+  "how": "It learns patterns from your past data to predict what will happen next. This is claimed, not proven."
+ },
+ "hr-5": {
+  "does": "Suggests which seasonal staff should go to which hotel, based on skills, languages and availability; people confirm the choice.",
+  "how": "It learns from past data to match people with the places that suit them best."
+ },
+ "hr-6": {
+  "does": "Staff clock in and out with their face or fingerprint instead of a card or PIN. The alternative without biometrics is clocking in on a phone, allowed only at the hotel's location.",
+  "how": "It matches the face or fingerprint against the stored record; phone clock-in by location follows a fixed rule, which is not AI."
+ },
+ "gm-1": {
+  "does": "Brings performance figures from the property management system (PMS), finance and food and drink into dashboards, explains changes, suggests next steps and gives forecasts.",
+  "how": "A large language model (AI trained on huge amounts of text) writes the explanations; the forecasts follow fixed rules."
+ },
+ "gm-2": {
+  "does": "Drafts, summarises, analyses and reports, for example for month-end closing, messages to owners or research, using an AI assistant licensed by the company.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "gm-3": {
+  "does": "Creates daily performance summaries and morning briefings automatically and answers questions about operations asked in everyday language.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text, and AI agents carry out several steps on their own."
+ },
+ "gm-4": {
+  "does": "A group-wide base of data and AI, with rules and expert teams, on which the AI tools for staff and guests are built.",
+  "how": "It combines large language models, prediction from past data and AI agents on one shared platform."
+ },
+ "gm-5": {
+  "does": "Brings together data from several hotels and operators for owners and drafts comments explaining the differences from plan.",
+  "how": "A large language model (AI trained on huge amounts of text) is the aim; checked products do not state any AI."
+ },
+ "gm-6": {
+  "does": "A chat assistant in the staff app answers questions from the hotel's own handbook and procedures.",
+  "how": "A large language model (AI trained on huge amounts of text) reads the hotel's own documents and writes the answers."
+ },
+ "gm-7": {
+  "does": "Staff build small internal tools, such as data pulls, dashboards and links between systems, with an AI coding assistant, while core systems stay with suppliers. No European hotel example was found.",
+  "how": "A large language model (AI trained on huge amounts of text) writes computer code from instructions given in everyday language."
+ },
+ "it-1": {
+  "does": "Detects and stops break-ins to the hotel's systems, fake emails, stolen accounts and ransomware (software that locks files for money) across many hotels with a small security team.",
+  "how": "It learns what normal looks like on your systems, flags anything unusual, and AI agents act on their own to stop attacks."
+ },
+ "it-2": {
+  "does": "Answers and passes on staff IT requests, writes down and summarises calls, and opens problem tickets automatically across hotels.",
+  "how": "It turns speech into text and reads its tone, and a large language model (AI trained on huge amounts of text) writes the summaries."
+ },
+ "it-3": {
+  "does": "Detects fake bookings, hacked booking-platform accounts and fake emails pretending to be booking sites, before stays are confirmed or payments taken.",
+  "how": "It learns patterns from your past data to predict what will happen next. Hotel tools claim this without explaining it."
+ },
+ "it-4": {
+  "does": "Detects break-ins, loitering, incidents, weapons and people in the pool in difficulty from security cameras, and counts people in queues without identifying them. Face recognition is limited by EU law; pool drowning alerts are not yet proven in live pools.",
+  "how": "It recognises what is in photos or camera images."
+ },
+ "it-5": {
+  "does": "Watches the cable and wireless network, spots problems and fixes or flags them before guests notice.",
+  "how": "It learns what normal looks like in your data and flags anything unusual."
+ },
+ "lg-1": {
+  "does": "Collects energy, water, waste and emissions data across hotels, compares results and produces sustainability and legally required reports.",
+  "how": "A large language model (AI trained on huge amounts of text) runs the assistants; AI for collecting data and calculating emissions is claimed but unclear."
+ },
+ "lg-2": {
+  "does": "Maps the guest data the hotel holds, manages consent, runs privacy risk assessments and oversees AI tools bought from other companies.",
+  "how": "The main privacy steps follow fixed rules, which is not AI; AI is claimed but unclear for overseeing AI tools."
+ },
+ "lg-3": {
+  "does": "Reviews supplier contracts, flags unusual clauses and watches for changes in the rules.",
+  "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."
+ },
+ "lg-4": {
+  "does": "Sets the rules for how staff may use AI, with oversight groups and agreements with staff representatives. This is a new task that AI creates, not a task AI does.",
+  "how": "This is not an AI tool: it is how the hotel manages its own use of AI."
+ }
+}
