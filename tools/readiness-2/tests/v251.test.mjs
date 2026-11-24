@@ -54,30 +54,31 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
   ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '').replace(/href="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
   ok(L.sourceItem(['r', 'S99', 'note'], {}).name === 'S99' && L.sourceItem(['r', 'S99', 'note'], {}).url === '', 'an unknown study key does not throw and gives no link');
   ok(!/href/.test(L.sourceRow(['c', 'Vendor', 'note', 'javascript:alert(1)'])), 'a non-http(s) URL is never a link');
-  ok(/data-ext="source"/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links are marked data-ext="source"');
-  ok(/L\.sourceRow\(s\)/.test(app) && !/s\[3\] \? ' <a href/.test(app), 'the detail layer renders through R2Logic.sourceRow');
+  // v2.6: the name is the link (no data-ext marker); the layer renders from L.detailData through R2Logic.sourceRowItem (tests/v26.test.mjs)
+  ok(/<a href="https:\/\/a\.com\/" target="_blank" rel="noopener">A<\/a>/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links: the name is the link (v2.6; was a data-ext="source" "Open the source" link)');
+  ok(/x\.srcs\.map\(L\.sourceRowItem\)/.test(app) && !/s\[3\] \? ' <a href/.test(app), 'the detail layer renders through R2Logic.sourceRowItem');
 }
 
-// ---------- 1b. the link bridge in the page ----------
-ok(/document\.addEventListener\('click', function \(e\) \{\s*if \(!host\.pong \|\| e\.defaultPrevented\) return;/.test(app), 'links: intercepted only once the hub answered the ping (standalone keeps ordinary links)');
-ok(/postMessage\(\{ hub: 'link', url: u\.href \}, location\.origin\)/.test(app), 'links: { hub: \'link\', url } to the hub, same origin');
-ok(/u\.protocol !== 'http:' && u\.protocol !== 'https:'\) \|\| u\.origin === location\.origin\) return;/.test(app), 'links: only external http(s) links');
+// ---------- 1b. v2.6: the link bridge is gone (changed expectation: inside the hub the hub draws the layer, tests/v26.test.mjs) ----------
+ok(!/hub: 'link'/.test(app) && !/e\.defaultPrevented\) return;\s*var a = e\.target/.test(app), 'links: no click interception, no { hub: \'link\' } (v2.6)');
 
 // ---------- 2. the "Is this an AI problem?" card ----------
 const cases = {
-  allYes: { q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' },
+  allYes: { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }, // v2.6: Q1 No is the answer that goes on ("allYes" keeps its name)
   notSure: { q1: 'u', q2: 'y', q3: 'y', q4: 'u', q5: 'y' },
-  withNo: { q1: 'y', q2: 'y', q3: 'y', q4: 'n', q5: 'n' },
-  mixed: { q1: 'y', q2: 'n', q3: 'u', q4: 'y', q5: 'n' }
+  withNo: { q1: 'n', q2: 'y', q3: 'y', q4: 'n', q5: 'n' },
+  mixed: { q1: 'n', q2: 'n', q3: 'u', q4: 'y', q5: 'n' }
 };
 for (const [tag, Q] of Object.entries(cases)) {
   const r = finished(F, D, 'gx-2', { Q }), m = L.resultModel(r, env);
-  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Complex judgement|Return|Information ready|Safety net|Proof', tag + ': five rows with the five titles');
+  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Complex judgement|Return|Information to learn from|Some mistakes are acceptable|Proof', tag + ': five rows with the five titles');
   m.answers.forEach(a => {
     const q = C.QUESTIONS.find(x => x.id === a.id), ans = Q[a.id];
     ok(a.a === { y: 'Yes', n: 'No', u: 'Not sure' }[ans] && a.state === ans, tag + ' ' + a.id + ': the answer word');
-    if (ans === 'y') ok(a.line.startsWith('Met: ') && a.line.toLowerCase().includes(q.yesIf.slice(1, 30).toLowerCase()), tag + ' ' + a.id + ': Yes explains the Yes-if test');
-    if (ans === 'n') ok(a.line === q.outcome + (q.add ? ' ' + q.add : ''), tag + ' ' + a.id + ': No gives the defined consequence');
+    // v2.6: the answer that goes on is No for question 1 (its No-if test), Yes for the others
+    const goes = a.id === 'q1' ? 'n' : 'y', test = a.id === 'q1' ? q.noIf : q.yesIf;
+    if (ans === goes) ok(a.line.startsWith('Met: ') && a.line.toLowerCase().includes(test.slice(1, 30).toLowerCase()) && a.good === true, tag + ' ' + a.id + ': the answer that goes on explains its test');
+    if (ans && ans !== 'u' && ans !== goes) ok(a.line === q.outcome + (q.add ? ' ' + q.add : '') && a.good === false, tag + ' ' + a.id + ': the other answer gives the defined consequence');
     if (ans === 'u') ok(a.line.startsWith('To find out: yes if ') && a.line.includes('; no if ') && a.ask === 'Ask ' + q.who + '.' && a.ifNo, tag + ' ' + a.id + ': Not sure says what to find out, whom to ask and what a No would mean');
     ok(!/—/.test([a.line, a.ask, a.ifNo].join(' ')), tag + ' ' + a.id + ': no em dash');
   });
@@ -86,9 +87,9 @@ for (const [tag, Q] of Object.entries(cases)) {
 }
 {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: cases.withNo }), env);
-  ok(m.answers[3].line.startsWith('AI as an assistant only'), 'Q4 No = assistant only');
+  ok(m.answers[3].line.startsWith('A rule-based tool or a person is the better choice.'), 'Q4 No (v2.6): a rule-based tool or a person (was: assistant only)');
   const mu = L.resultModel(finished(F, D, 'gx-2', { Q: cases.notSure }), env);
-  ok(mu.answers[0].ifNo === 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.', 'Q1 Not sure keeps the existing Q1 sentence');
+  ok(mu.answers[0].ifNo === 'If question 1 turns out to be Yes, this is not suitable for AI: rules or ordinary automation will do it.', 'Q1 Not sure keeps the Q1 sentence (v2.6: Yes is the stop answer)');
   ok(mu.ai.head === 'Find out first.' && L.resultModel(finished(F, D, 'gx-2', { Q: cases.allYes }), env).ai.head === 'Worth exploring with AI.', 'the verdict words stay');
 }
 ok(/function aiCard\(m\)/.test(app) && /id="ai-rows"/.test(app) && /id="ai-head"/.test(app), 'the card: verdict word (#ai-head) and the five rows (#ai-rows)');

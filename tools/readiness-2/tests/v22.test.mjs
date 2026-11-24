@@ -18,7 +18,7 @@ const src = inputs(), G = generate({ ...src, wording: null });
 const ids = D.cat.depts.flatMap(d => d.uses.map(u => u.id));
 
 // ---------- 1. wording: every key applied ----------
-ok(Object.keys(W.names).length === 99 && Object.keys(W.qs).length === 661 && Object.keys(W.core).length === 21, 'wording.json: 99 names, 661 questions, 21 core fields');
+ok(Object.keys(W.names).length === 99 && Object.keys(W.qs).length === 661 && Object.keys(W.core).length === 30, 'wording.json: 99 names, 661 questions, 30 core fields (v2.6: was 21; nine added for the new questions 1, 3 and 4)');
 Object.entries(W.names).forEach(([id, t]) => ok(J.uses[id].plain === t && TQ.uses[id].plain === t, 'name applied (file and page): ' + id));
 Object.entries(W.qs).forEach(([k, t]) => { const [id, qid] = k.split('|'); ok(J.uses[id].qs.find(q => q.id === qid).q === t && TQ.uses[id].qs.find(q => q.id === qid).q === t, 'question applied (file and page): ' + k); });
 Object.entries(W.core).forEach(([k, t]) => { const [id, f] = k.split('.'); const it = (id[0] === 'q' ? C.QUESTIONS : C.MUSTS).find(x => x.id === id); ok(it && it[f] === t, 'core field applied in src/content.js: ' + k); });

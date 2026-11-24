@@ -501,25 +501,5 @@ window.Catalogue = Object.freeze({
 window.addEventListener('hashchange',render);
 render();
 </script>
-<script id="hublink">
-/* Link bridge (24 Nov 2026; contract: tools/hub/CONTRACTS.md). In the claude.ai hub this page is a nested frame, where
-   target="_blank" links do not open. The page asks the hub once ({ hub: 'ping' }); after the hub's pong, a click on an external
-   http(s) link is sent as { hub: 'link', url } and the hub opens it from the top page. On its own the page keeps ordinary links. */
-(function () {
-  var inHub = false;
-  if (window.parent === window) return;
-  try { if (window.parent.location.origin !== location.origin) return; } catch (e) { return; }
-  window.addEventListener('message', function (e) { if (e.source === window.parent && e.data && e.data.hub === 'pong') inHub = true; });
-  try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { return; }
-  document.addEventListener('click', function (e) {
-    if (!inHub || e.defaultPrevented) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
-    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
-    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
-    e.preventDefault();
-    try { window.parent.postMessage({ hub: 'link', url: u.href }, location.origin); } catch (x) { /* the hub is gone */ }
-  }, true);
-})();
-</script>
 </body>
 </html>

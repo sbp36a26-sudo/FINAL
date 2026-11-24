@@ -15,6 +15,10 @@ const SCREENS = path.join(__dirname, '..', '..', '..', '..', 'reports', 'readine
 const OUT = process.env.R2_SHOTS || path.join(SCREENS, 'v25'), WORDING = process.env.R2_SHOTS ? path.join(OUT, 'wording') : path.join(SCREENS, 'wording');
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(WORDING, { recursive: true });
 const FX = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'v2.4-saved.json'), 'utf8'));
+/* v2.6: the v2.4 checks hold step 2 in the old meaning and would wait on step 2 (proved in tests/v25.test.mjs and v26.test.mjs).
+   To prove the share paths (H1, R5) on the result, step 2 is given here as answered in the v2.6 meaning (qv 2); the store as v3. */
+const asV26 = c => Object.assign(c, { qv: 2, Q: { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: c.Q && c.Q.q5 ? c.Q.q5 : 'y' } });
+Object.values(FX.store.checks).forEach(asV26); FX.store.v = 3; asV26(FX.file.check); FX.file.v = 3;
 let pass = 0, fail = 0; const ok = (c, n) => { if (c) pass++; else { fail++; console.log('FAIL  ' + n); } };
 const TEAM = 'hftp-readiness-checks-v1', KEY = 'hftp-readiness2-v1';
 
@@ -37,7 +41,7 @@ async function fill(f, o) {
   await f.evaluate(o => {
     const R = window.Readiness2;
     R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('hotel', { k: 'name', v: 'Hotel Fixture' }); R.send('next');
-    const Q = Object.assign({ q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }, o.Q || {}); Object.keys(Q).forEach(id => R.send('answer', { id, value: Q[id] })); R.send('next');
+    const Q = Object.assign({ q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }, o.Q || {}); /* v2.6: Q1 No goes on */ Object.keys(Q).forEach(id => R.send('answer', { id, value: Q[id] })); R.send('next');
     for (let i = 1; i <= 10; i++) { const id = 'm' + i; R.send('answer', { id, value: typeof o.A === 'string' ? o.A : (o.A && o.A[id]) || 'y' }); }
     if (o.stay === 'must') return;
     R.send('next');
@@ -127,7 +131,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
     const init = { fn: a => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('hftp-readiness2-v1', a.store); localStorage.setItem('hftp-readiness-checks-v1', a.team); sessionStorage.setItem('hftp-readiness2-cur', a.cur); sessionStorage.setItem('seeded', '1'); } }, arg: { store: JSON.stringify(FX.store), team: JSON.stringify(FX.team), cur: c1 } };
     const { ctx, p } = await mk(b, 1280, false, init); await open(p);
     let s = await st(p);
-    ok(s.id === c1 && s.step === 'result' && s.sharedAt && s.rules === 'v2.5 (24 Nov 2026)', 'v2.4 store: the shared check opens on its result under rules v2.5');
+    ok(s.id === c1 && s.step === 'result' && s.sharedAt && s.rules === 'v2.6 (24 Nov 2026)', 'v2.4 store: the shared check opens on its result under rules v2.6 (step 2 given in the v2.6 meaning)');
     ok(/worked out with earlier rules/.test((await txt(p, '#since')) || ''), 'v2.4 store: the earlier result is marked "worked out with earlier rules"');
     ok(await p.isVisible('#unshare') && /switched off/.test((await txt(p, '#share')) || ''), 'O7: with sharing off the shared check still shows its withdraw button');
     await p.evaluate(t => window.Readiness2.openFileText(t), JSON.stringify(FX.file)); await p.waitForSelector('#import-yes');
@@ -191,7 +195,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
     ['F', 'tailored-dont-know', { T: 'k' }, 'Almost ready', 'Score: 55%', ''],
     ['G', 'none-fits', { use: 'none' }, 'Almost ready', 'Score: 100%', 'Held back: no use case chosen.'],
     ['H', 'one-must-have-no', { A: { m4: 'n' } }, 'Not ready yet', 'Score: 94%', 'Because 1 must-have is No.'],
-    ['I', 'q4-no', { Q: { q4: 'n' } }, 'Ready to start a pilot', 'Score: 100%', '']
+    ['I', 'q4-no', { Q: { q4: 'n' } }, 'Almost ready', 'Score: 100%', 'Held back: a No in step 2.'] // v2.6: was Ready with the assistant-only line
   ];
   const SHOOT = { A: 1, C: 1, G: 1, H: 1 };
   const heads = [];
@@ -206,7 +210,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
       ok(bx ? !!(await p.$('#result #box-reason')) : !(await p.$('#box-reason')), wt + ' ' + k + ': the box line sits in the verdict box only when it is due (O5)');
       ok(fl !== 'Nothing open' || level === 'Ready to start a pilot', wt + ' ' + k + ': no "Nothing open" under a held verdict');
       ok(level === 'Ready to start a pilot' ? /^A pilot: a trial with one team or one outlet/.test((await txt(p, '#pilot-gloss')) || '') : !(await p.$('#pilot-gloss')), wt + ' ' + k + ': pilot gloss only under the top verdict');
-      if (k === 'I') ok((await txt(p, '#assist')) === 'Use it as an assistant only: a person checks every result before it counts.', wt + ' I: the assistant-only condition is shown');
+      if (k === 'I') ok(!(await p.$('#assist')) && /Some mistakes are acceptable/.test((await txt(p, '#first ol li')) || ''), wt + ' I (v2.6): no assistant-only line; the No on question 4 is item 1');
       if (k === 'D') ok(/^Settle this first: in step 2 you answered No to “Proof”/.test((await txt(p, '#first ol li')) || ''), wt + ' D: the hold is item 1');
       if (k === 'F' || k === 'B') { const plan = (await txt(p, '#plan')) || ''; ok(/Finish: |Find out: /.test(plan) && !/Agree in writing: hand-off rules|Train or brief the people involved:/.test(plan), wt + ' ' + k + ': the action plan shows the team-worded question, not the workbook action'); }
       ok(await noHScroll(p), wt + ' ' + k + ': no horizontal scroll');
@@ -220,7 +224,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
     const { ctx, p } = await mk(b, w, touch); await open(p);
     await fill(p, { Q: { q5: 'n', q3: 'u' }, stay: 'must' });
     ok((await txt(p, '#consist-m3')) === 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.', wt + ' BUILD NOW 7: line under must-have 3');
-    ok((await txt(p, '#consist-m7')) === 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.', wt + ' BUILD NOW 7: line under must-have 7');
+    ok(!(await p.$('#consist-m7')), wt + ' BUILD NOW 7 (v2.6): no line under must-have 7 any more (question 3 now asks about past examples)');
     await p.evaluate(() => window.Readiness2.send('answer', { id: 'm3', value: 'pl' })); ok(!(await p.$('#consist-m3')), wt + ' BUILD NOW 7: gone when must-have 3 is not Yes');
     ok(((await st(p)).events || []).includes('next'), wt + ' BUILD NOW 7: no blocking');
     await ctx.close();
@@ -251,7 +255,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
     await p.goto(BASE + 'index.html'); await p.click('#hubBar button[data-tool="readiness-2"]');
     await p.waitForSelector('#hubFrame iframe[title="readiness-2"]'); const f = await (await p.$('#hubFrame iframe[title="readiness-2"]')).contentFrame();
     await f.waitForFunction(() => window.Readiness2 && window.Readiness2.state().inHub === true, null, { timeout: 15000 });
-    await fill(f, { where: true }); await f.click('#dt-gx-2'); await f.waitForSelector('#detail[open]'); await p.waitForTimeout(150);
+    await fill(f, { where: true }); await f.click('#dt-gx-2'); await p.waitForSelector('#hub-detail[open]'); await p.waitForTimeout(150); // v2.6: the hub draws the layer on its main page
     ok((await f.evaluate(() => window.Readiness2.state().sharingOn)) === false && !(await f.$('#share-btn')), 'hub: sharing is off in the hub too');
     await shot(p, 'desktop-hub-picker-panel-open', WORDING, true);
     await ctx.close();

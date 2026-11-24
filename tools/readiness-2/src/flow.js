@@ -7,12 +7,16 @@
       Events: begin, next, back, change (stop → q), edit (result → q), pop(step) (browser Back/forward or a restore)
       Guards (ctx from ctxOf(rec, env)):
         hotel --next--> q only when "how the hotel is run" is chosen.
-        q --next--> 'stop' when Q1 is No (whatever the rest); else 'must' only when all five questions are answered.
-        'stop' only while Q1 is No; 'must', 'where', 'tailored', 'result' never while Q1 is No.
+        q --next--> 'stop' when Q1 is Yes (v2.6; whatever the rest); else 'must' only when all five questions are answered.
+        'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes. (ctx.q1Stop; before v2.6 the
+        stop answer was No.)
         must --next--> where only with every must-have answered ("Don't know yet" counts).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
         tailored --next--> result only with every tailored question answered.
-   2. STORE (persisted in localStorage['hftp-readiness2-v1']): { v: 2, cur: <check id>, checks: { <id>: rec }, notice }.
+   2. STORE (persisted in localStorage['hftp-readiness2-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
+      v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
+      it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
+      read once through R2Logic.legacyQ (question 1 turned round; the old questions 3 and 4 dropped and listed in Qnew).
       migrate() takes any saved value: a v2 store is validated; a v1 record (the build before 24 Nov 2026) becomes one check
       that keeps the five answers and the chosen use case, drops the rest and sets notice 'v1' (shown once).
    3. reduce(store, ev, arg, env): the only function that changes the store. Returns { store, ok }.
@@ -26,7 +30,8 @@
    5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list. */
 (function (root) {
   'use strict';
-  var V = 2, KEY = 'hftp-readiness2-v1';
+  var V = 3, KEY = 'hftp-readiness2-v1';
+  var LG = root.R2Logic, QV = LG.QV; // v2.6: the step 2 question set and legacyQ live with the rules
   var STEPS = ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result'];
   var ORDER = ['start', 'hotel', 'q', 'must', 'where', 'tailored', 'result']; // the main line ('stop' is a side end)
   var FLOW = {
@@ -63,9 +68,9 @@
 
   /* from: 'link' while the use case was preselected by #use=<id> and the person has not chosen one themselves (audit L3, L9).
      tqSig: the signature of the chosen use case's tailored questions when it was chosen ('' in records saved by v2.0) (audit M5). */
-  function blank(id) { return { id: id || newId(), step: 'start', hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
+  function blank(id) { return { id: id || newId(), step: 'start', qv: QV, Qnew: [], hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
   function copy(r) {
-    return { id: r.id, step: r.step, hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
+    return { id: r.id, step: r.step, qv: QV, Qnew: (r.Qnew || []).slice(), hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
       T: Object.assign({}, r.T), TBy: Object.assign({}, r.TBy), snaps: (r.snaps || []).slice(), share: { named: !!(r.share && r.share.named) }, sharedAt: r.sharedAt || null, sharedMode: r.sharedMode || null, sharedSig: r.sharedSig || null, updated: r.updated || '' };
   }
   /* The check as it goes into a file: whether a copy was shared belongs to this browser, not to the file (audit L11). */
@@ -91,7 +96,7 @@
     var Q = rec.Q || {}, A = rec.A || {}, Tt = rec.T || {}, ids = rec.use && rec.use !== 'none' ? tailIds(env, rec.use) : [];
     return {
       hotelDone: TYPES.indexOf((rec.hotel || {}).type) >= 0,
-      q1No: Q.q1 === 'n',
+      q1Stop: Q.q1 === LG.badAns('q1'), // v2.6: Yes (fixed rules can do it)
       qDone: QIDS.every(function (id) { return !!Q_OK[Q[id]]; }),
       mustDone: MUST_IDS.every(function (id) { return !!A_OK[A[id]]; }),
       whereDone: rec.use === 'none' || (!!rec.use && useIn(env, rec.dept, rec.use) && deptOf(env, rec.dept).cat === rec.cat),
@@ -104,20 +109,20 @@
     switch (step) {
       case 'start': case 'hotel': return true;
       case 'q': return c.hotelDone;
-      case 'stop': return c.hotelDone && c.q1No;
-      case 'must': return c.hotelDone && !c.q1No && c.qDone;
+      case 'stop': return c.hotelDone && c.q1Stop;
+      case 'must': return c.hotelDone && !c.q1Stop && c.qDone;
       case 'where': return reachable('must', c) && c.mustDone;
       case 'tailored': return reachable('where', c) && c.whereDone && !c.none && c.hasTail;
       case 'result': return reachable('where', c) && c.whereDone && (c.none || !c.hasTail || c.tailDone);
     }
     return false;
   }
-  /* The step a saved or historic step lands on: itself if reachable; 'stop' for any later step while Q1 is No;
+  /* The step a saved or historic step lands on: itself if reachable; 'stop' for any later step while Q1 is Yes (v2.6);
      otherwise the nearest reachable step before it on the main line. Unknown values → 'start'. */
   function placeStep(step, c) {
     if (STEPS.indexOf(step) < 0) return 'start';
     if (reachable(step, c)) return step;
-    if (c.q1No && c.hotelDone && step !== 'start' && step !== 'hotel') return 'stop';
+    if (c.q1Stop && c.hotelDone && step !== 'start' && step !== 'hotel') return 'stop';
     var i = ORDER.indexOf(step); if (i < 0) i = ORDER.indexOf('q');
     for (; i >= 0; i--) if (reachable(ORDER[i], c)) return ORDER[i];
     return 'start';
@@ -125,7 +130,7 @@
   function flowNext(step, ev, c) {
     var row = FLOW[step]; if (!row || !own(row, ev)) return null;
     var to = row[ev];
-    if (to === '@q') to = c.q1No ? 'stop' : 'must';
+    if (to === '@q') to = c.q1Stop ? 'stop' : 'must';
     else if (to === '@where') to = c.none || !c.hasTail ? 'result' : 'tailored';
     else if (to === '@result') to = c.none || !c.hasTail ? 'where' : 'tailored';
     return reachable(to, c) ? to : null;
@@ -147,7 +152,10 @@
     var o = blank(r.id), H = obj(r.hotel), Q = obj(r.Q), A = obj(r.A), By = obj(r.By), Tt = obj(r.T), TBy = obj(r.TBy);
     o.hotel.name = str(H.name, 120); o.hotel.type = TYPES.indexOf(H.type) >= 0 ? H.type : ''; o.hotel.role = ROLES.indexOf(H.role) >= 0 ? H.role : '';
     o.hotel.country = typeof H.country === 'string' && (!env || !env.countries || env.countries.indexOf(H.country) >= 0) ? str(H.country, 40) : '';
-    QIDS.forEach(function (id) { if (Q_OK[Q[id]]) o.Q[id] = Q[id]; });
+    /* v2.6: a record without qv QV holds step 2 in the old meaning: turned round here, once (o.qv is set by blank()). */
+    var legacy = r.qv !== QV, LQ = legacy ? LG.legacyQ(Q) : { Q: Q, dropped: [] };
+    QIDS.forEach(function (id) { if (Q_OK[LQ.Q[id]]) o.Q[id] = LQ.Q[id]; });
+    o.Qnew = (legacy ? LQ.dropped : (Array.isArray(r.Qnew) ? r.Qnew : [])).filter(function (id, i, a) { return (id === 'q3' || id === 'q4') && a.indexOf(id) === i && !o.Q[id]; });
     MUST_IDS.forEach(function (id) { if (A_OK[A[id]] || OLD_A[A[id]]) { o.A[id] = A[id]; if (A[id] === 'pl' && validDate(By[id])) o.By[id] = By[id]; } });
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(env, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
@@ -232,7 +240,7 @@
       case 'answer': {
         var id = arg && arg.id, v = arg && arg.value; r = copy(rec);
         /* Answers only on their own step, so no answer can make the screen being shown impossible. */
-        if (QIDS.indexOf(id) >= 0 && Q_OK[v] && rec.step === 'q') r.Q[id] = v;
+        if (QIDS.indexOf(id) >= 0 && Q_OK[v] && rec.step === 'q') { r.Q[id] = v; r.Qnew = r.Qnew.filter(function (x) { return x !== id; }); }
         else if (MUST_IDS.indexOf(id) >= 0 && A_OK[v] && rec.step === 'must') { r.A[id] = v; if (v !== 'pl') delete r.By[id]; }
         else if (rec.step === 'tailored' && T_OK[v] && tailIds(env, rec.use).indexOf(id) >= 0) { r.T[id] = v; if (v !== 'pl') delete r.TBy[id]; }
         else return no;
@@ -415,7 +423,7 @@
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
+  var api = { QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
     V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,

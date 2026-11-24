@@ -10,6 +10,7 @@ const { C, L, F, P } = load();
 const D = data(), TQ = D.tq, ENV = envOf(D, F);
 const { ok, done } = tester('v25');
 const rd = p => readFileSync(join(root, p), 'utf8');
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const clone = o => JSON.parse(JSON.stringify(o));
 const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
 const app = rd('src/app.js'), css = rd('src/style.css'), logicSrc = rd('src/logic.js'), contentSrc = rd('src/content.js');
@@ -18,12 +19,12 @@ const GX = TQ.uses['gx-2'].qs;
 const pdfText = r => P.model(r, env).blocks.map(b => [b.t, b.sub, b.check, b.answer].filter(Boolean).join(' ')).join('\n');
 
 // ---------- rules v2.5 and the JUDGEMENT constants (O1 to O4) ----------
-ok(L.RULES === 'v2.5 (24 Nov 2026)', 'rules version v2.5: ' + L.RULES);
+ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version v2.6 (was v2.5): ' + L.RULES);
 ok(L.POINTS.y === 2 && L.POINTS.pl === 1 && L.POINTS.n === 0, 'O1: points unchanged (Yes 2, Planned 1, No 0; Don\'t know yet 0)');
 const J = L.JUDGEMENT || {};
 ok(J.ALMOST_MIN_MUST_YES === 50 && J.READY_MIN_TAIL_YES === 50, 'O1 (c): the two caps are named constants in JUDGEMENT (50% each)');
 ok(J.NOT_SURE_HOLDS_TOP === true, 'O2 (b): NOT_SURE_HOLDS_TOP');
-ok(J.Q4_NO_HOLDS_TOP === false, 'O3 (b): Q4_NO_HOLDS_TOP is false');
+ok(!('Q4_NO_HOLDS_TOP' in J), 'O3 (b) is replaced by the owner\'s v2.6 decision: Q4_NO_HOLDS_TOP is gone, a No on the new question 4 holds');
 ok(J.NONE_BEST_ALMOST === true, 'O4 (b): NONE_BEST_ALMOST');
 ok(J.UNKNOWN_SCORES_ZERO === true && J.LEGAL_HOLDS_TOP === true && J.CARRIED_NO_HOLDS_TOP === true, 'the v2.1 switches stay');
 
@@ -38,7 +39,7 @@ const PAT = {
   F: [mk('gx-2', { T: 'k' }), 'almost', 55, [], /^$/],
   G: [mk('none', {}), 'almost', 100, ['none'], /^Held back: no use case chosen\.$/],
   H: [mk('gx-2', { A1: { m4: 'n' } }), 'notready', 94, [], /^Because 1 must-have is No\.$/],
-  I: [mk('gx-2', { Q: { q4: 'n' } }), 'ready', 100, [], /^$/],
+  I: [mk('gx-2', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/], // v2.6: was ready with the assistant-only condition
   legal: [mk('hr-2', {}), 'almost', 100, ['legal'], /^Held back: legal items to check\.$/]
 };
 const heads = {};
@@ -68,14 +69,13 @@ const mG = L.resultModel(PAT.G[0], env);
 ok(mG.levelLine === 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.' && /^Settle this first:/.test(mG.first[0]?.text), 'O4: G line and first item');
 // O3: Q4 No is a condition, not a hold
 const mI = L.resultModel(PAT.I[0], env);
-ok(mI.assist === 'Use it as an assistant only: a person checks every result before it counts.' && mI.level === 'ready', 'O3: I shows the assistant-only condition beside the top verdict');
-ok(!L.resultModel(PAT.C[0], env).assist, 'O3: no condition line without a Q4 No');
+ok(!('assist' in mI) && mI.level === 'almost' && /“Some mistakes are acceptable”/.test(mI.reason), 'v2.6 (replaces O3): I is held back by the No on question 4, and the reason names it');
 // O5: the box line only for Not ready yet and held verdicts
-ok(['C', 'F', 'I'].every(k => !L.resultModel(PAT[k][0], env).boxLine), 'O5: no box line for Ready and an unheld Almost ready');
+ok(['C', 'F'].every(k => !L.resultModel(PAT[k][0], env).boxLine), 'O5: no box line for Ready and an unheld Almost ready');
 ok(C.LEVELS.ready.name === 'Ready to start a pilot', 'O5: the top verdict keeps its name');
 // method lists the team judgement (O1 to O4)
 const meth = L.method(L.evaluate(PAT.C[0], TQ)).join('\n');
-ok(/at least half the must-haves at Yes/.test(meth) && /at least half the questions for this use case that you answered at Yes/.test(meth) && /“Not sure” in step 2 holds the top verdict back/.test(meth) && /“None of these fits”/.test(meth) && /question 4/.test(meth), 'method names the v2.5 team judgement');
+ok(/at least half the must-haves at Yes/.test(meth) && /at least half the questions for this use case that you answered at Yes/.test(meth) && /“Not sure” in step 2 holds the top verdict back/.test(meth) && /“None of these fits”/.test(meth) && /question 2, 3, 4 or 5/.test(meth), 'method names the v2.5 (and v2.6) team judgement');
 ok(/v2\.5/.test(meth), 'method names rules v2.5');
 
 // ---------- BUILD NOW 5 / O6: tailored tasks read as the team-worded question ----------
@@ -94,8 +94,8 @@ ok(!/Agree in writing: hand-off rules|Train or brief the people involved/.test(p
 ok(!/toLowerCase\(\)\.replace\(\/\^the \//.test(app) && /function copyLabel/.test(app), 'BUILD NOW 6: the copy buttons use the role\'s display name');
 
 // ---------- BUILD NOW 7: step 3 consistency lines ----------
-ok(C.CONSIST && C.CONSIST.m3 === 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.' && C.CONSIST.m7 === 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.', 'BUILD NOW 7: copy');
-ok(L.consistLines && L.consistLines({ Q: { q5: 'n', q3: 'u' }, A: { m3: 'y', m7: 'y' } }).m3 && L.consistLines({ Q: { q5: 'n', q3: 'u' }, A: { m3: 'y', m7: 'y' } }).m7, 'BUILD NOW 7: both lines when they apply');
+ok(C.CONSIST && C.CONSIST.m3 === 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.' && !C.CONSIST.m7, 'BUILD NOW 7: copy (v2.6: the must-have 7 line is gone, question 3 now asks about past examples)');
+ok(L.consistLines && L.consistLines({ Q: { q5: 'n', q3: 'u' }, A: { m3: 'y', m7: 'y' } }).m3 && !L.consistLines({ Q: { q5: 'n', q3: 'u' }, A: { m3: 'y', m7: 'y' } }).m7, 'BUILD NOW 7: the must-have 3 line when it applies (v2.6: no must-have 7 line)');
 ok(L.consistLines && !L.consistLines({ Q: { q5: 'y', q3: 'y' }, A: { m3: 'y', m7: 'y' } }).m3 && !L.consistLines({ Q: { q5: 'n' }, A: { m3: 'pl' } }).m3, 'BUILD NOW 7: none otherwise');
 ok(/id="consist-' \+/.test(app) || /consist-/.test(app), 'BUILD NOW 7: drawn under must-haves 3 and 7');
 
@@ -165,7 +165,7 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   const FX = JSON.parse(rd('tests/fixtures/v2.4-saved.json'));
   const info = {}, st = F.migrate(clone(FX.store), ENV, info), c1 = st && st.checks[FX.seen.check1.id], c2 = st && st.checks[FX.seen.check2.id];
   ok(st && c1 && c2 && !info.newer && !info.questionsChanged && !info.useChanged, 'v2.4 store opens with both checks and no notice');
-  ok(c1.step === 'result' && c2.step === 'result' && c1.sharedAt && c1.sharedMode === 'local', 'v2.4 store: both on their result; check 1 still knows its copy');
+  ok(c1.step === 'q' && c2.step === 'q' && c1.sharedAt && c1.sharedMode === 'local' && eq(c1.Qnew, ['q3', 'q4']), 'v2.4 store: both wait on step 2 (v2.6: questions 3 and 4 are new; was: on their result); check 1 still knows its copy');
   const m1 = L.resultModel(c1, env), m2 = L.resultModel(c2, env);
   ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 69, 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready, 69%');
   ok(FX.seen.check2.levelName === 'Ready to start a pilot' && m2.level === 'almost' && m2.held.join() === 'none', 'v2.4 check 2 (None of these fits) was Ready, is Almost ready under rules v2.5 (O4)');
@@ -174,8 +174,8 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   const sn = L.since(withNew.snaps);
   ok(sn && sn.compared === false && /worked out with earlier rules/.test(sn.lines.join(' ')), 'v2.4 result is shown as worked out with earlier rules: ' + (sn && sn.lines[0]));
   const fr = F.cleanRec(FX.file.check, ENV, {}, { file: true });
-  ok(fr && fr.step === 'result' && fr.use === 'gx-2' && fr.sharedAt === null && FX.file.rules === 'v2.3 (24 Nov 2026)', 'v2.4 file opens on its result, unshared');
+  ok(fr && fr.step === 'q' && fr.use === 'gx-2' && fr.sharedAt === null && FX.file.rules === 'v2.3 (24 Nov 2026)', 'v2.4 file opens on step 2 (v2.6: was its result), unshared');
 }
 
-console.log('Headlines (rules v2.5):'); Object.entries(heads).forEach(([k, h]) => console.log('  ' + k + ': ' + h));
+console.log('Headlines (rules v2.6):'); Object.entries(heads).forEach(([k, h]) => console.log('  ' + k + ': ' + h));
 done();

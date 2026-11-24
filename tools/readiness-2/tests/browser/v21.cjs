@@ -1,5 +1,6 @@
 // Browser proof for "Do you need AI?" v2.1 (24 Nov 2026): one block per High / Medium fault of the clean-up audit, the Low
 // ones that need a browser, and each item of the council's BUILD NOW list; at 1280 and 390 px, standalone and inside the hub.
+// v2.6: question 1 is turned round (Yes stops), so the walks answer it No to go on and Yes to reach the stop screen.
 // Serve tools/ first:  python3 -m http.server 8817 --bind 127.0.0.1   (R2_BASE sets another address)
 // Screenshots go to R2_SHOTS (default ./shots). Run:  node tools/readiness-2/tests/browser/v21.cjs
 const { chromium } = require('playwright');
@@ -39,7 +40,7 @@ async function fill(f, plan) {
     const R = window.Readiness2, s = (e, a) => R.send(e, a);
     if (R.state().step === 'start') s('begin');
     if (R.state().step === 'hotel') { s('hotel', { k: 'type', v: 'independent' }); s('hotel', { k: 'name', v: plan.name || 'Hotel Alpenblick' }); s('hotel', { k: 'role', v: 'gm' }); s('hotel', { k: 'country', v: 'France' }); s('next'); }
-    ['q1', 'q2', 'q3', 'q4', 'q5'].forEach((q, i) => s('answer', { id: q, value: (plan.Q && plan.Q[i]) || 'y' })); s('next');
+    ['q1', 'q2', 'q3', 'q4', 'q5'].forEach((q, i) => s('answer', { id: q, value: (plan.Q && plan.Q[i]) || (q === 'q1' ? 'n' : 'y') })); s('next');
     if (R.state().step !== 'must') return R.state().step;
     ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10'].forEach((m, i) => s('answer', { id: m, value: (plan.must && plan.must[i]) || 'y' }));
     if (plan.stopAt === 'must') return 'must';
@@ -122,7 +123,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       ok((await p.getAttribute('#cover-range', 'data-min')) === '6' && (await p.getAttribute('#cover-range', 'data-max')) === '9' && /^Six to nine questions/.test(await text(p, '#cover-range')), wtag + ': L13: the cover\'s range is the data\'s (six to nine)');
       ok(await p.evaluate(() => { const D = JSON.parse(document.getElementById('r2-data').textContent), n = Object.values(D.tq.uses).map(u => u.qs.length); return Math.min(...n) === 6 && Math.max(...n) === 9; }), wtag + ': L13: min and max in the page data');
       ok(!/every AI project/.test(await text(p, '#view')), wtag + ': item 5: the cover no longer says "every AI project needs"');
-      await fill(p, { use: 'gx-2', Q: ['y', 'y', 'n', 'y', 'y'], stopAt: 'must' });
+      await fill(p, { use: 'gx-2', Q: ['n', 'y', 'n', 'y', 'y'], stopAt: 'must' });
       ok((await text(p, '#must-intro')).startsWith('Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the 90 use cases in the team’s analysis need it.'), wtag + ': item 5: step 3 intro');
       await p.click('details[data-fold="src-must"] > summary');
       ok(/The analysis covers 90 of the catalogue’s 99 use cases: 8 were added to the catalogue later \(their questions are drafts\), and “AI use policies and governance” is a document, not a tool/.test(await text(p, '.sources')) && /the team’s earlier readiness check/.test(await text(p, '.sources')), wtag + ': L13 + L8: the sources note says why 90 is not 99');
@@ -140,8 +141,8 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       // B6: the No on question 3 holds the top verdict
       await p.evaluate(() => { const R = window.Readiness2; R.state().tailored.forEach(t => R.send('answer', { id: t, value: 'y' })); R.send('next'); });
       let s = await state(p);
-      ok(s.step === 'result' && s.level === 'almost' && s.held.join() === 'carried' && (await text(p, '#reason')) === 'Because you answered No in step 2 to “Information ready” (Fix the data first). The top verdict is held back until that is settled.', wtag + ': B6: a No carried from step 2 blocks the top verdict, with the reason shown');
-      ok((await text(p, '#ai-head')) === 'Fix the data first.' && (await text(p, '#level-name')) === 'Almost ready', wtag + ': B6: "Fix the data first." no longer stands beside "Ready to start a pilot"');
+      ok(s.step === 'result' && s.level === 'almost' && s.held.join() === 'carried' && (await text(p, '#reason')) === 'Because you answered No in step 2 to “Information to learn from” (Too few examples to learn from). The top verdict is held back until that is settled.' /* v2.6: new question 3 */, wtag + ': B6: a No carried from step 2 blocks the top verdict, with the reason shown');
+      ok((await text(p, '#ai-head')) === 'Too few examples to learn from.' && (await text(p, '#level-name')) === 'Almost ready', wtag + ': B6: "Too few examples to learn from." (v2.6; was "Fix the data first.") no longer stands beside "Ready to start a pilot"');
       // print: the folds open for printing and close again
       await p.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
       ok(await p.evaluate(() => [...document.querySelectorAll('#view details.fold')].every(d => d.open) && document.querySelectorAll('#view details.fold').length >= 4), wtag + ': print: every fold of the result is open while printing');
@@ -165,13 +166,13 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       // change answers from the start → Q1 No → stop
       await f.click('#edit'); s = await state(f); ok(s.step === 'q' && await f.isVisible('#shared-line') && await f.isVisible('#unshare'), tag + ' H1: on step 2 the shared line and its withdraw button are there');
       await check(f, tag + ' H1 step 2');
-      await f.click('label[for="a-q1-n"]'); await f.click('#next'); s = await state(f);
+      await f.click('label[for="a-q1-y"]'); await f.click('#next'); s = await state(f);
       ok(s.step === 'stop' && /The team still has your earlier result \(shared \d+ \w+ \d{4}\)\. Withdraw it, or change your answers and send an updated copy from the result\./.test(await text(f, '#shared-line')) && await f.isVisible('#unshare'), tag + ' H1: the stop screen says the team still has the earlier result and offers to withdraw it');
       await check(f, tag + ' H1 stop'); if (w === 1280 && where === 'alone') await shot(p, 'v21-stop-shared');
       await f.click('#unshare'); await f.waitForFunction(() => !window.Readiness2.state().sharedAt);
       ok((await teamIds(f)).length === 0 && !(await f.$('#shared-line')) && /Shared copy withdrawn/.test(await text(f, '#toast')), tag + ' H1: withdrawn from the stop screen: the team store is empty, sharedAt is null');
       // from every other step
-      await f.click('#change'); await f.click('label[for="a-q1-y"]'); await f.evaluate(() => { const R = window.Readiness2; R.send('next'); R.send('next'); R.send('next'); R.send('next'); }); await share(f);
+      await f.click('#change'); await f.click('label[for="a-q1-n"]'); await f.evaluate(() => { const R = window.Readiness2; R.send('next'); R.send('next'); R.send('next'); R.send('next'); }); await share(f);
       for (const n of ['tailored', 'where', 'must', 'hotel']) {
         await backTo(f, n);
         ok((await state(f)).step === n && await f.isVisible('#unshare'), tag + ' H1: withdraw button on step "' + n + '"');
@@ -225,7 +226,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       s = await state(p); const since = await text(p, '#since');
       ok(s.use === 'rm-1' && s.snaps === 3 && /Since last time/.test(since) && /Score: 100% → 96%\./.test(since) && !/55|rm-2/.test(since), wtag + ' M1: back on rm-1 with one answer changed: the two rm-1 results are compared: ' + (since || '').replace(/\s+/g, ' ').slice(0, 120));
       await share(p); const doc = await p.evaluate(k => Object.values(JSON.parse(localStorage.getItem(k)))[0], TEAM);
-      ok(doc.snaps.length === 2 && doc.snaps.every(x => x.rules === 'v2.5 (24 Nov 2026)') && doc.kind === 'dyn' && doc.v === 2 && doc.rules === 'v2.5 (24 Nov 2026)' && /^Because /.test(doc.reason), wtag + ' M1: only the rm-1 history goes to the team; the copy keeps its shape (kind dyn, v 2)');
+      ok(doc.snaps.length === 2 && doc.snaps.every(x => x.rules === 'v2.6 (24 Nov 2026)') && doc.kind === 'dyn' && doc.v === 2 && doc.qv === 2 && doc.rules === 'v2.6 (24 Nov 2026)' && /^Because /.test(doc.reason), wtag + ' M1: only the rm-1 history goes to the team; the copy keeps its shape (kind dyn, v 2; v2.6 adds qv 2)');
       await ctx.close();
     }
     {
@@ -240,6 +241,9 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       await p.click('#change'); await backTo(p, 'start');
       await p.click('.mycheck[data-check="' + rm1 + '"] [data-act="open"]');
       s = await state(p);
+      // v2.6: step 2 was saved in the old meaning: it opens on step 2 with questions 3 and 4 to answer again (Q1 turned round)
+      ok(s.step === 'q' && s.Q.q1 && !s.Q.q3 && await p.isVisible('#q-changed') && await p.isVisible('#qnew-q3') && await p.isVisible('#qnew-q4'), wtag + ' v2.0 check (v2.6): opens on step 2, questions 3 and 4 to answer again');
+      await p.click('label[for="a-q3-y"]'); await p.click('label[for="a-q4-y"]'); ok(!(await p.$('#qnew-q3')) && !(await p.$('#q-changed')), wtag + ' v2.6: the lines go once answered'); await p.click('#next'); s = await state(p);
       // v2.3 (owner): its m5 "Partly", sk1 "Partly" and te1 "Doesn't apply" are no longer offered: it opens on step 3, the old answers kept as they were
       ok(s.step === 'must' && s.use === 'rm-1' && s.A.m8 === 'n' && s.A.m5 === 'p' && s.By.m3 === '2027-03-01' && s.T.te1 === 'na' && s.T.sk1 === 'p' && s.sharedAt, wtag + ' v2.0 check (v2.3): opens on step 3 with its answers (old ones kept), date and share state');
       ok((await text(p, '#old-m5')) === 'Your earlier answer was Partly; this answer is no longer offered, please choose again.' && (await p.getAttribute('#old-m5', 'data-old')) === 'p' && (await p.$$('#f-m5 input:checked')).length === 0 && (await p.$$eval('#f-m5 .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|No|Don’t know yet', wtag + ' v2.3: the old Partly shows as unanswered, with the line, and only the four answers');
@@ -258,12 +262,13 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       ok(await p.isVisible('#unshare') && /out of date/.test(await text(p, '#share summary')), wtag + ' v2.0 share: still shared, can be withdrawn; out of date once answers changed (v2.3)');
       await check(p, wtag + ' v2.0 result'); if (w === 1280) await shot(p, 'v21-from-v2.0');
       // the stopped and the unfinished checks of the fixture
-      await p.click('.mycheck[data-check="' + mustId + '"] [data-act="open"]'); s = await state(p); ok(s.step === 'must' && s.A.m2 === 'p' && s.Q.q2 === 'n' && (await p.$$('.oldans')).length === 5, wtag + ' v2.0 unfinished check: back on step 3 with its answers; its five old Partly answers each carry the line (v2.3)');
+      await p.click('.mycheck[data-check="' + mustId + '"] [data-act="open"]'); s = await state(p); ok(s.step === 'q' && s.A.m2 === 'p' && s.Q.q2 === 'n', wtag + ' v2.0 unfinished check (v2.6): back on step 2 first (questions 3 and 4 are new), its answers kept');
+      await p.click('label[for="a-q3-y"]'); await p.click('label[for="a-q4-y"]'); await p.click('#next'); s = await state(p); ok(s.step === 'must' && (await p.$$('.oldans')).length === 5, wtag + ' v2.0 unfinished check: then step 3; its five old Partly answers each carry the line (v2.3)');
       // the v2.0 file opens in a fresh browser as "not shared" (L11)
       const o = await mk(b, w, touch); await o.p.goto(TOOL);
-      await o.p.setInputFiles('#file-open', path.join(FIX, 'v2.0-file.json')); await o.p.waitForFunction(() => window.Readiness2.state().step === 'must'); // v2.3: its old m5 Partly
-      s = await state(o.p); ok(s.use === 'rm-1' && !s.sharedAt && s.share === 'idle' && !/shared \d/.test(await text(o.p, '#share summary')) && s.By.m3 === '2027-03-01' && s.A.m5 === 'p' && !!(await o.p.$('#old-m5')), wtag + ' L11 / v2.0 file: opens with every answer and reads "not shared" in a browser that never shared');
-      const fd = await o.p.evaluate(() => window.Readiness2.fileDoc()); ok(fd.check.sharedAt === null && fd.check.sharedSig === null && fd.kind === 'hftp-do-you-need-ai' && fd.v === 2 && fd.rules === 'v2.5 (24 Nov 2026)', wtag + ' L11: a file saved now carries no share fields');
+      await o.p.setInputFiles('#file-open', path.join(FIX, 'v2.0-file.json')); await o.p.waitForFunction(() => window.Readiness2.state().step === 'q'); // v2.6: step 2 first (questions 3 and 4 are new); v2.3: its old m5 Partly
+      s = await state(o.p); ok(s.use === 'rm-1' && !s.sharedAt && s.share === 'idle' && !/shared \d/.test(await text(o.p, '#share summary')) && s.By.m3 === '2027-03-01' && s.A.m5 === 'p' && s.step === 'q' && !!(await o.p.$('#qnew-q3')), wtag + ' L11 / v2.0 file: opens with every answer and reads "not shared" in a browser that never shared (v2.6: on step 2, the old m5 Partly still kept for step 3)');
+      const fd = await o.p.evaluate(() => window.Readiness2.fileDoc()); ok(fd.check.sharedAt === null && fd.check.sharedSig === null && fd.kind === 'hftp-do-you-need-ai' && fd.v === 3 && fd.check.qv === 2 && fd.rules === 'v2.6 (24 Nov 2026)', wtag + ' L11: a file saved now carries no share fields');
       // the team page: the v2.0 copy is listed and marked, and a copy with an unknown use case is listed too (M7)
       await p.evaluate(k => { const o2 = JSON.parse(localStorage.getItem(k)), a = Object.values(o2)[0]; o2.gone1 = Object.assign({}, a, { useId: 'zz-9', useName: 'A use case that was removed', sharedAt: '2026-11-24T08:00:00.000Z' }); localStorage.setItem(k, JSON.stringify(o2)); }, TEAM);
       const t = await mk(b, w, touch, { ctx }); await t.p.goto(BASE + 'readiness-check/team.html'); await t.p.waitForFunction(() => window.ReadinessTeam && window.ReadinessTeam.state().phase !== 'loading');
@@ -271,10 +276,10 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       ok(ts.count === 2 && ts.old === 0 && /2 shared .*· 1 whose use case is no longer in the catalogue/.test(tv) && !/old v2 format/.test(tv), wtag + ' M7b: a copy with an unknown use id is listed and counted as "no longer in the catalogue", not as "old v2 format"');
       ok(/A use case that was removed \(no longer in the catalogue\)/.test(tv) && (await t.p.$$('.sub-row[data-gone="1"]')).length === 1, wtag + ' M7b: its row says so, with the level the hotel saw');
       const card = (await t.p.textContent('#flowcard')).replace(/\s+/g, ' ');
-      ok(/Do you need AI\? \(rules v2\.5 \(24 Nov 2026\)\)/.test(card) && !/Partly|Doesn't apply/.test(card.slice(0, card.indexOf('Earlier Readiness check'))) && /shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”/.test(card) && /No score is shown under “Not enough information yet”/.test(card) && /Don't know yet 0 \(team judgement\)/.test(card), wtag + ' M7a: the rules card describes the new score honestly');
+      ok(/Do you need AI\? \(rules v2\.6 \(24 Nov 2026\)\)/.test(card) && !/Partly|Doesn't apply/.test(card.slice(0, card.indexOf('Earlier Readiness check'))) && /shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”/.test(card) && /No score is shown under “Not enough information yet”/.test(card) && /Don't know yet 0 \(team judgement\)/.test(card), wtag + ' M7a: the rules card describes the new score honestly');
       ok(/Earlier Readiness check \(rules v4/.test(card) && /No 0–100 score\./.test(card) && card.indexOf('Do you need AI? (rules') < card.indexOf('Earlier Readiness check (rules'), wtag + ' M7a: and the old checks, under their own heading ("No 0–100 score" now only there)');
       await t.p.click('.sub-row:not([data-gone])'); const dv = (await t.p.textContent('#view')).replace(/\s+/g, ' ');
-      ok(/made with rules v2 \(24 Nov 2026\) \(earlier rules\); recomputed here with rules v2\.5/.test(dv) && /Not answered \(earlier answer: Partly, no longer offered\)/.test(dv) && /Not answered \(earlier answer: Doesn’t apply, no longer offered\)/.test(dv) && /^Score: \d+%$/.test(await t.p.textContent('#dyn-score')) && /^Because 1 must-have is missing/.test(await t.p.textContent('#dyn-reason')) && /The hotel saw \(rules v2 \(24 Nov 2026\)\): Not ready yet, Score: \d+%\./.test(dv), wtag + ' M7: a v2.0 copy is recomputed with rules v2.1 and says what the hotel saw');
+      ok(/made with rules v2 \(24 Nov 2026\) \(earlier rules\); recomputed here with rules v2\.6/.test(dv) && /Not answered \(earlier answer: Partly, no longer offered\)/.test(dv) && /Not answered \(earlier answer: Doesn’t apply, no longer offered\)/.test(dv) && /^Score: \d+%$/.test(await t.p.textContent('#dyn-score')) && /^Because 1 must-have is missing/.test(await t.p.textContent('#dyn-reason')) && /The hotel saw \(rules v2 \(24 Nov 2026\)\): Not ready yet, Score: \d+%\./.test(dv), wtag + ' M7: a v2.0 copy is recomputed with rules v2.1 and says what the hotel saw');
       ok(/Research record entries behind this use case’s questions \(team only, not shown to hotels\): [A-Z]{3}-\d{3}-\d{2}/.test(dv) && /0 \/ 2 \(don’t know yet\)/.test(dv) && !/\d+% ready/.test(dv), wtag + ' item 8: the ids are on the Team tab only; "Don\'t know yet" shows as 0 / 2');
       await t.p.click('.sub-row[data-gone="1"]'); ok(/is no longer in the catalogue, so the copy cannot be recomputed\. What the hotel saw when it shared: Not ready yet, Score: \d+%/.test((await t.p.textContent('#gone')).replace(/\s+/g, ' ')) && await t.p.isVisible('#del'), wtag + ' M7b: its detail shows what the hotel saw and can be deleted');
       ok(await noH(t.p), wtag + ' team: no horizontal scroll'); if (w === 1280) await shot(t.p, 'v21-team');
@@ -314,19 +319,19 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       const { ctx, p } = await mk(b, w, touch); await p.goto('about:blank'); await p.goto(TOOL);
       // real clicks, so every step is a real history entry
       await p.click('#begin'); await p.selectOption('#h-type', 'independent'); await p.click('#next');
-      for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await p.click(`label[for="a-${q}-y"]`); await p.click('#next');
+      for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await p.click(`label[for="a-${q}-${q === 'q1' ? 'n' : 'y'}"]`); await p.click('#next');
       for (let i = 1; i <= 10; i++) await p.click(`label[for="a-m${i}-y"]`); await p.click('#next');
       await p.click('#cat-commercial'); await p.click('#dept-rm'); await p.click('label[for="u-rm-1"] .ucn'); await p.click('#next');
       for (const t of (await state(p)).tailored) await p.click(`label[for="a-${t}-y"]`); await p.click('#next');
       ok((await state(p)).step === 'result', wtag + ' M4: a finished check (seven history entries)');
       // L10: Change answers from the start → Q1 No → stop; Back shows q, then hotel, never stop again
-      await p.click('#edit'); await p.click('label[for="a-q1-n"]'); await p.click('#next'); ok((await state(p)).step === 'stop', wtag + ' L10: stop reached through "Change answers from the start"');
+      await p.click('#edit'); await p.click('label[for="a-q1-y"]'); await p.click('#next'); ok((await state(p)).step === 'stop', wtag + ' L10: stop reached through "Change answers from the start"');
       const seen = [];
       for (let i = 0; i < 3; i++) { await p.goBack(); await p.waitForTimeout(350); if (!/readiness-2/.test(p.url())) { seen.push('left'); break; } seen.push((await state(p)).step); }
       ok(seen.join() === 'q,hotel,start', wtag + ' L10: Back from stop shows q, hotel, the cover; never the stop screen again (was q, stop ×4, q): ' + seen.join(' → '));
       await p.goForward(); await p.waitForTimeout(250); await p.goForward(); await p.waitForTimeout(350);
       ok((await state(p)).step === 'q', wtag + ' L10: Forward comes back to the questions');
-      await p.click('label[for="a-q1-y"]'); await p.click('#next'); await p.evaluate(() => { const R = window.Readiness2; R.send('next'); R.send('next'); R.send('next'); });
+      await p.click('label[for="a-q1-n"]'); await p.click('#next'); await p.evaluate(() => { const R = window.Readiness2; R.send('next'); R.send('next'); R.send('next'); });
       ok((await state(p)).step === 'result', wtag + ' M4: back on the result');
       // M4: Start a new check, then one browser Back leaves the tool
       await p.click('#new-check'); ok((await state(p)).step === 'start', wtag + ' M4: Start a new check → cover');
@@ -343,7 +348,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       // inside the hub: Back returns to the previous hub tab
       const { ctx, p } = await mk(b, w, touch); const f = await openHubTool(p);
       await f.click('#begin'); await f.selectOption('#h-type', 'independent'); await f.click('#next');
-      for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await f.click(`label[for="a-${q}-y"]`); await f.click('#next');
+      for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await f.click(`label[for="a-${q}-${q === 'q1' ? 'n' : 'y'}"]`); await f.click('#next');
       ok((await state(f)).step === 'must', wtag + ' hub M4: three steps in');
       await f.click('#new-top'); ok((await state(f)).step === 'start', wtag + ' hub M4: Start a new check');
       await p.goBack(); await p.waitForTimeout(900);
@@ -406,7 +411,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       n = 0; await p.dblclick('#pdf'); await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); await p.waitForTimeout(400); ok(n === 1, wtag + ' L1: and the PDF still one: ' + n); p.off('download', onDl);
       // L7: one title
       ok(await p.evaluate(() => window.Readiness2.pdfModel().blocks[0].t) === 'Do you need AI? Result', wtag + ' L7: the result PDF is titled like the screen');
-      await p.click('#edit'); await p.click('label[for="a-q1-n"]'); await p.click('#next');
+      await p.click('#edit'); await p.click('label[for="a-q1-y"]'); await p.click('#next');
       const st = await p.evaluate(() => window.Readiness2.pdfModel().blocks[0].t); ok(st === 'Do you need AI? Not suitable for AI' && !/score/i.test(st), wtag + ' L7: the stop PDF has no "score" in its title: ' + st);
       // L8: a file from the earlier Readiness check
       const oldFile = path.join(OUT, wtag + '-old-readiness-check.json'); fs.writeFileSync(oldFile, JSON.stringify({ kind: 'hftp-readiness-check', v: 3, rules: 'v4', savedAt: '2026-11-20T10:00:00.000Z', check: { id: 'x1', useId: 'gx-2' } }));

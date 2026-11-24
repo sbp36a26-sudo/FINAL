@@ -11,15 +11,16 @@ const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // ---------- The five questions: all 3^5 = 243 combinations against an independent reading of the research ----------
 function oracle(q) {
-  if (q.q1 === 'n') return { key: 'stop', carried: [], find: [] };
-  const carried = ['q2', 'q3', 'q5', 'q4'].filter(k => q[k] === 'n');
+  // v2.6: Q1 Yes stops (fixed rules can do it); Q4 No is its own verdict ("exact"), ordered Q2 > Q3 > Q4 > Q5; no "assist"
+  if (q.q1 === 'y') return { key: 'stop', carried: [], find: [] };
+  const carried = ['q2', 'q3', 'q4', 'q5'].filter(k => q[k] === 'n');
   const find = ['q1', 'q2', 'q3', 'q4', 'q5'].filter(k => q[k] === 'u');
   let key;
   if (q.q2 === 'n') key = 'worth';
   else if (q.q3 === 'n') key = 'data';
+  else if (q.q4 === 'n') key = 'exact';
   else if (q.q5 === 'n') key = 'success';
   else if (find.length) key = 'find';
-  else if (q.q4 === 'n') key = 'assist';
   else key = 'go';
   return { key, carried, find };
 }
@@ -33,29 +34,29 @@ for (const a of VALS) for (const b of VALS) for (const c of VALS) for (const d o
   ok(eq(v.find.map(x => x.id), o.find), 'to find out ' + tag);
   ok(v.complete === true, 'complete ' + tag);
   ok(v.head === C.VERDICT[o.key], 'headline wording ' + tag);
-  if (a === 'n') { stops++; ok(v.stop && v.carried.length === 0 && v.find.length === 0, 'Q1 No stops ' + tag); }
-  else ok(!v.stop, 'only Q1 No stops ' + tag);
+  if (a === 'y') { stops++; ok(v.stop && v.carried.length === 0 && v.find.length === 0, 'Q1 Yes stops (v2.6) ' + tag); }
+  else ok(!v.stop, 'only Q1 Yes stops ' + tag);
   ok(v.second === (o.key === 'data' && q.q5 === 'n' ? 'Then define success.' : ''), 'second line only when Q3 and Q5 are No ' + tag);
   ok(v.q1Unsure === (a === 'u'), 'Q1 Not sure shows the other outcome ' + tag);
-  if (Object.values(q).includes('u')) ok(v.key !== 'go' && v.key !== 'assist', 'Not sure never counts as Yes ' + tag);
+  if (Object.values(q).includes('u')) ok(v.key !== 'go', 'Not sure never counts as Yes ' + tag);
 }
 ok(combos === 243 && stops === 81, 'all 243 combinations checked, 81 of them stop');
 
 // ---------- wording (owner, 24 Nov 2026) ----------
 ok(eq(C.QUESTIONS.map(q => q.q), [
-  'Is each case different enough that fixed “if this, then that” rules cannot handle it?',
+  'Can each case be fixed with an “if this, then that” rule?',
   'Is this task frequent or costly enough to be worth improving?',
-  'Is the information it needs digital and up to date?',
-  'Can mistakes be caught before they harm anyone?',
-  'Do you know which KPI should improve, and what it is today?']), 'the five questions, the team\'s plain wording (v2.2, data/wording.json); Q2 is the owner\'s own');
-ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information ready', 'Safety net', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
-C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= 15 && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
+  'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
+  'Is it acceptable if the result is right most of the time, but not every time?',
+  'Do you know which KPI should improve, and what it is today?']), 'the five questions (v2.6: Q1, Q3 and Q4 are the owner\'s new texts; Q2 is the owner\'s own; Q5 the team\'s plain wording)');
+ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information to learn from', 'Some mistakes are acceptable', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
+C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 16 }[q.id] || 15) && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');
 ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading');
 ok(C.HONEST === 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.', 'honesty line');
 ok(C.AS_OF === '24 Nov 2026', 'content date');
-const partial = L.verdict({ q1: 'y', q2: 'y' }); ok(partial.key === 'open' && !partial.complete, 'not all answered → open');
-ok(L.verdict({ q1: 'n' }).key === 'stop', 'Q1 No stops even when the rest is blank');
+const partial = L.verdict({ q1: 'n', q2: 'y' }); ok(partial.key === 'open' && !partial.complete, 'not all answered → open');
+ok(L.verdict({ q1: 'y' }).key === 'stop', 'Q1 Yes (v2.6) stops even when the rest is blank');
 
 // ---------- must-haves ----------
 ok(C.MUSTS.length === 10 && C.MUSTS.length <= 10, 'at most 10 must-haves');
@@ -100,9 +101,9 @@ function expect(rec) {
   mv.concat(tv).forEach(v => { total++; if (v === 'k' || !v) unk++; pts += P[v || 'k']; max += 2; });
   const allYes = mv.every(v => v === 'y'), anyNo = mv.some(v => v === 'n'), ratio = max ? pts / max : null;
   const lab = LABELS.find(u => u.id === rec.use), legal = !!(lab && lab.base === 'high') || !!(rec.use && rec.use !== 'none' && TQ.uses[rec.use].add.includes('sens'));
-  // v2.5: Q4 No no longer holds (O3); any Not sure holds (O2); "Almost ready" needs half the must-haves at Yes and the top verdict
+  // v2.6: a No on Q2 to Q5 holds (v2.5 left Q4 out, O3); any Not sure holds (O2); "Almost ready" needs half the must-haves at Yes and the top verdict
   // half the answered tailored questions at Yes (O1); "None of these fits" is "Almost ready" at best (O4)
-  const carriedNo = ['q2', 'q3', 'q5'].some(q => rec.Q[q] === 'n'), notSure = ['q1', 'q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'u');
+  const carriedNo = ['q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'n'), notSure = ['q1', 'q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'u');
   const mustYes = mv.filter(v => v === 'y').length, tKnown = tv.filter(v => v === 'y' || v === 'pl' || v === 'n'), tailFew = tKnown.filter(v => v === 'y').length * 2 < tKnown.length;
   let level;
   if (unk / total > 0.5) level = 'noinfo';

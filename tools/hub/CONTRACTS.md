@@ -115,17 +115,27 @@ Ids are cleaned to `[A-Za-z0-9_-]`. `data` must be a plain object.
 | `timeout` | the hub had no answer from the db within 7 s |
 | other | passed through from the db |
 
-### link (no reply), 24 Nov 2026
+### detail / detail-closed / detail-close, v2.6 (24 Nov 2026)
 
 ```
-frame → hub   { hub: 'link', url: string }
+frame → hub   { hub: 'detail', id: string, data: { title, kicker, catName, draft, draftText, does, how, level, task, foot: string, srcs: [{ type: 'c'|'h'|'r'|'l', name, note, url }] } }
+hub → frame   { hub: 'detail-closed', id, focus: boolean }        (the layer was closed: Close, Esc, backdrop → focus true; another hub tab → focus false)
+frame → hub   { hub: 'detail-close' }                              (no reply: the frame's own state dropped the layer, e.g. its step changed)
 ```
 
-Why: the hub's tools run in a frame the hub creates inside the claude.ai artifact sandbox, where a `target="_blank"` link in that nested frame does not open (the artifact viewer opens external links only from the top page). So the frame asks the hub to open it. The hub then shows a small panel on the top page (`#hub-link`) with the address, a real "Open the source" link the person clicks, "Copy address" and "Close" (24 Nov 2026: a script-made click from the hub was ignored by the viewer too).
+Why: the owner tested in the claude.ai viewer (24 Nov 2026): a link on the hub's main page opens; a link inside any tool frame never opens, with or without `target="_blank"`. So "Do you need AI?"'s "Details and sources" layer is drawn by the hub on the main page, over exactly the frame's area (below the bar, the frame's size), in the tool's own look (its colour tokens and fonts, a drawer on a desktop, a full sheet at 640 px and below). Each source's **name is a real hyperlink** (`<a href target="_blank" rel="noopener noreferrer">`), one click opens it; under it the address, selectable, with "Copy address".
 
-Frame side (readiness-2 "Do you need AI?" detail layer, use-case-catalogue, register): only after the hub has answered the frame's `ping` (readiness-2 `host.pong`, register `host.hub`, the catalogue's own ping since 24 Nov 2026), a click (capture phase) on an `<a href>` that resolves to an http(s) URL of another origin is cancelled and sent as `{ hub: 'link', url: <absolute href> }`. Same-origin links and `download` links are left alone. Outside the hub (no pong) links stay ordinary links. The AI Act guide has no external links and sends nothing.
+Frame side (readiness-2 only): once the hub has answered its `ping` (`host.pong`), "Details and sources" / "More detail" sends `detail` with the layer's content as plain JSON (`detailData(id)` in `src/app.js`, the same object its own dialog is drawn from) and keeps `ui.layer = { use, from, step, check, hub: true }` (`#app[data-layer-host="hub"]`). On `detail-closed` it clears `ui.layer` and, if `focus`, puts focus back on the button that opened it. If its own state drops the layer (step or check changed), it sends `detail-close`. Outside the hub (no pong) it draws its own `<dialog id="detail">` with the same content and plain hyperlinks (those open standalone).
 
-Hub side: read only from the hub's own frames (same check as every message). `hubLinkUrl(url)` (pure, in the machine block, tested in `hub/tests/hub.test.mjs`) accepts a string of at most 2048 characters (`HUB_LINK_MAX`), absolute `http:` or `https:`, without spaces, control characters, user name or password, and returns the normalised URL; anything else is ignored silently (no reply). The hub then creates a real `<a href target="_blank" rel="noopener noreferrer">` in the top document and calls `.click()` inside the message handler (the person's click in the frame still counts as a user action), removes it, and falls back to `window.open(url, '_blank', 'noopener')` if the click throws. `HFTPHub.state().links` counts the links opened (for tests). Locally a popup opens; the real claude.ai sandbox can only be checked there.
+Hub side: read only from the hub's own frames, and only from the frame of the tab on screen. `hubDetail(id, data)` (pure, in the machine block, tested in `hub/tests/hub.test.mjs`) is the only check: `id` matches `[A-Za-z0-9_-]{1,40}`; `data` is a plain object with exactly the eleven keys; each text a string within its limit (`HUB_DETAIL`: title 200, not empty; kicker 200; catName 300; draft 200; draftText 400; does and how 1500; level 300; task 2000; foot 300); at most 60 sources, each a plain object with exactly `type`, `name` (1 to 400), `note` (up to 1000), `url` (`''` or an absolute `http:`/`https:` URL of at most 2048 characters, no spaces or control characters, no user name or password). Anything else is ignored silently. The layer is built with `createElement` and `textContent` only (never `innerHTML` from a message), opened with `showModal()` as `#hub-detail`; Esc, Close and a click on the dimmed area close it; switching hub tab closes it. `HFTPHub.state().detail` is `{ tool, id }` while it is open.
+
+The AI Register and the Use-Case Catalogue keep plain hyperlinks (no interception): their links sit in many places (the catalogue's lists, popups and source table; the register's legal entries), so moving them to the main page is not a small change. Inside the hub frame those links may not open in the claude.ai viewer; this is open (owner).
+
+**Removed (v2.6):** the `{ hub: 'link', url }` message, `hubLinkUrl`, `HUB_LINK_MAX` and the hub's bottom link panel (`#hub-link`), with the click interception in readiness-2, the register and the catalogue: nothing sends it any more.
+
+### Frame addresses and cache-busting, v2.6 (24 Nov 2026)
+
+`build-hub.mjs` writes `HUB_VER = { <tool>: <first 10 hex of the SHA-256 of its page> }` into the hub (pages: `use-case-catalogue/index.html`, `readiness-2/index.html`, `ai-act-guide/index.html`, `register/index.html`, `readiness-check/team.html` for `team`). `hubSrc(tool, SRC, HUB_VER)` (machine block) gives `<page>?v=<hash>`; `open` messages append `#<hash>` after it (`readiness-2/index.html?v=…#use=gx-2`). Rebuild each tool first, then the hub; `hub/tests/hub.test.mjs` checks that the built `tools/index.html` carries the current hash of every page.
 
 ### open (no reply)
 
@@ -133,7 +143,7 @@ Hub side: read only from the hub's own frames (same check as every message). `hu
 frame → hub   { hub: 'open', tool: 'readiness-check' | 'register' | 'ai-act-guide' | 'readiness-2' | 'use-case-catalogue', hash?: string }
 ```
 
-The hub keeps only `[A-Za-z0-9_=&%.-]` of `hash`, loads `<tool>/index.html#<hash>` in that tool's frame (creating it if needed, otherwise `location.replace` so the frame adds no history entry), and sends `select(tool)`. Other tools are ignored. Callers send `open` only when they are in a frame.
+The hub keeps only `[A-Za-z0-9_=&%.-]` of `hash`, loads `<tool>/index.html?v=<hash of the page>#<hash>` in that tool's frame (creating it if needed, otherwise `location.replace` so the frame adds no history entry), and sends `select(tool)`. Other tools are ignored. Callers send `open` only when they are in a frame.
 
 `readiness-2` and `use-case-catalogue` are openable since 23 Nov 2026. **24 Nov 2026:** `readiness-check` stays an accepted `tool` value, but the hub resolves it to `readiness-2` and keeps the hash, so `{ hub: 'open', tool: 'readiness-check', hash: 'use=<use id>' }` (still sent by the AI Register's "Check whether the hotel is ready for this tool (Do you need AI?)" link) opens "Do you need AI?" with that use case preselected. "Do you need AI?" itself sends `{ hub: 'open', tool: 'register', hash: 'add=<use id>&name=<name>' }` ("Add to the AI Register"). (Its `{ hub: 'open', tool: 'use-case-catalogue', hash: '<dept id>' }` message for "Sources in the Use-Case Catalogue" was removed on 24 Nov 2026, v2.4: catalogue detail opens in its own detail layer. The hub's `open` bridge itself is unchanged for other tools.) It sends them only after the hub has answered its `ping`; until then, and outside the hub, the same controls are plain links.
 

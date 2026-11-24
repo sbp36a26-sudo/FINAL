@@ -27,11 +27,11 @@ export function tester(name) {
   const done = () => { console.log(name + ': ' + pass + ' passed, ' + fail + ' failed'); if (fail) process.exit(1); };
   return { ok, done };
 }
-/* A finished check: five answers, every must-have and every tailored question answered. o overrides. */
+/* A finished check (v2.6 meaning: every answer points towards AI): five answers, every must-have and every tailored question answered. o overrides. */
 export function finished(F, D, use, o) {
   const r = F.blank('t' + String(use).replace(/\W/g, '') + 'x');
   r.hotel = { name: 'Hotel Test', role: 'gm', type: 'independent', country: 'France' };
-  r.Q = { q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' };
+  r.Q = { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }; // v2.6: question 1 No (each case needs judgement) is the answer that goes on
   F.MUST_IDS.forEach(id => { r.A[id] = 'y'; });
   if (use && use !== 'none') { const d = D.cat.depts.find(x => x.uses.some(u => u.id === use)); r.cat = d.cat; r.dept = d.id; r.use = use; r.useName = d.uses.find(u => u.id === use).n; D.tq.uses[use].qs.forEach(q => { r.T[q.id] = 'y'; }); }
   else if (use === 'none') r.use = 'none';

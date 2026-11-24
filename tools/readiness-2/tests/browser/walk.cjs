@@ -62,8 +62,8 @@ async function walk(p, f, tag, plan, shots) {
   await check(f, tag + ' hotel'); await S('1-hotel');
   await click(f, '#next');
   ok((await f.getAttribute('#app', 'data-state')) === 'q', tag + ': step 2');
-  ok((await f.textContent('#crisp')) === 'C-R-I-S-P' && /Complex judgement · Return · Information ready · Safety net · Proof/.test((await f.textContent('.crisp-key')).replace(/\s+/g, ' ')), tag + ': C-R-I-S-P header and key');
-  ok((await f.$$eval('.qa .qtext', e => e.map(x => x.textContent))).join('|') === ['Is each case different enough that fixed “if this, then that” rules cannot handle it?', 'Is this task frequent or costly enough to be worth improving?', 'Is the information it needs digital and up to date?', 'Can mistakes be caught before they harm anyone?', 'Do you know which KPI should improve, and what it is today?'].join('|'), tag + ': the five questions as worded');
+  ok((await f.textContent('#crisp')) === 'C-R-I-S-P' && /Complex judgement · Return · Information to learn from · Some mistakes are acceptable · Proof/.test((await f.textContent('.crisp-key')).replace(/\s+/g, ' ')), tag + ': C-R-I-S-P header and key');
+  ok((await f.$$eval('.qa .qtext', e => e.map(x => x.textContent))).join('|') === ['Can each case be fixed with an “if this, then that” rule?', 'Is this task frequent or costly enough to be worth improving?', 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?', 'Is it acceptable if the result is right most of the time, but not every time?', 'Do you know which KPI should improve, and what it is today?'].join('|'), tag + ': the five questions as worded');
   ok((await f.$$('details[data-fold^="why-"]')).length === 5 && (await f.$$('details[data-fold^="why-"][open]')).length === 0, tag + ': five "Why this matters" folds, closed: only the question shows');
   await click(f, 'details[data-fold="why-q1"] > summary');
   ok(await f.isVisible('#whyshort-q1') && await f.isVisible('#yes-q1') && await f.isVisible('#no-q1') && await f.isVisible('#guard-q1') && (await f.textContent('#yes-q1 .yn-head')) === 'Answer Yes if' && (await f.textContent('#no-q1 .yn-head')) === 'Answer No if', tag + ': Why this matters: one-line reason, Yes and No boxes with examples, "Not sure?" on Q1');
@@ -154,13 +154,13 @@ async function walk(p, f, tag, plan, shots) {
 }
 
 const PLANS = {
-  chat: { use: 'gx-2', addon: 'x-auto', hotel: { type: 'independent', name: 'Hotel Alpenblick', role: 'gm', country: 'Austria' }, Q: ['y', 'y', 'y', 'n', 'u'],
+  chat: { use: 'gx-2', addon: 'x-auto', hotel: { type: 'independent', name: 'Hotel Alpenblick', role: 'gm', country: 'Austria' }, Q: ['n', 'y', 'y', 'n', 'u'], // v2.6: Q1 No goes on
     must: ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], by: { m3: '2027-01-15' }, tail: ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'], level: 'notready' }, // v2.3: Partly → Planned, Doesn't apply → No
-  hr: { use: 'hr-2', addon: 'x-sens', hotel: { type: 'group', name: 'Meridian Hotels', role: 'owner', country: 'France' }, Q: ['y', 'y', 'y', 'y', 'y'],
+  hr: { use: 'hr-2', addon: 'x-sens', hotel: { type: 'group', name: 'Meridian Hotels', role: 'owner', country: 'France' }, Q: ['n', 'y', 'y', 'y', 'y'],
     must: ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'], tail: ['y', 'y', 'y', 'y', 'y', 'y', 'pl'], level: 'almost' }, // v2.1 (B5): a high-risk use never gets the top verdict here
   draft: { use: 'fo-8', draft: true, hotel: { type: 'managed', name: 'Seehotel Bellevue', role: 'dept', country: 'Switzerland' }, Q: ['u', 'y', 'y', 'y', 'y'],
     must: ['y', 'y', 'pl', 'y', 'y', 'pl', 'y', 'y', 'y', 'y'], tail: ['y', 'pl', 'y', 'y', 'n', 'y'], level: 'almost' }, // v2.3: Partly → Planned
-  none: { use: 'none', hotel: { type: 'independent', name: 'Pension Aurora', role: 'other', country: 'Other' }, Q: ['y', 'y', 'y', 'y', 'y'],
+  none: { use: 'none', hotel: { type: 'independent', name: 'Pension Aurora', role: 'other', country: 'Other' }, Q: ['n', 'y', 'y', 'y', 'y'],
     must: ['k', 'k', 'k', 'k', 'k', 'k', 'y', 'y', 'y', 'y'], level: 'noinfo' }
 };
 async function hubFrame(p, tool) { await p.waitForSelector(`#hubFrame iframe[title="${tool}"]`); const h = await p.$(`#hubFrame iframe[title="${tool}"]`); const f = await h.contentFrame(); await f.waitForFunction(() => window.Readiness2 || window.Register || window.ReadinessTeam || document.readyState === 'complete'); return f; }
@@ -204,7 +204,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#save-file')]);
         const jsonPath = path.join(OUT, wtag + '-' + dl2.suggestedFilename()); await dl2.saveAs(jsonPath);
         const doc = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-        ok(/^Do-you-need-AI_Hotel-Alpenblick_\d{4}-\d{2}-\d{2}\.json$/.test(dl2.suggestedFilename()) && doc.kind === 'hftp-do-you-need-ai' && doc.v === 2 && doc.check.use === 'gx-2' && doc.check.snaps.length === 2, wtag + ': Save as file');
+        ok(/^Do-you-need-AI_Hotel-Alpenblick_\d{4}-\d{2}-\d{2}\.json$/.test(dl2.suggestedFilename()) && doc.kind === 'hftp-do-you-need-ai' && doc.v === 3 && doc.check.qv === 2 && doc.check.use === 'gx-2' && doc.check.snaps.length === 2, wtag + ': Save as file (v2.6: file version 3, check qv 2)');
         await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
         const o = await mk(b, w, touch); await o.p.goto(BASE + 'readiness-2/index.html');
         ok(await o.p.isVisible('#mychecks') && /None yet/.test(await o.p.textContent('#mychecks')), wtag + ': a fresh browser has no checks');
@@ -235,9 +235,9 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
     {
       const { ctx, p } = await mk(b, w, touch); await p.goto(BASE + 'readiness-2/index.html');
       await p.click('#begin'); await p.selectOption('#h-type', 'independent'); await p.click('#next');
-      await answer(p, 'q1', 'n'); ok(/Question 1 is No/.test(await p.textContent('#verdict')) && (await p.textContent('#next')) === 'See the result', wtag + ': Q1 No shows at once');
+      await answer(p, 'q1', 'y'); ok(/Question 1 is Yes/.test(await p.textContent('#verdict')) && (await p.textContent('#next')) === 'See the result', wtag + ': Q1 Yes (v2.6) shows at once');
       await p.click('#next'); let s = await state(p);
-      ok(s.step === 'stop' && (await p.textContent('#stop-head')) === 'This is not suitable for AI.', wtag + ': Q1 No → "This is not suitable for AI."');
+      ok(s.step === 'stop' && (await p.textContent('#stop-head')) === 'This is not suitable for AI.', wtag + ': Q1 Yes → "This is not suitable for AI."');
       ok((await p.$$eval('#stopcard .btnrow > *', e => e.map(x => x.textContent))).join('|') === 'Change my answers|Start again|Download (PDF)', wtag + ': stop: Change my answers / Start again / Download (PDF)');
       ok(!(await p.$('#next')) && !(await p.$('#new-top')) && s.events.join() === 'change', wtag + ': stop: nothing leads past it');
       for (const e of ['next', 'begin', 'back', 'edit']) ok((await p.evaluate(ev => window.Readiness2.send(ev), e)) === false, wtag + ': stop refuses "' + e + '"');
@@ -250,7 +250,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
       await p.goForward(); ok((await state(p)).step === 'stop', wtag + ': Forward → stop again');
       await p.click('#change'); await answer(p, 'q1', 'u'); for (const q of ['q2', 'q3', 'q4', 'q5']) await answer(p, q, 'y'); await p.click('#next');
       ok((await state(p)).step === 'must', wtag + ': Change my answers → Not sure → the must-haves open');
-      await p.goBack(); await p.goBack(); s = await state(p); ok(s.step !== 'stop' || s.Q.q1 === 'n', wtag + ': an old stop entry in history cannot show the stop screen once Q1 is not No (' + s.step + ')');
+      await p.goBack(); await p.goBack(); s = await state(p); ok(s.step !== 'stop' || s.Q.q1 === 'y', wtag + ': an old stop entry in history cannot show the stop screen once Q1 is not Yes (' + s.step + ')');
       ok(p._errs.length === 0, wtag + ': stop: no console errors ' + p._errs.join('|')); await ctx.close();
     }
     // ---------- a record saved by the build before v2 ----------
@@ -260,16 +260,17 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         const { ctx, p } = await mk(b, w, touch, { init: `if (!sessionStorage.getItem('seeded')) { localStorage.setItem('${KEY}', ${JSON.stringify(x.raw)}); sessionStorage.setItem('seeded', '1'); }` });
         await p.goto(BASE + 'readiness-2/index.html'); const s = await state(p), old = JSON.parse(x.raw);
         ok(p._errs.length === 0 && s.step === (old.step === 'start' ? 'start' : 'hotel'), wtag + ' v1 ' + x.name + ': opens without an error (on ' + s.step + ')');
-        ok(JSON.stringify(Object.keys(s.Q).sort().map(k => s.Q[k])) === JSON.stringify(Object.keys(old.Q).sort().map(k => old.Q[k])) && s.use === old.use, wtag + ' v1 ' + x.name + ': five answers and use case kept');
-        ok(await p.isVisible('#from-v1') && /Your five answers and your use case were kept/.test(await p.textContent('#from-v1')), wtag + ' v1 ' + x.name + ': the one-time notice');
+        const conv = {}; Object.keys(old.Q || {}).forEach(k => { if (k === 'q1') conv.q1 = { y: 'n', n: 'y', u: 'u' }[old.Q.q1]; else if (k !== 'q3' && k !== 'q4') conv[k] = old.Q[k]; });
+        ok(JSON.stringify(Object.keys(s.Q).sort().map(k => s.Q[k])) === JSON.stringify(Object.keys(conv).sort().map(k => conv[k])) && s.use === old.use, wtag + ' v1 ' + x.name + ': v2.6: Q1 turned round, Q2 and Q5 and the use case kept, old Q3/Q4 dropped');
+        ok(await p.isVisible('#from-v1') && /Your use case and your answers to questions 1, 2 and 5 of step 2 were kept/.test(await p.textContent('#from-v1')), wtag + ' v1 ' + x.name + ': the one-time notice');
         if (x.name === 'summary-gx-2') {
           await shot(p, wtag + '-v1-notice');
           await p.selectOption('#h-type', 'independent'); await p.click('#next');
           ok((await state(p)).step === 'q' && !(await p.$('#from-v1')), wtag + ' v1: the notice goes after the first Next');
-          await p.click('#next'); ok((await state(p)).step === 'must', wtag + ' v1: the kept answers let it go on to the must-haves');
+          ok(await p.isVisible('#q-changed') && await p.isVisible('#qnew-q3'), wtag + ' v1: step 2 says the questions changed (v2.6)'); await answer(p, 'q3', 'y'); await answer(p, 'q4', 'y'); await p.click('#next'); ok((await state(p)).step === 'must', wtag + ' v1: with the new questions 3 and 4 answered it goes on to the must-haves');
           for (const id of MUST) await answer(p, id, 'y'); await p.click('#next');
           const s2 = await state(p); ok(s2.step === 'where' && s2.use === 'gx-2' && (await p.isChecked('#u-gx-2')), wtag + ' v1: the kept use case is preselected in step 4');
-          await p.reload(); ok(!(await p.$('#from-v1')) && (await p.evaluate(k => JSON.parse(localStorage.getItem(k)).v, KEY)) === 2, wtag + ' v1: saved as version 2, notice not shown again');
+          await p.reload(); ok(!(await p.$('#from-v1')) && (await p.evaluate(k => JSON.parse(localStorage.getItem(k)).v, KEY)) === 3, wtag + ' v1: saved as version 3 (v2.6), notice not shown again');
         }
         await ctx.close();
       }

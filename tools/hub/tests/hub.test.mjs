@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'hub-bar.html'), 'utf8');
 const block = src.slice(src.indexOf('/* machine:start'), src.indexOf('/* machine:end */'));
 assert.ok(block.length > 100, 'machine block found');
-const { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubLinkUrl, HUB_LINK_MAX } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubLinkUrl, HUB_LINK_MAX };')();
+const { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubSrc, hubUrl, hubDetail, HUB_DETAIL } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubSrc, hubUrl, hubDetail, HUB_DETAIL };')();
+import { createHash } from 'node:crypto';
 
 let n = 0;
 function t(name, fn) { fn(); n++; console.log('ok', n, name); }
@@ -91,7 +92,10 @@ t('open messages for readiness-check are routed to readiness-2 with the hash kep
   assert.match(body, /send\(\{ type: 'select', tool: to \}, \{ push: true \}\);/);
   assert.ok(!/frames\[m\.tool\]|nextSrc\[m\.tool\]|srcOf\(m\.tool\)/.test(body), 'nothing in the open handler still uses the unresolved name');
   /* the same steps, run: what the handler computes for the AI Register's message */
-  const srcOf = new Function('SRC', 'return function (tool) { return SRC[tool] || (tool + "/index.html"); }')(new Function('return ' + src.match(/var SRC = (\{[^}]*\});/)[1])());
+  // v2.6: srcOf is hubSrc(tool, SRC, HUB_VER); with no hashes it is the plain page (changed expectation: the hash part is tested below)
+  const SRC = new Function('return ' + src.match(/var SRC = (\{[^}]*\});/)[1])();
+  assert.match(src, /function srcOf\(tool\) \{ return hubSrc\(tool, SRC, HUB_VER\); \}/);
+  const srcOf = tool => hubSrc(tool, SRC, {});
   const clean = h => h.replace(/[^\w=&%.\-]/g, '');
   const route = m => srcOf(hubTool(m.tool)) + (m.hash ? '#' + clean(m.hash) : '');
   assert.equal(route({ hub: 'open', tool: 'readiness-check', hash: 'use=hr-2' }), 'readiness-2/index.html#use=hr-2');
@@ -114,35 +118,84 @@ t('the hash filter still keeps use=<id> and a bare department id', () => {
   assert.match(src, /m\.hash\.replace\(\/\[\^\\w=&%\.\\-\]\/g, ''\)/);
   assert.equal(clean('use=fo-3'), 'use=fo-3'); assert.equal(clean('fo'), 'fo'); assert.equal(clean('use=fo-3"><x'), 'use=fo-3x');
 });
-// ---------- link bridge (24 Nov 2026): { hub: 'link', url } ----------
-t('link: plain http and https links pass, normalised', () => {
-  assert.equal(hubLinkUrl('https://ideas.com/science-behind-g3-rms/'), 'https://ideas.com/science-behind-g3-rms/');
-  assert.equal(hubLinkUrl('http://data.europa.eu/eli/reg/2024/1689/oj'), 'http://data.europa.eu/eli/reg/2024/1689/oj');
-  assert.equal(hubLinkUrl('HTTPS://Example.COM/a?b=1#c'), 'https://example.com/a?b=1#c');
-  assert.equal(hubLinkUrl('https://doi.org/10.1016/j.annals.2026.104274'), 'https://doi.org/10.1016/j.annals.2026.104274');
+// ---------- v2.6 (24 Nov 2026): the link bridge is gone (changed expectation: its five tests are replaced by these) ----------
+t('link: no link message, no link panel, no openTop, no hubLinkUrl', () => {
+  assert.ok(!/'link'|hubLinkUrl|HUB_LINK_MAX|openTop|hub-link|\.hub-link/.test(src));
+  for (const h of ["m.hub === 'db'", "m.hub === 'open'", "m.hub === 'ping'", "m.hub === 'download'", "m.hub === 'detail'", "m.hub === 'detail-close'"]) assert.ok(src.includes(h), h);
 });
-t('link: other schemes are refused (javascript, data, file, blob, mailto, relative, protocol-relative)', () => {
-  for (const u of ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,<b>x</b>', 'file:///etc/passwd', 'blob:https://x.com/1', 'mailto:a@b.c', 'ftp://x.com/',
-    '/register/index.html', '../readiness-check/index.html', '//evil.example/x', 'https:/x.com', 'https://', 'about:blank', 'chrome://settings']) assert.equal(hubLinkUrl(u), null, u);
+// ---------- v2.6: cache-busting ----------
+t('hubSrc: the page with ?v=<hash>; the team page; no hash or a bad one gives the plain page', () => {
+  const SRC = { team: 'readiness-check/team.html' }, VER = { 'readiness-2': 'abc123def0', team: '0123456789', register: 'NOT-HEX!', 'ai-act-guide': '' };
+  assert.equal(hubSrc('readiness-2', SRC, VER), 'readiness-2/index.html?v=abc123def0');
+  assert.equal(hubSrc('team', SRC, VER), 'readiness-check/team.html?v=0123456789');
+  assert.equal(hubSrc('register', SRC, VER), 'register/index.html');
+  assert.equal(hubSrc('ai-act-guide', SRC, VER), 'ai-act-guide/index.html');
+  assert.equal(hubSrc('use-case-catalogue', SRC, VER), 'use-case-catalogue/index.html');
+  assert.equal(hubSrc('constructor', SRC, VER), 'constructor/index.html');
+  const clean = h => h.replace(/[^\w=&%.\-]/g, '');
+  assert.equal(hubSrc('readiness-2', SRC, VER) + '#' + clean('use=gx-2'), 'readiness-2/index.html?v=abc123def0#use=gx-2', '#use= still works after the version');
+  assert.equal(new URL(hubSrc('readiness-2', SRC, VER) + '#use=gx-2', 'https://x.test/tools/').hash, '#use=gx-2');
 });
-t('link: non-strings, empty, too long, spaces and control characters, user names are refused', () => {
-  for (const u of [undefined, null, 1, {}, [], ['https://x.com'], { href: 'https://x.com' }, '', ' https://x.com', 'https://x.com/a b', 'https://x.com/\n', 'https://x.com/\t', 'https://x.com/\u0000',
-    'https://user:pw@x.com/', 'https://user@x.com/']) assert.equal(hubLinkUrl(u), null, JSON.stringify(u));
-  assert.equal(HUB_LINK_MAX, 2048);
-  const base = 'https://x.com/'; assert.ok(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length)), 'exactly at the limit passes');
-  assert.equal(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length + 1)), null, 'one over the limit is refused');
+t('build-hub writes the current content hash of every frame page into the built hub', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..'), built = readFileSync(join(root, 'index.html'), 'utf8');
+  assert.ok(src.includes('var HUB_VER = {} /*__HUB_VER__*/;'), 'the source keeps the marker');
+  const m = built.match(/var HUB_VER = (\{[^}]*\}) \/\* written by build-hub\.mjs \*\//); assert.ok(m, 'the built hub carries HUB_VER');
+  const VER = JSON.parse(m[1]);
+  const pages = { 'use-case-catalogue': 'use-case-catalogue/index.html', 'readiness-2': 'readiness-2/index.html', 'ai-act-guide': 'ai-act-guide/index.html', register: 'register/index.html', team: 'readiness-check/team.html' };
+  for (const [tool, page] of Object.entries(pages)) assert.equal(VER[tool], createHash('sha256').update(readFileSync(join(root, page))).digest('hex').slice(0, 10), tool + ': hash of the current page (rebuild the hub after a tool)');
+  assert.deepEqual(Object.keys(VER).sort(), Object.keys(pages).sort());
 });
-t('link: the hub handles it only from its own frames, shows it on the top page as a link to click, and sends no reply', () => {
+// ---------- v2.6: the detail layer drawn on the main page ----------
+const good = () => ({ title: 'AI chat assistant for guests', kicker: 'Guest experience · Guest-facing', catName: 'Catalogue name: AI chat', draft: '', draftText: '', does: 'Answers guests.', how: 'A language model.', level: 'How common in hotels: High.', task: 'Research wording.', foot: 'From the catalogue.',
+  srcs: [{ type: 'c', name: 'Vendor', note: 'n', url: 'https://a.com/x' }, { type: 'h', name: 'Hotel', note: '', url: '' }, { type: 'r', name: 'Study', note: 'p. 3', url: 'http://b.org/' }, { type: 'l', name: 'A link', note: '', url: 'HTTPS://C.com/a?b=1#c' }] });
+t('detail: a well-formed layer passes, copied, URLs normalised', () => {
+  const d = good(), x = hubDetail('gx-2', d);
+  assert.ok(x && x.id === 'gx-2' && x.title === d.title && x.srcs.length === 4);
+  assert.equal(x.srcs[3].url, 'https://c.com/a?b=1#c'); assert.equal(x.srcs[1].url, '');
+  assert.notEqual(x.srcs, d.srcs, 'a copy, not the message object');
+  assert.ok(hubDetail('gx-2', Object.assign(good(), { srcs: [] })), 'no sources is fine');
+});
+t('detail: bad ids and non-objects are refused', () => {
+  for (const id of [undefined, null, 1, '', 'a b', '../x', '<x>', 'x'.repeat(41), {}]) assert.equal(hubDetail(id, good()), null, JSON.stringify(id));
+  for (const d of [undefined, null, 'x', 1, [], [good()], new Date(), Object.create(null)]) assert.equal(hubDetail('gx-2', d), null, Object.prototype.toString.call(d));
+});
+t('detail: wrong types, missing or extra keys are refused', () => {
+  for (const k of ['title', 'kicker', 'catName', 'draft', 'draftText', 'does', 'how', 'level', 'task', 'foot']) {
+    for (const v of [1, null, undefined, {}, [], true]) { const d = good(); d[k] = v; assert.equal(hubDetail('gx-2', d), null, k + '=' + JSON.stringify(v)); }
+    const d2 = good(); delete d2[k]; assert.equal(hubDetail('gx-2', d2), null, 'missing ' + k);
+  }
+  assert.equal(hubDetail('gx-2', Object.assign(good(), { html: '<b>x</b>' })), null, 'an extra key');
+  assert.equal(hubDetail('gx-2', Object.assign(good(), { title: '' })), null, 'an empty title');
+  for (const srcs of [null, 'x', {}, [null], ['x'], [{ type: 'c', name: 'a', note: '' }], [{ type: 'c', name: 'a', note: '', url: '', x: 1 }], [{ type: 'z', name: 'a', note: '', url: '' }], [{ type: 'c', name: '', note: '', url: '' }], [{ type: 'c', name: 1, note: '', url: '' }], [{ type: 'c', name: 'a', note: 2, url: '' }]])
+    assert.equal(hubDetail('gx-2', Object.assign(good(), { srcs })), null, JSON.stringify(srcs));
+});
+t('detail: oversized data is refused (every limit, and one under it passes)', () => {
+  for (const k of ['title', 'kicker', 'catName', 'draft', 'draftText', 'does', 'how', 'level', 'task', 'foot']) {
+    assert.ok(hubDetail('gx-2', Object.assign(good(), { [k]: 'a'.repeat(HUB_DETAIL[k]) })), k + ' at the limit');
+    assert.equal(hubDetail('gx-2', Object.assign(good(), { [k]: 'a'.repeat(HUB_DETAIL[k] + 1) })), null, k + ' over the limit');
+  }
+  const one = { type: 'c', name: 'a', note: '', url: '' };
+  assert.ok(hubDetail('gx-2', Object.assign(good(), { srcs: Array(HUB_DETAIL.srcs).fill(one) })));
+  assert.equal(hubDetail('gx-2', Object.assign(good(), { srcs: Array(HUB_DETAIL.srcs + 1).fill(one) })), null, 'too many sources');
+  assert.equal(hubDetail('gx-2', Object.assign(good(), { srcs: [Object.assign({}, one, { name: 'a'.repeat(HUB_DETAIL.name + 1) })] })), null, 'long name');
+  assert.equal(hubDetail('gx-2', Object.assign(good(), { srcs: [Object.assign({}, one, { note: 'a'.repeat(HUB_DETAIL.note + 1) })] })), null, 'long note');
+  const base = 'https://x.com/'; assert.ok(hubUrl(base + 'a'.repeat(HUB_DETAIL.url - base.length))); assert.equal(hubUrl(base + 'a'.repeat(HUB_DETAIL.url - base.length + 1)), null);
+});
+t('detail: bad URLs are refused (schemes, relative, spaces, control characters, user names)', () => {
+  for (const u of ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,<b>x</b>', 'file:///etc/passwd', 'blob:https://x.com/1', 'mailto:a@b.c', 'ftp://x.com/', '/register/index.html', '../x', '//evil.example/x', 'https:/x.com', 'https://',
+    'about:blank', ' https://x.com', 'https://x.com/a b', 'https://x.com/\n', 'https://x.com/\t', 'https://x.com/\u0000', 'https://user:pw@x.com/', 'https://user@x.com/', 1, null, undefined, {}]) {
+    assert.equal(hubUrl(u), null, JSON.stringify(u));
+    assert.equal(hubDetail('gx-2', Object.assign(good(), { srcs: [{ type: 'c', name: 'a', note: '', url: u }] })), null, 'in a source: ' + JSON.stringify(u));
+  }
+});
+t('detail: only from the hub\'s own frame on screen; drawn without innerHTML; closes on another tab', () => {
   const body = src.slice(src.indexOf("addEventListener('message'"), src.indexOf('// The bar'));
-  assert.ok(body.indexOf("if (!own) return;") < body.indexOf("m.hub === 'link'"), 'own-frame check first');
-  assert.match(body, /if \(m\.hub === 'link'\) \{ var url = hubLinkUrl\(m\.url\); if \(url\) openTop\(url\); return; \}/);
-  const open = src.slice(src.indexOf('function openTop'), src.indexOf("addEventListener('message'"));
-  // 24 Nov 2026: a script-made click is ignored by the claude.ai viewer, so the hub shows a panel with a real link the person clicks
-  assert.match(open, /id="hub-link-go" target="_blank" rel="noopener noreferrer"/); assert.match(open, /\.href = url/); assert.match(open, /Copy address/);
-  assert.ok(!/\.click\(\)/.test(open) && !/window\.open/.test(open), 'no script-made click, no window.open');
-  assert.ok(!/postMessage/.test(open), 'no reply message');
-});
-t('link: the other bridge messages are unchanged', () => {
-  for (const h of ["m.hub === 'db'", "m.hub === 'open'", "m.hub === 'ping'", "m.hub === 'download'"]) assert.ok(src.includes(h), h);
+  assert.ok(body.indexOf('if (!own) return;') < body.indexOf("m.hub === 'detail'"), 'own-frame check first');
+  assert.match(body, /var x = hubDetail\(m\.id, m\.data\)/); assert.match(body, /if \(x && tool === S\.tool\) openHubDetail\(x, e\.source, tool\)/);
+  const draw = src.slice(src.indexOf('var detail = {'), src.indexOf("addEventListener('message'"));
+  assert.ok(!/innerHTML|insertAdjacentHTML|outerHTML|document\.write/.test(draw), 'textContent and createElement only');
+  assert.match(draw, /name\.target = '_blank'; name\.rel = 'noopener noreferrer'/); assert.match(draw, /showModal\(\)/);
+  assert.match(draw, /hub: 'detail-closed', id: id, focus: !!focus/);
+  assert.match(src, /if \(detail\.open && tool !== detail\.tool\) closeHubDetail\(false\);/);
 });
 console.log(n + ' hub machine tests passed');

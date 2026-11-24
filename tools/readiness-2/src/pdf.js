@@ -3,7 +3,7 @@
    1. model(rec, env) → { stop, run: { hotel, date }, blocks }, built from R2Logic.resultModel(rec, env), the same object the
       result page draws, so the PDF and the screen use the same words. env = { cat, TQ, RC, M, today }.
         blocks: { k: 'title' | 'meta' | 'h' | 'verdict' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'todo' | 'area' | 'item' | 'num' | 'src' | 'page', ... }
-      Q1 No → the one-page stop version (why, the instead line, the five answers).
+      Q1 Yes (v2.6; No before) → the one-page stop version (why, the instead line, the five answers).
    2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII.
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4 for print. PDF redesign (24 Nov 2026): page 1 is the summary
       (hotel, use case, the verdict box in the verdict's colour, "Start with"); then the five questions, where it sits, the
@@ -26,8 +26,9 @@
     b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE, note: true });
     return b;
   }
-  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card. */
-  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: ({ y: 'hi', n: 'lo', u: 'md' })[a.state] || 'na', m: L.aiMeaningText(a) }; }); }
+  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card.
+     v2.6: the tone follows the meaning (a.good), so question 1 No is drawn in the good tone. */
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: L.aiMeaningText(a) }; }); }
   function sources(TQ, stop) {
     var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
     (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
@@ -46,7 +47,7 @@
     var b = head(m, v.stop, v.stop ? '' : m.useName || (m.none ? m.path : ''));
     if (v.stop) {
       return { stop: true, run: run, blocks: b.concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
-        { k: 'p', t: 'Because you answered No to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
+        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
     }
     /* Page 1, as the screen: the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with". */
     b.push({ k: 'h', t: 'Result' }, { k: 'verdict', id: 'level', t: m.levelName + ' · ' + m.scoreHead, name: m.levelName, score: m.scoreHead, box: m.boxLine, sub: m.mustLine, tone: LEVEL_TONE[m.level] || 'accent' });
@@ -57,7 +58,6 @@
     if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
 
     b.push({ k: 'h', t: m.firstLabel });
-    if (m.assist) b.push({ k: 'lead', t: m.assist, id: 'assist' }); // v2.5, owner O3
     if (m.law) b.push({ k: 'p', t: m.law, id: 'law' });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });

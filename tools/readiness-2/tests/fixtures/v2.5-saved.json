@@ -1,0 +1,358 @@
+{
+ "_about": "Saved by the v2.5.1 code (rules v2.5 (24 Nov 2026), step 2 questions in the old polarity: Q1 Yes = needs judgement) before any v2.6 change, through its own cleanRec, forFile and share-document shape (scratchpad mkfix.mjs). seen: what v2.5.1 worked out for each check.",
+ "store": {
+  "v": 2,
+  "cur": "fixgo0001",
+  "checks": {
+   "fixstop01": {
+    "id": "fixstop01",
+    "step": "stop",
+    "hotel": {
+     "name": "Hotel Test",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {},
+    "By": {},
+    "cat": "",
+    "dept": "",
+    "use": "",
+    "useName": "",
+    "from": "",
+    "tqSig": "",
+    "T": {},
+    "TBy": {},
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-24T10:00:00.000Z"
+   },
+   "fixgo0001": {
+    "id": "fixgo0001",
+    "step": "result",
+    "hotel": {
+     "name": "Hotel Test",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "y",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "y",
+     "m3": "y",
+     "m4": "y",
+     "m5": "y",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {},
+    "cat": "Guest-facing",
+    "dept": "gx",
+    "use": "gx-2",
+    "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+    "from": "",
+    "tqSig": "1823a2a472",
+    "T": {
+     "pe1": "y",
+     "sk1": "y",
+     "fi1": "y",
+     "te1": "y",
+     "da1": "y",
+     "or1": "y",
+     "or2": "y",
+     "x-auto": "y"
+    },
+    "TBy": {},
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-24T10:00:00.000Z"
+   },
+   "fixunsure": {
+    "id": "fixunsure",
+    "step": "result",
+    "hotel": {
+     "name": "Hotel Test",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "u",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "y",
+     "m3": "y",
+     "m4": "y",
+     "m5": "y",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {},
+    "cat": "Guest-facing",
+    "dept": "gx",
+    "use": "gx-2",
+    "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+    "from": "",
+    "tqSig": "1823a2a472",
+    "T": {
+     "pe1": "y",
+     "sk1": "y",
+     "fi1": "y",
+     "te1": "y",
+     "da1": "y",
+     "or1": "y",
+     "or2": "y",
+     "x-auto": "y"
+    },
+    "TBy": {},
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-24T10:00:00.000Z"
+   },
+   "fixassist": {
+    "id": "fixassist",
+    "step": "result",
+    "hotel": {
+     "name": "Hotel Test",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "y",
+     "q2": "y",
+     "q3": "n",
+     "q4": "n",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "y",
+     "m3": "y",
+     "m4": "y",
+     "m5": "y",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {},
+    "cat": "Guest-facing",
+    "dept": "gx",
+    "use": "gx-2",
+    "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+    "from": "",
+    "tqSig": "1823a2a472",
+    "T": {
+     "pe1": "y",
+     "sk1": "y",
+     "fi1": "y",
+     "te1": "y",
+     "da1": "y",
+     "or1": "y",
+     "or2": "y",
+     "x-auto": "y"
+    },
+    "TBy": {},
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-24T10:00:00.000Z"
+   }
+  }
+ },
+ "file": {
+  "kind": "hftp-do-you-need-ai",
+  "v": 2,
+  "rules": "v2.5 (24 Nov 2026)",
+  "savedAt": "2026-11-24T10:00:00.000Z",
+  "check": {
+   "id": "fixunsure",
+   "step": "result",
+   "hotel": {
+    "name": "Hotel Test",
+    "role": "gm",
+    "type": "independent",
+    "country": "France"
+   },
+   "Q": {
+    "q1": "u",
+    "q2": "y",
+    "q3": "y",
+    "q4": "y",
+    "q5": "y"
+   },
+   "A": {
+    "m1": "y",
+    "m2": "y",
+    "m3": "y",
+    "m4": "y",
+    "m5": "y",
+    "m6": "y",
+    "m7": "y",
+    "m8": "y",
+    "m9": "y",
+    "m10": "y"
+   },
+   "By": {},
+   "cat": "Guest-facing",
+   "dept": "gx",
+   "use": "gx-2",
+   "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+   "from": "",
+   "tqSig": "1823a2a472",
+   "T": {
+    "pe1": "y",
+    "sk1": "y",
+    "fi1": "y",
+    "te1": "y",
+    "da1": "y",
+    "or1": "y",
+    "or2": "y",
+    "x-auto": "y"
+   },
+   "TBy": {},
+   "snaps": [],
+   "share": {
+    "named": false
+   },
+   "sharedAt": null,
+   "sharedMode": null,
+   "sharedSig": null,
+   "updated": "2026-11-24T10:00:00.000Z"
+  }
+ },
+ "team": {
+  "kind": "dyn",
+  "v": 2,
+  "rules": "v2.5 (24 Nov 2026)",
+  "useId": "gx-2",
+  "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+  "dept": "gx",
+  "cat": "Guest-facing",
+  "role": "gm",
+  "type": "independent",
+  "country": "France",
+  "Q": {
+   "q1": "y",
+   "q2": "y",
+   "q3": "y",
+   "q4": "y",
+   "q5": "y"
+  },
+  "answers": {
+   "m1": "y",
+   "m2": "y",
+   "m3": "y",
+   "m4": "y",
+   "m5": "y",
+   "m6": "y",
+   "m7": "y",
+   "m8": "y",
+   "m9": "y",
+   "m10": "y"
+  },
+  "tailored": {
+   "pe1": "y",
+   "sk1": "y",
+   "fi1": "y",
+   "te1": "y",
+   "da1": "y",
+   "or1": "y",
+   "or2": "y",
+   "x-auto": "y"
+  },
+  "by": {},
+  "tby": {},
+  "level": "ready",
+  "pct": 100,
+  "named": false
+ },
+ "seen": {
+  "fixstop01": {
+   "step": "stop",
+   "verdict": "stop",
+   "stop": true,
+   "level": "noinfo",
+   "pct": null,
+   "held": [],
+   "q1Unsure": false
+  },
+  "fixgo0001": {
+   "step": "result",
+   "verdict": "go",
+   "stop": false,
+   "level": "ready",
+   "pct": 100,
+   "held": [],
+   "q1Unsure": false
+  },
+  "fixunsure": {
+   "step": "result",
+   "verdict": "find",
+   "stop": false,
+   "level": "almost",
+   "pct": 100,
+   "held": [
+    "notsure"
+   ],
+   "q1Unsure": true
+  },
+  "fixassist": {
+   "step": "result",
+   "verdict": "data",
+   "stop": false,
+   "level": "almost",
+   "pct": 100,
+   "held": [
+    "carried"
+   ],
+   "q1Unsure": false
+  }
+ }
+}

@@ -23,7 +23,7 @@ ok(eq(C.Q_ANSWERS, [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']]), 'the five C-
 ok(!('NA' in C) || C.NA == null, 'no "Doesn\'t apply" option left in the content');
 ok(eq(Object.keys(L.A_OK).sort(), ['k', 'n', 'pl', 'y']), 'logic accepts only the four answers');
 ok(L.POINTS.y === 2 && L.POINTS.pl === 1 && L.POINTS.n === 0 && !('p' in L.POINTS), 'points: Yes 2, Planned 1, No 0; no Partly');
-ok(L.RULES === 'v2.5 (24 Nov 2026)', 'rules version bumped (v2.3, now v2.5): ' + L.RULES);
+ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.3, v2.5, now v2.6): ' + L.RULES);
 const app = rd('src/app.js');
 ok(!/C\.NA\b|\['na'/.test(app), 'app.js: step 5 no longer adds a "Doesn\'t apply" option');
 ok(/radios\(m\.id, C\.ANSWERS,/.test(app) && /radios\(q\.id, C\.ANSWERS,/.test(app), 'app.js: steps 3 and 5 render C.ANSWERS (the four) and nothing else');
@@ -31,7 +31,7 @@ ok(/radios\(m\.id, C\.ANSWERS,/.test(app) && /radios\(q\.id, C\.ANSWERS,/.test(a
 // ---------- 2. answering: p and na cannot be set any more ----------
 let s = F.blankStore(); const id0 = s.cur;
 const go = (ev, arg) => { const r = F.reduce(s, ev, arg, ENV); if (r.ok) s = r.store; return r.ok; };
-go('begin'); go('hotel', { k: 'type', v: 'independent' }); go('next'); F.QIDS.forEach(id => go('answer', { id, value: 'y' })); go('next');
+go('begin'); go('hotel', { k: 'type', v: 'independent' }); go('next'); F.QIDS.forEach(id => go('answer', { id, value: id === 'q1' ? 'n' : 'y' })); go('next'); // v2.6: Q1 No goes on
 ok(F.cur(s).step === 'must', 'walked to step 3');
 ok(!go('answer', { id: 'm1', value: 'p' }) && !go('answer', { id: 'm1', value: 'na' }), 'step 3: Partly and Doesn\'t apply are refused');
 ['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'm1', value: v }) && F.cur(s).A.m1 === v, 'step 3: ' + v + ' is accepted'));
@@ -43,7 +43,11 @@ ok(F.cur(s).id === id0, 'same check throughout');
 
 // ---------- 3. the old saved store (localStorage) ----------
 let info = {};
-const st = F.migrate(clone(FX.store), ENV, info);
+/* v2.6: these records were saved before step 2 changed, so they would wait on step 2 (questions 3 and 4 are new; tests/v26.test.mjs).
+   To test the Partly / Doesn't apply mechanism on its own, step 2 is given as answered in the v2.6 meaning (qv 2). */
+const asV26 = r => Object.assign(r, { qv: 2, Q: { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' } });
+const FXS = clone(FX.store); Object.values(FXS.checks).forEach(asV26);
+const st = F.migrate(FXS, ENV, info);
 ok(st && Object.keys(st.checks).length === 2 && st.cur === 'dynoldmust01' && !info.newer && !info.questionsChanged && !info.useChanged, 'old store: opens, both checks kept, no notice');
 const a = st.checks.dynoldmust01, b = st.checks.dynoldtail02;
 ok(a.A.m5 === 'p' && a.T.sk1 === 'p' && a.T.te1 === 'na' && b.T.te1 === 'na', 'old answers are kept as they were (not turned into another answer)');
@@ -81,9 +85,9 @@ ok(sn.earlier.length === 1 && sn.earlier[0].endsWith('(' + L.EARLIER_RULES + ')'
 
 // ---------- 4. a saved file ----------
 info = {};
-const fr = F.cleanRec(clone(FX.file.check), ENV, info, { file: true });
+const fr = F.cleanRec(asV26(clone(FX.file.check)), ENV, info, { file: true });
 ok(fr && fr.A.m1 === 'p' && fr.T.pe1 === 'na' && fr.step === 'must' && !info.questionsChanged, 'old file: opens on step 3, old answers kept as they were');
-const imp = F.reduce(F.blankStore(), 'import', clone(FX.file.check), ENV);
+const imp = F.reduce(F.blankStore(), 'import', asV26(clone(FX.file.check)), ENV);
 ok(imp.ok && F.cur(imp.store).id === 'dynoldfile03' && F.cur(imp.store).step === 'must', 'old file: the import event takes it');
 const ef = L.evaluate(fr, TQ);
 ok(ef.items.find(it => it.key === 'm1').old === 'p' && ef.items.find(it => it.key === 'pe1').old === 'na' && ef.counts.total === 16, 'old file: both old answers count as not answered');

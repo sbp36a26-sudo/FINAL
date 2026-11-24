@@ -8,16 +8,22 @@
   'use strict';
 
   /* ---------- Step 2: is this an AI problem? (research A). v2 (owner, 24 Nov 2026): simpler wording, one short sentence each;
-     Q2 is the owner's wording of 23 Nov and stays. The "Why this matters" texts are unchanged. ---------- */
+     Q2 is the owner's wording of 23 Nov and stays.
+     v2.6 (owner, 24 Nov 2026): question 1 is asked the other way round ("Can each case be fixed with an if-then rule?"): Yes now
+     means fixed rules can do it, so Yes is the stop answer (stopOn: 'y'); for every other question No is the answer that holds.
+     Questions 3 and 4 are new (Brynjolfsson & Mitchell 2017: large digital sets of examples; a task that tolerates errors).
+     Records saved before v2.6 are turned round on load (R2Logic.legacyQ; record field qv). ---------- */
   var QUESTIONS = [
-    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Complex judgement', yesIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.', noIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
-      q: 'Is each case different enough that fixed “if this, then that” rules cannot handle it?',
-      hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
+    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Complex judgement', stopOn: 'y',
+      yesIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
+      noIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.',
+      q: 'Can each case be fixed with an “if this, then that” rule?',
+      hint: 'Yes if you could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”. No if every case is different, like guest emails, photos or tomorrow’s demand.',
       guard: 'Think about the job itself, not how you do it today. If you use rules now only because nothing better existed (for example price rules), answer Not sure.', // v1.2, council BUILD NOW 1
       whyShort: 'AI only helps when a job needs judgement. If fixed rules can do the job, ordinary software is cheaper and more reliable.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
-      yes: 'Reading guest emails in five languages and drafting replies.',
-      no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
+      yes: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
+      no: 'Reading guest emails in five languages and drafting replies.',
       outcome: 'Not suitable for AI: rules or ordinary automation will do it.', // v1.2 (owner B2): was "Not an AI problem: …"
       who: 'the vendor or IT' },
     { id: 'q2', short: 'Worth real money or hours', title: 'Return', yesIf: 'It happens often or costs a lot, for example many cases a week, or many staff hours or much revenue involved.', noIf: 'It is rare or small, so doing it better would save little.',
@@ -29,23 +35,25 @@
       no: 'A 12-room guesthouse with 10 email enquiries a week.',
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
-    { id: 'q3', short: 'Information is digital and current', title: 'Information ready', yesIf: 'The facts it needs are digital, in one place and kept up to date, such as bookings, past guest messages, rates or menus.', noIf: 'The facts are on paper, in one person’s head, or spread over systems that disagree.',
-      q: 'Is the information it needs digital and up to date?',
-      hint: 'Examples: bookings, past guest messages, rates, your hotel’s facts and menus.',
-      whyShort: 'AI works from your data. If the data is missing or out of date, the tool gives wrong answers that sound sure.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
-      why: 'If the facts sit on paper, in one person’s head or in five systems that disagree, the tool gives wrong answers with confidence.',
-      yes: 'One up-to-date fact sheet (rooms, hours, policies) for a guest chatbot.',
-      no: 'Allergen information only in the chef’s binder.',
-      outcome: 'Fix the data first.', add: 'Put the facts in one place and name who keeps them right. Then ask again.',
-      who: 'IT or the department head' },
-    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A person can check the result before it is used, or a mistake is easy to put right.', noIf: 'A mistake would reach a guest or staff member straight away and could hurt them.',
-      q: 'Can mistakes be caught before they harm anyone?',
+    /* v2.6 (owner): new question 3. Brynjolfsson & Mitchell 2017, criterion 2 ("large (digital) data sets ... containing input-output pairs"). */
+    { id: 'q3', short: 'Many past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
+      q: 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
       hint: '',
-      whyShort: 'AI sometimes makes mistakes, so you need a way to catch them before they hurt anyone.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
-      why: 'AI works on probabilities, so it is never right every time. Where a mistake would be costly, unsafe or unfair, AI can still help, but only as a draft a person checks.',
+      whyShort: 'AI learns from examples; without many past cases it has nothing to learn from.',
+      why: 'Machine learning works best where many past cases are stored digitally, each with the result that was right for it. A tool bought from a vendor may have learned from other hotels’ cases: ask the vendor what it learned from.',
+      yes: 'Two years of guest emails and the replies staff sent, kept in the mailbox.',
+      no: 'A special request that comes up a few times a year and was never written down.',
+      outcome: 'Too few examples to learn from.', add: 'Start keeping these cases digitally, or ask the vendor what examples its tool learned from. Then ask again.',
+      who: 'IT or the department head' },
+    /* v2.6 (owner): new question 4. Brynjolfsson & Mitchell 2017, criterion 6 ("a tolerance for error"). Checking results is must-have 6. */
+    { id: 'q4', short: 'Some mistakes are acceptable', title: 'Some mistakes are acceptable', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a legal or safety decision.',
+      q: 'Is it acceptable if the result is right most of the time, but not every time?',
+      hint: '',
+      whyShort: 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.',
+      why: 'AI works on probabilities, so it is never right every time. It suits a task where an occasional wrong result can be caught or does little harm.',
       yes: 'Draft replies to reviews that a manager approves before they go out.',
       no: 'Answering guests’ allergen questions on its own.',
-      outcome: 'AI as an assistant only: a person checks every result before it counts.',
+      outcome: 'A rule-based tool or a person is the better choice.',
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
@@ -58,9 +66,12 @@
       outcome: 'Define success first.', add: 'Write down the number and today’s figure, then come back.',
       who: 'the GM' }
   ];
+  /* v2.6: above the questions when a saved check lost its answers to the old questions 3 and 4 (rec.Qnew). */
+  var Q_CHANGED = 'Step 2 changed on 24 Nov 2026: question 1 is now asked the other way round (your answer was turned round with it, so it means the same), and questions 3 and 4 are new. Please answer questions 3 and 4.';
+  var Q_NEW_LINE = 'New question: please choose an answer.';
   var Q_ANSWERS = [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']];
 
-  /* The stop screen (owner's hard rule: Q1 No ends the journey). Reads: headline, why, instead, then the "Not sure" line.
+  /* The stop screen (owner's hard rule: the stop answer to Q1 ends the journey; since v2.6 that answer is Yes). Reads: headline, why, instead, then the "Not sure" line.
      v1.2 (owner B2): the headline was "This is not an AI problem."; unsure: council BUILD NOW 2. */
   var STOP = {
     head: 'This is not suitable for AI.',
@@ -73,10 +84,10 @@
   var VERDICT = {
     stop: STOP.head,
     worth: 'Probably not worth it.',
-    data: 'Fix the data first.',
+    data: 'Too few examples to learn from.', // v2.6: the new question 3's outcome
+    exact: 'A rule-based tool or a person is the better choice.', // v2.6: the new question 4's outcome (replaces "assist")
     success: 'Define success first.',
     find: 'Find out first.',
-    assist: 'Worth exploring, as an assistant only: a person checks every result before it counts.',
     go: 'Worth exploring with AI. Next: the must-haves.',
     goDone: 'Worth exploring with AI.' // the same verdict on the summary, where "where it sits" is already answered
   };
@@ -240,12 +251,10 @@
   var BOX = { held: 'Held back: {why}.', legal: 'legal items to check', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
-  /* O3: a No on question 4 is a condition on how the tool is used, not a hold. */
-  var ASSIST_LINE = 'Use it as an assistant only: a person checks every result before it counts.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
   var CONSIST = {
-    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.',
-    m7: 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.'
+    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.'
+    /* v2.6: the must-have 7 line is gone: the new question 3 asks about past examples, not whether the data is digital and current */
   };
   /* Audit v3 H1: the replace question, when the check in this browser has a shared copy. */
   var FILE_KEEPS_SHARE = 'The project team’s copy of this check stays shared; you can still withdraw it.';
@@ -270,9 +279,9 @@
       'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019).',
       'NIST, AI Risk Management Framework 1.0, NIST AI 100-1 (Jan 2023).',
       'Google PAIR, People + AI Guidebook, “User Needs + Defining Success” (undated page, read 23 Nov 2026).',
-      'Brynjolfsson & Mitchell, “What can machine learning do? Workforce implications”, Science 358 (Dec 2017).'
+      'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534 (questions 3 and 4).'
     ],
-    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Question 1 asks whether the job needs AI; it is not a legal classification (the AI Act guide tab covers that).',
+    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell). Question 1 asks whether the job needs AI; it is not a legal classification (the AI Act guide tab covers that).',
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
       'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
@@ -306,7 +315,7 @@
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
   var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
-  var FROM_V1 = 'This tool has changed. Your five answers and your use case were kept. The other answers were not: the questions are new.';
+  var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
@@ -315,6 +324,6 @@
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
-    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, ASSIST_LINE: ASSIST_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
+    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

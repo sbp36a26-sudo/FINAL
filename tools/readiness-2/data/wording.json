@@ -1,5 +1,5 @@
 {
- "note": "Plain wording agreed for the tool (team wording review, sheet https://claude.ai/artifact/76gwowzFVM62zGptFnGpsw, 24 Nov 2026). Applied last, after the generator and overrides. Keyed by use id; names under names, questions under qs as use|qid; five questions and must-haves under core as id.field.",
+ "note": "Plain wording agreed for the tool (team wording review, sheet https://claude.ai/artifact/76gwowzFVM62zGptFnGpsw, 24 Nov 2026). Applied last, after the generator and overrides. Keyed by use id; names under names, questions under qs as use|qid; five questions and must-haves under core as id.field. v2.6 (owner, 24 Nov 2026): question 1 turned round and questions 3 and 4 replaced; their core fields follow the owner's new texts.",
  "names": {
   "rm-1": "Demand forecasting for rooms (by day, guest type and room type)",
   "rm-2": "Dynamic room pricing, including automatic rate publishing",
@@ -765,13 +765,22 @@
   "lg-4|or1": "Is it agreed who approves the AI rules and how all staff are told about them?"
  },
  "core": {
-  "q1.q": "Is each case different enough that fixed “if this, then that” rules cannot handle it?",
+  "q1.q": "Can each case be fixed with an “if this, then that” rule?",
+  "q1.yesIf": "You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.",
+  "q1.noIf": "Every case is different, like guest emails, photos or tomorrow’s demand.",
   "q1.whyShort": "AI only helps when a job needs judgement. If fixed rules can do the job, ordinary software is cheaper and more reliable.",
   "q1.guard": "Think about the job itself, not how you do it today. If you use rules now only because nothing better existed (for example price rules), answer Not sure.",
   "q2.yesIf": "It happens often or costs a lot, for example many cases a week, or many staff hours or much revenue involved.",
-  "q3.whyShort": "AI works from your data. If the data is missing or out of date, the tool gives wrong answers that sound sure.",
-  "q4.yesIf": "A person can check the result before it is used, or a mistake is easy to put right.",
-  "q4.whyShort": "AI sometimes makes mistakes, so you need a way to catch them before they hurt anyone.",
+  "q3.title": "Information to learn from",
+  "q3.q": "Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?",
+  "q3.yesIf": "You have hundreds of past cases stored digitally.",
+  "q3.noIf": "It happens rarely, or nothing was ever recorded.",
+  "q3.whyShort": "AI learns from examples; without many past cases it has nothing to learn from.",
+  "q4.title": "Some mistakes are acceptable",
+  "q4.q": "Is it acceptable if the result is right most of the time, but not every time?",
+  "q4.yesIf": "A wrong answer now and then can be caught or does little harm.",
+  "q4.noIf": "Every single result must be exactly right, for example a legal or safety decision.",
+  "q4.whyShort": "AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.",
   "q5.q": "Do you know which KPI should improve, and what it is today?",
   "m2.why": "AI keeps costing money after launch: the subscription, fees based on use, connecting it to your systems, training, and staff time to check results.",
   "m3.q": "Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?",

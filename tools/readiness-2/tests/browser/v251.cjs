@@ -1,7 +1,7 @@
 // Browser proof for "Do you need AI?" v2.5.1 (24 Nov 2026), desktop 1280 and phone 390:
-// 1. the link bridge: inside the hub a click on an external link in a frame (readiness-2 detail layer, Use-Case Catalogue,
-//    AI Register) posts { hub: 'link', url } and the hub creates and clicks a top-level <a target="_blank"> (a popup fires locally);
-//    the hub ignores bad urls; standalone, links are ordinary links (a popup fires, no message);
+// 1. links (v2.6, replacing the v2.5.1 link bridge): inside the hub the readiness-2 detail layer is drawn by the hub on its main page
+//    and a source name there opens its url; the catalogue and the register keep plain links and send nothing; standalone, links
+//    are ordinary links (a popup fires);
 // 2. the result's "Is this an AI problem?" card: five rows (title, answer, meaning), the verdict word, no big empty box;
 // 3. screenshots (deviceScaleFactor 2) to reports/readiness-2-screens/v25/ (v251-*.png).
 // The real claude.ai sandbox cannot be tested locally.
@@ -28,7 +28,7 @@ async function fill(f, o) {
   await f.evaluate(o => {
     const R = window.Readiness2;
     R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('hotel', { k: 'name', v: 'Hotel Fixture' }); R.send('next');
-    const Q = Object.assign({ q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }, o.Q || {}); Object.keys(Q).forEach(id => R.send('answer', { id, value: Q[id] })); R.send('next');
+    const Q = Object.assign({ q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }, o.Q || {}); /* v2.6: Q1 No goes on */ Object.keys(Q).forEach(id => R.send('answer', { id, value: Q[id] })); R.send('next');
     for (let i = 1; i <= 10; i++) R.send('answer', { id: 'm' + i, value: 'y' });
     R.send('next');
     const use = o.use || 'gx-2', D = { 'gx-2': ['Guest-facing', 'gx'], 'gx-1': ['Guest-facing', 'gx'] }[use];
@@ -51,26 +51,14 @@ const hubFrame = async (p, tool) => {
   const f = await h.contentFrame(); await f.waitForLoadState('load'); await p.waitForFunction(t => { const x = document.querySelector('#hubFrame iframe[title="' + t + '"]'); return x && x.contentWindow.location.pathname.includes('/' + t + '/') && x.contentDocument.readyState === 'complete'; }, tool);
   return h.contentFrame();
 };
-/* Click a link in a frame; returns { popup url, messages, clicked } */
-async function clickLink(ctx, p, f, sel) {
-  const href = await f.$eval(sel, a => a.href);
-  const before = await p.evaluate(() => window.__links.length);
-  let [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 1500 }).catch(() => null), f.click(sel)]);
-  await p.waitForTimeout(150);
-  // inside the hub: no popup from the frame; the hub shows its link panel and the person clicks the real link there
-  const panel = await p.$('#hub-link:not([hidden])'); let panelHref = null;
-  if (panel) { panelHref = await p.$eval('#hub-link-go', a => a.href); [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), p.click('#hub-link-go')]); await p.waitForTimeout(100); }
-  const r = await p.evaluate(() => ({ links: window.__links.slice(), clicked: [], n: window.HFTPHub ? window.HFTPHub.state().links : 0 }));
-  r.panelHref = panelHref; r.panelGone = panel ? await p.$eval('#hub-link', x => x.hidden) : null;
-  if (pop) await pop.close().catch(() => {});
-  return { href, pop: pop ? pop.url() : null, newMsgs: r.links.slice(before), clicked: r.clicked, n: r.n, panelHref: r.panelHref, panelGone: r.panelGone };
-}
 
 (async () => {
   const b = await chromium.launch({ args: ['--disable-features=LocalNetworkAccessChecks,PrivateNetworkAccessRespectPreflightResults'] });
 
   for (const [w, touch, tag] of [[1280, false, 'desktop'], [390, true, 'phone']]) {
-    // ---------- 1. inside the hub ----------
+    // ---------- 1. inside the hub (v2.6: changed expectation, the link bridge is gone) ----------
+    // readiness-2: the hub draws the detail layer on its main page, where a source name is a real link (tests/browser/v26.cjs
+    // proves the layer in full). The catalogue and the register keep plain links: no message is sent, the browser opens them.
     {
       const { ctx, p } = await mk(b, w, touch);
       await p.goto(BASE + 'index.html'); await spyHub(p);
@@ -78,41 +66,37 @@ async function clickLink(ctx, p, f, sel) {
       const f = await hubFrame(p, 'readiness-2');
       await f.waitForFunction(() => window.Readiness2 && window.Readiness2.state().inHub === true, null, { timeout: 15000 });
       await fill(f, { where: true, use: 'gx-2' });
-      await f.click('[data-act="detail"][data-detail="gx-2"]'); await f.waitForSelector('#detail[open] #detail-srcs');
-      const types = await f.$$eval('#detail-srcs li', l => l.map(x => x.getAttribute('data-src')));
-      const r = await clickLink(ctx, p, f, '#detail-srcs li a');
-      ok(r.newMsgs.length === 1 && r.newMsgs[0] === r.href, tag + ' hub/readiness-2: the click posts { hub: "link", url } with the source url (' + r.href + ')');
-      ok(r.panelHref === r.href && r.panelGone === true, tag + ' hub/readiness-2: the hub shows its link panel with that url; a click on its link opens it and closes the panel');
-      ok(r.pop === r.href && r.n === 1, tag + ' hub/readiness-2: a popup opens with that url (' + r.pop + ')');
+      await f.click('[data-act="detail"][data-detail="gx-2"]'); await p.waitForSelector('#hub-detail[open] #hub-detail-srcs');
+      ok(!(await f.evaluate(() => document.querySelector('#detail').open)), tag + ' hub/readiness-2: the frame does not draw its own layer');
+      const types = await p.$$eval('#hub-detail-srcs li', l => l.map(x => x.getAttribute('data-src')));
       ok(types.includes('c') && types.includes('h') && types.includes('r'), tag + ': gx-2 shows company, hotel and study sources');
-      // every source link of the layer: one link each, the message for each
-      const n = await f.$$eval('#detail-srcs li a', l => l.length), m = await f.$$eval('#detail-srcs li', l => l.length);
-      ok(n === m, tag + ': one link per source in the layer (' + n + ')');
+      const sel = '#hub-detail-srcs li a', href = await p.$eval(sel, a => a.href);
+      const [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), p.click(sel)]);
+      ok(pop && pop.url() === href, tag + ' hub/readiness-2: the source name on the main page opens its url (' + (pop && pop.url()) + ')');
+      if (pop) await pop.close().catch(() => {});
+      ok((await p.evaluate(() => window.__links.length)) === 0, tag + ' hub/readiness-2: no { hub: "link" } message');
       if (!touch) await p.screenshot({ path: path.join(OUT, 'v251-detail-gx2-hub-desktop.png') });
-      // bad urls from a frame are ignored by the hub (no anchor, no popup)
-      const before = (await p.evaluate(() => window.HFTPHub.state().links));
-      const pops = []; const onPage = x => pops.push(x); ctx.on('page', onPage);
-      await f.evaluate(() => { for (const url of ['javascript:alert(1)', 'data:text/html,x', '/index.html', 'https://user:pw@x.com/', 'https://x.com/' + 'a'.repeat(3000), 42]) window.parent.postMessage({ hub: 'link', url }, location.origin); });
-      await p.waitForTimeout(300); ctx.off('page', onPage);
-      ok((await p.evaluate(() => window.HFTPHub.state().links)) === before && pops.length === 0, tag + ' hub: bad urls open nothing');
-      // a message from the top page itself (not a hub frame) is ignored
-      await p.evaluate(() => window.postMessage({ hub: 'link', url: 'https://example.com/' }, location.origin)); await p.waitForTimeout(150);
-      ok((await p.evaluate(() => window.HFTPHub.state().links)) === before, tag + ' hub: a link message not from a hub frame is ignored');
-      // the catalogue in the hub
+      await p.keyboard.press('Escape'); await p.waitForFunction(() => !document.querySelector('#hub-detail[open]'));
+      // the catalogue in the hub: a plain link, nothing sent to the hub
       await p.click('#hubBar button[data-tool="use-case-catalogue"]');
       const cf = await hubFrame(p, 'use-case-catalogue');
       await cf.waitForFunction(() => window.Catalogue); await cf.evaluate(() => window.Catalogue.go('rm')); await cf.waitForTimeout(300);
       await cf.waitForSelector('#d-rm .usrc a[target="_blank"]', { state: 'attached' });
       await cf.$eval('#d-rm .usrc a[target="_blank"]', a => a.scrollIntoView());
-      const rc = await clickLink(ctx, p, cf, '#d-rm .usrc a[target="_blank"]');
-      ok(rc.newMsgs.length === 1 && rc.newMsgs[0] === rc.href && rc.pop === rc.href, tag + ' hub/catalogue: link sent to the hub and opened from the top (' + rc.href + ')');
+      const ch = await cf.$eval('#d-rm .usrc a[target="_blank"]', a => a.href);
+      const [cpop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), cf.click('#d-rm .usrc a[target="_blank"]')]);
+      ok(cpop && cpop.url() === ch && (await p.evaluate(() => window.__links.length)) === 0, tag + ' hub/catalogue: a plain link (opens locally), no message to the hub (' + ch + ')');
+      if (cpop) await cpop.close().catch(() => {});
       // the AI Register in the hub (the watch list's law links)
       await p.click('#hubBar button[data-tool="register"]');
       const rf = await hubFrame(p, 'register');
       await rf.waitForFunction(() => window.HotelAIRegister); await rf.waitForTimeout(400);
       await rf.click('#tab-watch'); await rf.waitForSelector('.wcard a[target="_blank"]');
-      const rr = await clickLink(ctx, p, rf, '.wcard a[target="_blank"]');
-      ok(rr.newMsgs.length === 1 && rr.newMsgs[0] === rr.href && rr.pop === rr.href, tag + ' hub/register: link sent to the hub and opened from the top (' + rr.href + ')');
+      const rh = await rf.$eval('.wcard a[target="_blank"]', a => a.href);
+      const [rpop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), rf.click('.wcard a[target="_blank"]')]);
+      ok(rpop && rpop.url() === rh && (await p.evaluate(() => window.__links.length)) === 0, tag + ' hub/register: a plain link (opens locally), no message to the hub (' + rh + ')');
+      if (rpop) await rpop.close().catch(() => {});
+      ok(!(await p.$('#hub-link')), tag + ' hub: no link panel');
       ok(!p._errs.length, tag + ' hub: no page errors ' + JSON.stringify(p._errs.slice(0, 3)));
       await ctx.close();
     }
@@ -136,16 +120,16 @@ async function clickLink(ctx, p, f, sel) {
       await ctx.close();
     }
     // ---------- 3. the "Is this an AI problem?" card ----------
-    for (const [name, Q, head] of [['notsure', { q1: 'u', q4: 'u' }, 'Find out first.'], ['no', { q4: 'n', q5: 'n' }, 'Define success first.']]) {
+    for (const [name, Q, head] of [['notsure', { q1: 'u', q4: 'u' }, 'Find out first.'], ['no', { q4: 'n', q5: 'n' }, 'A rule-based tool or a person is the better choice.'] /* v2.6: Q4 before Q5 */]) {
       const { ctx, p } = await mk(b, w, touch);
       await p.goto(BASE + 'readiness-2/index.html'); await p.waitForFunction(() => window.Readiness2);
       await fill(p, { Q, use: 'gx-2' });
       ok((await p.evaluate(() => window.Readiness2.state().step)) === 'result', tag + ' ' + name + ': on the result');
       const rows = await p.$$eval('#ai-rows li', l => l.map(x => ({ q: x.getAttribute('data-q'), a: x.getAttribute('data-a'), t: x.textContent.replace(/\s+/g, ' ').trim() })));
-      ok(rows.length === 5 && rows.map(r => r.t.split(/Yes|No|Not sure/)[0].trim()).join('|') === 'Complex judgement|Return|Information ready|Safety net|Proof', tag + ' ' + name + ': five rows with titles ' + JSON.stringify(rows.map(r => r.t.slice(0, 24))));
+      ok(rows.length === 5 && rows.map(r => r.t.split(/Yes|No|Not sure/)[0].trim()).join('|') === 'Complex judgement|Return|Information to learn from|Some mistakes are acceptable|Proof', tag + ' ' + name + ': five rows with titles ' + JSON.stringify(rows.map(r => r.t.slice(0, 24))));
       ok((await p.$eval('#ai-head', e => e.textContent)) === head, tag + ' ' + name + ': the verdict word ' + head);
       if (name === 'notsure') ok(/To find out: yes if/.test(rows[0].t) && /Ask the vendor or IT\./.test(rows[0].t) && /Ask the department head\./.test(rows[3].t) && /^Return ?Yes ?Met:/.test(rows[1].t), tag + ': Not sure rows say what to find out and whom to ask');
-      else ok(/AI as an assistant only/.test(rows[3].t) && /Define success first\./.test(rows[4].t), tag + ': No rows give the consequence (Q4 No = assistant only)');
+      else ok(/A rule-based tool or a person is the better choice\./.test(rows[3].t) && /Define success first\./.test(rows[4].t), tag + ': No rows give the consequence (v2.6: Q4 No = a rule-based tool or a person)');
       const g = await p.evaluate(() => { const a = document.getElementById('sum-ai').getBoundingClientRect(), w = document.getElementById('sum-where').getBoundingClientRect(), last = document.querySelector('#ai-rows li:last-child').getBoundingClientRect();
         return { aw: a.width, ww: w.width, stacked: w.top >= a.bottom - 1, slack: a.bottom - last.bottom, noH: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1 }; });
       ok(g.stacked && Math.abs(g.aw - g.ww) < 2 && g.slack < 60 && g.noH, tag + ' ' + name + ': the card is full width above "Where it sits", sized to content (slack ' + Math.round(g.slack) + 'px), no sideways scroll');

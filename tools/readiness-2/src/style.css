@@ -362,7 +362,7 @@ dialog.detail .dbody p{margin:0 0 10px}
 dialog.detail .dbody h3{font-size:1rem;margin:18px 0 6px}
 dialog.detail .dsrcs{padding-left:1.1em;margin:0}
 dialog.detail .dsrcs li{margin:0 0 8px}
-dialog.detail .dsrcs a{display:inline-block;min-height:44px;line-height:44px;margin-top:-12px;margin-bottom:-12px}
+dialog.detail .dsrcs a{padding:12px 0;margin:-12px 0} /* v2.6: the name is the link and may run over lines; the padding gives the 44 px target without breaking the line */
 dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px;vertical-align:1px}
 @media (max-width:640px){ dialog.detail{width:100vw;margin:0;box-shadow:none} dialog.detail .dhead{padding:12px 16px 10px} dialog.detail .dbody{padding:10px 16px 24px} }
 @media print{ dialog.detail{display:none!important} }

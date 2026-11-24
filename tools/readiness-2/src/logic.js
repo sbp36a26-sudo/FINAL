@@ -8,15 +8,34 @@
       "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
       Rules v2.5 (24 Nov 2026, owner decisions O1 to O4 of reports/Council - Do you need AI v2.4.md): two caps on "Planned" and three
       holds, each a named constant in JUDGEMENT; points unchanged.
+      Rules v2.6 (24 Nov 2026, owner): question 1 is asked the other way round (Yes = fixed rules can do it = stop); questions 3
+      and 4 are new, and a No on either holds the top verdict like a No on 2 or 5 (the "assistant only" condition is gone).
    3. resultModel(rec, env): every word of the result page. The screen and the PDF read it, so they agree. The Team tab reads
       evaluate(), method(), open() and answerWord(). */
 (function (root) {
   'use strict';
   var C = root.R2Content;
-  var RULES = 'v2.5 (24 Nov 2026)';
+  var RULES = 'v2.6 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
-  var Q1_UNSURE = 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.';
+  var Q1_UNSURE = 'If question 1 turns out to be Yes, this is not suitable for AI: rules or ordinary automation will do it.';
+  /* v2.6: the answer to a step 2 question that holds (stopOn for question 1: 'y'; 'n' for the others). */
+  function badAns(id) { return (QBY[id] && QBY[id].stopOn) || 'n'; }
+  /* ---------- v2.6: the step 2 question set (QV) and records saved before it ----------
+     QV 2: since v2.6 (question 1 turned round, questions 3 and 4 new). A record, a file's check or a team copy without qv === QV
+     holds its step 2 answers in the old meaning. legacyQ(Q) turns question 1 round (Yes ↔ No; Not sure stays) and drops the old
+     questions 3 and 4 (they asked something else; their answers are not carried over). dropped: the ids that had an answer.
+     Used once per record: R2Flow.cleanRec sets qv, the Team tab reads qv on each copy. */
+  var QV = 2;
+  function legacyQ(Q) {
+    Q = Q && typeof Q === 'object' ? Q : {}; var out = {}, dropped = [];
+    QIDS.forEach(function (id) {
+      var a = Q[id]; if (!Q_OK[a]) return;
+      if (id === 'q3' || id === 'q4') { dropped.push(id); return; }
+      out[id] = id === 'q1' ? ({ y: 'n', n: 'y', u: 'u' })[a] : a;
+    });
+    return { Q: out, dropped: dropped };
+  }
   var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
@@ -41,19 +60,18 @@
                            team's sheet flags as handling sensitive personal data. The tool cannot check the legal items, so the
                            best verdict is "Almost ready" and the result says why. false: the line under the verdict only.
      CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 (C-R-I-S-P) holds back the top verdict, with
-                           the reason shown. false: it is carried as a condition only (rules v2). Since v2.5 it covers
-                           questions 2, 3 and 5; question 4 has its own switch below.
+                           the reason shown. false: it is carried as a condition only (rules v2). (v2.5 left question 4 out
+                           with its own switch, Q4_NO_HOLDS_TOP; v2.6, owner: the new question 4 holds like the others and the
+                           switch is gone.)
      Rules v2.5 (24 Nov 2026), owner decisions on the council of v2.4 (team judgement, not tested with hotels):
      ALMOST_MIN_MUST_YES   (O1 c) "Almost ready" needs at least this share (%) of the must-haves at Yes; below it the verdict is
                            "Not ready yet", because "Planned" is not done yet. 0 switches the cap off.
      READY_MIN_TAIL_YES    (O1 c) "Ready to start a pilot" needs at least this share (%) of the tailored questions that were
                            answered (Yes, Planned or No) at Yes; otherwise the top verdict is held back. 0 switches it off.
      NOT_SURE_HOLDS_TOP    (O2 b) true: any "Not sure" in step 2 holds the top verdict back, with the reason shown.
-     Q4_NO_HOLDS_TOP       (O3 b) false: a No on question 4 (safety net) does not hold the top verdict; it is shown as a
-                           condition ("Use it as an assistant only ..."). true: it holds like a No on questions 2, 3, 5.
      NONE_BEST_ALMOST      (O4 b) true: with "None of these fits" the best verdict is "Almost ready" (nothing to pilot). */
   var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,
-    ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true };
+    ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true };
   /* Does the use have legal items to check first? high: the AI Register's provisional label is High-risk (TQ.highRisk, set by
      build.mjs from the register's label file); sens: the team's sheet flags sensitive personal data (the add-on question). */
   function legalFlags(TQ, useId) {
@@ -62,22 +80,23 @@
     return { high: high, sens: sens, any: high || sens };
   }
 
-  /* ---------- the five questions (v1 rules, unchanged) ----------
-     Precedence Q1 > Q2 > Q3 > Q5; Q4 is a modifier; "Not sure" sits below any No. Only Q1 No stops. */
+  /* ---------- the five questions ----------
+     v2.6: Precedence Q1 > Q2 > Q3 > Q4 > Q5; "Not sure" sits below any No. Only Q1 Yes stops (fixed rules can do it).
+     (Before v2.6 Q1 No stopped and Q4 No was a modifier, "assistant only".) */
   function verdict(Q) {
     Q = Q || {};
     var a = function (id) { return Q_OK[Q[id]] ? Q[id] : ''; };
     var complete = QIDS.every(function (id) { return !!a(id); });
-    if (a('q1') === 'n') return { key: 'stop', head: C.VERDICT.stop, second: '', complete: complete, stop: true, carried: [], find: [], q1Unsure: false };
-    var carried = ['q2', 'q3', 'q5', 'q4'].filter(function (id) { return a(id) === 'n'; }).map(function (id) { return { id: id, text: QBY[id].outcome, add: QBY[id].add || '' }; });
+    if (a('q1') === badAns('q1')) return { key: 'stop', head: C.VERDICT.stop, second: '', complete: complete, stop: true, carried: [], find: [], q1Unsure: false };
+    var carried = ['q2', 'q3', 'q4', 'q5'].filter(function (id) { return a(id) === 'n'; }).map(function (id) { return { id: id, text: QBY[id].outcome, add: QBY[id].add || '' }; });
     var find = QIDS.filter(function (id) { return a(id) === 'u'; }).map(function (id) { return { id: id, text: QBY[id].short, who: QBY[id].who }; });
     var key, second = '';
     if (a('q2') === 'n') key = 'worth';
     else if (a('q3') === 'n') { key = 'data'; if (a('q5') === 'n') second = 'Then define success.'; }
+    else if (a('q4') === 'n') key = 'exact';
     else if (a('q5') === 'n') key = 'success';
     else if (find.length) key = 'find';
     else if (!complete) key = 'open';
-    else if (a('q4') === 'n') key = 'assist';
     else key = 'go';
     return { key: key, head: key === 'open' ? 'Answer all five questions to see the verdict.' : C.VERDICT[key], second: second, complete: complete, stop: false,
       carried: carried, find: find, q1Unsure: a('q1') === 'u' };
@@ -85,7 +104,7 @@
   /* The verdict as the result words it. onResult: the all-Yes headline drops its "Next: ...". */
   function verdictText(v, onResult) {
     var head = onResult && v.key === 'go' ? C.VERDICT.goDone : v.head;
-    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q5: 'success' }[c.id]] === v.head); });
+    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q4: 'exact', q5: 'success' }[c.id]] === v.head); });
     return { head: head, second: v.second,
       carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Conditions carried forward') : '',
       carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
@@ -95,18 +114,21 @@
 
   /* v2.5.1 (owner, 24 Nov 2026): what each of the five answers means for this decision, for the result's "Is this an AI problem?"
      card and the PDF. Only the questions' own words (yesIf, noIf, outcome, add, who; Q1 Not sure: the existing q1Unsure sentence).
-     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo }:
-       Yes       line = "Met: <the Yes-if test>"
-       No        line = the consequence already defined (outcome + add; Q4 No = assistant only)
-       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what a No would mean */
+     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo, good: true | false | null }:
+       the good answer (No for question 1 since v2.6, Yes for the others)  line = "Met: <its test>", good true
+       the other answer   line = the consequence already defined (outcome + add), good false
+       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what the holding answer would mean, good null */
   function lcFirst(t) { t = String(t || ''); return /^[A-Z](?:[a-z]|\s)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
   function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
   function aiMeaning(id, ans) {
     var q = QBY[id], a = Q_OK[ans] ? ans : '';
-    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '' };
+    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null };
     if (!q) return o;
-    if (a === 'y') o.line = 'Met: ' + lcFirst(q.yesIf);
-    else if (a === 'n') o.line = q.outcome + (q.add ? ' ' + q.add : '');
+    var bad = badAns(id);
+    if (a === 'y' || a === 'n') {
+      o.good = a !== bad;
+      o.line = o.good ? 'Met: ' + lcFirst(a === 'y' ? q.yesIf : q.noIf) : q.outcome + (q.add ? ' ' + q.add : '');
+    }
     else if (a === 'u') {
       o.line = 'To find out: yes if ' + lcFirst(noStop(q.yesIf)) + '; no if ' + lcFirst(noStop(q.noIf)) + '.';
       o.ask = 'Ask ' + q.who + '.';
@@ -132,16 +154,28 @@
     if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
     return o;
   }
+  /* v2.6: the detail layer's content as plain JSON (title, kicker, catName, draft, draftText, does, how, level, task, srcs, foot),
+     one source for the page's own dialog and the hub's layer on the main page ({ hub: 'detail' }, tools/hub/CONTRACTS.md).
+     D: the page's data block (ex, detail); u: the catalogue use; d: its department. Strings only, except srcs. */
+  function detailData(D, u, d, TQ) {
+    var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
+    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u),
+      draft: tu && tu.draft ? C.DRAFT + '.' : '', draftText: tu && tu.draft ? 'This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.' : '',
+      does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u), task: String(u.task || ''),
+      srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
+      foot: 'From the hub’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+  }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  /* The list item the detail layer shows: name (a "Hotel" tag for 'h'), note, and one "Open the source" link where a URL exists. */
-  function sourceRow(s, refs) {
-    var x = sourceItem(s, refs);
-    var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
+  /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
+     (no frame interception); a "Hotel" tag for 'h'; the note; then the address, selectable, with "Copy address". */
+  function sourceRow(s, refs) { return sourceRowItem(sourceItem(s, refs)); }
+  /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). */
+  function sourceRowItem(x) {
+    x = x || {}; x = { type: x.type, name: String(x.name || ''), note: String(x.note || ''), url: HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '' };
+    var nm = x.url ? '<a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.name) + '</a>' : escH(x.name);
     /* a plain link ('l') is a sentence, not a name: not set in bold */
-    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
-      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' +
-        /* 24 Nov 2026: the claude.ai viewer may refuse to open a link from inside the hub, so the address is also shown, selectable, with a copy button */
-        '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
+    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
+      (x.url ? '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -197,7 +231,7 @@
        notready  any must-have at No, the score below 50%, or (v2.5, O1) fewer than half the must-haves at Yes
        ready     every must-have Yes, the score 75% or more, and fewer than a quarter of the questions unknown,
                  unless a switch in JUDGEMENT holds the top verdict back: legal items to check; a No carried from step 2
-                 (questions 2, 3, 5); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
+                 (questions 2 to 5, v2.6); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
                  (v2.5, O1); "None of these fits" (v2.5, O4)
        almost    everything else (50 to 74%; a must-have not Yes but none at No; 75%+ with a quarter or more unknown; a held top verdict)
      ev.reason: the plain sentence that heads "Start with" ("Because ..."). ev.held: what held the top verdict back, in this order:
@@ -223,7 +257,7 @@
     var namesOf = function (st) { return items.filter(function (it) { return it.grp === 'must' && (st === 'open' ? it.state !== 'yes' : it.state === st); }).map(function (it) { return it.name; }).join('; '); };
     var missing = n_(must.no, 'must-have is', 'must-haves are') + ' missing: ' + namesOf('no') + '.';
     var v = verdict(rec.Q), lf = legalFlags(TQ, rec.use), none = rec.use === 'none', held = [];
-    var carried = v.carried.filter(function (x) { return x.id !== 'q4' || JUDGEMENT.Q4_NO_HOLDS_TOP; });
+    var carried = v.carried; // v2.6: every No on questions 2 to 5
     var level, why, reason, kind, box = '';
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
@@ -269,7 +303,7 @@
       else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
     }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
-      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }), q4No: !!(rec.Q && rec.Q.q4 === 'n' && !v.stop),
+      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
       mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
   /* “Complex judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
@@ -312,7 +346,6 @@
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
     if ((Q.q5 === 'n' || Q.q5 === 'u') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
-    if ((Q.q3 === 'n' || Q.q3 === 'u') && A.m7 === 'y') o.m7 = C.CONSIST.m7;
     return o;
   }
 
@@ -421,7 +454,7 @@
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
     if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
     if (JUDGEMENT.LEGAL_HOLDS_TOP) out.push('Team judgement: a use that the AI Register labels high-risk, or that the team’s sheet flags as handling sensitive personal data, does not get the top verdict here, because this tool cannot check its legal items.');
-    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3 or 5 of step 2 holds the top verdict back until it is settled.' + (JUDGEMENT.Q4_NO_HOLDS_TOP ? ' So does a No on question 4.' : ' A No on question 4 does not: it means the tool is used as an assistant only, which the result shows as a condition.'));
+    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
     if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
     if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement (rules v2.5): a “Not sure” in step 2 holds the top verdict back until it is found out.');
@@ -485,7 +518,7 @@
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
       /* v2.5.1: each answer also carries what it means (aiMeaning): state, line, ask, ifNo. */
-      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
+      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, good: x.good, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
@@ -494,7 +527,7 @@
       levelName: C.LEVELS[ev.level].name,
       levelLine: levelLine(ev),
       reason: ev.reason, held: ev.held.slice(), law: ev.legal.any ? C.LAW_LINE : '',
-      boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '', assist: ev.q4No ? C.ASSIST_LINE : '',
+      boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
       cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
       mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: tu && tu.draft ? C.DRAFT + '. These questions come from a draft row the team has not reviewed yet.' : '',
@@ -527,9 +560,9 @@
     return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
-  var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
+  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,

@@ -35,6 +35,16 @@ Each question is worded so that **Yes points towards AI**. Each one comes from g
 | Can errors be caught? | Brynjolfsson & Mitchell criterion 6; PAIR ("Minimizing costly errors"); UK AI Playbook ("fully automated decision making"); AI Act Art. 14 and Art. 26(2) |
 | Is success defined? | Brynjolfsson & Mitchell criterion 3; PAIR success template; NIST MANAGE 1.1; readiness check F2 and F3 |
 
+### Added note, v2.6 (24 Nov 2026): owner decisions on step 2
+
+The tool's step 2 was changed by the owner on 24 Nov 2026 (tool `tools/readiness-2`, CHANGELOG v2.6). The sections below keep the research as it was written on 23 Nov 2026.
+
+- **Question 1** now reads "Can each case be fixed with an “if this, then that” rule?". Its meaning is turned round: **Yes** means fixed rules can do the job, so it is not an AI problem (the stop screen); **No** means the job needs judgement and is worth exploring. The grounding is unchanged (AI Act Art. 3(1) and recital 12; Commission guidelines C(2025) 5053; PAIR; NIST MANAGE 2.1). Answers saved before the change are turned round once on load, so they keep their meaning.
+- **Question 3 "Information to learn from"** replaces "Is the data there?": "Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?" Yes if you have hundreds of past cases stored digitally; No if it happens rarely or nothing was ever recorded. Why: AI learns from examples; without many past cases it has nothing to learn from.
+- **Question 4 "Some mistakes are acceptable"** replaces "Can errors be caught?": "Is it acceptable if the result is right most of the time, but not every time?" Yes if a wrong answer now and then can be caught or does little harm; No if every single result must be exactly right (a legal or safety decision). Why: AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice. The old "AI as an assistant only" outcome is gone: checking results is must-have 6 (a named role checks the results).
+- **Source for both:** Brynjolfsson, E. & Mitchell, T. (2017), "What can machine learning do? Workforce implications", *Science* 358(6370), 1530–1534, doi 10.1126/science.aap8062 [opened, see Q3 and Q4 below]: criterion 2, "Large (digital) data sets exist or can be created containing input-output pairs"; criterion 6, "A tolerance for error and no need for provably correct or optimal solutions".
+- **Verdict:** a No on the new question 3 or 4 holds the top verdict like a No on question 2 or 5 (the reason is shown); Not sure holds it as before. Old answers to the former questions 3 and 4 are not carried over (they asked something else).
+
 ### Q1. Does the job need judgement on varied input that you could not write down as fixed if-then rules?
 
 Examples of varied input: free-text messages, speech, photos, or a forecast that has to learn from past patterns.

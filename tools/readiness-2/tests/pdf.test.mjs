@@ -67,20 +67,20 @@ sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', '
 let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8 draft'); ok(x.t.includes('Draft questions: team to review'), 'a draft use case says so in the PDF');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label') && x.pdf.blocks.filter(b => b.k === 'item').length === 10, '"None of these fits": must-haves only, said so; no vendor or label section');
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
-x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.m.ai.carried.every(c => x.t.includes(c)) && x.t.includes('If question 1 turns out to be No'), 'every carried condition (now under its answer, v2.5.1) and the Q1 "Not sure" line');
+x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.m.ai.carried.every(c => x.t.includes(c)) && x.t.includes('If question 1 turns out to be Yes'), 'every carried condition (now under its answer, v2.5.1) and the Q1 "Not sure" line');
 r = mk('gx-2', [], []); r.snaps = [L.snapshot(L.evaluate(mk('gx-2', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z', 'gx-2'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z', 'gx-2')];
 x = sameWords(r, 'since last time'); ok(x.t.includes('Since last time (20 Nov 2026)') && x.t.includes('Verdict: Not ready yet → Ready to start a pilot.'), 'the return-visit lines');
 x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed', country: 'Other' } }), 'no name'); ok(x.t.includes('Hotel: Managed or franchised · Other (outside the EU)') && !x.t.includes('Filled in by'), 'no hotel name, no role');
 // random sets over every use case: the words always match
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
 const uses = Object.keys(TQ.uses); let n = 0;
-for (let i = 0; i < 220; i++) { const use = i < 99 ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); sameWords(mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k', 'n'])), { Q: { q1: pick(['y', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }), 'random ' + i + ' ' + use); n++; }
+for (let i = 0; i < 220; i++) { const use = i < 99 ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); sameWords(mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k', 'n'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }), 'random ' + i + ' ' + use); n++; }
 ok(n === 220, '220 answer sets (every use case at least once) checked word for word');
 
 // ---------- the stop version ----------
-r = finished(F, D, '', { Q: { q1: 'n', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf);
-ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered No to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Is each case different enough that fixed “if this, then that” rules cannot handle it?', 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
-ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: No', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
+r = finished(F, D, '', { Q: { q1: 'y', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf); // v2.6: Q1 Yes stops
+ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered Yes to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Can each case be fixed with an “if this, then that” rule?', 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
+ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
 let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
 
 // ---------- drawing ----------
@@ -112,10 +112,10 @@ for (const [tag, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'p
 }
 // page count and layout over many answer sets
 seed = 5; let pc = [];
-for (let i = 0; i < 99; i += 3) { const use = uses[i], rec = mk(use, F.MUST_IDS.map(() => pick(['y', 'pl', 'n', 'k'])), TQ.uses[use].qs.map(() => pick(['y', 'pl', 'n', 'k'])), { Q: { q1: pick(['y', 'u']), q2: pick(['y', 'n', 'u']), q3: 'y', q4: pick(['y', 'n']), q5: 'y' } });
+for (let i = 0; i < 99; i += 3) { const use = uses[i], rec = mk(use, F.MUST_IDS.map(() => pick(['y', 'pl', 'n', 'k'])), TQ.uses[use].qs.map(() => pick(['y', 'pl', 'n', 'k'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: 'y', q4: pick(['y', 'n']), q5: 'y' } });
   const mdl = P.model(rec, env); d = drawn(mdl); pc.push(d.r.pages); noOverflow(d.log, 'layout ' + use); layout(mdl, d, 'layout ' + use); }
 ok(Math.min(...pc) >= 4 && Math.max(...pc) <= 9, 'page count sane over 33 use cases: ' + Math.min(...pc) + ' to ' + Math.max(...pc) + ' pages');
-d = drawn(P.model(finished(F, D, '', { Q: { q1: 'n', q2: 'n', q3: 'n', q4: 'n', q5: 'n' }, A: {}, step: 'stop' }), env)); ok(d.r.pages === 1, 'stop PDF with five No answers: still one page');
+d = drawn(P.model(finished(F, D, '', { Q: { q1: 'y', q2: 'n', q3: 'n', q4: 'n', q5: 'n' }, A: {}, step: 'stop' }), env)); ok(d.r.pages === 1, 'stop PDF with Q1 Yes and four No answers (v2.6: was five No): still one page');
 ok(P.safe('é ł ø € › “x” → ✓ 汉') === 'é ł ø € › “x” → ? ?', 'characters the font lacks print as "?"');
 // ---------- file names ----------
 ok(P.fileName('Hôtel de la Paix', '2026-11-24') === 'Do-you-need-AI_Hotel-de-la-Paix_2026-11-24.pdf' && P.fileName('', '2026-11-24') === 'Do-you-need-AI_assessment_2026-11-24.pdf' && P.fileName('../../x<y>|z', '2026-11-24') === 'Do-you-need-AI_x-y-z_2026-11-24.pdf', 'file names: safe ASCII');

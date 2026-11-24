@@ -373,7 +373,7 @@ dialog.detail .dbody p{margin:0 0 10px}
 dialog.detail .dbody h3{font-size:1rem;margin:18px 0 6px}
 dialog.detail .dsrcs{padding-left:1.1em;margin:0}
 dialog.detail .dsrcs li{margin:0 0 8px}
-dialog.detail .dsrcs a{display:inline-block;min-height:44px;line-height:44px;margin-top:-12px;margin-bottom:-12px}
+dialog.detail .dsrcs a{padding:12px 0;margin:-12px 0} /* v2.6: the name is the link and may run over lines; the padding gives the 44 px target without breaking the line */
 dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px;vertical-align:1px}
 @media (max-width:640px){ dialog.detail{width:100vw;margin:0;box-shadow:none} dialog.detail .dhead{padding:12px 16px 10px} dialog.detail .dbody{padding:10px 16px 24px} }
 @media print{ dialog.detail{display:none!important} }
@@ -1460,16 +1460,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   'use strict';
 
   /* ---------- Step 2: is this an AI problem? (research A). v2 (owner, 24 Nov 2026): simpler wording, one short sentence each;
-     Q2 is the owner's wording of 23 Nov and stays. The "Why this matters" texts are unchanged. ---------- */
+     Q2 is the owner's wording of 23 Nov and stays.
+     v2.6 (owner, 24 Nov 2026): question 1 is asked the other way round ("Can each case be fixed with an if-then rule?"): Yes now
+     means fixed rules can do it, so Yes is the stop answer (stopOn: 'y'); for every other question No is the answer that holds.
+     Questions 3 and 4 are new (Brynjolfsson & Mitchell 2017: large digital sets of examples; a task that tolerates errors).
+     Records saved before v2.6 are turned round on load (R2Logic.legacyQ; record field qv). ---------- */
   var QUESTIONS = [
-    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Complex judgement', yesIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.', noIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
-      q: 'Is each case different enough that fixed “if this, then that” rules cannot handle it?',
-      hint: 'Yes if every case is different, like guest emails, photos or tomorrow’s demand. No if you could write it as rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
+    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Complex judgement', stopOn: 'y',
+      yesIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
+      noIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.',
+      q: 'Can each case be fixed with an “if this, then that” rule?',
+      hint: 'Yes if you could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”. No if every case is different, like guest emails, photos or tomorrow’s demand.',
       guard: 'Think about the job itself, not how you do it today. If you use rules now only because nothing better existed (for example price rules), answer Not sure.', // v1.2, council BUILD NOW 1
       whyShort: 'AI only helps when a job needs judgement. If fixed rules can do the job, ordinary software is cheaper and more reliable.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
-      yes: 'Reading guest emails in five languages and drafting replies.',
-      no: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
+      yes: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
+      no: 'Reading guest emails in five languages and drafting replies.',
       outcome: 'Not suitable for AI: rules or ordinary automation will do it.', // v1.2 (owner B2): was "Not an AI problem: …"
       who: 'the vendor or IT' },
     { id: 'q2', short: 'Worth real money or hours', title: 'Return', yesIf: 'It happens often or costs a lot, for example many cases a week, or many staff hours or much revenue involved.', noIf: 'It is rare or small, so doing it better would save little.',
@@ -1481,23 +1487,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       no: 'A 12-room guesthouse with 10 email enquiries a week.',
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
-    { id: 'q3', short: 'Information is digital and current', title: 'Information ready', yesIf: 'The facts it needs are digital, in one place and kept up to date, such as bookings, past guest messages, rates or menus.', noIf: 'The facts are on paper, in one person’s head, or spread over systems that disagree.',
-      q: 'Is the information it needs digital and up to date?',
-      hint: 'Examples: bookings, past guest messages, rates, your hotel’s facts and menus.',
-      whyShort: 'AI works from your data. If the data is missing or out of date, the tool gives wrong answers that sound sure.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
-      why: 'If the facts sit on paper, in one person’s head or in five systems that disagree, the tool gives wrong answers with confidence.',
-      yes: 'One up-to-date fact sheet (rooms, hours, policies) for a guest chatbot.',
-      no: 'Allergen information only in the chef’s binder.',
-      outcome: 'Fix the data first.', add: 'Put the facts in one place and name who keeps them right. Then ask again.',
-      who: 'IT or the department head' },
-    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A person can check the result before it is used, or a mistake is easy to put right.', noIf: 'A mistake would reach a guest or staff member straight away and could hurt them.',
-      q: 'Can mistakes be caught before they harm anyone?',
+    /* v2.6 (owner): new question 3. Brynjolfsson & Mitchell 2017, criterion 2 ("large (digital) data sets ... containing input-output pairs"). */
+    { id: 'q3', short: 'Many past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
+      q: 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
       hint: '',
-      whyShort: 'AI sometimes makes mistakes, so you need a way to catch them before they hurt anyone.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
-      why: 'AI works on probabilities, so it is never right every time. Where a mistake would be costly, unsafe or unfair, AI can still help, but only as a draft a person checks.',
+      whyShort: 'AI learns from examples; without many past cases it has nothing to learn from.',
+      why: 'Machine learning works best where many past cases are stored digitally, each with the result that was right for it. A tool bought from a vendor may have learned from other hotels’ cases: ask the vendor what it learned from.',
+      yes: 'Two years of guest emails and the replies staff sent, kept in the mailbox.',
+      no: 'A special request that comes up a few times a year and was never written down.',
+      outcome: 'Too few examples to learn from.', add: 'Start keeping these cases digitally, or ask the vendor what examples its tool learned from. Then ask again.',
+      who: 'IT or the department head' },
+    /* v2.6 (owner): new question 4. Brynjolfsson & Mitchell 2017, criterion 6 ("a tolerance for error"). Checking results is must-have 6. */
+    { id: 'q4', short: 'Some mistakes are acceptable', title: 'Some mistakes are acceptable', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a legal or safety decision.',
+      q: 'Is it acceptable if the result is right most of the time, but not every time?',
+      hint: '',
+      whyShort: 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.',
+      why: 'AI works on probabilities, so it is never right every time. It suits a task where an occasional wrong result can be caught or does little harm.',
       yes: 'Draft replies to reviews that a manager approves before they go out.',
       no: 'Answering guests’ allergen questions on its own.',
-      outcome: 'AI as an assistant only: a person checks every result before it counts.',
+      outcome: 'A rule-based tool or a person is the better choice.',
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
@@ -1510,9 +1518,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       outcome: 'Define success first.', add: 'Write down the number and today’s figure, then come back.',
       who: 'the GM' }
   ];
+  /* v2.6: above the questions when a saved check lost its answers to the old questions 3 and 4 (rec.Qnew). */
+  var Q_CHANGED = 'Step 2 changed on 24 Nov 2026: question 1 is now asked the other way round (your answer was turned round with it, so it means the same), and questions 3 and 4 are new. Please answer questions 3 and 4.';
+  var Q_NEW_LINE = 'New question: please choose an answer.';
   var Q_ANSWERS = [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']];
 
-  /* The stop screen (owner's hard rule: Q1 No ends the journey). Reads: headline, why, instead, then the "Not sure" line.
+  /* The stop screen (owner's hard rule: the stop answer to Q1 ends the journey; since v2.6 that answer is Yes). Reads: headline, why, instead, then the "Not sure" line.
      v1.2 (owner B2): the headline was "This is not an AI problem."; unsure: council BUILD NOW 2. */
   var STOP = {
     head: 'This is not suitable for AI.',
@@ -1525,10 +1536,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var VERDICT = {
     stop: STOP.head,
     worth: 'Probably not worth it.',
-    data: 'Fix the data first.',
+    data: 'Too few examples to learn from.', // v2.6: the new question 3's outcome
+    exact: 'A rule-based tool or a person is the better choice.', // v2.6: the new question 4's outcome (replaces "assist")
     success: 'Define success first.',
     find: 'Find out first.',
-    assist: 'Worth exploring, as an assistant only: a person checks every result before it counts.',
     go: 'Worth exploring with AI. Next: the must-haves.',
     goDone: 'Worth exploring with AI.' // the same verdict on the summary, where "where it sits" is already answered
   };
@@ -1692,12 +1703,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var BOX = { held: 'Held back: {why}.', legal: 'legal items to check', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
-  /* O3: a No on question 4 is a condition on how the tool is used, not a hold. */
-  var ASSIST_LINE = 'Use it as an assistant only: a person checks every result before it counts.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
   var CONSIST = {
-    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.',
-    m7: 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.'
+    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.'
+    /* v2.6: the must-have 7 line is gone: the new question 3 asks about past examples, not whether the data is digital and current */
   };
   /* Audit v3 H1: the replace question, when the check in this browser has a shared copy. */
   var FILE_KEEPS_SHARE = 'The project team’s copy of this check stays shared; you can still withdraw it.';
@@ -1722,9 +1731,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019).',
       'NIST, AI Risk Management Framework 1.0, NIST AI 100-1 (Jan 2023).',
       'Google PAIR, People + AI Guidebook, “User Needs + Defining Success” (undated page, read 23 Nov 2026).',
-      'Brynjolfsson & Mitchell, “What can machine learning do? Workforce implications”, Science 358 (Dec 2017).'
+      'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534 (questions 3 and 4).'
     ],
-    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Question 1 asks whether the job needs AI; it is not a legal classification (the AI Act guide tab covers that).',
+    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell). Question 1 asks whether the job needs AI; it is not a legal classification (the AI Act guide tab covers that).',
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
       'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
@@ -1758,7 +1767,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
   var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
-  var FROM_V1 = 'This tool has changed. Your five answers and your use case were kept. The other answers were not: the questions are new.';
+  var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
@@ -1767,7 +1776,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
-    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, ASSIST_LINE: ASSIST_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
+    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);
 
@@ -1781,15 +1790,34 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
       Rules v2.5 (24 Nov 2026, owner decisions O1 to O4 of reports/Council - Do you need AI v2.4.md): two caps on "Planned" and three
       holds, each a named constant in JUDGEMENT; points unchanged.
+      Rules v2.6 (24 Nov 2026, owner): question 1 is asked the other way round (Yes = fixed rules can do it = stop); questions 3
+      and 4 are new, and a No on either holds the top verdict like a No on 2 or 5 (the "assistant only" condition is gone).
    3. resultModel(rec, env): every word of the result page. The screen and the PDF read it, so they agree. The Team tab reads
       evaluate(), method(), open() and answerWord(). */
 (function (root) {
   'use strict';
   var C = root.R2Content;
-  var RULES = 'v2.5 (24 Nov 2026)';
+  var RULES = 'v2.6 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
-  var Q1_UNSURE = 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.';
+  var Q1_UNSURE = 'If question 1 turns out to be Yes, this is not suitable for AI: rules or ordinary automation will do it.';
+  /* v2.6: the answer to a step 2 question that holds (stopOn for question 1: 'y'; 'n' for the others). */
+  function badAns(id) { return (QBY[id] && QBY[id].stopOn) || 'n'; }
+  /* ---------- v2.6: the step 2 question set (QV) and records saved before it ----------
+     QV 2: since v2.6 (question 1 turned round, questions 3 and 4 new). A record, a file's check or a team copy without qv === QV
+     holds its step 2 answers in the old meaning. legacyQ(Q) turns question 1 round (Yes ↔ No; Not sure stays) and drops the old
+     questions 3 and 4 (they asked something else; their answers are not carried over). dropped: the ids that had an answer.
+     Used once per record: R2Flow.cleanRec sets qv, the Team tab reads qv on each copy. */
+  var QV = 2;
+  function legacyQ(Q) {
+    Q = Q && typeof Q === 'object' ? Q : {}; var out = {}, dropped = [];
+    QIDS.forEach(function (id) {
+      var a = Q[id]; if (!Q_OK[a]) return;
+      if (id === 'q3' || id === 'q4') { dropped.push(id); return; }
+      out[id] = id === 'q1' ? ({ y: 'n', n: 'y', u: 'u' })[a] : a;
+    });
+    return { Q: out, dropped: dropped };
+  }
   var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
@@ -1814,19 +1842,18 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                            team's sheet flags as handling sensitive personal data. The tool cannot check the legal items, so the
                            best verdict is "Almost ready" and the result says why. false: the line under the verdict only.
      CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 (C-R-I-S-P) holds back the top verdict, with
-                           the reason shown. false: it is carried as a condition only (rules v2). Since v2.5 it covers
-                           questions 2, 3 and 5; question 4 has its own switch below.
+                           the reason shown. false: it is carried as a condition only (rules v2). (v2.5 left question 4 out
+                           with its own switch, Q4_NO_HOLDS_TOP; v2.6, owner: the new question 4 holds like the others and the
+                           switch is gone.)
      Rules v2.5 (24 Nov 2026), owner decisions on the council of v2.4 (team judgement, not tested with hotels):
      ALMOST_MIN_MUST_YES   (O1 c) "Almost ready" needs at least this share (%) of the must-haves at Yes; below it the verdict is
                            "Not ready yet", because "Planned" is not done yet. 0 switches the cap off.
      READY_MIN_TAIL_YES    (O1 c) "Ready to start a pilot" needs at least this share (%) of the tailored questions that were
                            answered (Yes, Planned or No) at Yes; otherwise the top verdict is held back. 0 switches it off.
      NOT_SURE_HOLDS_TOP    (O2 b) true: any "Not sure" in step 2 holds the top verdict back, with the reason shown.
-     Q4_NO_HOLDS_TOP       (O3 b) false: a No on question 4 (safety net) does not hold the top verdict; it is shown as a
-                           condition ("Use it as an assistant only ..."). true: it holds like a No on questions 2, 3, 5.
      NONE_BEST_ALMOST      (O4 b) true: with "None of these fits" the best verdict is "Almost ready" (nothing to pilot). */
   var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,
-    ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true };
+    ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true };
   /* Does the use have legal items to check first? high: the AI Register's provisional label is High-risk (TQ.highRisk, set by
      build.mjs from the register's label file); sens: the team's sheet flags sensitive personal data (the add-on question). */
   function legalFlags(TQ, useId) {
@@ -1835,22 +1862,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return { high: high, sens: sens, any: high || sens };
   }
 
-  /* ---------- the five questions (v1 rules, unchanged) ----------
-     Precedence Q1 > Q2 > Q3 > Q5; Q4 is a modifier; "Not sure" sits below any No. Only Q1 No stops. */
+  /* ---------- the five questions ----------
+     v2.6: Precedence Q1 > Q2 > Q3 > Q4 > Q5; "Not sure" sits below any No. Only Q1 Yes stops (fixed rules can do it).
+     (Before v2.6 Q1 No stopped and Q4 No was a modifier, "assistant only".) */
   function verdict(Q) {
     Q = Q || {};
     var a = function (id) { return Q_OK[Q[id]] ? Q[id] : ''; };
     var complete = QIDS.every(function (id) { return !!a(id); });
-    if (a('q1') === 'n') return { key: 'stop', head: C.VERDICT.stop, second: '', complete: complete, stop: true, carried: [], find: [], q1Unsure: false };
-    var carried = ['q2', 'q3', 'q5', 'q4'].filter(function (id) { return a(id) === 'n'; }).map(function (id) { return { id: id, text: QBY[id].outcome, add: QBY[id].add || '' }; });
+    if (a('q1') === badAns('q1')) return { key: 'stop', head: C.VERDICT.stop, second: '', complete: complete, stop: true, carried: [], find: [], q1Unsure: false };
+    var carried = ['q2', 'q3', 'q4', 'q5'].filter(function (id) { return a(id) === 'n'; }).map(function (id) { return { id: id, text: QBY[id].outcome, add: QBY[id].add || '' }; });
     var find = QIDS.filter(function (id) { return a(id) === 'u'; }).map(function (id) { return { id: id, text: QBY[id].short, who: QBY[id].who }; });
     var key, second = '';
     if (a('q2') === 'n') key = 'worth';
     else if (a('q3') === 'n') { key = 'data'; if (a('q5') === 'n') second = 'Then define success.'; }
+    else if (a('q4') === 'n') key = 'exact';
     else if (a('q5') === 'n') key = 'success';
     else if (find.length) key = 'find';
     else if (!complete) key = 'open';
-    else if (a('q4') === 'n') key = 'assist';
     else key = 'go';
     return { key: key, head: key === 'open' ? 'Answer all five questions to see the verdict.' : C.VERDICT[key], second: second, complete: complete, stop: false,
       carried: carried, find: find, q1Unsure: a('q1') === 'u' };
@@ -1858,7 +1886,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   /* The verdict as the result words it. onResult: the all-Yes headline drops its "Next: ...". */
   function verdictText(v, onResult) {
     var head = onResult && v.key === 'go' ? C.VERDICT.goDone : v.head;
-    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q5: 'success' }[c.id]] === v.head); });
+    var also = v.carried.filter(function (c, i) { return !(i === 0 && C.VERDICT[{ q2: 'worth', q3: 'data', q4: 'exact', q5: 'success' }[c.id]] === v.head); });
     return { head: head, second: v.second,
       carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Conditions carried forward') : '',
       carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
@@ -1868,18 +1896,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   /* v2.5.1 (owner, 24 Nov 2026): what each of the five answers means for this decision, for the result's "Is this an AI problem?"
      card and the PDF. Only the questions' own words (yesIf, noIf, outcome, add, who; Q1 Not sure: the existing q1Unsure sentence).
-     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo }:
-       Yes       line = "Met: <the Yes-if test>"
-       No        line = the consequence already defined (outcome + add; Q4 No = assistant only)
-       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what a No would mean */
+     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo, good: true | false | null }:
+       the good answer (No for question 1 since v2.6, Yes for the others)  line = "Met: <its test>", good true
+       the other answer   line = the consequence already defined (outcome + add), good false
+       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what the holding answer would mean, good null */
   function lcFirst(t) { t = String(t || ''); return /^[A-Z](?:[a-z]|\s)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
   function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
   function aiMeaning(id, ans) {
     var q = QBY[id], a = Q_OK[ans] ? ans : '';
-    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '' };
+    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null };
     if (!q) return o;
-    if (a === 'y') o.line = 'Met: ' + lcFirst(q.yesIf);
-    else if (a === 'n') o.line = q.outcome + (q.add ? ' ' + q.add : '');
+    var bad = badAns(id);
+    if (a === 'y' || a === 'n') {
+      o.good = a !== bad;
+      o.line = o.good ? 'Met: ' + lcFirst(a === 'y' ? q.yesIf : q.noIf) : q.outcome + (q.add ? ' ' + q.add : '');
+    }
     else if (a === 'u') {
       o.line = 'To find out: yes if ' + lcFirst(noStop(q.yesIf)) + '; no if ' + lcFirst(noStop(q.noIf)) + '.';
       o.ask = 'Ask ' + q.who + '.';
@@ -1905,16 +1936,28 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
     return o;
   }
+  /* v2.6: the detail layer's content as plain JSON (title, kicker, catName, draft, draftText, does, how, level, task, srcs, foot),
+     one source for the page's own dialog and the hub's layer on the main page ({ hub: 'detail' }, tools/hub/CONTRACTS.md).
+     D: the page's data block (ex, detail); u: the catalogue use; d: its department. Strings only, except srcs. */
+  function detailData(D, u, d, TQ) {
+    var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
+    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u),
+      draft: tu && tu.draft ? C.DRAFT + '.' : '', draftText: tu && tu.draft ? 'This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.' : '',
+      does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u), task: String(u.task || ''),
+      srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
+      foot: 'From the hub’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+  }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  /* The list item the detail layer shows: name (a "Hotel" tag for 'h'), note, and one "Open the source" link where a URL exists. */
-  function sourceRow(s, refs) {
-    var x = sourceItem(s, refs);
-    var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
+  /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
+     (no frame interception); a "Hotel" tag for 'h'; the note; then the address, selectable, with "Copy address". */
+  function sourceRow(s, refs) { return sourceRowItem(sourceItem(s, refs)); }
+  /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). */
+  function sourceRowItem(x) {
+    x = x || {}; x = { type: x.type, name: String(x.name || ''), note: String(x.note || ''), url: HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '' };
+    var nm = x.url ? '<a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.name) + '</a>' : escH(x.name);
     /* a plain link ('l') is a sentence, not a name: not set in bold */
-    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
-      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' +
-        /* 24 Nov 2026: the claude.ai viewer may refuse to open a link from inside the hub, so the address is also shown, selectable, with a copy button */
-        '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
+    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
+      (x.url ? '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -1970,7 +2013,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
        notready  any must-have at No, the score below 50%, or (v2.5, O1) fewer than half the must-haves at Yes
        ready     every must-have Yes, the score 75% or more, and fewer than a quarter of the questions unknown,
                  unless a switch in JUDGEMENT holds the top verdict back: legal items to check; a No carried from step 2
-                 (questions 2, 3, 5); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
+                 (questions 2 to 5, v2.6); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
                  (v2.5, O1); "None of these fits" (v2.5, O4)
        almost    everything else (50 to 74%; a must-have not Yes but none at No; 75%+ with a quarter or more unknown; a held top verdict)
      ev.reason: the plain sentence that heads "Start with" ("Because ..."). ev.held: what held the top verdict back, in this order:
@@ -1996,7 +2039,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var namesOf = function (st) { return items.filter(function (it) { return it.grp === 'must' && (st === 'open' ? it.state !== 'yes' : it.state === st); }).map(function (it) { return it.name; }).join('; '); };
     var missing = n_(must.no, 'must-have is', 'must-haves are') + ' missing: ' + namesOf('no') + '.';
     var v = verdict(rec.Q), lf = legalFlags(TQ, rec.use), none = rec.use === 'none', held = [];
-    var carried = v.carried.filter(function (x) { return x.id !== 'q4' || JUDGEMENT.Q4_NO_HOLDS_TOP; });
+    var carried = v.carried; // v2.6: every No on questions 2 to 5
     var level, why, reason, kind, box = '';
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
@@ -2042,7 +2085,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
     }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
-      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }), q4No: !!(rec.Q && rec.Q.q4 === 'n' && !v.stop),
+      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
       mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
   /* “Complex judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
@@ -2085,7 +2128,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
     if ((Q.q5 === 'n' || Q.q5 === 'u') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
-    if ((Q.q3 === 'n' || Q.q3 === 'u') && A.m7 === 'y') o.m7 = C.CONSIST.m7;
     return o;
   }
 
@@ -2194,7 +2236,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
     if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
     if (JUDGEMENT.LEGAL_HOLDS_TOP) out.push('Team judgement: a use that the AI Register labels high-risk, or that the team’s sheet flags as handling sensitive personal data, does not get the top verdict here, because this tool cannot check its legal items.');
-    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3 or 5 of step 2 holds the top verdict back until it is settled.' + (JUDGEMENT.Q4_NO_HOLDS_TOP ? ' So does a No on question 4.' : ' A No on question 4 does not: it means the tool is used as an assistant only, which the result shows as a condition.'));
+    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
     if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
     if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement (rules v2.5): a “Not sure” in step 2 holds the top verdict back until it is found out.');
@@ -2258,7 +2300,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
       /* v2.5.1: each answer also carries what it means (aiMeaning): state, line, ask, ifNo. */
-      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
+      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, good: x.good, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
@@ -2267,7 +2309,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       levelName: C.LEVELS[ev.level].name,
       levelLine: levelLine(ev),
       reason: ev.reason, held: ev.held.slice(), law: ev.legal.any ? C.LAW_LINE : '',
-      boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '', assist: ev.q4No ? C.ASSIST_LINE : '',
+      boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
       cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
       mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: tu && tu.draft ? C.DRAFT + '. These questions come from a draft row the team has not reviewed yet.' : '',
@@ -2300,9 +2342,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
-  var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
+  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
@@ -2320,12 +2362,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       Events: begin, next, back, change (stop → q), edit (result → q), pop(step) (browser Back/forward or a restore)
       Guards (ctx from ctxOf(rec, env)):
         hotel --next--> q only when "how the hotel is run" is chosen.
-        q --next--> 'stop' when Q1 is No (whatever the rest); else 'must' only when all five questions are answered.
-        'stop' only while Q1 is No; 'must', 'where', 'tailored', 'result' never while Q1 is No.
+        q --next--> 'stop' when Q1 is Yes (v2.6; whatever the rest); else 'must' only when all five questions are answered.
+        'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes. (ctx.q1Stop; before v2.6 the
+        stop answer was No.)
         must --next--> where only with every must-have answered ("Don't know yet" counts).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
         tailored --next--> result only with every tailored question answered.
-   2. STORE (persisted in localStorage['hftp-readiness2-v1']): { v: 2, cur: <check id>, checks: { <id>: rec }, notice }.
+   2. STORE (persisted in localStorage['hftp-readiness2-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
+      v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
+      it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
+      read once through R2Logic.legacyQ (question 1 turned round; the old questions 3 and 4 dropped and listed in Qnew).
       migrate() takes any saved value: a v2 store is validated; a v1 record (the build before 24 Nov 2026) becomes one check
       that keeps the five answers and the chosen use case, drops the rest and sets notice 'v1' (shown once).
    3. reduce(store, ev, arg, env): the only function that changes the store. Returns { store, ok }.
@@ -2339,7 +2385,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
    5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list. */
 (function (root) {
   'use strict';
-  var V = 2, KEY = 'hftp-readiness2-v1';
+  var V = 3, KEY = 'hftp-readiness2-v1';
+  var LG = root.R2Logic, QV = LG.QV; // v2.6: the step 2 question set and legacyQ live with the rules
   var STEPS = ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result'];
   var ORDER = ['start', 'hotel', 'q', 'must', 'where', 'tailored', 'result']; // the main line ('stop' is a side end)
   var FLOW = {
@@ -2376,9 +2423,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   /* from: 'link' while the use case was preselected by #use=<id> and the person has not chosen one themselves (audit L3, L9).
      tqSig: the signature of the chosen use case's tailored questions when it was chosen ('' in records saved by v2.0) (audit M5). */
-  function blank(id) { return { id: id || newId(), step: 'start', hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
+  function blank(id) { return { id: id || newId(), step: 'start', qv: QV, Qnew: [], hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
   function copy(r) {
-    return { id: r.id, step: r.step, hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
+    return { id: r.id, step: r.step, qv: QV, Qnew: (r.Qnew || []).slice(), hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
       T: Object.assign({}, r.T), TBy: Object.assign({}, r.TBy), snaps: (r.snaps || []).slice(), share: { named: !!(r.share && r.share.named) }, sharedAt: r.sharedAt || null, sharedMode: r.sharedMode || null, sharedSig: r.sharedSig || null, updated: r.updated || '' };
   }
   /* The check as it goes into a file: whether a copy was shared belongs to this browser, not to the file (audit L11). */
@@ -2404,7 +2451,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var Q = rec.Q || {}, A = rec.A || {}, Tt = rec.T || {}, ids = rec.use && rec.use !== 'none' ? tailIds(env, rec.use) : [];
     return {
       hotelDone: TYPES.indexOf((rec.hotel || {}).type) >= 0,
-      q1No: Q.q1 === 'n',
+      q1Stop: Q.q1 === LG.badAns('q1'), // v2.6: Yes (fixed rules can do it)
       qDone: QIDS.every(function (id) { return !!Q_OK[Q[id]]; }),
       mustDone: MUST_IDS.every(function (id) { return !!A_OK[A[id]]; }),
       whereDone: rec.use === 'none' || (!!rec.use && useIn(env, rec.dept, rec.use) && deptOf(env, rec.dept).cat === rec.cat),
@@ -2417,20 +2464,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     switch (step) {
       case 'start': case 'hotel': return true;
       case 'q': return c.hotelDone;
-      case 'stop': return c.hotelDone && c.q1No;
-      case 'must': return c.hotelDone && !c.q1No && c.qDone;
+      case 'stop': return c.hotelDone && c.q1Stop;
+      case 'must': return c.hotelDone && !c.q1Stop && c.qDone;
       case 'where': return reachable('must', c) && c.mustDone;
       case 'tailored': return reachable('where', c) && c.whereDone && !c.none && c.hasTail;
       case 'result': return reachable('where', c) && c.whereDone && (c.none || !c.hasTail || c.tailDone);
     }
     return false;
   }
-  /* The step a saved or historic step lands on: itself if reachable; 'stop' for any later step while Q1 is No;
+  /* The step a saved or historic step lands on: itself if reachable; 'stop' for any later step while Q1 is Yes (v2.6);
      otherwise the nearest reachable step before it on the main line. Unknown values → 'start'. */
   function placeStep(step, c) {
     if (STEPS.indexOf(step) < 0) return 'start';
     if (reachable(step, c)) return step;
-    if (c.q1No && c.hotelDone && step !== 'start' && step !== 'hotel') return 'stop';
+    if (c.q1Stop && c.hotelDone && step !== 'start' && step !== 'hotel') return 'stop';
     var i = ORDER.indexOf(step); if (i < 0) i = ORDER.indexOf('q');
     for (; i >= 0; i--) if (reachable(ORDER[i], c)) return ORDER[i];
     return 'start';
@@ -2438,7 +2485,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function flowNext(step, ev, c) {
     var row = FLOW[step]; if (!row || !own(row, ev)) return null;
     var to = row[ev];
-    if (to === '@q') to = c.q1No ? 'stop' : 'must';
+    if (to === '@q') to = c.q1Stop ? 'stop' : 'must';
     else if (to === '@where') to = c.none || !c.hasTail ? 'result' : 'tailored';
     else if (to === '@result') to = c.none || !c.hasTail ? 'where' : 'tailored';
     return reachable(to, c) ? to : null;
@@ -2460,7 +2507,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var o = blank(r.id), H = obj(r.hotel), Q = obj(r.Q), A = obj(r.A), By = obj(r.By), Tt = obj(r.T), TBy = obj(r.TBy);
     o.hotel.name = str(H.name, 120); o.hotel.type = TYPES.indexOf(H.type) >= 0 ? H.type : ''; o.hotel.role = ROLES.indexOf(H.role) >= 0 ? H.role : '';
     o.hotel.country = typeof H.country === 'string' && (!env || !env.countries || env.countries.indexOf(H.country) >= 0) ? str(H.country, 40) : '';
-    QIDS.forEach(function (id) { if (Q_OK[Q[id]]) o.Q[id] = Q[id]; });
+    /* v2.6: a record without qv QV holds step 2 in the old meaning: turned round here, once (o.qv is set by blank()). */
+    var legacy = r.qv !== QV, LQ = legacy ? LG.legacyQ(Q) : { Q: Q, dropped: [] };
+    QIDS.forEach(function (id) { if (Q_OK[LQ.Q[id]]) o.Q[id] = LQ.Q[id]; });
+    o.Qnew = (legacy ? LQ.dropped : (Array.isArray(r.Qnew) ? r.Qnew : [])).filter(function (id, i, a) { return (id === 'q3' || id === 'q4') && a.indexOf(id) === i && !o.Q[id]; });
     MUST_IDS.forEach(function (id) { if (A_OK[A[id]] || OLD_A[A[id]]) { o.A[id] = A[id]; if (A[id] === 'pl' && validDate(By[id])) o.By[id] = By[id]; } });
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(env, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
@@ -2545,7 +2595,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       case 'answer': {
         var id = arg && arg.id, v = arg && arg.value; r = copy(rec);
         /* Answers only on their own step, so no answer can make the screen being shown impossible. */
-        if (QIDS.indexOf(id) >= 0 && Q_OK[v] && rec.step === 'q') r.Q[id] = v;
+        if (QIDS.indexOf(id) >= 0 && Q_OK[v] && rec.step === 'q') { r.Q[id] = v; r.Qnew = r.Qnew.filter(function (x) { return x !== id; }); }
         else if (MUST_IDS.indexOf(id) >= 0 && A_OK[v] && rec.step === 'must') { r.A[id] = v; if (v !== 'pl') delete r.By[id]; }
         else if (rec.step === 'tailored' && T_OK[v] && tailIds(env, rec.use).indexOf(id) >= 0) { r.T[id] = v; if (v !== 'pl') delete r.TBy[id]; }
         else return no;
@@ -2728,7 +2778,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
+  var api = { QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
     V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,
@@ -2743,7 +2793,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
    1. model(rec, env) → { stop, run: { hotel, date }, blocks }, built from R2Logic.resultModel(rec, env), the same object the
       result page draws, so the PDF and the screen use the same words. env = { cat, TQ, RC, M, today }.
         blocks: { k: 'title' | 'meta' | 'h' | 'verdict' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'todo' | 'area' | 'item' | 'num' | 'src' | 'page', ... }
-      Q1 No → the one-page stop version (why, the instead line, the five answers).
+      Q1 Yes (v2.6; No before) → the one-page stop version (why, the instead line, the five answers).
    2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII.
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4 for print. PDF redesign (24 Nov 2026): page 1 is the summary
       (hotel, use case, the verdict box in the verdict's colour, "Start with"); then the five questions, where it sits, the
@@ -2766,8 +2816,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE, note: true });
     return b;
   }
-  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card. */
-  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: ({ y: 'hi', n: 'lo', u: 'md' })[a.state] || 'na', m: L.aiMeaningText(a) }; }); }
+  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card.
+     v2.6: the tone follows the meaning (a.good), so question 1 No is drawn in the good tone. */
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: L.aiMeaningText(a) }; }); }
   function sources(TQ, stop) {
     var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
     (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
@@ -2786,7 +2837,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var b = head(m, v.stop, v.stop ? '' : m.useName || (m.none ? m.path : ''));
     if (v.stop) {
       return { stop: true, run: run, blocks: b.concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
-        { k: 'p', t: 'Because you answered No to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
+        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
     }
     /* Page 1, as the screen: the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with". */
     b.push({ k: 'h', t: 'Result' }, { k: 'verdict', id: 'level', t: m.levelName + ' · ' + m.scoreHead, name: m.levelName, score: m.scoreHead, box: m.boxLine, sub: m.mustLine, tone: LEVEL_TONE[m.level] || 'accent' });
@@ -2797,7 +2848,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
 
     b.push({ k: 'h', t: m.firstLabel });
-    if (m.assist) b.push({ k: 'lead', t: m.assist, id: 'assist' }); // v2.5, owner O3
     if (m.law) b.push({ k: 'p', t: m.law, id: 'law' });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
@@ -3331,7 +3381,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       (past ? '<span class="meta" id="overdue-' + id + '"><strong>This date has passed (overdue).</strong> Set a new one or clear it.</span>' : '') +
       '<span class="meta">Planned is not in place yet: it stays on your to-do list until it is done.</span></div>';
   }
-  function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' || key === 'assist' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
+  function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
   function verdictBody(t) {
     var h = '<p class="vsent" id="verdict-head">' + esc(t.head) + '</p>' + (t.second ? '<p><strong>' + esc(t.second) + '</strong></p>' : '');
     if (t.carried.length) h += '<div><p><strong>' + esc(t.carriedLabel) + '</strong></p><ul>' + t.carried.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>';
@@ -3341,11 +3391,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   /* v2.5.1 (owner, 24 Nov 2026): the result's "Is this an AI problem?" card explains every one of the five answers (title, the
      person's answer, what it means for this decision: R2Logic.aiMeaning), under the verdict word. Full width, sized to content. */
-  var AI_CHIP = { y: 'a-yes', n: 'a-no', u: 'a-unknown' };
+  /* v2.6: the chip's colour follows what the answer means (a.good), not the word: question 1 No is the good answer. */
+  function aiChip(a) { return a.good === true ? 'a-yes' : a.good === false ? 'a-no' : a.state === 'u' ? 'a-unknown' : 'a-na'; }
   function aiCard(m) {
     return '<div class="aiv ' + vClass(L.verdict(rec.Q).key) + '"><p class="vsent" id="ai-head">' + esc(m.ai.head) + '</p>' + (m.ai.second ? '<p><strong>' + esc(m.ai.second) + '</strong></p>' : '') +
       '<ol class="aiq" id="ai-rows">' + m.answers.map(function (a) {
-        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + (AI_CHIP[a.state] || 'a-na') + '">' + esc(a.a) + '</span></div>' +
+        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + aiChip(a) + '">' + esc(a.a) + '</span></div>' +
           '<p>' + esc(a.line) + (a.ask ? ' <strong>' + esc(a.ask) + '</strong>' : '') + '</p>' + (a.ifNo ? '<p class="meta">' + esc(a.ifNo) + '</p>' : '') + '</li>';
       }).join('') + '</ol></div>';
   }
@@ -3433,20 +3484,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
       '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
       '<h2>Is this an AI problem?</h2>' +
-      '<p class="sub">Think of one problem in your hotel. Five questions; each Yes points towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
+      '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
+    if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname" id="title-' + q.id + '">' + esc(q.title) + '</p>' +
         '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' +
+        (rec.Qnew && rec.Qnew.indexOf(q.id) >= 0 ? '<p class="oldans" id="qnew-' + q.id + '" role="note">' + esc(C.Q_NEW_LINE) + '</p>' : '') +
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + (ui.missing === q.id ? '<p class="needline" role="alert">Answer this to continue (“Not sure” is fine).</p>' : '') +
+        /* v2.6: the box colours follow what the answer means: for question 1 "Yes" (fixed rules) is the red box */
         fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p>' +
-          '<div class="yn"><div class="yn-box yn-yes" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
-          '<div class="yn-box yn-no" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
+          '<div class="yn"><div class="yn-box ' + (q.stopOn === 'y' ? 'yn-no' : 'yn-yes') + '" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
+          '<div class="yn-box ' + (q.stopOn === 'y' ? 'yn-yes' : 'yn-no') + '" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
           (q.guard ? '<div class="yn-unsure"><p class="yn-head">Not sure?</p><p id="guard-' + q.id + '">' + esc(q.guard) + '</p></div>' : '') +
           '<p class="meta yn-more">' + esc(q.why) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
-    if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is No.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
+    if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is Yes.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
     else if (v.complete) h += '<section class="verdict ' + vClass(v.key) + '" id="verdict" data-verdict="' + v.key + '">' + verdictBody(L.verdictText(v)) +
       (v.key !== 'go' ? '<p class="meta">You can still go on. The result keeps these conditions.</p>' : '') + '</section>';
     h += sources('q');
@@ -3456,7 +3510,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function vStop() {
     return '<section class="verdict v-stop stopcard" id="stopcard" data-verdict="stop"><h1 id="stop-head">' + esc(C.STOP.head) + '</h1>' +
       '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p><p id="stop-unsure">' + esc(C.STOP.unsure) + '</p>' +
-      '<p class="meta">Because you answered No to: “' + esc(L.QBY.q1.q) + '”</p>' +
+      '<p class="meta">Because you answered Yes to: “' + esc(L.QBY.q1.q) + '”</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="new" id="restart">Start again</button>' +
       pdfButton('Download (PDF)') + '</div></section>' + sources('q');
   }
@@ -3587,7 +3641,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
-      (m.assist ? '<p id="assist"><strong>' + esc(m.assist) + '</strong></p>' : '') + // v2.5, owner O3
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
@@ -3660,21 +3713,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var m = e.data;
       if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
+      /* v2.6: the hub closed its detail layer (Close, Esc, backdrop: focus back to the opener; another hub tab: focus stays). */
+      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false);
     });
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
   }
-  /* v2.5.1: external links inside the hub. The hub's frame sits in the claude.ai artifact sandbox, where a target="_blank" link in a
-     nested frame does not open; the hub opens it from the top page instead ({ hub: 'link', url }, tools/hub/CONTRACTS.md). Only once
-     the hub has answered the ping (host.pong); on its own the page keeps ordinary links. Same-origin links are left alone. */
-  document.addEventListener('click', function (e) {
-    if (!host.pong || e.defaultPrevented) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
-    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
-    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
-    e.preventDefault();
-    try { window.parent.postMessage({ hub: 'link', url: u.href }, location.origin); } catch (x) { /* the hub is gone */ }
-  }, true);
+  /* v2.6 (owner, 24 Nov 2026): source links are plain hyperlinks the browser opens itself; the v2.5.1 click interception
+     (a message to the hub) and the hub's link panel are gone. */
   function saveFile(name, blob) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
@@ -3749,7 +3795,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
   function shareDoc() {
     var m = model(), ev = m.ev, named = rec.share.named, u = USE[rec.use];
-    var d = { kind: 'dyn', v: 2, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
+    var d = { kind: 'dyn', v: 2, qv: F.QV, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
       Q: Object.assign({}, rec.Q), answers: Object.assign({}, rec.A), tailored: Object.assign({}, rec.T), by: Object.assign({}, rec.By), tby: Object.assign({}, rec.TBy),
       level: ev.level, pct: ev.pct, known: ev.counts.known, total: ev.counts.total, met: ev.must.yes, gates: ev.must.n, open: L.open(ev).length,
       reason: ev.reason, held: ev.held.slice(),
@@ -3818,35 +3864,49 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      a phone. ui.layer = { use, from, step, check } (v2.5, audit v3 M1 to M3: one field instead of two, and it remembers the step and
      the check it was opened on), so the layer survives render() and focus goes back to the opener when it closes (Close, Esc, a
      click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
+  /* v2.6 (owner, 24 Nov 2026): the layer's content as plain JSON, one source for both places it is drawn: this page's own dialog
+     (standalone) and, inside the hub, the hub's layer on the main page ({ hub: 'detail', id, data }, tools/hub/CONTRACTS.md), where
+     a source link can open (links inside a tool frame never open in the claude.ai viewer). Every field is a string except srcs. */
+  function detailData(id) { return L.detailData(D, USE[id], DEPT[(F.deptOfUse(ENV, id) || {}).id], TQ); }
   function detailHtml(id) {
-    var u = USE[id], dt = (D.detail || {})[id] || { srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
-    var src = function (s) { return L.sourceRow(s); }; // v2.5.1: every source type, one link per URL (R2Logic.sourceRow)
-    return '<div class="dhead"><div><p class="kicker">' + esc([d.name, d.cat].filter(Boolean).join(' · ')) + '</p><h2 id="detail-title">' + esc(uName(u)) + '</h2>' + (cn ? '<p class="meta" id="detail-catname">' + esc(cn) + '</p>' : '') + '</div>' +
+    var x = detailData(id);
+    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + esc(x.title) + '</h2>' + (x.catName ? '<p class="meta" id="detail-catname">' + esc(x.catName) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
-      (tu && tu.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') +
-      (x ? '<p><b>What it does:</b> ' + esc(D.ex[id].does) + '</p><p><b>How the AI works:</b> ' + esc(D.ex[id].how) + '</p>' : '') +
-      '<p id="detail-level"><b>' + esc(L.useLevelLine(u)) + '</b></p>' +
+      (x.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(x.draft) + '</strong> ' + esc(x.draftText) + '</p>' : '') +
+      (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +
+      '<p id="detail-level"><b>' + esc(x.level) + '</b></p>' +
       /* v2.5 (council BUILD NOW 8): no research or fact-check notes; the catalogue's text is labelled as research wording. */
-      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(u.task) + '</p>' +
-      '<h3>Examples and sources (' + dt.srcs.length + ')</h3>' + (dt.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + dt.srcs.map(src).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
-      '<p class="meta">From the hub’s Use-Case Catalogue, as of ' + esc(C.AS_OF) + '. A source link opens in a new browser tab.</p></div>';
+      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(x.task) + '</p>' +
+      '<h3>Examples and sources (' + x.srcs.length + ')</h3>' + (x.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + x.srcs.map(L.sourceRowItem).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
+      '<p class="meta">' + esc(x.foot) + '</p></div>';
   }
+  /* ui.layer.hub: the layer is drawn by the hub on its main page; this page only keeps the state (and the opener, for focus). */
+  function hubPost(m) { try { window.parent.postMessage(m, location.origin); } catch (e) { /* the hub is gone */ } }
   function syncDetail() {
-    var dlg = $('detail'); if (!dlg || typeof dlg.showModal !== 'function') return;
-    var L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
-    if (!id) { ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg.open) dlg.close(); return; }
+    var dlg = $('detail'), L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
+    if (!id) { if (L2 && L2.hub) hubPost({ hub: 'detail-close' }); ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg && dlg.open) dlg.close(); return; }
     $('app').setAttribute('data-layer', id);
+    if (L2.hub) { $('app').setAttribute('data-layer-host', 'hub'); return; }
+    $('app').removeAttribute('data-layer-host');
+    if (!dlg || typeof dlg.showModal !== 'function') return;
     if (dlg.getAttribute('data-use') !== id) { dlg.innerHTML = detailHtml(id); dlg.setAttribute('data-use', id); }
     if (!dlg.open) { dlg.showModal(); var c = $('detail-close'); if (c) c.focus(); }
   }
-  function openDetail(id, from) { if (!USE[id]) return; ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id }; syncDetail(); }
+  function openDetail(id, from) {
+    if (!USE[id]) return;
+    var inHub = !!host.pong; // only once the hub has answered: then it draws the layer (v2.6)
+    ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id, hub: inHub };
+    if (inHub) hubPost({ hub: 'detail', id: id, data: detailData(id) });
+    syncDetail();
+  }
   /* Every way out (Close, Esc, a click on the backdrop) runs this at once, so the state never waits for the dialog's own
      asynchronous close event (a render() in between would open it again). */
-  /* moved: true when the step or the check changed (afterMove then puts focus on #view). */
-  function closeDetail(moved) {
-    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer');
+  /* moved: true when the step or the check changed (afterMove then puts focus on #view). noFocus: the hub closed it because
+     the person went to another tab. */
+  function closeDetail(moved, noFocus) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
-    var b = !moved && from && $(from); if (b) b.focus({ preventScroll: true });
+    var b = !moved && !noFocus && from && $(from); if (b) b.focus({ preventScroll: true });
   }
   (function () { var dlg = $('detail'); if (!dlg) return;
     dlg.addEventListener('cancel', function () { closeDetail(); }); // Esc

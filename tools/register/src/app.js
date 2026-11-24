@@ -786,17 +786,8 @@
     try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { hostEvent({ type: 'timeout' }); }
     setTimeout(function () { hostEvent({ type: 'timeout' }); }, 12000);
   }
-  /* 24 Nov 2026 (link bridge, tools/hub/CONTRACTS.md): in the claude.ai hub this page is a nested frame, where target="_blank" links
-     (the law's official texts) do not open. Once the hub has answered the ping, an external http(s) link is sent to the hub as
-     { hub: 'link', url } and the hub opens it from the top page. On its own the page keeps ordinary links. */
-  document.addEventListener('click', function (e) {
-    if (!host.hub || e.defaultPrevented) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
-    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
-    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
-    e.preventDefault();
-    try { window.parent.postMessage({ hub: 'link', url: u.href }, window.location.origin); } catch (x) { /* the hub is gone */ }
-  }, true);
+  /* v2.6 (24 Nov 2026): the law's official texts are plain hyperlinks; the earlier click interception (a message to the hub)
+     is gone with the hub's link panel. Inside the claude.ai hub frame such a link may not open (owner's test, 24 Nov 2026); kept as plain links for now (tools/hub/CONTRACTS.md). */
   function whenHostKnown(fn) { if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(fn); } else fn(); }
   function saveFile(name, content, mime) {
     function viaLink() {

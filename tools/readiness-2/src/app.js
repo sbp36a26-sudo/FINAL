@@ -326,7 +326,7 @@
       (past ? '<span class="meta" id="overdue-' + id + '"><strong>This date has passed (overdue).</strong> Set a new one or clear it.</span>' : '') +
       '<span class="meta">Planned is not in place yet: it stays on your to-do list until it is done.</span></div>';
   }
-  function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' || key === 'assist' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
+  function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
   function verdictBody(t) {
     var h = '<p class="vsent" id="verdict-head">' + esc(t.head) + '</p>' + (t.second ? '<p><strong>' + esc(t.second) + '</strong></p>' : '');
     if (t.carried.length) h += '<div><p><strong>' + esc(t.carriedLabel) + '</strong></p><ul>' + t.carried.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>';
@@ -336,11 +336,12 @@
   }
   /* v2.5.1 (owner, 24 Nov 2026): the result's "Is this an AI problem?" card explains every one of the five answers (title, the
      person's answer, what it means for this decision: R2Logic.aiMeaning), under the verdict word. Full width, sized to content. */
-  var AI_CHIP = { y: 'a-yes', n: 'a-no', u: 'a-unknown' };
+  /* v2.6: the chip's colour follows what the answer means (a.good), not the word: question 1 No is the good answer. */
+  function aiChip(a) { return a.good === true ? 'a-yes' : a.good === false ? 'a-no' : a.state === 'u' ? 'a-unknown' : 'a-na'; }
   function aiCard(m) {
     return '<div class="aiv ' + vClass(L.verdict(rec.Q).key) + '"><p class="vsent" id="ai-head">' + esc(m.ai.head) + '</p>' + (m.ai.second ? '<p><strong>' + esc(m.ai.second) + '</strong></p>' : '') +
       '<ol class="aiq" id="ai-rows">' + m.answers.map(function (a) {
-        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + (AI_CHIP[a.state] || 'a-na') + '">' + esc(a.a) + '</span></div>' +
+        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + aiChip(a) + '">' + esc(a.a) + '</span></div>' +
           '<p>' + esc(a.line) + (a.ask ? ' <strong>' + esc(a.ask) + '</strong>' : '') + '</p>' + (a.ifNo ? '<p class="meta">' + esc(a.ifNo) + '</p>' : '') + '</li>';
       }).join('') + '</ol></div>';
   }
@@ -428,20 +429,23 @@
       '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
       '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
       '<h2>Is this an AI problem?</h2>' +
-      '<p class="sub">Think of one problem in your hotel. Five questions; each Yes points towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
+      '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
+    if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname" id="title-' + q.id + '">' + esc(q.title) + '</p>' +
         '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' +
+        (rec.Qnew && rec.Qnew.indexOf(q.id) >= 0 ? '<p class="oldans" id="qnew-' + q.id + '" role="note">' + esc(C.Q_NEW_LINE) + '</p>' : '') +
         radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + (ui.missing === q.id ? '<p class="needline" role="alert">Answer this to continue (“Not sure” is fine).</p>' : '') +
+        /* v2.6: the box colours follow what the answer means: for question 1 "Yes" (fixed rules) is the red box */
         fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p>' +
-          '<div class="yn"><div class="yn-box yn-yes" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
-          '<div class="yn-box yn-no" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
+          '<div class="yn"><div class="yn-box ' + (q.stopOn === 'y' ? 'yn-no' : 'yn-yes') + '" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
+          '<div class="yn-box ' + (q.stopOn === 'y' ? 'yn-yes' : 'yn-no') + '" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
           (q.guard ? '<div class="yn-unsure"><p class="yn-head">Not sure?</p><p id="guard-' + q.id + '">' + esc(q.guard) + '</p></div>' : '') +
           '<p class="meta yn-more">' + esc(q.why) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
-    if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is No.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
+    if (v.key === 'stop') h += '<section class="verdict v-stop" id="verdict" data-verdict="stop"><p class="vsent">Question 1 is Yes.</p><p>Press “See the result”: there is no need to answer the rest.</p></section>';
     else if (v.complete) h += '<section class="verdict ' + vClass(v.key) + '" id="verdict" data-verdict="' + v.key + '">' + verdictBody(L.verdictText(v)) +
       (v.key !== 'go' ? '<p class="meta">You can still go on. The result keeps these conditions.</p>' : '') + '</section>';
     h += sources('q');
@@ -451,7 +455,7 @@
   function vStop() {
     return '<section class="verdict v-stop stopcard" id="stopcard" data-verdict="stop"><h1 id="stop-head">' + esc(C.STOP.head) + '</h1>' +
       '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p><p id="stop-unsure">' + esc(C.STOP.unsure) + '</p>' +
-      '<p class="meta">Because you answered No to: “' + esc(L.QBY.q1.q) + '”</p>' +
+      '<p class="meta">Because you answered Yes to: “' + esc(L.QBY.q1.q) + '”</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="new" id="restart">Start again</button>' +
       pdfButton('Download (PDF)') + '</div></section>' + sources('q');
   }
@@ -582,7 +586,6 @@
     h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
-      (m.assist ? '<p id="assist"><strong>' + esc(m.assist) + '</strong></p>' : '') + // v2.5, owner O3
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
@@ -655,21 +658,14 @@
       var m = e.data;
       if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
+      /* v2.6: the hub closed its detail layer (Close, Esc, backdrop: focus back to the opener; another hub tab: focus stays). */
+      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false);
     });
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
   }
-  /* v2.5.1: external links inside the hub. The hub's frame sits in the claude.ai artifact sandbox, where a target="_blank" link in a
-     nested frame does not open; the hub opens it from the top page instead ({ hub: 'link', url }, tools/hub/CONTRACTS.md). Only once
-     the hub has answered the ping (host.pong); on its own the page keeps ordinary links. Same-origin links are left alone. */
-  document.addEventListener('click', function (e) {
-    if (!host.pong || e.defaultPrevented) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
-    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
-    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
-    e.preventDefault();
-    try { window.parent.postMessage({ hub: 'link', url: u.href }, location.origin); } catch (x) { /* the hub is gone */ }
-  }, true);
+  /* v2.6 (owner, 24 Nov 2026): source links are plain hyperlinks the browser opens itself; the v2.5.1 click interception
+     (a message to the hub) and the hub's link panel are gone. */
   function saveFile(name, blob) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
@@ -744,7 +740,7 @@
   // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
   function shareDoc() {
     var m = model(), ev = m.ev, named = rec.share.named, u = USE[rec.use];
-    var d = { kind: 'dyn', v: 2, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
+    var d = { kind: 'dyn', v: 2, qv: F.QV, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
       Q: Object.assign({}, rec.Q), answers: Object.assign({}, rec.A), tailored: Object.assign({}, rec.T), by: Object.assign({}, rec.By), tby: Object.assign({}, rec.TBy),
       level: ev.level, pct: ev.pct, known: ev.counts.known, total: ev.counts.total, met: ev.must.yes, gates: ev.must.n, open: L.open(ev).length,
       reason: ev.reason, held: ev.held.slice(),
@@ -813,35 +809,49 @@
      a phone. ui.layer = { use, from, step, check } (v2.5, audit v3 M1 to M3: one field instead of two, and it remembers the step and
      the check it was opened on), so the layer survives render() and focus goes back to the opener when it closes (Close, Esc, a
      click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
+  /* v2.6 (owner, 24 Nov 2026): the layer's content as plain JSON, one source for both places it is drawn: this page's own dialog
+     (standalone) and, inside the hub, the hub's layer on the main page ({ hub: 'detail', id, data }, tools/hub/CONTRACTS.md), where
+     a source link can open (links inside a tool frame never open in the claude.ai viewer). Every field is a string except srcs. */
+  function detailData(id) { return L.detailData(D, USE[id], DEPT[(F.deptOfUse(ENV, id) || {}).id], TQ); }
   function detailHtml(id) {
-    var u = USE[id], dt = (D.detail || {})[id] || { srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
-    var src = function (s) { return L.sourceRow(s); }; // v2.5.1: every source type, one link per URL (R2Logic.sourceRow)
-    return '<div class="dhead"><div><p class="kicker">' + esc([d.name, d.cat].filter(Boolean).join(' · ')) + '</p><h2 id="detail-title">' + esc(uName(u)) + '</h2>' + (cn ? '<p class="meta" id="detail-catname">' + esc(cn) + '</p>' : '') + '</div>' +
+    var x = detailData(id);
+    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + esc(x.title) + '</h2>' + (x.catName ? '<p class="meta" id="detail-catname">' + esc(x.catName) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
-      (tu && tu.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') +
-      (x ? '<p><b>What it does:</b> ' + esc(D.ex[id].does) + '</p><p><b>How the AI works:</b> ' + esc(D.ex[id].how) + '</p>' : '') +
-      '<p id="detail-level"><b>' + esc(L.useLevelLine(u)) + '</b></p>' +
+      (x.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(x.draft) + '</strong> ' + esc(x.draftText) + '</p>' : '') +
+      (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +
+      '<p id="detail-level"><b>' + esc(x.level) + '</b></p>' +
       /* v2.5 (council BUILD NOW 8): no research or fact-check notes; the catalogue's text is labelled as research wording. */
-      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(u.task) + '</p>' +
-      '<h3>Examples and sources (' + dt.srcs.length + ')</h3>' + (dt.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + dt.srcs.map(src).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
-      '<p class="meta">From the hub’s Use-Case Catalogue, as of ' + esc(C.AS_OF) + '. A source link opens in a new browser tab.</p></div>';
+      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(x.task) + '</p>' +
+      '<h3>Examples and sources (' + x.srcs.length + ')</h3>' + (x.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + x.srcs.map(L.sourceRowItem).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
+      '<p class="meta">' + esc(x.foot) + '</p></div>';
   }
+  /* ui.layer.hub: the layer is drawn by the hub on its main page; this page only keeps the state (and the opener, for focus). */
+  function hubPost(m) { try { window.parent.postMessage(m, location.origin); } catch (e) { /* the hub is gone */ } }
   function syncDetail() {
-    var dlg = $('detail'); if (!dlg || typeof dlg.showModal !== 'function') return;
-    var L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
-    if (!id) { ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg.open) dlg.close(); return; }
+    var dlg = $('detail'), L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
+    if (!id) { if (L2 && L2.hub) hubPost({ hub: 'detail-close' }); ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg && dlg.open) dlg.close(); return; }
     $('app').setAttribute('data-layer', id);
+    if (L2.hub) { $('app').setAttribute('data-layer-host', 'hub'); return; }
+    $('app').removeAttribute('data-layer-host');
+    if (!dlg || typeof dlg.showModal !== 'function') return;
     if (dlg.getAttribute('data-use') !== id) { dlg.innerHTML = detailHtml(id); dlg.setAttribute('data-use', id); }
     if (!dlg.open) { dlg.showModal(); var c = $('detail-close'); if (c) c.focus(); }
   }
-  function openDetail(id, from) { if (!USE[id]) return; ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id }; syncDetail(); }
+  function openDetail(id, from) {
+    if (!USE[id]) return;
+    var inHub = !!host.pong; // only once the hub has answered: then it draws the layer (v2.6)
+    ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id, hub: inHub };
+    if (inHub) hubPost({ hub: 'detail', id: id, data: detailData(id) });
+    syncDetail();
+  }
   /* Every way out (Close, Esc, a click on the backdrop) runs this at once, so the state never waits for the dialog's own
      asynchronous close event (a render() in between would open it again). */
-  /* moved: true when the step or the check changed (afterMove then puts focus on #view). */
-  function closeDetail(moved) {
-    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer');
+  /* moved: true when the step or the check changed (afterMove then puts focus on #view). noFocus: the hub closed it because
+     the person went to another tab. */
+  function closeDetail(moved, noFocus) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
-    var b = !moved && from && $(from); if (b) b.focus({ preventScroll: true });
+    var b = !moved && !noFocus && from && $(from); if (b) b.focus({ preventScroll: true });
   }
   (function () { var dlg = $('detail'); if (!dlg) return;
     dlg.addEventListener('cancel', function () { closeDetail(); }); // Esc

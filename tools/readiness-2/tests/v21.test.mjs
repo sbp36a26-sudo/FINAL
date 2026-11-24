@@ -30,7 +30,7 @@ const storeWith = (...recs) => { const s = { v: 2, cur: recs[0].id, checks: {} }
 // ====================================================================================================================
 // H2 + council items 1, 2, 3: the headline never contradicts itself
 // ====================================================================================================================
-ok(L.RULES === 'v2.5 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answers, now v2.5: owner O1 to O4)');
+ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answers, v2.5 owner O1 to O4, now v2.6: step 2 questions)');
 {
   // the three rows the audit marked bold (machine 5), on rm-1
   const n = TQ.uses['rm-1'].qs.length;
@@ -117,7 +117,7 @@ ok(TQ.uses['gx-2'].qs.some(q => q.q === 'Is it agreed how you will tell guests t
 // ====================================================================================================================
 // Team judgement: B2, B5, B6, each behind one named constant
 // ====================================================================================================================
-ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true, ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true }), 'the three v2.1 switches, all on (v2.5 adds five named constants, owner O1 to O4)');
+ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true, ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true }), 'the three v2.1 switches, all on (v2.5 adds named constants, owner O1 to O4; v2.6 removes Q4_NO_HOLDS_TOP)');
 {
   const J = L.JUDGEMENT, flip = (k, f) => { J[k] = false; try { f(); } finally { J[k] = true; } };
   // B2
@@ -140,8 +140,8 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(L.method(L.evaluate(mk('gx-2', [], []), TQ)).some(t => t.startsWith('Team judgement: a use that the AI Register labels high-risk')), 'B5: listed in "How this was worked out" as team judgement');
   ok(L.evaluate(mk('hr-2', ['n'], []), TQ).level === 'notready' && L.evaluate(mk('hr-2', ['n'], []), TQ).held.length === 0, 'B5: only the top verdict is held; a must-have No is still "Not ready yet"');
   // B6
-  // v2.5 (owner O3): question 4 no longer holds the top verdict (tests/v25.test.mjs); questions 2, 3 and 5 still do
-  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information ready', 'Fix the data first'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
+  // v2.6 (owner): a No on any of questions 2 to 5 holds (v2.5 had left question 4 out); the new question 3 and 4 titles and outcomes
+  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information to learn from', 'Too few examples to learn from'], ['q4', 'Some mistakes are acceptable', 'A rule-based tool or a person is the better choice'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
     const r6 = mk('gx-2', [], []); r6.Q[q] = 'n'; const e6 = L.evaluate(r6, TQ);
     ok(e6.level === 'almost' && eq(e6.held, ['carried']) && e6.pct === 100, 'B6: a No on ' + q + ' blocks the top verdict');
     ok(e6.reason === 'Because you answered No in step 2 to “' + title + '” (' + out + '). The top verdict is held back until that is settled.', 'B6: the reason is shown: ' + e6.reason);
@@ -150,11 +150,11 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(L.evaluate(r6, TQ).level === 'almost' && eq(L.evaluate(r6, TQ).held, ['notsure']), 'B6 / v2.5 (owner O2): a "Not sure" in step 2 now holds the top verdict too (was: only a No)');
   r6 = mk('gx-2', [], []); r6.Q.q3 = 'n';
   flip('CARRIED_NO_HOLDS_TOP', () => ok(L.evaluate(r6, TQ).level === 'ready' && L.resultModel(r6, env).ai.carried.length === 1, 'B6 off: the No is carried as a condition only'));
-  ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3 or 5 of step 2 holds the top verdict back until it is settled\. A No on question 4 does not/.test(t)), 'B6 (v2.5 wording, O3): listed in "How this was worked out" as team judgement');
+  ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled\.$/.test(t)), 'B6 (v2.6 wording: question 4 holds too): listed in "How this was worked out" as team judgement');
   r6 = mk('hr-2', [], []); r6.Q.q5 = 'n'; const both = L.evaluate(r6, TQ);
   ok(eq(both.held, ['legal', 'carried']) && /^Because this use has legal items .* Also because you answered No in step 2 to “Proof”/.test(both.reason), 'B5 + B6 together: both reasons, in one sentence each');
   // the switches are named in the source where the owner flips them
-  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
+  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage
   ok(L.evaluate(mk('gx-2', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 99, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 99 use cases');
 }
@@ -289,7 +289,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   for (;;) { pos--; if (pos < 0) { left = true; break; } const dir = F.histSkip(stack[pos], { id: 'me', d, step: 'start', placed: stack[pos].step, run }); d = stack[pos].d; if (!dir) break; run++; }
   ok(left && run === 6, 'M4: one Back press runs through all six old entries and leaves the tool (it took seven presses)');
   // L10: stop reached through "Change answers from the start"
-  const recStop = mk('gx-2', [], [], { id: 'me' }); recStop.Q.q1 = 'n'; const ctx = F.ctxOf(recStop, ENV);
+  const recStop = mk('gx-2', [], [], { id: 'me' }); recStop.Q.q1 = 'y'; const ctx = F.ctxOf(recStop, ENV);
   const st2 = ['start', 'hotel', 'q', 'must', 'where', 'tailored', 'result', 'q', 'stop'].map((s, i) => h(s, i, 'me'));
   const shown = []; pos = 8; d = 8; let step = 'stop';
   for (let press = 0; press < 4 && pos > 0; press++) {
@@ -308,7 +308,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   const team = rd('../readiness-check/src/team.js'), built = rd('../readiness-check/team.html');
   ok(/whose use case is no longer in the catalogue/.test(team) && /function dynGone/.test(team), 'M7b: a "Do you need AI?" copy with an unknown use id has its own count and is listed');
   ok(/Do you need AI\? \(rules /.test(team) && /Earlier Readiness check \(rules /.test(team) && /Score: n%/.test(team), 'M7a: the rules card has a block for each kind of copy');
-  ok(built.includes('"highRisk":["res-8","hr-2","hr-5"]') && built.includes("RULES = 'v2.5 (24 Nov 2026)'"), 'M7: the team page is rebuilt with the current rules (v2.5) and the high-risk list');
+  ok(built.includes('"highRisk":["res-8","hr-2","hr-5"]') && built.includes("RULES = 'v2.6 (24 Nov 2026)'"), 'M7: the team page is rebuilt with the current rules (v2.6) and the high-risk list');
   ok(!/[A-Z]{3}-\d{3}-\d{2}/.test(rd('src/app.js')) && /Research record entries/.test(team), 'item 8: the ids are shown on the Team tab only');
 }
 
@@ -357,7 +357,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   // L6
   ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && /mode === 'local' && storage === 'ok' \? 'Outside the project hub/.test(app), 'L6: with storage not ok, neither "kept here until you remove it" nor "a test copy in this browser"');
   // L7
-  const stopRec = finished(F, D, '', { Q: { q1: 'n' }, A: {}, step: 'stop' });
+  const stopRec = finished(F, D, '', { Q: { q1: 'y' }, A: {}, step: 'stop' }); // v2.6: Q1 Yes stops
   ok(P.model(stopRec, env).blocks[0].t === 'Do you need AI? Not suitable for AI' && !/score/i.test(P.model(stopRec, env).blocks[0].t) && P.model(mk('gx-2', [], []), env).blocks[0].t === 'Do you need AI? Result' && L.resultModel(mk('gx-2', [], []), env).title === 'Do you need AI? Result', 'L7: one title on the screen and in the PDF; the stop PDF has no "score" in its title');
   // L8
   ok(C.OLD_FILE === 'This file is from the earlier Readiness check. It cannot be opened here.' && /o\.kind === OLD_KIND\) old = true/.test(app) && /var OLD_KIND = 'hftp-readiness-check'/.test(app) && /href="\.\.\/readiness-check\/index\.html"/.test(app), 'L8: a file of the earlier Readiness check gets its own message and a link to the page that opens it');
@@ -392,32 +392,34 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
     const a = raw.checks[k], b = st.checks[k];
     // v2.3: a check that holds an old Partly / Doesn't apply is placed back on that step (answers kept as they were)
     const oldM = Object.values(a.A || {}).some(v => v === 'p'), oldT = Object.values(a.T || {}).some(v => v === 'p' || v === 'na');
-    const want = a.step === 'result' && oldM ? 'must' : a.step === 'result' && oldT ? 'tailored' : a.step;
-    ok(b.step === want && eq(b.Q, a.Q) && eq(b.A, a.A) && eq(b.By, a.By) && eq(b.T, a.T) && eq(b.TBy, a.TBy) && b.use === a.use && eq(b.hotel, a.hotel) && b.sharedAt === a.sharedAt && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel, share state and history are kept');
+    // v2.6: step 2 is read in its old meaning: Q1 turned round, the old Q3/Q4 dropped, so a check past step 2 waits on step 2 again
+    const conv = L.legacyQ(a.Q).Q, qDone = F.QIDS.every(q => conv[q]);
+    const want = ['start', 'hotel'].includes(a.step) ? a.step : conv.q1 === 'y' ? (a.step === 'q' ? 'q' : 'stop') : a.step === 'q' || !qDone ? 'q' : a.step === 'result' && oldM ? 'must' : a.step === 'result' && oldT ? 'tailored' : a.step;
+    ok(b.step === want && eq(b.Q, conv) && b.qv === L.QV && eq(b.A, a.A) && eq(b.By, a.By) && eq(b.T, a.T) && eq(b.TBy, a.TBy) && b.use === a.use && eq(b.hotel, a.hotel) && b.sharedAt === a.sharedAt && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel, share state and history are kept');
     if (a.step === 'result') { const m = L.resultModel(b, env); /* v2.3: worked out even where the check now waits on step 3 or 5 */ ok(/^(Score: \d+%|No score yet: )/.test(m.scoreHead) && m.reason && m.method.length > 8, 'v2.0 check ' + a.use + ': the result is worked out with rules v2.1 (' + m.levelName + ', ' + m.scoreHead + ')'); }
   });
   const rm1 = Object.values(st.checks).find(c => c.use === 'rm-1');
   ok(rm1.sharedAt && rm1.snaps.length === 1 && rm1.snaps[0].rules === 'v2 (24 Nov 2026)' && rm1.snaps[0].use === '', 'v2.0 check rm-1: shared, one snapshot under rules v2');
   // v2.3: rm-1 holds old answers (m5 Partly, sk1 Partly, te1 Doesn't apply), so it opens on step 3; the person picks again first
   let s3 = Object.assign({}, st, { cur: rm1.id }); const go3 = (ev, arg) => { const x = F.reduce(s3, ev, arg, ENV); s3 = x.store; return x.ok; };
-  ok(F.cur(s3).step === 'must' && go3('answer', { id: 'm5', value: 'pl' }) && go3('next') && go3('next') && go3('answer', { id: 'sk1', value: 'pl' }) && go3('answer', { id: 'te1', value: 'y' }) && go3('next') && F.cur(s3).step === 'result', 'v2.0 check rm-1 (v2.3): picks again on steps 3 and 5, then its result');
+  ok(F.cur(s3).step === 'q' && go3('answer', { id: 'q3', value: 'y' }) && go3('answer', { id: 'q4', value: 'y' }) && go3('next') && F.cur(s3).step === 'must' && go3('answer', { id: 'm5', value: 'pl' }) && go3('next') && go3('next') && go3('answer', { id: 'sk1', value: 'pl' }) && go3('answer', { id: 'te1', value: 'y' }) && go3('next') && F.cur(s3).step === 'result', 'v2.0 check rm-1 (v2.3, v2.6): answers the new questions 3 and 4, picks again on steps 3 and 5, then its result');
   const sn = L.snapshot(L.evaluate(F.cur(s3), TQ), '2026-11-25T09:00:00.000Z', rm1.use), after = F.reduce(s3, 'snap', sn, ENV).store.checks[rm1.id];
   ok(!L.sameSnap(rm1.snaps[0], sn) && after.snaps.length === 2, 'v2.0 check rm-1: on its first v2.1 visit a new snapshot is kept beside the old one');
   const sc = L.since(after.snaps);
   ok(sc && !sc.compared && sc.lines[0].includes('worked out with earlier rules') && sc.earlier[0].endsWith('(worked out with earlier rules)'), 'v2.0 history is marked "worked out with earlier rules", not compared line by line');
-  ok(F.shareStale(rm1) === false && F.shareSettled(rm1) === 'shared', 'v2.0 share state reads as shared and up to date');
+  ok(F.shareStale(rm1) === true && F.shareSettled(rm1) === 'shared', 'v2.0 share state reads as shared; v2.6: out of date, because step 2 was converted (was: up to date)');
   // the file
   ok(file.kind === 'hftp-do-you-need-ai' && file.v === 2 && file.rules === 'v2 (24 Nov 2026)' && file.check.sharedAt, 'fixture: a v2.0 file (it still carried share fields)');
   const fi = {}, fr = F.cleanRec(JSON.parse(JSON.stringify(file.check)), ENV, fi, { file: true });
-  ok(fr && fr.step === 'must' && eq(fr.A, file.check.A) && eq(fr.T, file.check.T) && fr.By.m3 === '2027-03-01' && fr.sharedAt === null && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every answer kept, on step 3 (v2.3: its m5 Partly must be chosen again); its share fields are ignored');
+  ok(fr && fr.step === 'q' && eq(fr.Q, L.legacyQ(file.check.Q).Q) && eq(fr.A, file.check.A) && eq(fr.T, file.check.T) && fr.By.m3 === '2027-03-01' && fr.sharedAt === null && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every other answer kept, on step 2 (v2.6: Q1 turned round, the new questions 3 and 4 to answer; was step 3); its share fields are ignored');
   const imp = F.reduce(F.blankStore(), 'import', fr, ENV);
-  ok(imp.ok && F.cur(imp.store).step === 'must' && F.cur(imp.store).id === file.check.id, 'v2.0 file: imported');
+  ok(imp.ok && F.cur(imp.store).step === 'q' && F.cur(imp.store).id === file.check.id && F.cur(imp.store).Q.q1 === fr.Q.q1, 'v2.0 file: imported (v2.6: on step 2, not turned twice)');
   // the copy v2.0 shared with the team still reads
   const copy = JSON.parse(JSON.parse(rd('tests/fixtures/v2.0-other-keys.json'))['hftp-readiness-checks-v1'])[rm1.id];
   ok(copy.kind === 'dyn' && copy.v === 2 && copy.rules === 'v2 (24 Nov 2026)' && copy.useId === 'rm-1' && typeof copy.pct === 'number', 'fixture: the team copy v2.0 made (message shape unchanged: kind dyn, v 2)');
-  ok(/kind: 'dyn', v: 2, rules: L\.RULES, useId: rec\.use/.test(rd('src/app.js')), 'the share document keeps its shape (kind, v, rules, useId …); reason, held and rules per snapshot are added');
+  ok(/kind: 'dyn', v: 2, qv: F\.QV, rules: L\.RULES, useId: rec\.use/.test(rd('src/app.js')), 'the share document keeps its shape (kind, v, rules, useId …; v2.6 adds qv); reason, held and rules per snapshot are added');
 }
 // storage keys and hub messages unchanged
-ok(F.KEY === 'hftp-readiness2-v1' && F.V === 2 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && /\{ hub: 'open', tool: tool, hash: hash \}/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'storage keys, store version and hub message shapes are unchanged');
+ok(F.KEY === 'hftp-readiness2-v1' && F.V === 3 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && /\{ hub: 'open', tool: tool, hash: hash \}/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'storage keys and hub message shapes are unchanged; store version 3 since v2.6 (was 2)');
 ok(!/AIHA|AI Hospitality Alliance/i.test(rd('index.html').replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
 done();

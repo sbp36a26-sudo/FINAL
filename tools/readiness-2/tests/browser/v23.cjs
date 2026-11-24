@@ -2,7 +2,7 @@
 // 1. steps 3 and 5 offer only Yes / Planned, not done yet / No / Don't know yet;
 // 2. the result: the verdict box holds verdict, score and must-haves line; the top row only "Download (PDF)";
 // 3. the detail layer (native <dialog>) replaces the links to the catalogue tab: mouse and keyboard, Esc, focus return,
-//    no navigation away, survives render(), not printed.
+//    no navigation away, survives render(), not printed. v2.6: proved standalone; inside the hub the hub draws it (v26.cjs).
 // Old Partly / Doesn't apply records are proved in tests/browser/v21.cjs (the v2.0 fixture store and file).
 // Serve tools/ first:  python3 -m http.server 8815 --bind 127.0.0.1   (R2_BASE sets another address)
 // Screenshots (deviceScaleFactor 2): reports/readiness-2-screens/four-answers/ (R2_SHOTS for another folder).
@@ -38,7 +38,7 @@ async function shot(p, f, name) {
 }
 async function toMust(f) {
   await f.evaluate(() => { const R = window.Readiness2; R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('hotel', { k: 'name', v: 'Hotel Fixture' }); R.send('next');
-    ['q1', 'q2', 'q3', 'q4', 'q5'].forEach(id => R.send('answer', { id, value: 'y' })); R.send('next'); });
+    ['q1', 'q2', 'q3', 'q4', 'q5'].forEach(id => R.send('answer', { id, value: id === 'q1' ? 'n' : 'y' })); R.send('next'); }); // v2.6: Q1 No goes on
 }
 
 (async () => {
@@ -61,6 +61,8 @@ async function toMust(f) {
       await f.evaluate(() => { window.Readiness2.send('cat', 'Guest-facing'); window.Readiness2.send('dept', 'gx'); window.Readiness2.send('use', 'gx-1'); });
       ok(!(await f.$('[data-act="catalogue"]')) && !(await f.$('a[href*="use-case-catalogue"]')), tag + ': no link to the catalogue on step 4');
       const url0 = p.url(), tool0 = await hubTool(p);
+      /* v2.6: inside the hub the layer is drawn by the hub on its main page (tests/browser/v26.cjs); the in-frame layer is proved standalone. */
+      if (where === 'standalone') {
       // mouse: the row's "Details and sources"
       await f.click('#dt-gx-2'); await f.waitForSelector('#detail[open]');
       const y0 = await f.evaluate(() => scrollY); // the page behind, as it stood when the layer opened
@@ -91,7 +93,7 @@ async function toMust(f) {
       await f.click('#detail-close'); await f.waitForFunction(() => !document.querySelector('#detail[open]'));
       ok((await active(f)) === 'dt-gx-4', tag + ': Close returns focus');
       // keyboard Close (Enter on Close)
-      await f.focus('#dt-gx-2'); await p.keyboard.press('Space'); await f.waitForSelector('#detail[open]'); await f.waitForFunction(() => document.activeElement && document.activeElement.id === 'detail-close'); await p.waitForTimeout(100); await p.keyboard.press('Enter');
+      await p.waitForTimeout(150); await f.focus('#dt-gx-2'); await f.waitForFunction(() => document.activeElement && document.activeElement.id === 'dt-gx-2'); await p.keyboard.press('Space'); await f.waitForSelector('#detail[open]'); /* v2.6: waits out the dialog's own focus return */ await f.waitForFunction(() => document.activeElement && document.activeElement.id === 'detail-close'); await p.waitForTimeout(100); await p.keyboard.press('Enter');
       await f.waitForFunction(() => !document.querySelector('#detail[open]')); ok((await active(f)) === 'dt-gx-2', tag + ': Space opens, Enter on Close closes, focus back');
       // owner 24 Nov 2026: no "What does this do?" button on the row; "Details and sources" is the only way in on step 4
       /* Audit v3 section 4: #ex- is also the must-haves' example prefix, so check the words and the one button per row. */
@@ -107,6 +109,7 @@ async function toMust(f) {
       await p.keyboard.press('Escape'); await f.waitForFunction(() => !document.querySelector('#detail[open]'));
       await f.click('#dt-fo-1'); await f.waitForSelector('#detail[open]'); ok(!(await f.$('#detail-draft')), tag + ': a workbook use case has none');
       await p.keyboard.press('Escape'); await f.waitForFunction(() => !document.querySelector('#detail[open]'));
+      }
       // ---------- step 5: four answers ----------
       await f.evaluate(() => { const R = window.Readiness2; R.send('cat', 'Guest-facing'); R.send('dept', 'gx'); R.send('use', 'gx-2'); R.send('next'); });
       ok((await st(f)).step === 'tailored', tag + ': step 5');
@@ -123,9 +126,11 @@ async function toMust(f) {
       ok(await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1) && !(await f.$('#new-top')), tag + ': Start a new check next to Download (PDF), and only there (owner 24 Nov 2026)');
       ok(!(await f.$('[data-act="catalogue"]')), tag + ': no link to the catalogue on the result');
       await shot(p, f, wt + '-result-almost-ready');
+      if (where === 'standalone') {
       await f.click('#dr-gx-2'); await f.waitForSelector('#detail[open]');
       ok((await st(f)).detail === 'gx-2' && p.url() === url0 && (await hubTool(p)) === tool0, tag + ': "More detail" in "Where it sits" opens the layer, nothing navigates');
       await p.keyboard.press('Escape'); await f.waitForFunction(() => !document.querySelector('#detail[open]')); ok((await active(f)) === 'dr-gx-2', tag + ': focus back on the result\'s "More detail"');
+      }
       ok(p._errs.length === 0, tag + ': no page errors ' + p._errs.join(' | '));
       await ctx.close();
     }
