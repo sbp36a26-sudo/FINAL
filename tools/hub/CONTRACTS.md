@@ -121,7 +121,7 @@ Ids are cleaned to `[A-Za-z0-9_-]`. `data` must be a plain object.
 frame → hub   { hub: 'link', url: string }
 ```
 
-Why: the hub's tools run in a frame the hub creates inside the claude.ai artifact sandbox, where a `target="_blank"` link in that nested frame does not open (the artifact viewer opens external links only from the top page). So the frame asks the hub to open it.
+Why: the hub's tools run in a frame the hub creates inside the claude.ai artifact sandbox, where a `target="_blank"` link in that nested frame does not open (the artifact viewer opens external links only from the top page). So the frame asks the hub to open it. The hub then shows a small panel on the top page (`#hub-link`) with the address, a real "Open the source" link the person clicks, "Copy address" and "Close" (24 Nov 2026: a script-made click from the hub was ignored by the viewer too).
 
 Frame side (readiness-2 "Do you need AI?" detail layer, use-case-catalogue, register): only after the hub has answered the frame's `ping` (readiness-2 `host.pong`, register `host.hub`, the catalogue's own ping since 24 Nov 2026), a click (capture phase) on an `<a href>` that resolves to an http(s) URL of another origin is cancelled and sent as `{ hub: 'link', url: <absolute href> }`. Same-origin links and `download` links are left alone. Outside the hub (no pong) links stay ordinary links. The AI Act guide has no external links and sends nothing.
 

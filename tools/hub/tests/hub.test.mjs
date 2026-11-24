@@ -132,12 +132,14 @@ t('link: non-strings, empty, too long, spaces and control characters, user names
   const base = 'https://x.com/'; assert.ok(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length)), 'exactly at the limit passes');
   assert.equal(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length + 1)), null, 'one over the limit is refused');
 });
-t('link: the hub handles it only from its own frames, opens it from the top page, and sends no reply', () => {
+t('link: the hub handles it only from its own frames, shows it on the top page as a link to click, and sends no reply', () => {
   const body = src.slice(src.indexOf("addEventListener('message'"), src.indexOf('// The bar'));
   assert.ok(body.indexOf("if (!own) return;") < body.indexOf("m.hub === 'link'"), 'own-frame check first');
   assert.match(body, /if \(m\.hub === 'link'\) \{ var url = hubLinkUrl\(m\.url\); if \(url\) openTop\(url\); return; \}/);
   const open = src.slice(src.indexOf('function openTop'), src.indexOf("addEventListener('message'"));
-  assert.match(open, /createElement\('a'\)/); assert.match(open, /a\.target = '_blank'/); assert.match(open, /noopener/); assert.match(open, /a\.click\(\)/); assert.match(open, /window\.open\(url, '_blank', 'noopener'\)/);
+  // 24 Nov 2026: a script-made click is ignored by the claude.ai viewer, so the hub shows a panel with a real link the person clicks
+  assert.match(open, /id="hub-link-go" target="_blank" rel="noopener noreferrer"/); assert.match(open, /\.href = url/); assert.match(open, /Copy address/);
+  assert.ok(!/\.click\(\)/.test(open) && !/window\.open/.test(open), 'no script-made click, no window.open');
   assert.ok(!/postMessage/.test(open), 'no reply message');
 });
 t('link: the other bridge messages are unchanged', () => {

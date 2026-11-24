@@ -319,6 +319,19 @@ td.gap-hi { background: var(--warn-wash); }
 <!-- HFTP hub bar: injected at the top of the AI Assessment page by build-hub.mjs.
      State machines and the cross-tool contracts are documented in tools/hub/CONTRACTS.md. -->
 <style>
+  /* Link panel (24 Nov 2026): the claude.ai viewer only opens a link the person clicks on the top page, so a frame's source link
+     is shown here as a real link to click, with the address to copy if the viewer refuses it. */
+  .hub-link { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 90; width: min(560px, calc(100% - 32px));
+    background: #fff; color: #1f2328; border: 1px solid #c9c4b8; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.18);
+    padding: 14px 16px; font: 15px/1.45 "IBM Plex Sans", system-ui, sans-serif; display: grid; gap: 8px; }
+  .hub-link[hidden] { display: none; }
+  .hub-link p { margin: 0; }
+  .hub-link .addr { font-size: 13px; color: #5b6168; overflow-wrap: anywhere; }
+  .hub-link .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .hub-link a.go { background: #1f3b3a; color: #fff; text-decoration: none; font-weight: 600; border-radius: 6px; padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; }
+  .hub-link button { font: inherit; background: #fff; color: #1f2328; border: 1px solid #c9c4b8; border-radius: 6px; padding: 10px 14px; min-height: 44px; cursor: pointer; }
+  .hub-link a.go:focus-visible, .hub-link button:focus-visible { outline: 2px solid #1f3b3a; outline-offset: 2px; }
+  @media (prefers-color-scheme: dark) { .hub-link { background: #1d2125; color: #e8e6e1; border-color: #3a4046; } .hub-link .addr { color: #a9b0b7; } .hub-link button { background: #1d2125; color: #e8e6e1; border-color: #3a4046; } }
   .hub-bar {
     display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap;
     padding: 8px 16px; background: #1f3b3a; color: #f3f1ea;
@@ -556,16 +569,29 @@ td.gap-hi { background: var(--warn-wash); }
       return dl.save({ filename: m.filename, data: m.data });
     }).then(function () { reply(true); }, function (err) { reply(false, (err && err.code) || 'unavailable'); });
   }
-  /* Opens a frame's external link from this (top) page: a real <a target="_blank"> clicked inside the message handler, which runs
-     while the person's click in the frame still counts as a user action; window.open if the click fails. */
-  var links = 0;
+  /* Opens a frame's external link from this (top) page. A script-made click does not count for the claude.ai viewer, so the hub
+     shows a small panel with a real link the person clicks here (a top-page click), plus the address to copy. */
+  var links = 0, linkBox = null;
   function openTop(url) {
     links++;
-    try {
-      var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.hidden = true;
-      document.body.appendChild(a); a.click(); a.remove(); return;
-    } catch (e) { /* fall through */ }
-    try { window.open(url, '_blank', 'noopener'); } catch (e) { /* the browser refused: nothing else to try */ }
+    if (!linkBox) {
+      linkBox = document.createElement('div'); linkBox.className = 'hub-link'; linkBox.id = 'hub-link'; linkBox.setAttribute('role', 'dialog'); linkBox.setAttribute('aria-label', 'Open a source');
+      linkBox.innerHTML = '<p><strong>This source opens in a new browser tab.</strong></p><p class="addr" id="hub-link-addr"></p>' +
+        '<div class="row"><a class="go" id="hub-link-go" target="_blank" rel="noopener noreferrer">Open the source</a>' +
+        '<button type="button" id="hub-link-copy">Copy address</button><button type="button" id="hub-link-close">Close</button></div>';
+      document.body.appendChild(linkBox);
+      linkBox.querySelector('#hub-link-go').addEventListener('click', function () { setTimeout(function () { linkBox.hidden = true; }, 0); });
+      linkBox.querySelector('#hub-link-close').addEventListener('click', function () { linkBox.hidden = true; });
+      linkBox.querySelector('#hub-link-copy').addEventListener('click', function () {
+        var b = this, u = linkBox.querySelector('#hub-link-go').href;
+        function sel() { var r = document.createRange(); r.selectNodeContents(linkBox.querySelector('#hub-link-addr')); var w = getSelection(); w.removeAllRanges(); w.addRange(r); b.textContent = 'Address selected: copy it'; }
+        try { navigator.clipboard.writeText(u).then(function () { b.textContent = 'Copied'; }, sel); } catch (e) { sel(); }
+      });
+      linkBox.addEventListener('keydown', function (e) { if (e.key === 'Escape') linkBox.hidden = true; });
+    }
+    linkBox.querySelector('#hub-link-go').href = url; linkBox.querySelector('#hub-link-addr').textContent = url;
+    linkBox.querySelector('#hub-link-copy').textContent = 'Copy address';
+    linkBox.hidden = false; linkBox.querySelector('#hub-link-go').focus();
   }
   addEventListener('message', function (e) {
     var m = e.data;

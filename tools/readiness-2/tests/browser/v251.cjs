@@ -55,11 +55,15 @@ const hubFrame = async (p, tool) => {
 async function clickLink(ctx, p, f, sel) {
   const href = await f.$eval(sel, a => a.href);
   const before = await p.evaluate(() => window.__links.length);
-  const [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), f.click(sel)]);
+  let [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 1500 }).catch(() => null), f.click(sel)]);
   await p.waitForTimeout(150);
-  const r = await p.evaluate(() => ({ links: window.__links.slice(), clicked: window.__clicked.slice(), n: window.HFTPHub.state().links }));
+  // inside the hub: no popup from the frame; the hub shows its link panel and the person clicks the real link there
+  const panel = await p.$('#hub-link:not([hidden])'); let panelHref = null;
+  if (panel) { panelHref = await p.$eval('#hub-link-go', a => a.href); [pop] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), p.click('#hub-link-go')]); await p.waitForTimeout(100); }
+  const r = await p.evaluate(() => ({ links: window.__links.slice(), clicked: [], n: window.HFTPHub ? window.HFTPHub.state().links : 0 }));
+  r.panelHref = panelHref; r.panelGone = panel ? await p.$eval('#hub-link', x => x.hidden) : null;
   if (pop) await pop.close().catch(() => {});
-  return { href, pop: pop ? pop.url() : null, newMsgs: r.links.slice(before), clicked: r.clicked, n: r.n };
+  return { href, pop: pop ? pop.url() : null, newMsgs: r.links.slice(before), clicked: r.clicked, n: r.n, panelHref: r.panelHref, panelGone: r.panelGone };
 }
 
 (async () => {
@@ -78,8 +82,7 @@ async function clickLink(ctx, p, f, sel) {
       const types = await f.$$eval('#detail-srcs li', l => l.map(x => x.getAttribute('data-src')));
       const r = await clickLink(ctx, p, f, '#detail-srcs li a');
       ok(r.newMsgs.length === 1 && r.newMsgs[0] === r.href, tag + ' hub/readiness-2: the click posts { hub: "link", url } with the source url (' + r.href + ')');
-      const last = r.clicked[r.clicked.length - 1];
-      ok(last && last.href === r.href && last.target === '_blank' && /noopener/.test(last.rel) && last.inDoc, tag + ' hub/readiness-2: the hub creates and clicks a top-level <a target=_blank rel=noopener>');
+      ok(r.panelHref === r.href && r.panelGone === true, tag + ' hub/readiness-2: the hub shows its link panel with that url; a click on its link opens it and closes the panel');
       ok(r.pop === r.href && r.n === 1, tag + ' hub/readiness-2: a popup opens with that url (' + r.pop + ')');
       ok(types.includes('c') && types.includes('h') && types.includes('r'), tag + ': gx-2 shows company, hotel and study sources');
       // every source link of the layer: one link each, the message for each
@@ -87,14 +90,14 @@ async function clickLink(ctx, p, f, sel) {
       ok(n === m, tag + ': one link per source in the layer (' + n + ')');
       if (!touch) await p.screenshot({ path: path.join(OUT, 'v251-detail-gx2-hub-desktop.png') });
       // bad urls from a frame are ignored by the hub (no anchor, no popup)
-      const before = (await p.evaluate(() => window.__clicked.length));
+      const before = (await p.evaluate(() => window.HFTPHub.state().links));
       const pops = []; const onPage = x => pops.push(x); ctx.on('page', onPage);
       await f.evaluate(() => { for (const url of ['javascript:alert(1)', 'data:text/html,x', '/index.html', 'https://user:pw@x.com/', 'https://x.com/' + 'a'.repeat(3000), 42]) window.parent.postMessage({ hub: 'link', url }, location.origin); });
       await p.waitForTimeout(300); ctx.off('page', onPage);
-      ok((await p.evaluate(() => window.__clicked.length)) === before && pops.length === 0, tag + ' hub: bad urls open nothing');
+      ok((await p.evaluate(() => window.HFTPHub.state().links)) === before && pops.length === 0, tag + ' hub: bad urls open nothing');
       // a message from the top page itself (not a hub frame) is ignored
       await p.evaluate(() => window.postMessage({ hub: 'link', url: 'https://example.com/' }, location.origin)); await p.waitForTimeout(150);
-      ok((await p.evaluate(() => window.__clicked.length)) === before, tag + ' hub: a link message not from a hub frame is ignored');
+      ok((await p.evaluate(() => window.HFTPHub.state().links)) === before, tag + ' hub: a link message not from a hub frame is ignored');
       // the catalogue in the hub
       await p.click('#hubBar button[data-tool="use-case-catalogue"]');
       const cf = await hubFrame(p, 'use-case-catalogue');
