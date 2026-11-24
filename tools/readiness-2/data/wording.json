@@ -776,7 +776,7 @@
   "m2.why": "AI keeps costing money after launch: the subscription, fees based on use, connecting it to your systems, training, and staff time to check results.",
   "m3.q": "Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?",
   "m3.good": "The number (KPI), today’s figure and the target, approved in writing and dated.",
-  "m4.q": "Can other software read data from, and send data back to, the systems you want to connect it to?",
+  "m4.q": "Can new AI tools easily be plugged in to your existing infrastructure?",
   "m4.good": "For each system you want to connect, its provider has confirmed that other software can connect to the version you use.",
   "m6.why": "AI is never right every time. Someone must be able to catch a wrong result and put it right before it is used.",
   "m6.good": "A named role that checks the results, knows which results must be checked before they are used, and can stop or correct the tool.",

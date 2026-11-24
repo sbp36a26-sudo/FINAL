@@ -118,7 +118,7 @@
            ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
       act: 'Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending.' },
     { id: 'm4', gate: 'T1', name: 'Systems that can connect', who: 'it', ex: true,
-      q: 'Can other software read data from, and send data back to, the systems you want to connect it to?',
+      q: 'Can new AI tools easily be plugged in to your existing infrastructure?',
       gloss: 'PMS: the property management system, the booking system that holds reservations, rooms and guest records.',
       why: 'An AI tool that cannot read from and write back to your hotel systems leaves staff copying data by hand.',
       good: 'For each system you want to connect, its provider has confirmed that other software can connect to the version you use.',

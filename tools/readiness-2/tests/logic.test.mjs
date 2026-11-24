@@ -74,7 +74,7 @@ ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of 90') && /foundation
 const shareOf = id => TQ.blocks.find(b => b.name === L.MUST[id].blocks[0]).n;
 ok(eq(['m1', 'm2', 'm3', 'm4', 'm5'].map(shareOf), [90, 77, 58, 58, 22]) && eq(['m6', 'm7', 'm8', 'm9', 'm10'].map(shareOf), [59, 48, 35, 30, 30]), 'order: the gates by share, then the rest by share');
 ok(C.MUSTS[2].q === 'Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?', 'KPI must-have in the team\'s plain wording (v2.2)');
-ok(C.MUSTS[3].q.includes('the systems you want to connect it to'), 'systems must-have: "the systems you want to connect it to"');
+ok(C.MUSTS[3].q === 'Can new AI tools easily be plugged in to your existing infrastructure?', 'systems must-have: owner wording of 24 Nov 2026');
 ok(L.systemsFor({}).fallback && L.systemsFor({ dept: 'fo' }).text === C.SYSTEMS.fo && L.systemsFor({ dept: 'fo', use: 'none' }).fallback, 'systems examples: generic before the department is known, by department after');
 ok(eq(Object.keys(C.SYSTEMS).sort(), D.cat.depts.map(d => d.id).sort()), 'systems examples for every catalogue department');
 
