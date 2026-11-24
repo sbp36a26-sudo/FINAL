@@ -8,7 +8,6 @@
      missing  after a refused "Next": the id of the first unanswered question ('type' on step 1, 'where' on step 4), outlined; else null
      copy     true while the copy box (clipboard fallback) is open; copyText: what it shows
      open     which folded explanations are open (kept across re-renders)
-     explain  the use case whose "What does this do?" panel is open on step 4 (v2.2), or null; one at a time, kept across re-renders
      dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'
      share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
               v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
@@ -110,7 +109,7 @@
   var store = load() || F.blankStore();
   var rec = F.cur(store);
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, explain: null, detail: null, detailFrom: null, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, detail: null, detailFrom: null, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
@@ -199,7 +198,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.explain = null; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
+      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -458,20 +457,6 @@
     /* v2.4 (owner): no leaving the tool. "Details and sources" opens the detail layer over this page. */
     return '<button type="button" class="exbtn" data-act="detail" data-detail="' + esc(u.id) + '" data-x="row" id="dt-' + esc(u.id) + '">Details and sources</button>';
   }
-  /* v2.2: "What does this do?" under each use case of step 4. A real button (inside the row's label, so a click on it does not
-     choose the row: the click handler cancels it), with an inline panel after the row; the open use case is ui.explain, so the
-     panel survives render(). */
-  function explainButton(u, open) {
-    return '<button type="button" class="exbtn" data-act="explain" data-ex="' + esc(u.id) + '" id="ex-' + esc(u.id) + '" aria-expanded="' + open + '" aria-controls="exp-' + esc(u.id) + '">' + (open ? 'Hide: what does this do?' : 'What does this do?') + '</button>';
-  }
-  function explainPanel(u, d) {
-    var x = L.explain(D.ex, u.id), tu = TQ.uses[u.id], cn = L.catalogueName(TQ, u);
-    return '<div class="explain" id="exp-' + esc(u.id) + '" role="region" aria-label="' + esc('What ' + uName(u) + ' does') + '">' +
-      (x ? '<p><b>What it does:</b> ' + esc(D.ex[u.id].does) + '</p><p><b>How the AI works:</b> ' + esc(D.ex[u.id].how) + '</p>' : '<p>' + esc('What AI does: ' + u.task) + '</p>') +
-      '<p class="meta">' + esc(L.useLevelLine(u)) + '</p>' + (cn ? '<p class="meta">' + esc(cn) + '</p>' : '') +
-      (tu && tu.draft ? '<p class="meta exdraft"><strong>' + esc(C.DRAFT) + '.</strong> Its questions in step 5 come from a draft row.</p>' : '') +
-      '<p><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(u.id) + '" data-x="explain" id="dx-' + esc(u.id) + '">More detail</button></p></div>';
-  }
   function vWhere() {
     var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h2>Where in the hotel?</h2>' +
       '<p class="sub">Pick the area, then the department. If one of its use cases matches your problem, choose it: the next step asks what that use needs. If none does, say so: the result then rests on the must-haves only.</p>' +
@@ -490,11 +475,10 @@
     var d = DEPT[rec.dept];
     if (d && d.cat === rec.cat) {
       h += '<h3>3. Use case</h3><p class="meta">Choose the one that matches your problem. “How common” is the catalogue’s rating of how widely hotels use it.</p><div class="ucs" role="radiogroup" aria-label="Use case">' + d.uses.map(function (u) {
-        var on = rec.use === u.id, ex = ui.explain === u.id;
+        var on = rec.use === u.id; // owner 24 Nov 2026: no "What does this do?" button on the row; "Details and sources" holds it
         return '<label class="uc' + (on ? ' on' : '') + '" for="u-' + u.id + '"><input type="radio" name="use" id="u-' + u.id + '" value="' + u.id + '" data-use="' + u.id + '"' + (on ? ' checked' : '') + '>' +
           '<span class="ucbody"><span class="ucn">' + esc(uName(u)) + '</span>' +
-          '<span class="ucm">' + explainButton(u, ex) + '<span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + catLink(d, u) + '</span></span></label>' +
-          (ex ? explainPanel(u, d) : '');
+          '<span class="ucm"><span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + catLink(d, u) + '</span></span></label>';
       }).join('') + '</div>';
     }
     var noneOn = rec.use === 'none';
@@ -561,7 +545,7 @@
     /* Owner, 24 Nov 2026 (second decision): the top row holds only "Download (PDF)". "Save as file" sits in "Your checks in this
        browser", "Add to the AI Register" in the EU AI Act fold, "Start a new check" at the very bottom; Copy summary and Print are gone. */
     var toReg = u && !u.notTool ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
-    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '</div>' +
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' + // owner 24 Nov 2026: next to Download (PDF)
       (ui.copy ? '<div class="copybox" id="copybox"><p class="meta">Copying is blocked here. Select the text and copy it:</p><textarea id="copytext" rows="12" readonly>' + esc(ui.copyText) + '</textarea></div>' : '');
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
@@ -603,7 +587,6 @@
     h += '<div class="noprint">' + myChecks() + '</div>';
     h += sources('result');
     h += '<div class="navrow noprint"><button type="button" class="btn back" data-act="back" id="back">Back</button><span class="spacer"></span><button type="button" class="linkbtn" data-act="edit" id="edit">Change answers from the start</button></div>';
-    h += '<div class="btnrow noprint newrow"><button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner: at the very bottom
     return h;
   }
   function copyText(t, what) {
@@ -828,7 +811,6 @@
     var act = t.getAttribute('data-act'), m;
     if (act === 'detail') { e.preventDefault(); openDetail(t.getAttribute('data-detail'), t.id); return; } // v2.4: never chooses the row, never leaves the tool
     if (act === 'detail-close') { e.preventDefault(); closeDetail(); return; }
-    if (act === 'explain') { e.preventDefault(); var xid = t.getAttribute('data-ex'); ui.explain = ui.explain === xid ? null : xid; render(); return; } // v2.2: never chooses the row
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
     else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.toLowerCase()); }

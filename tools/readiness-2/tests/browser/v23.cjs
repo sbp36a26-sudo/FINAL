@@ -93,9 +93,10 @@ async function toMust(f) {
       // keyboard Close (Enter on Close)
       await f.focus('#dt-gx-2'); await p.keyboard.press('Space'); await f.waitForSelector('#detail[open]'); await f.waitForFunction(() => document.activeElement && document.activeElement.id === 'detail-close'); await p.waitForTimeout(100); await p.keyboard.press('Enter');
       await f.waitForFunction(() => !document.querySelector('#detail[open]')); ok((await active(f)) === 'dt-gx-2', tag + ': Space opens, Enter on Close closes, focus back');
-      // the explainer's "More detail"
-      await f.click('#ex-gx-2'); await f.click('#dx-gx-2'); await f.waitForSelector('#detail[open]');
-      ok((await st(f)).detail === 'gx-2', tag + ': "More detail" in the explainer opens the same layer');
+      // owner 24 Nov 2026: no "What does this do?" button on the row; "Details and sources" is the only way in on step 4
+      ok(!(await f.$('#ex-gx-2')), tag + ': no "What does this do?" button on the row');
+      await f.click('#dt-gx-2'); await f.waitForSelector('#detail[open]');
+      ok((await st(f)).detail === 'gx-2', tag + ': "Details and sources" opens the layer again');
       // not printed
       await p.emulateMedia({ media: 'print' }); ok(await f.evaluate(() => getComputedStyle(document.querySelector('#detail')).display === 'none'), tag + ': the layer is not printed'); await p.emulateMedia({ media: 'screen' });
       await p.keyboard.press('Escape'); await f.waitForFunction(() => !document.querySelector('#detail[open]'));
@@ -116,9 +117,9 @@ async function toMust(f) {
       s = await st(f); ok(s.step === 'result' && s.level === 'almost', tag + ': result, Almost ready (' + s.level + ')');
       const boxIds = await f.evaluate(() => [...document.querySelectorAll('#result > *')].map(e => e.id || (e.querySelector('[id]') || {}).id));
       ok(boxIds.join() === 'level-name,score,must-line' && (await f.textContent('#level-name')) === 'Almost ready' && /^Score: \d+%$/.test(await f.textContent('#score')) && /^9 of 10 must-haves in place · 1 planned$/.test(await f.textContent('#must-line')), tag + ': the box: verdict, score, must-haves line only (' + await f.textContent('#must-line') + ')');
-      ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf' && !(await f.$('#copy, #print')), tag + ': the top row holds only Download (PDF)');
+      ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf,new-check' && !(await f.$('#copy, #print')), tag + ': the top row holds Download (PDF) and Start a new check');
       ok(/^Because /.test(await f.textContent('#first #reason')) && !!(await f.$('#mychecks #save-file')) && !!(await f.$('#legal #to-register')), tag + ': reason in "Start with", Save as file in "Your checks", AI Register in the AI Act fold');
-      ok(await f.evaluate(() => document.querySelector('#view').lastElementChild.contains(document.querySelector('#new-check'))) && !(await f.$('#new-top')), tag + ': Start a new check only at the very bottom');
+      ok(await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1) && !(await f.$('#new-top')), tag + ': Start a new check next to Download (PDF), and only there (owner 24 Nov 2026)');
       ok(!(await f.$('[data-act="catalogue"]')), tag + ': no link to the catalogue on the result');
       await shot(p, f, wt + '-result-almost-ready');
       await f.click('#dr-gx-2'); await f.waitForSelector('#detail[open]');

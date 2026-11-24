@@ -128,7 +128,7 @@ ok(all.level === 'ready', 'all Yes is still Ready');
   ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['ai', 'srcs'])), 'only the fields the layer needs are bundled');
   ok(Object.values(D.detail).every(x => x.srcs.every(s => ['c', 'h', 'r', 'l'].includes(s[0]) && s[1] && (!s[3] || /^https?:\/\//.test(s[3])))), 'every source has a type, a name and, where given, an http(s) link (' + nSrc + ' sources)');
   ok(!/data-act="catalogue"|use-case-catalogue\/index\.html/.test(app), 'app.js: no link or hub message to the catalogue tab is left');
-  ok((app.match(/data-act="detail"/g) || []).length === 3 && /Details and sources/.test(app) && (app.match(/>More detail</g) || []).length === 2, 'three buttons open the layer: step 4 row, the explainer, the result');
+  ok((app.match(/data-act="detail"/g) || []).length === 2 && /Details and sources/.test(app) && (app.match(/>More detail</g) || []).length === 1 && !/data-act="explain"/.test(app), 'two buttons open the layer: step 4 row and the result (owner 24 Nov 2026: no "What does this do?" button)');
   ok(/showModal\(\)/.test(app) && /dialog id="detail"/.test(rd('src/page.html')) && /@media print\{ dialog\.detail\{display:none!important\} \}/.test(rd('src/style.css')), 'a native dialog, opened modal, never printed');
   ok(!/AIHA|AI Hospitality Alliance|wikipedia/i.test(JSON.stringify(D.detail)), 'no banned source in the bundled detail');
 }
