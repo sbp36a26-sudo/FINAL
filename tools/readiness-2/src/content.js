@@ -82,10 +82,12 @@
   };
 
   /* ---------- Must-haves and tailored questions: the readiness check's answer scale ---------- */
-  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['p', 'Partly'], ['n', 'No'], ['k', 'Don’t know yet']];
-
-  var NA = ['na', 'Doesn’t apply'];
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', p: 'Partly', n: 'No', k: 'Don’t know yet', na: 'Doesn’t apply' };
+  /* v2.3 (owner, 24 Nov 2026): four answers only, in this order. "Partly" and "Doesn't apply" are no longer offered. */
+  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No'], ['k', 'Don’t know yet']];
+  /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
+  var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
+  var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet', p: 'Partly', na: 'Doesn’t apply' }; // p, na: only to name an old answer (Team tab)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -275,11 +277,11 @@
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers. Use Copy summary, Print, Save as file or Download before you close the page.';
+  var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your five answers and your use case were kept. The other answers were not: the questions are new.';
 
-  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, NA: NA, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
+  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
     READY_NONE: READY_NONE, ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,

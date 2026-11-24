@@ -72,7 +72,7 @@ async function walk(p, f, tag, plan, shots) {
   await click(f, '#next');
   ok((await f.getAttribute('#app', 'data-state')) === 'must', tag + ': step 3 Must-haves');
   ok((await f.$$('#view fieldset.qa')).length === 10 && (await f.textContent('#honest')).includes('Nobody checks your answers.'), tag + ': ten must-haves, honesty line on the step');
-  ok((await f.$$eval('#f-m1 .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|Partly|No|Don’t know yet', tag + ': the readiness check\'s answer scale');
+  ok((await f.$$eval('#f-m1 .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|No|Don’t know yet' && (await f.$$eval('#view fieldset.qa .opts', e => e.every(x => x.querySelectorAll('label').length === 4))), tag + ': v2.3: the four answers only, on every must-have');
   ok((await f.$$('details[data-fold^="why-m"][open]')).length === 0, tag + ': must-have folds closed');
   await click(f, 'details[data-fold="why-m1"] > summary');
   const why1 = await f.textContent('details[data-fold="why-m1"]');
@@ -105,8 +105,8 @@ async function walk(p, f, tag, plan, shots) {
     ok(/Area: People\./.test(w) && /Resource intensity \(team judgement, not evidence-based\): (Light|Moderate|Heavy): /.test(w) && /(Based on \d+ entr(y|ies) in the team’s research record \(not yet published\)\.|The team’s judgement from the catalogue description; no source entry\.|Evidence: team draft)/.test(w) && !/[A-Z]{3}-\d{3}-\d{2}|evidence pack/.test(w), tag + ': tailored why: area, intensity with its definition, a plain evidence line without ids (v2.1)');
     if (plan.draft) ok(await f.isVisible('#draft-note') && /Draft questions: team to review/.test(await f.textContent('#draft-note')) && /Evidence: team draft/.test(w), tag + ': draft use case is marked "Draft questions: team to review"');
     else ok(!(await f.$('#draft-note')), tag + ': no draft note');
-    if (plan.addon) { ok(await f.isVisible('#f-' + plan.addon), tag + ': the add-on question ' + plan.addon); if (plan.addon === 'x-sens') { ok((await f.textContent('#t-x-sens')) === 'Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?' && (await f.$$eval('#f-x-sens .opts label', e => e.map(x => x.textContent))).includes('Checked: not required (confirmed in writing)'), tag + ': DPIA question with the neutral wording and its "not required" answer'); } }
-    ok((await f.$$eval('#f-' + first + ' .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|Partly|No|Don’t know yet|Doesn’t apply', tag + ': tailored scale adds "Doesn\'t apply"');
+    if (plan.addon) { ok(await f.isVisible('#f-' + plan.addon), tag + ': the add-on question ' + plan.addon); if (plan.addon === 'x-sens') { ok((await f.textContent('#t-x-sens')) === 'Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?' && (await f.$$eval('#f-x-sens .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|No|Don’t know yet', tag + ': DPIA question with the neutral wording; v2.3: its "not required" answer (a Doesn\'t apply) is no longer offered'); } }
+    ok((await f.$$eval('#f-' + first + ' .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|No|Don’t know yet' && (await f.$$eval('#view fieldset.qa .opts', e => e.every(x => x.querySelectorAll('label').length === 4))) && !/Partly|Doesn’t apply/.test(await f.textContent('#view')), tag + ': v2.3: the same four answers on every tailored question; no Partly, no "Doesn\'t apply"');
     await click(f, '#next'); s = await state(f); ok(s.step === 'tailored' && s.missing === first, tag + ': Next with tailored questions unanswered is refused');
     for (const [i, id] of s.tailored.entries()) await answer(f, id, plan.tail[i] || 'y');
     await check(f, tag + ' tailored'); await S('5-tailored');
@@ -116,12 +116,15 @@ async function walk(p, f, tag, plan, shots) {
   ok(s.step === 'result' && (await f.getAttribute('#app', 'data-state')) === 'result', tag + ': result');
   ok(s.level === plan.level, tag + ': verdict ' + plan.level + ' (got ' + s.level + ', ' + s.pct + '%)');
   const m = await f.evaluate(() => window.Readiness2.resultModel());
-  ok((await f.textContent('#level-name')) === m.levelName && (await f.textContent('#score')) === m.scoreHead && (await f.textContent('#score-sub')) === m.scoreSub, tag + ': verdict, "' + m.scoreHead + '" and its base on the screen');
+  ok((await f.textContent('#level-name')) === m.levelName && (await f.textContent('#score')) === m.scoreHead && (await f.textContent('#must-line')) === m.mustLine, tag + ': verdict, "' + m.scoreHead + '" and the must-haves line on the screen');
+  const box = await f.evaluate(() => [...document.querySelectorAll('#result > *')].map(e => e.id || e.querySelector('[id]').id));
+  ok(box.join() === 'level-name,score,must-line' && !(await f.$('#res-hotel')) && !(await f.$('#result #reason, #result #score-sub, #result #level-line, #result #cap, #result #law')), tag + ': owner: the verdict box holds only the verdict, the score and the must-haves line (' + box.join() + ')');
+  ok((await f.$('#how #score-sub')) && (await f.textContent('#how #score-sub')) === m.scoreSub && (await f.$('#how #level-line')), tag + ': the points and the honesty text moved to "How this was worked out"');
+  ok(/the answers are your own and nobody checks them/.test(await f.textContent('.foot')), tag + ': one honesty line in the footer');
   ok((s.level === 'noinfo' ? m.scoreHead === 'No score yet: you answered ' + s.counts.known + ' of ' + s.counts.total + ' questions.' : m.scoreHead === 'Score: ' + s.pct + '%' && /^\d+ of \d+ points on /.test(m.scoreSub)) && m.scoreSub.endsWith('Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.') && !/% ready/.test(await f.textContent('#view')), tag + ': score wording (v2.1: "Score: n%" or "No score yet", never "% ready")');
-  ok((await f.textContent('#reason')) === m.reason && /^Because /.test(m.reason), tag + ': the reason stands under the verdict: ' + m.reason);
-  const sr = await f.evaluate(() => { const a = document.querySelector('#score').getBoundingClientRect(), b = document.querySelector('#score-sub').getBoundingClientRect(); return [a.bottom, b.top, a.right, b.left, b.bottom - a.top]; });
-  ok(sr[4] < ((await f.evaluate(() => innerWidth)) < 700 ? 230 : 140), tag + ': the points and the caveat sit right next to the score (' + Math.round(sr[4]) + ' px)');
-  ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).includes('new-check') && (await f.$$eval('#actions > *', e => e.map(x => x.id))).slice(0, 4).join() === 'pdf,copy,print,save-file', tag + ': top action row with Start a new check');
+  ok((await f.textContent('#first #reason')) === m.reason && /^Because /.test(m.reason), tag + ': the reason heads "' + m.firstLabel + '": ' + m.reason);
+  ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf' && !(await f.$('#copy')) && !(await f.$('#print')), tag + ': owner: the top row holds only Download (PDF); no Copy summary, no Print');
+  ok(!!(await f.$('#mychecks #save-file')) && (await f.evaluate(() => { const v = document.querySelector('#view'), n = document.querySelector('#new-check'); return !!n && n.closest('.newrow') === v.lastElementChild; })) && !(await f.$('#new-top')), tag + ': Save as file in "Your checks"; Start a new check at the very bottom, and only there');
   ok((await f.$$('#areas .brow')).length === m.areas.length && (await f.textContent('#areas .brow[data-area="must"]')).includes('Must-haves'), tag + ': score per area bars');
   ok((await f.$$('#first li')).length === m.first.length && (await f.textContent('#first h2')) === m.firstLabel, tag + ': ' + m.firstLabel);
   ok((await f.$$('#plan .person')).length === m.people.length && (await f.$$('#plan [data-act="copy-who"]')).length === m.people.length, tag + ': action plan by person with a copy button each');
@@ -130,7 +133,7 @@ async function walk(p, f, tag, plan, shots) {
   else {
     ok((await f.$$('#vendor-list li')).length === m.vendor.length && m.vendor.length >= 4, tag + ': vendor questions');
     ok(/provisional/i.test(await f.textContent('#legal summary')) && /not legal advice/i.test(await f.textContent('#legal')) && (await f.textContent('#legal-label')) === m.legal.name, tag + ': provisional AI Act label "' + m.legal.name + '", not legal advice');
-    ok((await f.getAttribute('#to-register', 'href')).startsWith('../register/index.html#add=' + plan.use + '&name='), tag + ': Add to the AI Register link');
+    ok((await f.getAttribute('#legal #to-register', 'href')).startsWith('../register/index.html#add=' + plan.use + '&name='), tag + ': Add to the AI Register link, inside the EU AI Act fold');
   }
   if (plan.draft) ok(/Draft questions: team to review/.test(await f.textContent('#draft')), tag + ': draft said on the result');
   ok((await f.$$('#method li')).length === m.method.length && /Cut-offs:/.test(await f.textContent('#how')), tag + ': how this was worked out');
@@ -148,11 +151,11 @@ async function walk(p, f, tag, plan, shots) {
 
 const PLANS = {
   chat: { use: 'gx-2', addon: 'x-auto', hotel: { type: 'independent', name: 'Hotel Alpenblick', role: 'gm', country: 'Austria' }, Q: ['y', 'y', 'y', 'n', 'u'],
-    must: ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], by: { m3: '2027-01-15' }, tail: ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y'], level: 'notready' },
+    must: ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], by: { m3: '2027-01-15' }, tail: ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'], level: 'notready' }, // v2.3: Partly → Planned, Doesn't apply → No
   hr: { use: 'hr-2', addon: 'x-sens', hotel: { type: 'group', name: 'Meridian Hotels', role: 'owner', country: 'France' }, Q: ['y', 'y', 'y', 'y', 'y'],
     must: ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'], tail: ['y', 'y', 'y', 'y', 'y', 'y', 'pl'], level: 'almost' }, // v2.1 (B5): a high-risk use never gets the top verdict here
   draft: { use: 'fo-8', draft: true, hotel: { type: 'managed', name: 'Seehotel Bellevue', role: 'dept', country: 'Switzerland' }, Q: ['u', 'y', 'y', 'y', 'y'],
-    must: ['y', 'y', 'p', 'y', 'y', 'pl', 'y', 'y', 'y', 'y'], tail: ['y', 'p', 'y', 'y', 'n', 'y'], level: 'almost' },
+    must: ['y', 'y', 'pl', 'y', 'y', 'pl', 'y', 'y', 'y', 'y'], tail: ['y', 'pl', 'y', 'y', 'n', 'y'], level: 'almost' }, // v2.3: Partly → Planned
   none: { use: 'none', hotel: { type: 'independent', name: 'Pension Aurora', role: 'other', country: 'Other' }, Q: ['y', 'y', 'y', 'y', 'y'],
     must: ['k', 'k', 'k', 'k', 'k', 'k', 'y', 'y', 'y', 'y'], level: 'noinfo' }
 };
@@ -178,12 +181,10 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         await p.reload(); s = await state(p); ok(s.step === 'tailored' && Object.keys(s.T).length === 8, wtag + ': reload mid-flow keeps the step and the answers');
         // change an answer, return: since last time
         await answer(p, 'sk1', 'y'); await p.click('#next'); s = await state(p);
-        ok(s.step === 'result' && s.snaps === 2 && await p.isVisible('#since') && /Since last time/.test(await p.textContent('#since')) && /Questions you answered: 15 of 17 → 16 of 17\./.test(await p.textContent('#since')), wtag + ': return visit shows "since last time"');
+        ok(s.step === 'result' && s.snaps === 2 && await p.isVisible('#since') && /Since last time/.test(await p.textContent('#since')) && /Questions you answered: 16 of 18 → 17 of 18\./.test(await p.textContent('#since')), wtag + ': return visit shows "since last time"');
         await shot(p, wtag + '-chat-7-since');
-        // copy summary and copy per person
-        await p.click('#copy'); await p.waitForTimeout(150);
-        let clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-        ok(clip.startsWith('Do you need AI? Result for Hotel Alpenblick') && /Not ready yet · Score: \d+%\nBecause 1 must-have is missing: Rules for staff on AI tools\. A missing must-have outweighs the score\.\n\d+ of 34 points on 17 questions: 16 answered, 1 “Don’t know yet” \(0 points each\)\./.test(clip) && !/% ready/.test(clip) && /Action plan by person:/.test(clip), wtag + ': Copy summary');
+        // copy per person (Copy summary was removed by the owner, 24 Nov 2026)
+        let clip;
         const who = await p.getAttribute('#plan [data-act="copy-who"]', 'data-who'); await p.click('#plan [data-act="copy-who"]'); await p.waitForTimeout(150);
         clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
         ok(/^Do you need AI\? · AI chat assistant for guests/.test(clip) && /\nFor: /.test(clip) && /Could you help with these\?/.test(clip) && !!who, wtag + ': copy per person');
@@ -315,6 +316,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         await p.click('#hubBar button[data-tool="readiness-2"]'); f = await hubFrame(p, 'readiness-2');
       }
       // Add to the AI Register
+      if (!(await f.isVisible('#to-register'))) await f.click('details[data-fold="legal"] > summary');
       await f.click('#to-register'); await p.waitForFunction(() => window.HFTPHub.state().tool === 'register');
       const rf = await hubFrame(p, 'register'); await rf.waitForFunction(() => /AI chat and messaging assistant/.test(document.body.textContent), null, { timeout: 15000 }).catch(() => {});
       ok(/AI chat and messaging assistant/.test(await rf.textContent('body')), wtag + ' hub: Add to the AI Register opens the register with the tool added');

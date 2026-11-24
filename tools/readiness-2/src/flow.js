@@ -41,7 +41,10 @@
   };
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var MUST_IDS = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10'];
-  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1 }, T_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1, na: 1 };
+  /* v2.3 (owner, 24 Nov 2026): steps 3 and 5 offer the same four answers. OLD_A / OLD_T: answers saved before v2.3 ("Partly" on
+     both steps, "Doesn't apply" on step 5). A saved one is kept in the record as it was (never turned into another answer) but is
+     not an answer: the step is not done until the person picks again, so a check that stood on its result opens on that step. */
+  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1, k: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var TYPES = ['independent', 'group', 'managed'], ROLES = ['gm', 'owner', 'dept', 'it', 'fin', 'other'];
   var MAX_SNAPS = 20, MAX_CHECKS = 50, HIST_SKIP_MAX = 60;
@@ -142,7 +145,7 @@
     o.hotel.name = str(H.name, 120); o.hotel.type = TYPES.indexOf(H.type) >= 0 ? H.type : ''; o.hotel.role = ROLES.indexOf(H.role) >= 0 ? H.role : '';
     o.hotel.country = typeof H.country === 'string' && (!env || !env.countries || env.countries.indexOf(H.country) >= 0) ? str(H.country, 40) : '';
     QIDS.forEach(function (id) { if (Q_OK[Q[id]]) o.Q[id] = Q[id]; });
-    MUST_IDS.forEach(function (id) { if (A_OK[A[id]]) { o.A[id] = A[id]; if (A[id] === 'pl' && validDate(By[id])) o.By[id] = By[id]; } });
+    MUST_IDS.forEach(function (id) { if (A_OK[A[id]] || OLD_A[A[id]]) { o.A[id] = A[id]; if (A[id] === 'pl' && validDate(By[id])) o.By[id] = By[id]; } });
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(env, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
     o.use = r.use === 'none' ? 'none' : (typeof r.use === 'string' && o.dept && useIn(env, o.dept, r.use) ? r.use : '');
@@ -156,7 +159,7 @@
       var sigNow = tailSig(env, o.use), sigThen = typeof r.tqSig === 'string' ? r.tqSig : '';
       o.tqSig = sigNow; o.from = r.from === 'link' ? 'link' : '';
       if (sigThen && sigNow && sigThen !== sigNow) { if (Object.keys(Tt).length && info) info.questionsChanged = true; } // answered against other questions: step 5 again
-      else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
+      else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]] || OLD_T[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
     }
     o.snaps = (Array.isArray(r.snaps) ? r.snaps : []).map(cleanSnap).filter(Boolean).slice(-MAX_SNAPS);
     o.share = { named: !!obj(r.share).named };

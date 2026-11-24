@@ -46,7 +46,7 @@
     if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
 
     b.push({ k: 'h', t: m.firstLabel });
-    if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes or does not apply.' });
+    if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes.' });
     m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: f.who + ': ' + f.text, sub: f.sub }); });
 
     b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });

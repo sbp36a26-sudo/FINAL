@@ -73,7 +73,7 @@ st = F.reduce(st, 'change', null, env).store; ok(F.cur(st).step === 'q' && F.cur
 s = sendAll(s, 'answer', F.QIDS, 'y'); s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'must', 'five answers → must-haves');
 ok(!F.reduce(s, 'next', null, env).ok, 'must-haves: Next refused with none answered');
 s = sendAll(s, 'answer', F.MUST_IDS.slice(0, 9), 'y'); ok(!F.reduce(s, 'next', null, env).ok, 'must-haves: Next refused with one unanswered');
-ok(!F.reduce(s, 'answer', { id: 'm10', value: 'na' }, env).ok, 'must-haves: "Doesn\'t apply" is not offered');
+ok(!F.reduce(s, 'answer', { id: 'm10', value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: 'm10', value: 'p' }, env).ok, 'must-haves: "Doesn\'t apply" and (v2.3) "Partly" are not offered');
 s = F.reduce(s, 'answer', { id: 'm10', value: 'k' }, env).store; ok(F.reduce(s, 'next', null, env).ok, '"Don\'t know yet" counts as an answer');
 s = F.reduce(s, 'answer', { id: 'm3', value: 'pl' }, env).store;
 ok(!F.reduce(s, 'by', { id: 'm3', date: '2026-02-31' }, env).ok && !F.reduce(s, 'by', { id: 'm1', date: '2027-01-15' }, env).ok, 'By when: real dates only, and only for a Planned answer');
@@ -86,7 +86,7 @@ ok(F.cur(s).use === 'gx-2' && F.cur(s).useName === D.cat.depts.find(d => d.id ==
 s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'tailored', 'a use case → tailored questions');
 const tids = F.tailIds(env, 'gx-2');
 ok(!F.reduce(s, 'next', null, env).ok && !F.reduce(s, 'answer', { id: 'zz1', value: 'y' }, env).ok, 'tailored: Next refused; an unknown question id refused');
-s = sendAll(s, 'answer', tids, 'y'); s = F.reduce(s, 'answer', { id: tids[0], value: 'na' }, env).store; ok(F.cur(s).T[tids[0]] === 'na', 'tailored: "Doesn\'t apply" is offered');
+s = sendAll(s, 'answer', tids, 'y'); ok(!F.reduce(s, 'answer', { id: tids[0], value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: tids[0], value: 'p' }, env).ok && F.cur(s).T[tids[0]] === 'y', 'tailored (v2.3): "Doesn\'t apply" and "Partly" are not offered');
 s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'result', 'tailored answered → result');
 ok(!F.reduce(s, 'answer', { id: 'm1', value: 'n' }, env).ok && !F.reduce(s, 'next', null, env).ok, 'result: no answers, no Next');
 ok(F.cur(F.reduce(s, 'back', null, env).store).step === 'tailored' && F.cur(F.reduce(s, 'edit', null, env).store).step === 'q', 'result: Back → tailored; edit → q');

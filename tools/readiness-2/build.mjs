@@ -66,6 +66,25 @@ export function tqModel(J, labels) {
   return { uses, highRisk, intensity: J.intensity, arch: J.arch, areas: J.areas, addonWhy: J.addonWhy, blocks: J.blocks, matrixTotal: J.matrixTotal, nFromWorkbook: J.nFromWorkbook, nDraft: J.nDraft };
 }
 
+/* v2.4 (owner, 24 Nov 2026): the detail layer. Each use case's catalogue entry, read from the catalogue page's <script id="data">
+   at build time (one source of truth, never copied by hand): { <use id>: { ai, srcs: [[type, name, note, url]] } }.
+   Sources keep the catalogue's types: 'c' company, 'h' hotel (the catalogue shows a "Hotel" tag), 'r' a study in the catalogue's
+   source list (name and link resolved from it, as the catalogue page does), 'l' a plain link. Only the entries the catalogue shows. */
+export function detailModel(catHtml) {
+  const m = catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!m) throw new Error('use-case-catalogue/index.html: no <script id="data"> block');
+  const X = JSON.parse(m[1]), SRC = X.src || {}, out = {};
+  X.depts.forEach(d => d.uses.forEach((u, i) => {
+    const srcs = (u.srcs || []).map(s => {
+      if (s[0] === 'r') { const r = SRC[s[1]]; if (!r) throw new Error('catalogue source ' + s[1] + ' is not in its source list (' + d.id + '-' + (i + 1) + ')'); return ['r', r[0], s[2] || '', r[1] || '']; }
+      if (s[0] === 'c' || s[0] === 'h') return [s[0], s[1], s[2] || '', s[3] || ''];
+      return ['l', s[1], '', s[2] || ''];
+    });
+    out[d.id + '-' + (i + 1)] = { ai: u.ai || '', srcs };
+  }));
+  return out;
+}
+
 /* The use-case explainer (v2.2, data/explain.json): { <use id>: { does, how } } for every catalogue use case, nothing left over. */
 export function explainModel(E, ids) {
   const bad = ids.filter(id => !E[id] || typeof E[id].does !== 'string' || !E[id].does.trim() || typeof E[id].how !== 'string' || !E[id].how.trim()), extra = Object.keys(E).filter(id => !ids.includes(id));
@@ -75,7 +94,7 @@ export function explainModel(E, ids) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const labels = JSON.parse(read('../register/data/uc-labels.json'));
-  const cat = catalogueModel(read('../use-case-catalogue/index.html'), labels);
+  const catHtml = read('../use-case-catalogue/index.html'), cat = catalogueModel(catHtml, labels), detail = detailModel(catHtml);
   const J = JSON.parse(read('data/usecase-questions.json'));
   /* Every catalogue use case must have its tailored questions, and no question may be left over: run data/build-questions.mjs after the catalogue changes. */
   const ids = cat.depts.flatMap(d => d.uses.map(u => u.id));
@@ -83,7 +102,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   if (missing.length || extra.length) throw new Error('data/usecase-questions.json is out of step with the catalogue (missing or renamed: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + '). Run: node tools/readiness-2/data/build-questions.mjs');
   const rc = rcModel(read('../readiness/index.html'), labels, JSON.parse(read('../register/data/reference.json')));
   const ex = explainModel(JSON.parse(read('data/explain.json')), ids);
-  const data = { cat, tq: tqModel(J, labels), rc, ex, builtOn: new Date().toISOString().slice(0, 10) };
+  const data = { cat, tq: tqModel(J, labels), rc, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   /* PDF: jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it. */
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };

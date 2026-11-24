@@ -1203,7 +1203,7 @@ details.fold[open] > summary{margin-bottom:12px}
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
-      q: 'Do you know which number should improve, and what it is today?',
+      q: 'Do you know which KPI should improve, and what it is today?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Without a starting figure nobody can tell whether the tool worked, and the decision to keep or stop it turns into opinion.',
@@ -1236,10 +1236,12 @@ details.fold[open] > summary{margin-bottom:12px}
   };
 
   /* ---------- Must-haves and tailored questions: the readiness check's answer scale ---------- */
-  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['p', 'Partly'], ['n', 'No'], ['k', 'Don’t know yet']];
-
-  var NA = ['na', 'Doesn’t apply'];
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', p: 'Partly', n: 'No', k: 'Don’t know yet', na: 'Doesn’t apply' };
+  /* v2.3 (owner, 24 Nov 2026): four answers only, in this order. "Partly" and "Doesn't apply" are no longer offered. */
+  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No'], ['k', 'Don’t know yet']];
+  /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
+  var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
+  var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet', p: 'Partly', na: 'Doesn’t apply' }; // p, na: only to name an old answer (Team tab)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -1272,7 +1274,7 @@ details.fold[open] > summary{margin-bottom:12px}
            ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
       act: 'Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending.' },
     { id: 'm4', gate: 'T1', name: 'Systems that can connect', who: 'it', ex: true,
-      q: 'Can other software read data from, and send data back to, the systems you want to connect it to?',
+      q: 'Can new AI tools easily be plugged in to your existing infrastructure?',
       gloss: 'PMS: the property management system, the booking system that holds reservations, rooms and guest records.',
       why: 'An AI tool that cannot read from and write back to your hotel systems leaves staff copying data by hand.',
       good: 'For each system you want to connect, its provider has confirmed that other software can connect to the version you use.',
@@ -1429,11 +1431,11 @@ details.fold[open] > summary{margin-bottom:12px}
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers. Use Copy summary, Print, Save as file or Download before you close the page.';
+  var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your five answers and your use case were kept. The other answers were not: the questions are new.';
 
-  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, NA: NA, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
+  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
     READY_NONE: READY_NONE, ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
@@ -1449,14 +1451,17 @@ details.fold[open] > summary{margin-bottom:12px}
    2. evaluate(rec, TQ): the score in % and the verdict (owner, 24 Nov 2026: "percentage plus verdict").
       Every cut-off sits in T, one block, and is the team's judgement, not tested with hotels.
       Rules v2.1 (24 Nov 2026, after the clean-up audit and the council on v2.0): the three switches in JUDGEMENT.
-   3. resultModel(rec, env): every word of the result page. The screen, Copy summary and the PDF all read it, so they agree. */
+      Rules v2.3 (24 Nov 2026, owner): four answers on steps 3 and 5 (Yes, Planned, No, Don't know yet). "Partly" (p) and
+      "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
+   3. resultModel(rec, env): every word of the result page. The screen and the PDF read it (summaryText too, kept for tests and the Team tab), so they agree. */
 (function (root) {
   'use strict';
   var C = root.R2Content;
-  var RULES = 'v2.1 (24 Nov 2026)';
+  var RULES = 'v2.3 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
-  var A_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1 };
+  var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
+  var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
   var MUST = {}; C.MUSTS.forEach(function (x) { MUST[x.id] = x; });
   var QBY = {}; C.QUESTIONS.forEach(function (q) { QBY[q.id] = q; });
@@ -1470,7 +1475,7 @@ details.fold[open] > summary{margin-bottom:12px}
     UNKNOWN_NOINFO: 50, // "Not enough information yet": more than 50% of the questions "Don't know yet"
     STRONG: 75, GAPS: 50 // an area in words: Strong (75% or more), Gaps to close (50 to 74%), Weak (below 50%)
   };
-  var POINTS = { y: 2, pl: 1, p: 1, n: 0 }; // "Doesn't apply" is left out; "Don't know yet": see JUDGEMENT.UNKNOWN_SCORES_ZERO
+  var POINTS = { y: 2, pl: 1, n: 0 }; // "Don't know yet": see JUDGEMENT.UNKNOWN_SCORES_ZERO (v2.3: no Partly, no "Doesn't apply")
 
   /* ---------- TEAM JUDGEMENT (rules v2.1): three switches the owner can flip. Each is named in "How this was worked out". ----------
      UNKNOWN_SCORES_ZERO   (council B2) true: "Don't know yet" counts as 0 points, so the score is the share of everything asked
@@ -1543,16 +1548,20 @@ details.fold[open] > summary{margin-bottom:12px}
   /* ---------- the questions of one check ---------- */
   function useQs(TQ, useId) { var u = TQ && TQ.uses && useId && useId !== 'none' ? TQ.uses[useId] : null; return u ? u.qs : []; }
   /* Every question asked, in order: the must-haves, then the tailored ones for the chosen use case.
-     { key, grp: 'must' | 'tail', a: 'must' | area key, name, q, who, act, v: answer or '', by, na: label or '' } */
+     { key, grp: 'must' | 'tail', a: 'must' | area key, name, q, who, act, v: answer or '', by, old: 'p' | 'na' | '' }
+     old: an answer saved before v2.3 that is no longer offered; v is then '' (not answered). */
+  function oldOf(raw) { return typeof raw === 'string' && Object.prototype.hasOwnProperty.call(OLD, raw) ? raw : ''; }
+  /* The line under a question whose saved answer is no longer offered ('' otherwise). */
+  function oldLine(raw) { var o = oldOf(raw); return o ? C.OLD_LINE.replace('{a}', OLD[o]) : ''; }
   function questions(rec, TQ) {
     var sy = systemsFor(rec), out = [];
     C.MUSTS.forEach(function (m) {
       var v = rec.A && A_OK[rec.A[m.id]] ? rec.A[m.id] : '';
-      out.push({ key: m.id, grp: 'must', a: 'must', name: m.name, q: m.q, who: m.who, act: m.act.replace('{ex}', sy.text), v: v, by: v === 'pl' ? (rec.By || {})[m.id] || '' : '', na: '' });
+      out.push({ key: m.id, grp: 'must', a: 'must', name: m.name, q: m.q, who: m.who, act: m.act.replace('{ex}', sy.text), v: v, by: v === 'pl' ? (rec.By || {})[m.id] || '' : '', old: v ? '' : oldOf((rec.A || {})[m.id]) });
     });
     useQs(TQ, rec.use).forEach(function (t) {
-      var raw = (rec.T || {})[t.id], v = A_OK[raw] || raw === 'na' ? raw : '';
-      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, who: t.who, act: t.act, v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', na: t.na || C.NA[1], kind: t.kind });
+      var raw = (rec.T || {})[t.id], v = A_OK[raw] ? raw : '';
+      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, who: t.who, act: t.act, v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw), kind: t.kind });
     });
     return out;
   }
@@ -1560,9 +1569,9 @@ details.fold[open] > summary{margin-bottom:12px}
   function areaWord(pts, max) { return !max ? 'thin' : pts * 100 >= T.STRONG * max ? 'strong' : pts * 100 >= T.GAPS * max ? 'gaps' : 'weak'; }
   var AREA_WORD_MIN = 2; // an area gets a word (Strong / Gaps to close / Weak) only with two or more known answers (council, item 6)
 
-  /* The score and the verdict (rules v2.1).
-     Score = points earned / points possible over every question asked (must-haves + tailored). "Doesn't apply" is left out
-     altogether. "Don't know yet" counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "to find out".
+  /* The score and the verdict (rules v2.3).
+     Score = points earned / points possible over every question asked (must-haves + tailored). An answer that is no longer
+     offered (it.old) counts as not answered, like a blank. "Don't know yet" counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "to find out".
      No score is shown under "Not enough information yet" (ev.pct is null there; ev.pts and ev.max keep the sum).
      Verdict, in this order:
        noinfo    more than half the questions unknown
@@ -1572,16 +1581,15 @@ details.fold[open] > summary{margin-bottom:12px}
        almost    everything else (50 to 74%; a must-have not Yes but none at No; 75%+ with a quarter or more unknown; a held top verdict)
      ev.reason: the plain sentence shown under the verdict name ("Because ..."). ev.held: what held the top verdict back, if anything. */
   function evaluate(rec, TQ) {
-    var items = questions(rec, TQ), c = { total: 0, known: 0, unknown: 0, na: 0, yes: 0, planned: 0, partly: 0, no: 0 }, pts = 0, max = 0;
-    var must = { n: 0, yes: 0, planned: 0, partly: 0, no: 0, unknown: 0 }, area = {}, zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
+    var items = questions(rec, TQ), c = { total: 0, known: 0, unknown: 0, yes: 0, planned: 0, no: 0 }, pts = 0, max = 0;
+    var must = { n: 0, yes: 0, planned: 0, no: 0, unknown: 0 }, area = {}, zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
     items.forEach(function (it) {
       var g = area[it.a] = area[it.a] || { k: it.a, name: it.a === 'must' ? 'Must-haves' : it.name, n: 0, known: 0, yes: 0, unknown: 0, pts: 0, max: 0 };
-      if (it.v === 'na') { c.na++; it.state = 'na'; return; }
       c.total++; g.n++;
       if (it.grp === 'must') must.n++;
       if (!it.v || it.v === 'k') { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
       c.known++; g.known++; pts += POINTS[it.v]; max += 2; g.pts += POINTS[it.v]; g.max += 2; if (it.v === 'y') g.yes++;
-      var w = { y: 'yes', pl: 'planned', p: 'partly', n: 'no' }[it.v]; c[w]++; it.state = w; if (it.grp === 'must') must[w]++;
+      var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w; if (it.grp === 'must') must[w]++;
     });
     must.allYes = must.yes === must.n; must.anyNo = must.no > 0;
     var areas = ['must'].concat(AK).filter(function (k) { return area[k] && area[k].n > 0; }).map(function (k) {
@@ -1627,14 +1635,14 @@ details.fold[open] > summary{margin-bottom:12px}
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
   /* ---------- to-do: one plain task per open item ---------- */
-  var RANK = { no: 0, partly: 1, unknown: 2, planned: 3 };
+  var RANK = { no: 0, unknown: 2, planned: 3 };
   function task(it) {
     var d = fmtDate(it.by);
     return it.state === 'planned' ? 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act)
       : it.state === 'unknown' ? 'Find out: “' + it.q + '”'
       : it.act;
   }
-  /* Open items, weakest first: must-haves before tailored questions; within each No, Partly, Don't know yet, Planned; then the order asked. */
+  /* Open items, weakest first: must-haves before tailored questions; within each No, Don't know yet, Planned; then the order asked. */
   function open(ev) {
     return ev.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return RANK[x.it.state] != null; })
       .sort(function (x, y) { return (x.it.grp === 'must' ? 0 : 1) - (y.it.grp === 'must' ? 0 : 1) || RANK[x.it.state] - RANK[y.it.state] || x.i - y.i; })
@@ -1648,7 +1656,9 @@ details.fold[open] > summary{margin-bottom:12px}
     var by = {}; open(ev).forEach(function (a) { (by[a.who] = by[a.who] || []).push(a); });
     return C.WHO_ORDER.filter(function (w) { return by[w]; }).map(function (w) { return { who: w, name: C.WHO[w], items: by[w] }; });
   }
-  var STATE_WORD = { yes: 'Yes', planned: 'Planned', partly: 'Partly', no: 'No', unknown: 'Don’t know yet', na: 'Doesn’t apply' };
+  var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Don’t know yet' };
+  /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such (Team tab). */
+  function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
 
   /* ---------- where it sits ---------- */
   /* v2.2: the name this tool shows for a use case: the team's plain name (TQ.uses[id].plain, data/wording.json) or the catalogue's.
@@ -1741,9 +1751,9 @@ details.fold[open] > summary{margin-bottom:12px}
   /* ---------- how it was worked out ---------- */
   function method(ev) {
     var c = ev.counts, out = [], zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
-    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · Partly 1 · No 0 · Don’t know yet 0. “Doesn’t apply” is left out.'
-      : 'Points per answer: Yes 2 · Planned, not done yet 1 · Partly 1 · No 0. “Don’t know yet” and “Doesn’t apply” are left out of the points.');
-    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' “Don’t know yet”' + (c.na ? '; ' + c.na + ' “Doesn’t apply”, not counted' : '') + ').');
+    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.'
+      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. “Don’t know yet” is left out of the points.');
+    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' “Don’t know yet”).');
     out.push(ev.pct != null ? 'Your points: ' + ev.pts + ' of ' + ev.max + ' possible = ' + ev.pct + '% (rounded down).'
       : 'No score is shown while more than half the questions are “Don’t know yet”' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
     ev.areas.forEach(function (g) { out.push(areaLine(g) + ' (' + g.pts + ' of ' + g.max + ' points; ' + g.known + ' of ' + g.n + ' answered).'); });
@@ -1763,7 +1773,7 @@ details.fold[open] > summary{margin-bottom:12px}
   }
   function mustLine(ev) {
     var m = ev.must, p = [m.yes + ' of ' + m.n + ' must-haves in place'];
-    if (m.planned) p.push(m.planned + ' planned'); if (m.partly) p.push(m.partly + ' partly'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' to find out');
+    if (m.planned) p.push(m.planned + ' planned'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' to find out');
     return p.join(' · ');
   }
   /* The score is never worded as "% ready" (council, items 1 and 2): "Score: 83%", or no score at all under "Not enough information yet". */
@@ -1809,13 +1819,13 @@ details.fold[open] > summary{margin-bottom:12px}
     o.first = all.slice(0, 3).map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + STATE_WORD[a.state] }; });
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
     o.people = byPerson(ev).map(function (p) { return { who: p.who, name: p.name, items: p.items.map(function (a) { return { text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + STATE_WORD[a.state], must: a.must, state: a.state }; }) }; });
-    o.itemList = ev.items.map(function (it) { return { key: it.key, grp: it.grp, name: it.name, q: it.q, answer: STATE_WORD[it.state] + (it.state === 'planned' && fmtDate(it.by) ? ' (' + plannedBy(it) + ')' : ''), state: it.state }; });
+    o.itemList = ev.items.map(function (it) { return { key: it.key, grp: it.grp, name: it.name, q: it.q, answer: answerWord(it) + (it.state === 'planned' && fmtDate(it.by) ? ' (' + plannedBy(it) + ')' : ''), state: it.state }; });
     /* Vendor questions and the provisional AI Act label: the readiness check's own functions and data (rules v4 wording). */
     o.vendor = []; o.legal = null; o.notTool = !!(u && u.notTool);
     var x = env.RC && env.M && u ? env.M.UI[rec.use] : null;
     if (x) {
       var st = {}; ev.items.forEach(function (it) { st[it.key] = it.state; });
-      var acts = []; [['m4', 'T1'], ['m6', 'P5'], ['m5', 'D5b'], ['x-pay', 'G4']].forEach(function (p) { if (st[p[0]] && st[p[0]] !== 'yes' && st[p[0]] !== 'na') acts.push({ group: 'vendor', q: { code: p[1] } }); });
+      var acts = []; [['m4', 'T1'], ['m6', 'P5'], ['m5', 'D5b'], ['x-pay', 'G4']].forEach(function (p) { if (st[p[0]] && st[p[0]] !== 'yes') acts.push({ group: 'vendor', q: { code: p[1] } }); });
       o.vendor = env.RC.vendorQs(env.M, x, { actions: acts });
       var l = env.RC.legal(env.M, x, H);
       if (l) o.legal = { name: l.name, applies: l.applies ? 'applies from ' + fmtDate(l.applies) : '', why: l.why || l.short, could: l.could.map(function (c) { return (c.to ? 'The label becomes “' + c.to + '” if: ' : 'Also check: ') + c.q; }),
@@ -1849,7 +1859,7 @@ details.fold[open] > summary{margin-bottom:12px}
   }
 
   var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
-    T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD,
+    T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
@@ -1918,7 +1928,7 @@ details.fold[open] > summary{margin-bottom:12px}
     return '<h4 id="card-dyn">Do you need AI? (rules ' + esc(DL.RULES) + ')</h4><div class="flow">' +
       '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, use case. Hotel name only if they tick it.</span></div>' +
       '<div><b>2 · Questions</b><span>Five questions on whether the job needs AI (a No on the first stops the check), ten must-haves, then six to nine questions for the chosen use case (none after “None of these fits”).</span></div>' +
-      '<div><b>3 · Points and score</b><span>Yes 2 · Planned, not done yet 1 · Partly 1 · No 0' + (J.UNKNOWN_SCORES_ZERO ? ' · Don\'t know yet 0 (team judgement)' : '. “Don\'t know yet” is left out') + '. “Doesn\'t apply” is left out. The score is points ÷ points possible, rounded down, shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”. It is the hotel\'s own answers; nobody checked them. No score is shown under “' + esc(LV.noinfo.name) + '”.</span></div>' +
+      '<div><b>3 · Points and score</b><span>Yes 2 · Planned, not done yet 1 · No 0' + (J.UNKNOWN_SCORES_ZERO ? ' · Don\'t know yet 0 (team judgement)' : '. “Don\'t know yet” is left out') + '. An answer a copy holds that is no longer offered counts as not answered; the table names it. The score is points ÷ points possible, rounded down, shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”. It is the hotel\'s own answers; nobody checked them. No score is shown under “' + esc(LV.noinfo.name) + '”.</span></div>' +
       '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, or below ' + T.ALMOST + '%: ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
         (J.LEGAL_HOLDS_TOP || J.CARRIED_NO_HOLDS_TOP ? ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from questions 2 to 5' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) : '') +
         '. Everything else: ' + esc(LV.almost.name) + '. The reason is printed under the verdict.</span></div>' +
@@ -1973,8 +1983,8 @@ details.fold[open] > summary{margin-bottom:12px}
   function detailDyn(s) {
     if (dynGone(s)) return detailGone(s);
     var rec = dynRec(s), e = DL.evaluate(rec, DTQ), v = DL.verdict(rec.Q), P = DL.POINTS, tu = DTQ.uses[s.useId];
-    var pts = function (it) { return it.state === 'na' ? 'left out (doesn’t apply)' : it.state === 'unknown' ? (DL.JUDGEMENT.UNKNOWN_SCORES_ZERO ? '0 / 2 (don’t know yet)' : 'left out (unknown)') : P[it.v] + ' / 2'; };
-    var rowOf = function (it) { return '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.q) + '</td><td>' + esc(DL.STATE_WORD[it.state]) + (it.by ? '<br><span class="meta">by ' + esc(DL.fmtDate(it.by)) + '</span>' : '') + '</td><td class="num">' + esc(pts(it)) + '</td></tr>'; };
+    var pts = function (it) { return it.old ? '0 / 2 (not answered)' : it.state === 'unknown' ? (DL.JUDGEMENT.UNKNOWN_SCORES_ZERO ? '0 / 2 (don’t know yet)' : 'left out (unknown)') : P[it.v] + ' / 2'; };
+    var rowOf = function (it) { return '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.q) + '</td><td>' + esc(DL.answerWord(it)) + (it.by ? '<br><span class="meta">by ' + esc(DL.fmtDate(it.by)) + '</span>' : '') + '</td><td class="num">' + esc(pts(it)) + '</td></tr>'; };
     var h = '<section class="panel" data-kind="dyn"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
       '<span class="chip big c-' + DYN_CHIP[e.level] + '">' + esc(DC.LEVELS[e.level].name) + '</span></div>' +
       '<p><strong>' + esc(dynUse(s) || 'No use case chosen (“None of these fits”)') + '</strong></p>' +

@@ -45,20 +45,20 @@ function sameWords(rec, tag) {
 }
 
 // ---------- a guest chatbot, mixed answers ----------
-let r = mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y']); r.By.m3 = '2027-01-15';
+let r = mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → No
 let { m, pdf, t } = sameWords(r, 'gx-2');
 ok(eq(heads(pdf), ['Result', 'Start with these three', 'Is this an AI problem?', 'Where it sits', 'What is in place, by area', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label', 'Every question and your answer', 'How this was worked out', 'Sources']), 'sections, in the result page\'s order');
 ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
 const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
-ok(lv.t === 'Not ready yet · Score: 73%' && why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 34 points on 17 questions: 15 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them.'), 'the verdict with the score, the reason, then the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
+ok(lv.t === 'Not ready yet · Score: 69%' && why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 36 points on 18 questions: 16 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them.'), 'the verdict with the score, the reason, then the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
 ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
-ok(t.includes('Finish: Agree the KPI this tool must improve') && t.includes('(planned by 15 Jan 2027).') && t.includes('Your answer: Planned (planned by 15 Jan 2027)') && t.includes('Your answer: Doesn’t apply'), 'planned dates and "Doesn\'t apply" are shown');
+ok(t.includes('Finish: Agree the KPI this tool must improve') && t.includes('(planned by 15 Jan 2027).') && t.includes('Your answer: Planned (planned by 15 Jan 2027)') && t.includes('Your answer: No') && !/Partly|Doesn’t apply|does not apply/.test(t), 'planned dates are shown; no Partly or Doesn\'t apply anywhere (v2.3)');
 ok(pdf.blocks.filter(b => b.k === 'item').length === 18 && pdf.blocks.filter(b => b.k === 'q').length === 5, '18 questions with answers, and the five questions');
 ok(!/\b(m\d+|pe1|x-auto)\b/.test(t) && !/\b(P1|F1|T1|D5a|G2s)\b/.test(t), 'no internal ids or codes in the PDF');
 ok(pdf.blocks.filter(b => b.k === 'src').length >= C.SOURCES.q.length + C.SOURCES.must.length && t.includes('90 catalogue use cases coded against 20 building blocks') && !t.includes('{N}'), 'sources per step, with the matrix count filled in');
 // ---------- the other two walks, and the special cases ----------
-sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', 'k'], ['k', 'p', 'pl', 'n', 'y', 'k', 'na']), 'hr-2 mixed');
-let x = sameWords(mk('fo-8', ['p'], []), 'fo-8 draft'); ok(x.t.includes('Draft questions: team to review'), 'a draft use case says so in the PDF');
+sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', 'k'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n']), 'hr-2 mixed');
+let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8 draft'); ok(x.t.includes('Draft questions: team to review'), 'a draft use case says so in the PDF');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label') && x.pdf.blocks.filter(b => b.k === 'item').length === 10, '"None of these fits": must-haves only, said so; no vendor or label section');
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
 x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.t.includes('If question 1 turns out to be No'), 'every carried condition and the Q1 "Not sure" line');
@@ -68,7 +68,7 @@ x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed',
 // random sets over every use case: the words always match
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
 const uses = Object.keys(TQ.uses); let n = 0;
-for (let i = 0; i < 220; i++) { const use = i < 99 ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); sameWords(mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'p', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'p', 'n', 'k', 'na'])), { Q: { q1: pick(['y', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }), 'random ' + i + ' ' + use); n++; }
+for (let i = 0; i < 220; i++) { const use = i < 99 ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); sameWords(mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k', 'n'])), { Q: { q1: pick(['y', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }), 'random ' + i + ' ' + use); n++; }
 ok(n === 220, '220 answer sets (every use case at least once) checked word for word');
 
 // ---------- the stop version ----------
@@ -79,7 +79,7 @@ let d = drawn(pdf); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? ·
 
 // ---------- drawing ----------
 function noOverflow(log, tag) { const bad = log.filter(l => l.x + l.w > 210 - 18 + 0.6 || l.x < 17.9 || l.y > 297 - 8); ok(bad.length === 0, tag + ': no line runs past the margins ' + JSON.stringify(bad.slice(0, 2))); }
-for (const [tag, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'p'], ['k', 'p', 'pl', 'n', 'y', 'k', 'na'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
+for (const [tag, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'pl'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
   const mdl = P.model(rec, env); d = drawn(mdl);
   ok(d.r.pages >= 2 && d.r.pages <= 9 && d.r.footers.length === d.r.pages && d.r.footers.every((f, i) => f === P.footer(i + 1, d.r.pages)), tag + ': ' + d.r.pages + ' pages, a footer with "page n of N" on each');
   noOverflow(d.log, tag);
