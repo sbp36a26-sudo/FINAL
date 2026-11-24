@@ -43,9 +43,16 @@ const block = `<script type="application/json" id="d-data">${JSON.stringify(data
 const safe = s => s.replace(/<\/script/gi, '<\\/script');
 const style = read('src/style.css');
 
+/* 24 Nov 2026: the team page also lists copies shared from "Do you need AI?" v2 (kind 'dyn'), which replaced this check in the hub.
+   To recompute them it carries that tool's words, rules and tailored questions (read from its files at build time). */
+const { tqModel } = await import('../readiness-2/build.mjs');
+const dynBlock = `<script type="application/json" id="dyn-data">${JSON.stringify({ tq: tqModel(JSON.parse(read('../readiness-2/data/usecase-questions.json'))) }).replace(/</g, '\\u003c')}</script>`;
+const dynCode = safe(read('../readiness-2/src/content.js')) + '\n' + safe(read('../readiness-2/src/logic.js')) + '\n';
+
 for (const [page, script, out] of [['src/check.html', 'src/check.js', 'index.html'], ['src/team.html', 'src/team.js', 'team.html']]) {
+  const team = out === 'team.html';
   let html = read(page);
-  for (const [mark, text] of [['/*__STYLE__*/', style], ['<!--__DATA__-->', block], ['/*__STORE__*/', safe(read('src/store.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__APP__*/', safe(read(script))]]) {
+  for (const [mark, text] of [['/*__STYLE__*/', style], ['<!--__DATA__-->', team ? block + '\n' + dynBlock : block], ['/*__STORE__*/', safe(read('src/store.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__APP__*/', (team ? dynCode : '') + safe(read(script))]]) {
     if (!html.includes(mark)) throw new Error(page + ': missing ' + mark);
     html = html.replace(mark, () => text);
   }

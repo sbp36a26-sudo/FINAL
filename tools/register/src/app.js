@@ -418,7 +418,7 @@
     var h = '<p><button type="button" class="linkbtn" data-act="back">← Back to the register</button></p>';
     h += '<div class="thead"><div class="t1"><span class="no">' + regNo(t) + '</span><label class="grow" style="flex:1"><span class="sr">Tool name</span><input type="text" class="title" id="f-name" data-f="name" value="' + esc(t.name) + '" placeholder="Name this tool"></label></div>' +
       '<p class="meta">' + esc(u.triage ? 'A tool that is not in the list' : u.name) + (DEPTS[u.dept] ? ' · ' + esc(DEPTS[u.dept].name) : '') + '</p>' +
-      (u.n ? '<p><button type="button" class="linkbtn" data-act="to-readiness" data-id="' + esc(t.id) + '">Check whether the hotel is ready for this tool (Readiness check) →</button></p>' : '') + '</div>';
+      (u.n ? '<p><button type="button" class="linkbtn" data-act="to-readiness" data-id="' + esc(t.id) + '">Check whether the hotel is ready for this tool (Do you need AI?) →</button></p>' : '') + '</div>';
     h += '<div class="detail"><div>';
 
     // label
@@ -948,7 +948,7 @@
     else if (a === 'to-readiness') {
       var tr = toolById(id), hash = 'use=' + (tr ? tr.useId : '');
       if (window.parent !== window) { try { window.parent.postMessage({ hub: 'open', tool: 'readiness-check', hash: hash }, window.location.origin); } catch (e3) { /* ignore */ } }
-      else window.location.href = '../readiness-check/index.html#' + hash;
+      else window.location.href = '../readiness-2/index.html#' + hash; // 24 Nov 2026: "Do you need AI?" replaced the Readiness check; in the hub the old message name is routed there
     }
     else if (a === 'vmail') {
       var vn = b.getAttribute('data-vendor'), xs;

@@ -1,84 +1,88 @@
-/* Do you need AI?: the PDF of the assessment (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
-   Built the way the readiness check, the AI Register and the AI Act guide make their PDFs: jsPDF and the "Register Sans"
-   font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs, so nothing is loaded from the internet.
-   1. model(rec, cat, o) → the document as plain blocks, in the summary's own words (R2Logic shares them with the screen):
-        o = { hotel: '' | name from the shared profile, today: 'YYYY-MM-DD' }
+/* Do you need AI? v2: the PDF of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+   jsPDF and the "Register Sans" font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs: nothing is loaded.
+   1. model(rec, env) → the document as plain blocks, built from R2Logic.resultModel(rec, env), the same object the result
+      page draws, so the PDF and the screen use the same words. env = { cat, TQ, RC, M, today }.
         blocks: { k: 'title' | 'meta' | 'h' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'item' | 'num' | 'src', ... }
-      Q1 No → the one-page stop version (why, the instead line, the five answers). No score anywhere.
-   2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII (v1.2; was "Readiness-2.0_…").
+      Q1 No → the one-page stop version (why, the instead line, the five answers).
+   2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII.
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4, the footer on every page with "page n of N". */
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'Do you need AI? Where it fits in your hotel';
+  var TITLE = 'Do you need AI? Readiness score and verdict';
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
   var FOOT = 'Do you need AI? · student prototype, not legal advice · page ';
-  var QWORD = {}; C.Q_ANSWERS.forEach(function (a) { QWORD[a[0]] = a[1]; });
-  var AWORD = {}; C.ANSWERS.forEach(function (a) { AWORD[a[0]] = a[1]; });
 
-  function head(o) {
+  function head(m) {
     var b = [{ k: 'title', t: TITLE }];
-    if (o.hotel) b.push({ k: 'meta', t: 'Hotel: ' + o.hotel });
-    b.push({ k: 'meta', t: 'Date: ' + L.fmtDate(o.today) }, { k: 'meta', t: LINE });
+    if (m.hotel) b.push({ k: 'meta', t: 'Hotel: ' + m.hotel });
+    if (m.filledBy) b.push({ k: 'meta', t: 'Filled in by: ' + m.filledBy });
+    b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE });
     return b;
   }
-  function answers(rec) {
-    return C.QUESTIONS.map(function (q, i) { return { k: 'q', n: i + 1, t: q.q, a: 'Your answer: ' + (QWORD[rec.Q[q.id]] || 'Not answered') }; });
-  }
-  function items(list, rec) {
-    return list.map(function (it) {
-      var v = L.A_OK[rec.A[it.id]] ? rec.A[it.id] : 'k', by = v === 'pl' ? L.fmtDate(rec.By[it.id]) : '';
-      var a = v === 'y' ? null : L.action(it.id, v, rec.By[it.id], rec), w = L.itemText(it.id, rec);
-      return { k: 'item', id: it.id, name: it.name, check: it.check, ex: w.ex, // v1.3: b1/b2 "For example: …"
-        answer: 'Your answer: ' + AWORD[v] + (by ? ' (planned by ' + by + ')' : ''),
-        action: a ? 'To do: ' + a.text + ' Usually: ' + a.who + '.' : 'In place: nothing to do.' };
-    });
-  }
-  function sources() {
-    var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }];
-    [['q', 'Step 1, is this an AI problem?'], ['where', 'Step 1, where in the hotel?'], ['needs', 'Step 2, what you need'], ['success', 'Step 3, what makes it succeed']].forEach(function (s) {
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a }; }); }
+  function sources(TQ, stop) {
+    var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : ''); };
+    (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
       b.push({ k: 'label', t: s[1] });
-      if (S[s[0] + 'Note']) b.push({ k: 'p', t: S[s[0] + 'Note'], small: true });
-      (S[s[0]] || []).forEach(function (t) { b.push({ k: 'src', t: t }); });
+      if (S[s[0] + 'Note']) b.push({ k: 'p', t: N(S[s[0] + 'Note']), small: true });
+      (S[s[0]] || []).forEach(function (t) { b.push({ k: 'src', t: N(t) }); });
     });
     return b;
   }
 
-  function model(rec, cat, o) {
-    o = o || {};
-    var v = L.verdict(rec.Q), b = head(o);
+  /* m: R2Logic.resultModel(rec, env). The words are the result page's own. */
+  function model(rec, env) {
+    var m = L.resultModel(rec, env), b = head(m), v = L.verdict(rec.Q);
     if (v.stop) {
-      var q1 = L.QBY.q1;
       return { stop: true, blocks: b.concat([{ k: 'h', t: C.STOP.head }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
-        { k: 'p', t: 'Because you answered No to: “' + q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(rec)) };
+        { k: 'p', t: 'Because you answered No to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
     }
-    var t = L.verdictText(v, true), A = rec.A, u = L.useOf(rec, cat);
-    b.push({ k: 'h', t: '1. Is this an AI problem?' }, { k: 'lead', t: t.head });
-    if (t.second) b.push({ k: 'lead', t: t.second });
-    if (t.carried.length) { b.push({ k: 'label', t: t.carriedLabel }); t.carried.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (t.find.length) { b.push({ k: 'label', t: 'To find out' }); t.find.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (t.q1Unsure) b.push({ k: 'p', t: t.q1Unsure });
-    b.push({ k: 'label', t: 'Your five answers' }); b = b.concat(answers(rec));
+    b.push({ k: 'h', t: 'Result' }, { k: 'lead', t: m.levelName + ' · ' + m.scoreHead, id: 'level' }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' }, { k: 'p', t: m.levelLine }, { k: 'p', t: m.mustLine, id: 'must-line' });
+    if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
+    if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
+    if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
+    if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
 
-    b.push({ k: 'h', t: '2. Where it sits' }, { k: 'lead', t: L.pathParts(rec, cat).join(' › ') || 'Nothing chosen.' });
-    if (u) b.push({ k: 'p', t: 'What AI does: ' + u.task }, { k: 'p', t: 'How common in hotels: ' + L.useLevel(u) + ' (Use-Case Catalogue rating).' });
-    else b.push({ k: 'p', t: L.noneLine(cat.nUses) });
+    b.push({ k: 'h', t: m.firstLabel });
+    if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes or does not apply.' });
+    m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: f.who + ': ' + f.text, sub: f.sub }); });
 
-    var cN = L.counts(A, L.NEED_IDS), cF = L.counts(A, L.FACTOR_IDS);
-    b.push({ k: 'h', t: '3. What you need' }, { k: 'lead', t: L.countLine(cN), id: 'count-needs' }); b = b.concat(items(C.NEEDS, rec));
-    b.push({ k: 'h', t: '4. What makes it succeed' }, { k: 'lead', t: L.countLine(cF), id: 'count-success' }); b = b.concat(items(C.FACTORS, rec));
+    b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });
+    if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });
+    if (m.ai.carried.length) { b.push({ k: 'label', t: m.ai.carriedLabel }); m.ai.carried.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
+    if (m.ai.find.length) { b.push({ k: 'label', t: 'To find out' }); m.ai.find.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
+    if (m.ai.q1Unsure) b.push({ k: 'p', t: m.ai.q1Unsure });
+    b.push({ k: 'label', t: 'Your five answers' }); b = b.concat(answers(m));
 
-    var top = L.weakest(A, 3);
-    b.push({ k: 'h', t: top.length ? L.firstLabel(top.length) : 'In short' }, { k: 'lead', t: L.overall(A).text, id: 'overall' });
-    top.forEach(function (x, i) {
-      var a = L.action(x.id, x.v, rec.By[x.id], rec);
-      b.push({ k: 'num', n: i + 1, t: a.text, sub: a.name + ' · your answer: ' + L.ANS_WORD[x.v] + ' · usually: ' + a.who });
-    });
-    var ho = L.handover(rec, u);
-    b.push({ k: 'h', t: 'Next step' }, { k: 'lead', t: ho.mode === 'search' ? 'Open the readiness check.' : 'Check one tool in detail in the Readiness check' + (ho.mode === 'use' ? ': “' + u.n + '”.' : '.') });
-    b.push({ k: 'p', t: ho.text + (ho.mode === 'use' ? ' It is the next tab in the project hub.' : '') });
-    if (ho.mode !== 'blocked') b.push({ k: 'p', t: L.HANDOVER_NOTE, small: true });
-    return { stop: false, blocks: b.concat(sources()) };
+    b.push({ k: 'h', t: 'Where it sits' }, { k: 'lead', t: m.path });
+    if (m.useTask) b.push({ k: 'p', t: m.useTask }, { k: 'p', t: m.useLevel });
+    if (m.none) b.push({ k: 'p', t: m.none });
+
+    b.push({ k: 'h', t: 'Score per area' }); m.areas.forEach(function (a) { b.push({ k: 'li', t: a.line, id: 'area-' + a.k }); });
+
+    b.push({ k: 'h', t: 'Action plan by person' });
+    if (!m.people.length) b.push({ k: 'p', t: 'Nothing open.' });
+    m.people.forEach(function (p) { b.push({ k: 'label', t: p.name }); p.items.forEach(function (a) { b.push({ k: 'li', t: a.text, sub: a.tag }); }); });
+
+    if (m.vendor.length) { b.push({ k: 'h', t: 'Questions for the vendor' }); m.vendor.forEach(function (q, i) { b.push({ k: 'num', n: i + 1, t: q, sub: '' }); }); }
+
+    if (m.legal) {
+      b.push({ k: 'h', t: 'EU AI Act: provisional label' }, { k: 'p', t: m.legalNote, small: true }, { k: 'lead', t: m.legal.name + (m.legal.applies ? ' (' + m.legal.applies + ')' : '') }, { k: 'p', t: m.legal.why });
+      m.legal.could.forEach(function (c) { b.push({ k: 'p', t: c, small: true }); });
+      if (m.legal.itemsHead) b.push({ k: 'label', t: m.legal.itemsHead });
+      else if (m.legal.items.length) b.push({ k: 'label', t: 'Items to check' });
+      m.legal.items.forEach(function (i) { b.push({ k: 'li', t: i.text, sub: i.sub }); });
+      if (m.legal.labour) b.push({ k: 'p', t: m.legal.labour, small: true });
+      b.push({ k: 'p', t: m.legal.country, small: true });
+    }
+
+    b.push({ k: 'h', t: 'Every question and your answer' });
+    var grp = '';
+    m.itemList.forEach(function (it) { var g = it.grp === 'must' ? 'Must-haves' : 'Questions for this use case'; if (g !== grp) { grp = g; b.push({ k: 'label', t: g }); } b.push({ k: 'item', id: it.key, name: it.name, check: it.q, ex: '', answer: 'Your answer: ' + it.answer, action: '' }); });
+
+    b.push({ k: 'h', t: 'How this was worked out' }); m.method.forEach(function (t) { b.push({ k: 'li', t: t }); });
+    return { stop: false, blocks: b.concat(sources(env.TQ, false)) };
   }
 
   /* Safe ASCII file name: accents dropped (é → e), anything else becomes one hyphen, at most 60 characters. */
@@ -124,20 +128,20 @@
         case 'lead': text(b.t, M, 10.5, 'bold', 25, next && next.k === 'item' ? 26 : 0); y += 1.8; break;
         case 'label': y += 1.5; text(b.t, M, 9.5, 'bold', 70, 8); y += 1; break;
         case 'p': text(b.t, M, b.small ? 8.8 : 9.8, 'normal', b.small ? 90 : 35); y += 1.6; break;
-        case 'li': room(LH(9.8)); f('normal', 9.8, 35); doc.text('–', M + 1, y + LH(9.8) * 0.75); text(b.t, M + 5, 9.8, 'normal', 35); y += 1.2; break;
+        case 'li': room(LH(9.8) + (b.sub ? LH(8.6) : 0)); f('normal', 9.8, 35); doc.text('–', M + 1, y + LH(9.8) * 0.75); text(b.t, M + 5, 9.8, 'normal', 35); if (b.sub) { y += 0.3; text(b.sub, M + 5, 8.6, 'normal', 100); } y += 1.2; break;
         case 'src': room(LH(8.8)); f('normal', 8.8, 90); doc.text('–', M + 1, y + LH(8.8) * 0.75); text(b.t, M + 5, 8.8, 'normal', 70); y += 0.8; break;
         case 'q': {
           f('normal', 9.8); var qh = doc.splitTextToSize(safe(b.t), TW - 6).length * LH(9.8) + LH(9.8) + 2; room(qh);
           f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); y += 2; break;
         }
         case 'item': {
-          f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + (b.ex ? doc.splitTextToSize(safe(b.ex), TW - 3).length : 0) + doc.splitTextToSize(safe(b.action), TW - 3).length + 2) * LH(9.6) + 6; room(Math.min(ih, 60));
+          f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + (b.ex ? doc.splitTextToSize(safe(b.ex), TW - 3).length : 0) + (b.action ? doc.splitTextToSize(safe(b.action), TW - 3).length : 0) + 2) * LH(9.6) + 6; room(Math.min(ih, 60));
           y += 1.5; text(b.name, M, 10, 'bold', 25); y += 0.6; text(b.check, M + 3, 9.2, 'normal', 95); if (b.ex) { y += 0.3; text(b.ex, M + 3, 9.2, 'normal', 95); } y += 0.6;
-          text(b.answer, M + 3, 9.6, 'bold', 35); y += 0.4; text(b.action, M + 3, 9.6, 'normal', 35); y += 2.2; break;
+          text(b.answer, M + 3, 9.6, 'bold', 35); if (b.action) { y += 0.4; text(b.action, M + 3, 9.6, 'normal', 35); } y += 2.2; break;
         }
         case 'num': {
           f('normal', 10); var nh = doc.splitTextToSize(safe(b.t), TW - 7).length * LH(10) + LH(8.8) + 3; room(nh);
-          f('bold', 10, 25); doc.text(String(b.n) + '.', M, y + LH(10) * 0.75); text(b.t, M + 7, 10, 'normal', 25); y += 0.5; text(b.sub, M + 7, 8.8, 'normal', 95); y += 2.5; break;
+          f('bold', 10, 25); doc.text(String(b.n) + '.', M, y + LH(10) * 0.75); text(b.t, M + 7, 10, 'normal', 25); if (b.sub) { y += 0.5; text(b.sub, M + 7, 8.8, 'normal', 95); } y += 2.5; break;
         }
       }
     });

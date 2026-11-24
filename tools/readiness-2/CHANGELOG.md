@@ -1,4 +1,35 @@
-# AI starting point (formerly "Readiness 2.0"): changelog
+# Do you need AI? (formerly "AI starting point", "Readiness 2.0"): changelog
+
+## v2.0 (24 Nov 2026): new flow, tailored questions, percentage plus verdict; replaces the Readiness check tab
+
+Owner's decision of 24 Nov 2026. Full notes: `research_notes/Do you need AI v2/build_notes.md`.
+
+| Item | Status |
+|---|---|
+| Cover updated to the five steps and "a readiness score and verdict" | Done |
+| 1 About your hotel (Readiness check's fields, one row, shared profile read and written) | Done |
+| 2 Five questions, simpler wording (Q2 kept); "Why this matters" unchanged; Q1 No stops | Done |
+| 3 Must-haves: ten, Readiness-check scale, evidence with the workbook share and sourced figures; all need an answer; cap the verdict | Done |
+| 4 Where in the hotel: unchanged; all 99 selectable; `#use=<id>` preselects | Done |
+| 5 Tailored questions generated from the owner's workbook (661 questions, 6 to 9 per use case), add-ons, draft marking, checker, overrides | Done |
+| Result: % with base and caveat, four verdicts, per-area bars, first three, action plan by person with copy buttons, vendor questions, provisional AI Act label, PDF, copy, print, Add to the AI Register, Start a new check, Your checks, file save/open, since last time | Done |
+| Hub: Readiness check tab removed; `readiness-check` is an alias of `readiness-2` (old links with `#use=` land here) | Done |
+| Team sharing (opt-in, `kind: 'dyn'`); the Team tab lists and recomputes old checks and new copies | Done |
+| Storage v2 (several checks) under the same key; v1 records migrate (five answers, use case) with a one-time notice | Done |
+
+### Removed from v1
+
+The old step 2 "What you need" (10 items) and step 3 "What makes it succeed" (9 factors), the count lines, the overall line and the hand-over to the Readiness check. Their content lives on in the ten must-haves and their evidence. "Start again" with a confirm is replaced by "Start a new check" (the old check is kept in the list; removing one asks first).
+
+### Changed test expectations (each because the owner changed the tool)
+
+- `tests/logic.test.mjs`: rewritten. Kept: the 243 five-question combinations against the same oracle. Changed: the wording of Q1, Q3, Q4, Q5 (simpler, owner); the all-Yes headline reads "Next: the must-haves."; the v1 counts / ranking / overall-line tests are gone with those features; new: score, verdict, cap, edges.
+- `tests/flow.test.mjs`: rewritten for the new FLOW table (states `hotel`, `must`, `tailored`, `result` replace `needs`, `success`, `summary`); the v1 round-trip test became the v1 → v2 migration test; restart-with-confirm tests replaced by store tests.
+- `tests/pdf.test.mjs`: rewritten: title "Do you need AI? Readiness score and verdict"; sections follow the result page.
+- `tests/catalogue.test.mjs` → `tests/build.test.mjs` (same catalogue checks; the "every use case except lg-4 opens in the readiness check" check is gone with the hand-over). `tests/v12.test.mjs` and `tests/v13.test.mjs` removed: they tested v1 screens (rename, BUILD NOW items, systems examples on b1/b2); what still applies (history machine, dates, newer version, use-case identity, systems examples by department) is covered in the new suites.
+- `tests/browser/walk.cjs` replaces `walk.cjs`, `pdf.cjs`, `v12.cjs`.
+- `tools/hub/tests/hub.test.mjs`: `readiness-check` is no longer a hub tool or a button; the Readiness check tooltip test is removed; new tests for the alias and the open routing; the Do you need AI? tooltip has new words.
+
 
 ## v1.3 (23 Nov 2026): systems named by department, "Why this matters" on step 1a
 

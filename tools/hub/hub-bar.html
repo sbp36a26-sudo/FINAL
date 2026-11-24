@@ -42,11 +42,10 @@
   <nav aria-label="Tools">
     <button type="button" data-tool="assessment" aria-pressed="true">AI Assessment</button>
     <button type="button" data-tool="use-case-catalogue" aria-pressed="false">Use-Case Catalogue</button>
-    <button type="button" data-tool="readiness-2" aria-pressed="false" title="Start here: is AI the answer, and where?">Do you need AI?</button>
-    <button type="button" data-tool="readiness-check" aria-pressed="false" title="Check one AI tool in detail before you sign">Readiness check</button>
+    <button type="button" data-tool="readiness-2" aria-pressed="false" title="Is AI the answer, and is your hotel ready for it?">Do you need AI?</button>
     <button type="button" data-tool="ai-act-guide" aria-pressed="false">AI Act guide</button>
     <button type="button" data-tool="register" aria-pressed="false">AI Register</button>
-    <button type="button" data-tool="team" class="team" aria-pressed="false" hidden title="Team only: each shared readiness check and how its verdict was worked out">Team: readiness results</button>
+    <button type="button" data-tool="team" class="team" aria-pressed="false" hidden title="Team only: each shared check and how its verdict was worked out">Team: readiness results</button>
   </nav>
 </div>
 <div class="hub-frame" id="hubFrame"></div>
@@ -56,26 +55,31 @@
   /* machine:start  (pure: tools/hub/tests/hub.test.mjs runs this block in Node)
      Hub tab machine.
      State: { tool, access, pending }
-       tool    'assessment' (this page) | 'use-case-catalogue' | 'readiness-2' | 'readiness-check' | 'ai-act-guide' | 'register' | 'team' (a frame)
+       tool    'assessment' (this page) | 'use-case-catalogue' | 'readiness-2' | 'ai-act-guide' | 'register' | 'team' (a frame)
+               24 Nov 2026: "Do you need AI?" (readiness-2) replaced the Readiness check tab. The old name 'readiness-check' is an
+               alias (HUB_ALIAS): old links, old Back/forward entries and old sessionStorage values land on readiness-2.
        access  'unknown' (not asked yet) | 'local' (no claude.ai: everything shows) | 'editor' | 'viewer'
        pending 'team' while the team tab was asked for before access is known, else null
      Events (send):
        { type: 'select', tool }  a hub button, Back/forward (popstate) or a frame's { hub: 'open' }
        { type: 'access', access } the user capability answered
-     Guards: unknown tool names are ignored; 'team' is never shown to a 'viewer' and waits while access is 'unknown'. */
-  var HUB_TOOLS = ['assessment', 'use-case-catalogue', 'readiness-2', 'readiness-check', 'ai-act-guide', 'register', 'team'];
+     Guards: an alias is resolved first; unknown tool names are ignored; 'team' is never shown to a 'viewer' and waits while access is 'unknown'. */
+  var HUB_TOOLS = ['assessment', 'use-case-catalogue', 'readiness-2', 'ai-act-guide', 'register', 'team'];
+  var HUB_ALIAS = { 'readiness-check': 'readiness-2' };
+  function hubTool(t) { return typeof t === 'string' && Object.prototype.hasOwnProperty.call(HUB_ALIAS, t) ? HUB_ALIAS[t] : t; }
   var HUB_ACCESS = ['unknown', 'local', 'editor', 'viewer'];
   function hubInitial() { return { tool: 'assessment', access: 'unknown', pending: null }; }
   function hubNext(s, ev) {
     var n = { tool: s.tool, access: s.access, pending: s.pending };
     if (!ev || typeof ev !== 'object') return n;
     if (ev.type === 'select') {
-      if (HUB_TOOLS.indexOf(ev.tool) < 0) return n;
-      if (ev.tool === 'team') {
+      var tool = hubTool(ev.tool);
+      if (HUB_TOOLS.indexOf(tool) < 0) return n;
+      if (tool === 'team') {
         if (n.access === 'viewer') return n;
         if (n.access === 'unknown') { n.pending = 'team'; return n; }
       }
-      n.tool = ev.tool; n.pending = null; return n;
+      n.tool = tool; n.pending = null; return n;
     }
     if (ev.type === 'access') {
       if (HUB_ACCESS.indexOf(ev.access) < 1) return n;
@@ -88,8 +92,9 @@
   }
   /* machine:end */
 
-  var SRC = { 'readiness-check': 'readiness-check/index.html', team: 'readiness-check/team.html' };
-  /* Tools a frame may open with { hub: 'open' }. 23 Nov 2026: + 'readiness-2' and 'use-case-catalogue' (Do you need AI? links to a department's sources). */
+  var SRC = { team: 'readiness-check/team.html' }; // the team page still lives in the readiness check's folder (which stays published)
+  /* Tools a frame may open with { hub: 'open' }. 23 Nov 2026: + 'readiness-2' and 'use-case-catalogue' (Do you need AI? links to a department's sources).
+     24 Nov 2026: 'readiness-check' stays openable for old links (the AI Register's "check readiness" link with #use=<id>); it opens readiness-2 with the same hash. */
   var OPENABLE = { 'readiness-check': 1, register: 1, 'ai-act-guide': 1, 'readiness-2': 1, 'use-case-catalogue': 1 };
   var TIMEOUT_MS = 6000; // capability lookups and db calls answer before the frames' own 8 s / 12 s timeouts
   var bar = document.getElementById('hubBar');
@@ -229,13 +234,14 @@
     if (m.hub === 'db') { onDb(m, e.source); return; }
     if (m.hub === 'open') {
       if (!OPENABLE[m.tool]) return;
+      var to = hubTool(m.tool); // 'readiness-check' → 'readiness-2', keeping the hash
       var hash = typeof m.hash === 'string' ? m.hash.replace(/[^\w=&%.\-]/g, '') : '';
-      var path = srcOf(m.tool) + (hash ? '#' + hash : '');
-      if (frames[m.tool]) {
+      var path = srcOf(to) + (hash ? '#' + hash : '');
+      if (frames[to]) {
         // replace(): a new hash in an open tab must not add a frame entry to Back/forward on top of the hub's own entry.
-        try { frames[m.tool].contentWindow.location.replace(new URL(path, location.href).href); } catch (err) { frames[m.tool].src = path; }
-      } else nextSrc[m.tool] = path;
-      send({ type: 'select', tool: m.tool }, { push: true });
+        try { frames[to].contentWindow.location.replace(new URL(path, location.href).href); } catch (err) { frames[to].src = path; }
+      } else nextSrc[to] = path;
+      send({ type: 'select', tool: to }, { push: true });
       return;
     }
     if (m.hub === 'ping') { cap('downloads').then(function (dl) { try { e.source.postMessage({ hub: 'pong', downloads: !!dl }, location.origin); } catch (err) { /* frame gone */ } }); return; }
@@ -251,6 +257,7 @@
   // Start where this tab was: the Back/forward entry first, then this browser tab's last choice. Unknown names fall back to the assessment.
   var start = histTool();
   if (!start) { try { start = sessionStorage.getItem('hubTool'); } catch (e) { start = null; } }
+  start = hubTool(start);
   if (HUB_TOOLS.indexOf(start) < 0) start = 'assessment';
   send({ type: 'select', tool: start });
   writeHist(S.pending || S.tool, false);

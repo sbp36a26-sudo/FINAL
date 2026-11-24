@@ -12,6 +12,13 @@
      send(event) is the only writer of t. A list answer that arrives after a newer Refresh is ignored (seq). */
   var F = window.RCFlow;
   var subs = [], old = 0, sel = null, err = '', t = { phase: 'loading', del: null }, seq = 0;
+  /* 24 Nov 2026: copies shared from "Do you need AI?" v2 (kind 'dyn', v 2), the tool that replaced this check in the hub.
+     They are recomputed with that tool's own rules (R2Logic, inlined by build.mjs with its tailored questions). */
+  var DL = window.R2Logic || null, DC = window.R2Content || null, DTQ = null;
+  try { DTQ = JSON.parse($('dyn-data').textContent).tq; } catch (e) { DTQ = null; }
+  var DYN_CHIP = { ready: 'scale', almost: 'pilot', notready: 'found', noinfo: 'open' };
+  function isDyn(d) { return !!(d && d.kind === 'dyn' && d.v === 2 && DL && DTQ && (d.useId === 'none' || d.useId === '' || DTQ.uses[d.useId])); }
+  function dynRec(s) { return { Q: s.Q || {}, A: s.answers || {}, By: s.by || {}, use: s.useId || 'none', dept: s.dept || '', cat: s.cat || '', T: s.tailored || {}, TBy: s.tby || {}, hotel: { type: s.type, country: s.country, role: s.role, name: s.named ? s.hotelName || '' : '' }, snaps: [] }; }
   function send(ev, n) { var to = F.teamNext(t, ev, n); if (!to) return false; t = to; return true; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmt(iso) { if (!iso) return ''; var d = new Date(iso); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
@@ -25,8 +32,8 @@
     S.list().then(function (docs) {
       if (my !== seq) return;
       docs = Array.isArray(docs) ? docs : [];
-      old = docs.filter(function (d) { return d && d.v !== 3; }).length;
-      subs = docs.filter(function (d) { return d && d.v === 3 && M.UI[d.useId]; }).sort(function (a, b) { return String(b.sharedAt).localeCompare(String(a.sharedAt)); });
+      old = docs.filter(function (d) { return d && d.v !== 3 && !isDyn(d); }).length;
+      subs = docs.filter(function (d) { return d && ((d.v === 3 && d.kind !== 'dyn' && M.UI[d.useId]) || isDyn(d)); }).sort(function (a, b) { return String(b.sharedAt).localeCompare(String(a.sharedAt)); });
       if (!sel || !subs.some(function (s) { return s._id === sel; })) sel = subs.length ? subs[0]._id : null;
       send('loaded', subs.length); render();
     }, function (e) {
@@ -52,6 +59,10 @@
     if (err) h += '<p class="warnline" style="padding:0 14px 12px">' + esc(err) + '</p>';
     if (t.phase === 'empty') h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
     subs.forEach(function (s) {
+      if (isDyn(s)) {
+        h += '<button type="button" class="sub-row" data-act="sel" data-kind="dyn" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">Do you need AI? · ' + esc(s.useName || 'no use case (“None of these fits”)') + '</span><span class="btnrow"><span class="chip c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span><span class="meta">' + esc(s.pct == null ? 'no score' : s.pct + '%') + ' · ' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + '</span></span></button>';
+        return;
+      }
       var lv = L.LEVELS[s.level] || L.LEVELS.open;
       h += '<button type="button" class="sub-row" data-act="sel" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">' + esc(s.useName) + '</span><span class="btnrow"><span class="chip c-' + lv.chip + '">' + esc(L.levelName(s.level, s.stage)) + '</span><span class="meta">' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + (s.rules && s.rules !== L.RULES ? ' · earlier rules' : '') + '</span></span></button>';
     });
@@ -65,7 +76,33 @@
   /* "By when?" dates come in the share payload (s.by) as plain YYYY-MM-DD strings; copies shared before have none. */
   function byOf(s) { var b = s.by && typeof s.by === 'object' ? s.by : {}, r = {}; Object.keys(b).forEach(function (k) { if (typeof b[k] === 'string') r[k] = b[k]; }); return r; }
 
+  /* A copy from "Do you need AI?" v2: recomputed with its rules; every answer with its points. */
+  function detailDyn(s) {
+    var rec = dynRec(s), e = DL.evaluate(rec, DTQ), v = DL.verdict(rec.Q), P = DL.POINTS;
+    var pts = function (it) { return it.state === 'na' ? 'left out (doesn’t apply)' : it.state === 'unknown' ? 'left out (unknown)' : P[it.v] + ' / 2'; };
+    var rowOf = function (it) { return '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.q) + '</td><td>' + esc(DL.STATE_WORD[it.state]) + (it.by ? '<br><span class="meta">by ' + esc(DL.fmtDate(it.by)) + '</span>' : '') + '</td><td class="num">' + esc(pts(it)) + '</td></tr>'; };
+    var h = '<section class="panel" data-kind="dyn"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
+      '<span class="chip big c-' + DYN_CHIP[e.level] + '">' + esc(DC.LEVELS[e.level].name) + '</span></div>' +
+      '<p><strong>' + esc(s.useName || 'No use case chosen (“None of these fits”)') + '</strong></p>' +
+      '<p><strong id="dyn-score">' + esc(DL.scoreHead(e)) + '</strong> <span class="meta">' + esc(DL.scoreSub(e)) + '</span></p><p>' + esc(DL.mustLine(e)) + '</p>' +
+      '<p class="meta" id="made-with">Shared ' + esc(fmt(s.sharedAt)) + ' · made with rules ' + esc(s.rules || 'not recorded') + (s.rules && s.rules !== DL.RULES ? ' (earlier rules); recomputed here with rules ' + esc(DL.RULES) : '') + (s.named ? ' · hotel name shared' : ' · no hotel name') + '</p>' +
+      (s.level !== e.level || s.pct !== e.pct ? '<p class="warnline" id="differs">The hotel saw: ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(s.pct == null ? 'no score' : s.pct + '%') + '. With the current rules and questions: ' + esc(DC.LEVELS[e.level].name) + ', ' + esc(e.pct == null ? 'no score' : e.pct + '%') + '.</p>' : '') +
+      ((s.snaps || []).length > 1 ? '<p class="meta">Their history: ' + s.snaps.map(function (h2) { return esc(fmt(h2.at).split(',')[0]) + ' ' + esc((DC.LEVELS[h2.level] || {}).name || '') + ' (' + esc(h2.pct == null ? 'no score' : h2.pct + '%') + ')'; }).join(' → ') + '</p>' : '') + '</section>';
+    h += '<section class="panel"><h3>Is this an AI problem?</h3><p><strong>' + esc(DL.verdictText(v, true).head) + '</strong></p><ul class="tight">' + DC.QUESTIONS.map(function (q) { return '<li>' + esc(q.title) + ': ' + esc(q.q) + ' <strong>' + esc(({ y: 'Yes', n: 'No', u: 'Not sure' })[rec.Q[q.id]] || 'Not answered') + '</strong></li>'; }).join('') + '</ul></section>';
+    h += '<section class="panel"><h3>Working out, step by step</h3><ol class="steps">' + DL.method(e).map(function (x2) { return '<li>' + esc(x2) + '</li>'; }).join('') + '</ol></section>';
+    h += '<section class="panel"><h3>Every answer and its points</h3><div class="tblw"><table><thead><tr><th>Item</th><th>Question</th><th>Answer</th><th style="text-align:right">Points</th></tr></thead><tbody>' +
+      '<tr class="areahead"><td colspan="4">Must-haves</td></tr>' + e.items.filter(function (it) { return it.grp === 'must'; }).map(rowOf).join('') +
+      (e.mustOnly ? '' : '<tr class="areahead"><td colspan="4">Questions for this use case</td></tr>' + e.items.filter(function (it) { return it.grp === 'tail'; }).map(rowOf).join('')) + '</tbody></table></div></section>';
+    h += '<section class="panel"><h3>Their action plan</h3><ol class="steps">' + DL.open(e).map(function (a) { return '<li>' + esc(a.text) + ' <span class="meta">(' + esc(DC.WHO[a.who]) + (a.must ? ', must-have' : '') + ')</span></li>'; }).join('') + '</ol></section>';
+    return h + delPanel();
+  }
+  function delPanel() {
+    return '<section class="panel" data-del="' + (t.del || 'none') + '"><h3>Delete</h3>' + (t.del === 'confirm' ? '<p>Delete this shared copy? The hotel keeps its own copy. This cannot be undone.</p><div class="btnrow"><button type="button" class="btn warn" data-act="del-yes" id="del-yes">Delete copy</button><button type="button" class="btn" data-act="del-no" id="del-no">Cancel</button></div>'
+      : t.del === 'deleting' ? '<p class="meta" role="status">Deleting…</p>' : '<div><button type="button" class="btn warn" data-act="del" id="del">Delete this shared copy</button></div>') + '</section>';
+  }
+
   function detail(s) {
+    if (isDyn(s)) return detailDyn(s);
     var x = M.UI[s.useId], A = s.answers || {}, P = s.named && s.proofs ? s.proofs : Object.keys(s.proofGiven || {}).reduce(function (o, k) { o[k] = 'note given (text not shared)'; return o; }, {}), By = byOf(s), e = L.evaluate(M, x, { type: s.type, country: s.country }, A, P, s.who || {}, s.stage, By), lv = L.LEVELS[e.level];
     var h = '<section class="panel"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc([ROLES[s.role], TYPES[s.type], s.country, L.STAGES[s.stage] && L.STAGES[s.stage].name].filter(Boolean).join(' · ')) + '</p></div>' +
       '<span class="chip big c-' + lv.chip + '">' + esc(L.levelName(e.level, s.stage)) + '</span></div>' +

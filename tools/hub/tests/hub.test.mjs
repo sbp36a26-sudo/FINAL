@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'hub-bar.html'), 'utf8');
 const block = src.slice(src.indexOf('/* machine:start'), src.indexOf('/* machine:end */'));
 assert.ok(block.length > 100, 'machine block found');
-const { hubInitial, hubNext, HUB_TOOLS } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS };')();
+const { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool };')();
 
 let n = 0;
 function t(name, fn) { fn(); n++; console.log('ok', n, name); }
@@ -20,7 +20,7 @@ t('select every ordinary tool in any access state', () => {
     for (const tool of HUB_TOOLS.filter(x => x !== 'team')) assert.deepEqual(hubNext(S('assessment', access), { type: 'select', tool }), S(tool, access));
 });
 t('unknown tool names are ignored (old sessionStorage, typos, frames)', () => {
-  for (const tool of ['readiness', '', undefined, 'TEAM', '../x']) assert.deepEqual(hubNext(S('register', 'local'), { type: 'select', tool }), S('register', 'local'));
+  for (const tool of ['readiness', '', undefined, 'TEAM', '../x', 'constructor', '__proto__']) assert.deepEqual(hubNext(S('register', 'local'), { type: 'select', tool }), S('register', 'local'));
 });
 t('team opens for local and editor', () => {
   assert.equal(hubNext(S('assessment', 'local'), { type: 'select', tool: 'team' }).tool, 'team');
@@ -54,31 +54,54 @@ t('no reachable state shows team to a viewer (exhaustive walk)', () => {
   }
   assert.ok(seen.size > 10);
 });
-// Readiness 2.0 (23 Nov 2026): a new tab before the Readiness check; nothing existing changes.
-t('readiness-2 is a hub tool, placed just before readiness-check; the old tools keep their order', () => {
-  assert.ok(HUB_TOOLS.includes('readiness-2'));
-  assert.equal(HUB_TOOLS.indexOf('readiness-2') + 1, HUB_TOOLS.indexOf('readiness-check'));
-  assert.deepEqual(HUB_TOOLS.filter(x => x !== 'readiness-2'), ['assessment', 'use-case-catalogue', 'readiness-check', 'ai-act-guide', 'register', 'team']);
+// 24 Nov 2026 (owner): "Do you need AI?" (tool id readiness-2) replaces the Readiness check tab. The old tool name is an alias.
+// Changed expectations, each because the tab was removed on purpose: readiness-check is no longer in HUB_TOOLS or the nav;
+// the Readiness check tooltip test is gone with its button; the Do you need AI? tooltip has new words.
+t('readiness-2 is a hub tool; the Readiness check tab is gone; the other tools keep their order', () => {
+  assert.deepEqual(HUB_TOOLS, ['assessment', 'use-case-catalogue', 'readiness-2', 'ai-act-guide', 'register', 'team']);
+  assert.ok(!HUB_TOOLS.includes('readiness-check'));
 });
 t('readiness-2 can be selected in every access state, and leaving it works', () => {
   for (const access of ['unknown', 'local', 'editor', 'viewer']) {
     assert.deepEqual(hubNext(S('assessment', access), { type: 'select', tool: 'readiness-2' }), S('readiness-2', access));
-    assert.deepEqual(hubNext(S('readiness-2', access), { type: 'select', tool: 'readiness-check' }), S('readiness-check', access));
+    assert.deepEqual(hubNext(S('readiness-2', access), { type: 'select', tool: 'register' }), S('register', access));
   }
 });
-// v1.2 (owner B1): the tab's visible name is "Do you need AI?" (was "Readiness 2.0"); the tool id stays 'readiness-2'.
-t('the bar has the Do you need AI? button before the Readiness check button, with its tooltip', () => {
+t('old name: selecting readiness-check (an old link, Back/forward entry or stored tab) lands on readiness-2', () => {
+  assert.deepEqual(HUB_ALIAS, { 'readiness-check': 'readiness-2' });
+  assert.equal(hubTool('readiness-check'), 'readiness-2'); assert.equal(hubTool('register'), 'register'); assert.equal(hubTool(undefined), undefined); assert.equal(hubTool('constructor'), 'constructor');
+  for (const access of ['unknown', 'local', 'editor', 'viewer'])
+    for (const from of HUB_TOOLS.filter(x => x !== 'team')) assert.deepEqual(hubNext(S(from, access), { type: 'select', tool: 'readiness-check' }), S('readiness-2', access));
+  assert.deepEqual(hubNext(S('assessment', 'unknown', 'team'), { type: 'select', tool: 'readiness-check' }), S('readiness-2', 'unknown'));
+});
+t('the bar has one button per hub tool, in machine order; Do you need AI? has its tooltip; no Readiness check button', () => {
   const nav = src.slice(src.indexOf('<nav'), src.indexOf('</nav>'));
-  const i2 = nav.indexOf('data-tool="readiness-2"'), ic = nav.indexOf('data-tool="readiness-check"');
-  assert.ok(i2 > 0 && ic > i2, 'button order');
-  assert.match(nav, /data-tool="readiness-2"[^>]*title="Start here: is AI the answer, and where\?"[^>]*>Do you need AI\?</);
-  assert.ok(!/Readiness 2\.0/.test(nav), 'the old name is not shown');
+  assert.match(nav, /data-tool="readiness-2"[^>]*title="Is AI the answer, and is your hotel ready for it\?"[^>]*>Do you need AI\?</);
+  assert.ok(!/Readiness 2\.0|AI starting point/.test(nav), 'no old name is shown');
+  assert.ok(!/data-tool="readiness-check"/.test(nav) && !/>Readiness check</.test(nav), 'the Readiness check tab is removed');
   const btns = [...nav.matchAll(/data-tool="([^"]+)"/g)].map(m => m[1]);
   assert.deepEqual(btns, HUB_TOOLS, 'one button per hub tool, in machine order');
+  assert.match(nav, /data-tool="team" class="team"[^>]*hidden[^>]*>Team: readiness results</, 'the red team tab is still there, hidden until access is known');
 });
-t('the Readiness check tab has its tooltip (v1.2, council BUILD NOW 9 in the owner\'s wording)', () => {
-  const nav = src.slice(src.indexOf('<nav'), src.indexOf('</nav>'));
-  assert.match(nav, /data-tool="readiness-check"[^>]*title="Check one AI tool in detail before you sign"[^>]*>Readiness check</);
+t('open messages for readiness-check are routed to readiness-2 with the hash kept (old #use=<id> links)', () => {
+  const body = src.slice(src.indexOf("if (m.hub === 'open')"), src.indexOf("if (m.hub === 'ping')"));
+  assert.match(body, /if \(!OPENABLE\[m\.tool\]\) return;/);
+  assert.match(body, /var to = hubTool\(m\.tool\);/);
+  assert.match(body, /var path = srcOf\(to\) \+ \(hash \? '#' \+ hash : ''\);/);
+  assert.match(body, /send\(\{ type: 'select', tool: to \}, \{ push: true \}\);/);
+  assert.ok(!/frames\[m\.tool\]|nextSrc\[m\.tool\]|srcOf\(m\.tool\)/.test(body), 'nothing in the open handler still uses the unresolved name');
+  /* the same steps, run: what the handler computes for the AI Register's message */
+  const srcOf = new Function('SRC', 'return function (tool) { return SRC[tool] || (tool + "/index.html"); }')(new Function('return ' + src.match(/var SRC = (\{[^}]*\});/)[1])());
+  const clean = h => h.replace(/[^\w=&%.\-]/g, '');
+  const route = m => srcOf(hubTool(m.tool)) + (m.hash ? '#' + clean(m.hash) : '');
+  assert.equal(route({ hub: 'open', tool: 'readiness-check', hash: 'use=hr-2' }), 'readiness-2/index.html#use=hr-2');
+  assert.equal(route({ hub: 'open', tool: 'readiness-check' }), 'readiness-2/index.html');
+  assert.equal(route({ hub: 'open', tool: 'readiness-2', hash: 'use=gx-2' }), 'readiness-2/index.html#use=gx-2');
+  assert.equal(route({ hub: 'open', tool: 'register', hash: 'add=gx-2&name=AI%20chat' }), 'register/index.html#add=gx-2&name=AI%20chat');
+  assert.equal(srcOf('team'), 'readiness-check/team.html', 'the team page stays where it is');
+});
+t('a stored or historic readiness-check tab starts on readiness-2', () => {
+  assert.match(src, /start = hubTool\(start\);\s*\n\s*if \(HUB_TOOLS\.indexOf\(start\) < 0\) start = 'assessment';/);
 });
 t('open messages: the old targets stay openable; readiness-2 and use-case-catalogue are added; others are not', () => {
   const m = src.match(/var OPENABLE = (\{[^}]*\});/); assert.ok(m, 'OPENABLE found');
