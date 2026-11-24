@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'hub-bar.html'), 'utf8');
 const block = src.slice(src.indexOf('/* machine:start'), src.indexOf('/* machine:end */'));
 assert.ok(block.length > 100, 'machine block found');
-const { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool };')();
+const { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubLinkUrl, HUB_LINK_MAX } = new Function(block + '; return { hubInitial, hubNext, HUB_TOOLS, HUB_ALIAS, hubTool, hubLinkUrl, HUB_LINK_MAX };')();
 
 let n = 0;
 function t(name, fn) { fn(); n++; console.log('ok', n, name); }
@@ -113,5 +113,34 @@ t('the hash filter still keeps use=<id> and a bare department id', () => {
   const clean = h => h.replace(/[^\w=&%.\-]/g, '');
   assert.match(src, /m\.hash\.replace\(\/\[\^\\w=&%\.\\-\]\/g, ''\)/);
   assert.equal(clean('use=fo-3'), 'use=fo-3'); assert.equal(clean('fo'), 'fo'); assert.equal(clean('use=fo-3"><x'), 'use=fo-3x');
+});
+// ---------- link bridge (24 Nov 2026): { hub: 'link', url } ----------
+t('link: plain http and https links pass, normalised', () => {
+  assert.equal(hubLinkUrl('https://ideas.com/science-behind-g3-rms/'), 'https://ideas.com/science-behind-g3-rms/');
+  assert.equal(hubLinkUrl('http://data.europa.eu/eli/reg/2024/1689/oj'), 'http://data.europa.eu/eli/reg/2024/1689/oj');
+  assert.equal(hubLinkUrl('HTTPS://Example.COM/a?b=1#c'), 'https://example.com/a?b=1#c');
+  assert.equal(hubLinkUrl('https://doi.org/10.1016/j.annals.2026.104274'), 'https://doi.org/10.1016/j.annals.2026.104274');
+});
+t('link: other schemes are refused (javascript, data, file, blob, mailto, relative, protocol-relative)', () => {
+  for (const u of ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,<b>x</b>', 'file:///etc/passwd', 'blob:https://x.com/1', 'mailto:a@b.c', 'ftp://x.com/',
+    '/register/index.html', '../readiness-check/index.html', '//evil.example/x', 'https:/x.com', 'https://', 'about:blank', 'chrome://settings']) assert.equal(hubLinkUrl(u), null, u);
+});
+t('link: non-strings, empty, too long, spaces and control characters, user names are refused', () => {
+  for (const u of [undefined, null, 1, {}, [], ['https://x.com'], { href: 'https://x.com' }, '', ' https://x.com', 'https://x.com/a b', 'https://x.com/\n', 'https://x.com/\t', 'https://x.com/\u0000',
+    'https://user:pw@x.com/', 'https://user@x.com/']) assert.equal(hubLinkUrl(u), null, JSON.stringify(u));
+  assert.equal(HUB_LINK_MAX, 2048);
+  const base = 'https://x.com/'; assert.ok(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length)), 'exactly at the limit passes');
+  assert.equal(hubLinkUrl(base + 'a'.repeat(HUB_LINK_MAX - base.length + 1)), null, 'one over the limit is refused');
+});
+t('link: the hub handles it only from its own frames, opens it from the top page, and sends no reply', () => {
+  const body = src.slice(src.indexOf("addEventListener('message'"), src.indexOf('// The bar'));
+  assert.ok(body.indexOf("if (!own) return;") < body.indexOf("m.hub === 'link'"), 'own-frame check first');
+  assert.match(body, /if \(m\.hub === 'link'\) \{ var url = hubLinkUrl\(m\.url\); if \(url\) openTop\(url\); return; \}/);
+  const open = src.slice(src.indexOf('function openTop'), src.indexOf("addEventListener('message'"));
+  assert.match(open, /createElement\('a'\)/); assert.match(open, /a\.target = '_blank'/); assert.match(open, /noopener/); assert.match(open, /a\.click\(\)/); assert.match(open, /window\.open\(url, '_blank', 'noopener'\)/);
+  assert.ok(!/postMessage/.test(open), 'no reply message');
+});
+t('link: the other bridge messages are unchanged', () => {
+  for (const h of ["m.hub === 'db'", "m.hub === 'open'", "m.hub === 'ping'", "m.hub === 'download'"]) assert.ok(src.includes(h), h);
 });
 console.log(n + ' hub machine tests passed');

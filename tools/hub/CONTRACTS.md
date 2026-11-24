@@ -6,7 +6,7 @@ Four contracts cross app boundaries. Their shapes are frozen: change a shape onl
 
 | Contract | Owner (answers) | Callers | Where |
 |---|---|---|---|
-| postMessage bridge (`ping`, `download`, `db`, `open`) | hub bar | register, ai-act-guide, readiness-2 "Do you need AI?" (`ping`, `download`, `open`; `db` since v2.0, 24 Nov 2026), readiness-check (`team.html` in the hub; `index.html` only when opened on its own) | `hub/hub-bar.html` (bridge section) |
+| postMessage bridge (`ping`, `download`, `db`, `open`, `link`) | hub bar | register, ai-act-guide, readiness-2 "Do you need AI?" (`ping`, `download`, `open`; `db` since v2.0, 24 Nov 2026; `link` since v2.5.1), use-case-catalogue (`ping`, `link`, 24 Nov 2026), register (`link` too), readiness-check (`team.html` in the hub; `index.html` only when opened on its own) | `hub/hub-bar.html` (bridge section) |
 | Hub tabs (which tool shows) | hub bar | user, Back/forward, `open` messages | `hub/hub-bar.html` (machine block) |
 | Shared hotel profile `localStorage['hftp-hotel-profile-v1']` | nobody (shared) | register, ai-act-guide, readiness-2 "Do you need AI?" (read and write since v2.0, exactly as the readiness check does: `name`, `country` code, `type`, `from: 'readiness'`), readiness-check (when opened on its own) | each app |
 | Hash links `#use=` and `#add=` | the receiving app | register → readiness-2 (`#use=`; in the hub still sent as an `open` for `readiness-check`, which the hub routes to readiness-2), readiness-2 / ai-act-guide → register (`#add=`) | each app |
@@ -114,6 +114,18 @@ Ids are cleaned to `[A-Za-z0-9_-]`. `data` must be a plain object.
 | `unavailable` | no db or user capability (local, or no answer in 6 s), or a db error without a code |
 | `timeout` | the hub had no answer from the db within 7 s |
 | other | passed through from the db |
+
+### link (no reply), 24 Nov 2026
+
+```
+frame → hub   { hub: 'link', url: string }
+```
+
+Why: the hub's tools run in a frame the hub creates inside the claude.ai artifact sandbox, where a `target="_blank"` link in that nested frame does not open (the artifact viewer opens external links only from the top page). So the frame asks the hub to open it.
+
+Frame side (readiness-2 "Do you need AI?" detail layer, use-case-catalogue, register): only after the hub has answered the frame's `ping` (readiness-2 `host.pong`, register `host.hub`, the catalogue's own ping since 24 Nov 2026), a click (capture phase) on an `<a href>` that resolves to an http(s) URL of another origin is cancelled and sent as `{ hub: 'link', url: <absolute href> }`. Same-origin links and `download` links are left alone. Outside the hub (no pong) links stay ordinary links. The AI Act guide has no external links and sends nothing.
+
+Hub side: read only from the hub's own frames (same check as every message). `hubLinkUrl(url)` (pure, in the machine block, tested in `hub/tests/hub.test.mjs`) accepts a string of at most 2048 characters (`HUB_LINK_MAX`), absolute `http:` or `https:`, without spaces, control characters, user name or password, and returns the normalised URL; anything else is ignored silently (no reply). The hub then creates a real `<a href target="_blank" rel="noopener noreferrer">` in the top document and calls `.click()` inside the message handler (the person's click in the frame still counts as a user action), removes it, and falls back to `window.open(url, '_blank', 'noopener')` if the click throws. `HFTPHub.state().links` counts the links opened (for tests). Locally a popup opens; the real claude.ai sandbox can only be checked there.
 
 ### open (no reply)
 

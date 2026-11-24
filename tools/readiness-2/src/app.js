@@ -334,6 +334,16 @@
     if (t.q1Unsure) h += '<p>' + esc(t.q1Unsure) + '</p>';
     return h;
   }
+  /* v2.5.1 (owner, 24 Nov 2026): the result's "Is this an AI problem?" card explains every one of the five answers (title, the
+     person's answer, what it means for this decision: R2Logic.aiMeaning), under the verdict word. Full width, sized to content. */
+  var AI_CHIP = { y: 'a-yes', n: 'a-no', u: 'a-unknown' };
+  function aiCard(m) {
+    return '<div class="aiv ' + vClass(L.verdict(rec.Q).key) + '"><p class="vsent" id="ai-head">' + esc(m.ai.head) + '</p>' + (m.ai.second ? '<p><strong>' + esc(m.ai.second) + '</strong></p>' : '') +
+      '<ol class="aiq" id="ai-rows">' + m.answers.map(function (a) {
+        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + (AI_CHIP[a.state] || 'a-na') + '">' + esc(a.a) + '</span></div>' +
+          '<p>' + esc(a.line) + (a.ask ? ' <strong>' + esc(a.ask) + '</strong>' : '') + '</p>' + (a.ifNo ? '<p class="meta">' + esc(a.ifNo) + '</p>' : '') + '</li>';
+      }).join('') + '</ol></div>';
+  }
   var LV_CLASS = { ready: 'v-go', almost: 'v-hold', notready: 'v-stop', noinfo: 'v-open' };
 
   // ---------- "Your checks in this browser" and files ----------
@@ -575,7 +585,7 @@
       (m.assist ? '<p id="assist"><strong>' + esc(m.assist) + '</strong></p>' : '') + // v2.5, owner O3
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
-    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
+    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
@@ -649,6 +659,17 @@
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
   }
+  /* v2.5.1: external links inside the hub. The hub's frame sits in the claude.ai artifact sandbox, where a target="_blank" link in a
+     nested frame does not open; the hub opens it from the top page instead ({ hub: 'link', url }, tools/hub/CONTRACTS.md). Only once
+     the hub has answered the ping (host.pong); on its own the page keeps ordinary links. Same-origin links are left alone. */
+  document.addEventListener('click', function (e) {
+    if (!host.pong || e.defaultPrevented) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
+    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
+    e.preventDefault();
+    try { window.parent.postMessage({ hub: 'link', url: u.href }, location.origin); } catch (x) { /* the hub is gone */ }
+  }, true);
   function saveFile(name, blob) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
@@ -794,10 +815,7 @@
      click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
   function detailHtml(id) {
     var u = USE[id], dt = (D.detail || {})[id] || { srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
-    var src = function (s) {
-      var name = s[0] === 'h' ? '<span class="tag">Hotel</span> ' + esc(s[1]) : esc(s[1]);
-      return '<li data-src="' + esc(s[0]) + '"><b>' + name + '</b>' + (s[2] ? ': ' + esc(s[2]) : '') + (s[3] ? ' <a href="' + esc(s[3]) + '" target="_blank" rel="noopener">Open the source</a>' : '') + '</li>';
-    };
+    var src = function (s) { return L.sourceRow(s); }; // v2.5.1: every source type, one link per URL (R2Logic.sourceRow)
     return '<div class="dhead"><div><p class="kicker">' + esc([d.name, d.cat].filter(Boolean).join(' · ')) + '</p><h2 id="detail-title">' + esc(uName(u)) + '</h2>' + (cn ? '<p class="meta" id="detail-catname">' + esc(cn) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
       (tu && tu.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') +

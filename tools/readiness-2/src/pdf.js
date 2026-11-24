@@ -20,7 +20,8 @@
     b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE });
     return b;
   }
-  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a }; }); }
+  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card. */
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a, m: L.aiMeaningText(a) }; }); }
   function sources(TQ, stop) {
     var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
     (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
@@ -53,10 +54,8 @@
 
     b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });
     if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });
-    if (m.ai.carried.length) { b.push({ k: 'label', t: m.ai.carriedLabel }); m.ai.carried.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (m.ai.find.length) { b.push({ k: 'label', t: 'To find out' }); m.ai.find.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (m.ai.q1Unsure) b.push({ k: 'p', t: m.ai.q1Unsure });
-    b.push({ k: 'label', t: 'Your five answers' }); b = b.concat(answers(m));
+    /* v2.5.1: the conditions, the "to find out" list and the Q1 note now stand under each answer (answers(m)), as on the card. */
+    b.push({ k: 'label', t: 'Your five answers and what each means' }); b = b.concat(answers(m));
 
     b.push({ k: 'h', t: 'Where it sits' }, { k: 'lead', t: m.path });
     if (m.useTask) { b.push({ k: 'p', t: m.useTask }); if (m.useHow) b.push({ k: 'p', t: m.useHow }); b.push({ k: 'p', t: m.useLevel }); if (m.catName) b.push({ k: 'p', t: m.catName }); }
@@ -134,8 +133,8 @@
         case 'li': room(LH(9.8) + (b.sub ? LH(8.6) : 0)); f('normal', 9.8, 35); doc.text('–', M + 1, y + LH(9.8) * 0.75); text(b.t, M + 5, 9.8, 'normal', 35); if (b.sub) { y += 0.3; text(b.sub, M + 5, 8.6, 'normal', 100); } y += 1.2; break;
         case 'src': room(LH(8.8)); f('normal', 8.8, 90); doc.text('–', M + 1, y + LH(8.8) * 0.75); text(b.t, M + 5, 8.8, 'normal', 70); y += 0.8; break;
         case 'q': {
-          f('normal', 9.8); var qh = doc.splitTextToSize(safe(b.t), TW - 6).length * LH(9.8) + LH(9.8) + 2; room(qh);
-          f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); y += 2; break;
+          f('normal', 9.8); var qh = doc.splitTextToSize(safe(b.t), TW - 6).length * LH(9.8) + LH(9.8) + 2; if (b.m) { f('normal', 9); qh += doc.splitTextToSize(safe(b.m), TW - 6).length * LH(9) + 0.5; } room(qh);
+          f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); if (b.m) { y += 0.4; text(b.m, M + 6, 9, 'normal', 70); } y += 2; break;
         }
         case 'item': {
           f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + (b.ex ? doc.splitTextToSize(safe(b.ex), TW - 3).length : 0) + (b.action ? doc.splitTextToSize(safe(b.action), TW - 3).length : 0) + 2) * LH(9.6) + 6; room(Math.min(ih, 60));

@@ -1806,7 +1806,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // ---------- exports ----------
   /* host.state is the download-bridge machine (src/machines.js: hostStart, hostSend): none | pending | yes | no. */
   function parentSameOrigin() { try { return window.parent.location.origin === window.location.origin; } catch (e) { return false; } }
-  var host = { state: M.hostStart(window.parent !== window, window.parent !== window && parentSameOrigin()), waiters: [], seq: 0, calls: {}, direct: null };
+  var host = { state: M.hostStart(window.parent !== window, window.parent !== window && parentSameOrigin()), hub: false, waiters: [], seq: 0, calls: {}, direct: null }; // hub: the hub answered the ping (v2.5.1 link bridge)
   function hostEvent(ev) {
     var was = host.state; host.state = M.hostSend(host.state, ev);
     if (was === 'pending' && host.state !== 'pending') host.waiters.splice(0).forEach(function (f) { f(); });
@@ -1822,12 +1822,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
       var m = e.data;
-      if (m.hub === 'pong') hostEvent({ type: 'pong', downloads: !!m.downloads });
+      if (m.hub === 'pong') { host.hub = true; hostEvent({ type: 'pong', downloads: !!m.downloads }); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
     try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { hostEvent({ type: 'timeout' }); }
     setTimeout(function () { hostEvent({ type: 'timeout' }); }, 12000);
   }
+  /* 24 Nov 2026 (link bridge, tools/hub/CONTRACTS.md): in the claude.ai hub this page is a nested frame, where target="_blank" links
+     (the law's official texts) do not open. Once the hub has answered the ping, an external http(s) link is sent to the hub as
+     { hub: 'link', url } and the hub opens it from the top page. On its own the page keeps ordinary links. */
+  document.addEventListener('click', function (e) {
+    if (!host.hub || e.defaultPrevented) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
+    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
+    e.preventDefault();
+    try { window.parent.postMessage({ hub: 'link', url: u.href }, window.location.origin); } catch (x) { /* the hub is gone */ }
+  }, true);
   function whenHostKnown(fn) { if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(fn); } else fn(); }
   function saveFile(name, content, mime) {
     function viaLink() {

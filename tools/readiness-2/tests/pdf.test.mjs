@@ -22,7 +22,7 @@ function spyPdf(log) {
   } };
 }
 function drawn(m) { const log = []; const r = P.draw(m, spyPdf(log), font); return { r, log }; }
-const texts = m => m.blocks.map(b => [b.t, b.a, b.name, b.check, b.answer, b.sub].filter(Boolean).join(' | '));
+const texts = m => m.blocks.map(b => [b.t, b.a, b.m, b.name, b.check, b.answer, b.sub].filter(Boolean).join(' | '));
 const all = m => texts(m).join('\n');
 const heads = m => m.blocks.filter(b => b.k === 'h').map(b => b.t);
 function mk(use, musts, tail, o) {
@@ -34,8 +34,9 @@ function mk(use, musts, tail, o) {
 /* Every word of the result model must be in the PDF, as it is. */
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
-  const need = [m.levelName + ' · ' + m.scoreHead, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.ai.q1Unsure, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
-    .concat(m.ai.carried, m.ai.find, m.areas.map(a => a.line), m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
+  const need = [m.levelName + ' · ' + m.scoreHead, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
+    /* v2.5.1: the AI-problem section explains each answer (line, ask, ifNo) instead of the carried / to-find-out lists. */
+    .concat(m.answers.map(a => a.line), m.answers.map(a => a.ask), m.answers.map(a => a.ifNo), m.areas.map(a => a.line), m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.method, m.answers.map(a => a.title + ': ' + a.q), m.answers.map(a => 'Your answer: ' + a.a), m.itemList.map(i => i.q), m.itemList.map(i => 'Your answer: ' + i.answer),
       m.legal ? [m.legalNote, m.legal.why, m.legal.country, m.legal.labour].concat(m.legal.could, m.legal.items.map(i => i.text), m.legal.items.map(i => i.sub)) : [], m.since ? [m.since.head].concat(m.since.lines) : []).filter(Boolean);
   const missing = need.filter(x => !t.includes(x));
@@ -61,7 +62,7 @@ sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', '
 let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8 draft'); ok(x.t.includes('Draft questions: team to review'), 'a draft use case says so in the PDF');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label') && x.pdf.blocks.filter(b => b.k === 'item').length === 10, '"None of these fits": must-haves only, said so; no vendor or label section');
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
-x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.t.includes('If question 1 turns out to be No'), 'every carried condition and the Q1 "Not sure" line');
+x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.m.ai.carried.every(c => x.t.includes(c)) && x.t.includes('If question 1 turns out to be No'), 'every carried condition (now under its answer, v2.5.1) and the Q1 "Not sure" line');
 r = mk('gx-2', [], []); r.snaps = [L.snapshot(L.evaluate(mk('gx-2', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z', 'gx-2'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z', 'gx-2')];
 x = sameWords(r, 'since last time'); ok(x.t.includes('Since last time (20 Nov 2026)') && x.t.includes('Verdict: Not ready yet → Ready to start a pilot.'), 'the return-visit lines');
 x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed', country: 'Other' } }), 'no name'); ok(x.t.includes('Hotel: Managed or franchised · Other (outside the EU)') && !x.t.includes('Filled in by'), 'no hotel name, no role');

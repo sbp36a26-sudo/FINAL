@@ -76,6 +76,8 @@ node tools/readiness-2/tests/browser/v21.cjs     # Playwright; serve tools/ on 8
 node readiness-2/tests/browser/v23.cjs           # from tools/; serve tools/ on 8815: four answers, result page, the detail layer; screenshots to reports/readiness-2-screens/four-answers/
 node tools/readiness-2/tests/v25.test.mjs        # v2.5: the council's BUILD NOW items, rules v2.5 (O1 to O4) with its nine answer patterns, clean-up inventory v3 (H1, M4, L1 to L5), the v2.4 fixture
 node readiness-2/tests/browser/v25.cjs           # from tools/; serve tools/ on 8831: R1 to R6, Team tab T1/T2, the nine patterns on the page, sharing off; screenshots to reports/readiness-2-screens/v25/ and wording/
+node tools/readiness-2/tests/v251.test.mjs       # v2.5.1: every catalogue source renders with one link per URL; the five answers explained on the card and in the PDF
+node readiness-2/tests/browser/v251.cjs          # from tools/; serve tools/ on 8831: hub link bridge (readiness-2, catalogue, register), the AI-problem card; screenshots v25/v251-*.png
 ```
 
 `walk.cjs` and `v21.cjs` set `window.R2_TEST_SHARING` before load, so they still prove the share paths for when sharing is switched back on.

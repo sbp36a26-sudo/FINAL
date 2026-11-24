@@ -280,6 +280,13 @@ input[type=text],select{font:inherit;color:var(--ink);background:var(--panel);bo
 .aiv{display:flex;flex-direction:column;gap:8px}
 .aiv .vsent{font-size:1.25rem}
 .aiv ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+/* v2.5.1: the AI-problem card and "Where it sits" stack, each full width and as tall as its content, so neither stretches into an empty box. */
+.sumgrid{grid-template-columns:1fr;align-items:start}
+#sum-ai{grid-column:1/-1}
+.aiq{list-style:none;padding:0;margin:4px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px 24px}
+.aiq li{border-top:1px solid var(--line2);padding-top:8px;display:flex;flex-direction:column;gap:3px}
+.aiq .aiqhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aiq p{margin:0;max-width:62ch}
 .bars{display:flex;flex-direction:column;gap:9px}
 .brow{display:grid;grid-template-columns:minmax(120px,210px) minmax(60px,1fr) 70px 150px;gap:10px;align-items:center;font-size:0.9375rem} /* v2.1: counts ("10 of 10"), not percentages */
 .brow .track{height:12px;background:var(--panel);border:1px solid var(--ctl);border-radius:6px;position:relative;overflow:hidden}

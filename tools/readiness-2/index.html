@@ -291,6 +291,13 @@ input[type=text],select{font:inherit;color:var(--ink);background:var(--panel);bo
 .aiv{display:flex;flex-direction:column;gap:8px}
 .aiv .vsent{font-size:1.25rem}
 .aiv ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+/* v2.5.1: the AI-problem card and "Where it sits" stack, each full width and as tall as its content, so neither stretches into an empty box. */
+.sumgrid{grid-template-columns:1fr;align-items:start}
+#sum-ai{grid-column:1/-1}
+.aiq{list-style:none;padding:0;margin:4px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px 24px}
+.aiq li{border-top:1px solid var(--line2);padding-top:8px;display:flex;flex-direction:column;gap:3px}
+.aiq .aiqhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aiq p{margin:0;max-width:62ch}
 .bars{display:flex;flex-direction:column;gap:9px}
 .brow{display:grid;grid-template-columns:minmax(120px,210px) minmax(60px,1fr) 70px 150px;gap:10px;align-items:center;font-size:0.9375rem} /* v2.1: counts ("10 of 10"), not percentages */
 .brow .track{height:12px;background:var(--panel);border:1px solid var(--ctl);border-radius:6px;position:relative;overflow:hidden}
@@ -1776,6 +1783,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var RULES = 'v2.5 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
+  var Q1_UNSURE = 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.';
   var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
@@ -1849,7 +1857,56 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Conditions carried forward') : '',
       carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
       find: v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }),
-      q1Unsure: v.q1Unsure ? 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.' : '' };
+      q1Unsure: v.q1Unsure ? Q1_UNSURE : '' };
+  }
+
+  /* v2.5.1 (owner, 24 Nov 2026): what each of the five answers means for this decision, for the result's "Is this an AI problem?"
+     card and the PDF. Only the questions' own words (yesIf, noIf, outcome, add, who; Q1 Not sure: the existing q1Unsure sentence).
+     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo }:
+       Yes       line = "Met: <the Yes-if test>"
+       No        line = the consequence already defined (outcome + add; Q4 No = assistant only)
+       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what a No would mean */
+  function lcFirst(t) { t = String(t || ''); return /^[A-Z](?:[a-z]|\s)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
+  function aiMeaning(id, ans) {
+    var q = QBY[id], a = Q_OK[ans] ? ans : '';
+    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '' };
+    if (!q) return o;
+    if (a === 'y') o.line = 'Met: ' + lcFirst(q.yesIf);
+    else if (a === 'n') o.line = q.outcome + (q.add ? ' ' + q.add : '');
+    else if (a === 'u') {
+      o.line = 'To find out: yes if ' + lcFirst(noStop(q.yesIf)) + '; no if ' + lcFirst(noStop(q.noIf)) + '.';
+      o.ask = 'Ask ' + q.who + '.';
+      o.ifNo = id === 'q1' ? Q1_UNSURE : 'If it turns out to be No, then ' + lcFirst(q.outcome);
+    } else o.line = 'Not answered yet.';
+    return o;
+  }
+  /* One line of plain text per question (PDF sub-line, copy texts). */
+  function aiMeaningText(x) { return [x.line, x.ask, x.ifNo].filter(Boolean).join(' '); }
+
+  /* ---------- v2.5.1: one source of the detail layer ----------
+     build.mjs bundles the catalogue's sources as [type, name, note, url] ('r' resolved through the catalogue's source list, 'l' moved
+     to that shape). sourceItem also reads the catalogue's raw shapes, so a raw entry can never print a URL as text or a bare key:
+       'c' / 'h' [type, name, note, url] · 'l' [type, text, url] · 'r' [type, refKey, note] with refs[refKey] = [citation, url, ...]
+     Returns { type, name, note, url } with url '' unless it is http(s). */
+  var HTTP = /^https?:\/\/[^\s"<>]+$/i;
+  function sourceItem(s, refs) {
+    s = Array.isArray(s) ? s : []; var t = s[0], o;
+    if (t === 'l' && s.length < 4) o = { name: s[1], note: '', url: s[2] };
+    else if (t === 'r' && s.length < 4) { var r = (refs || {})[s[1]] || []; o = { name: r[0] || s[1], note: s[2], url: r[1] }; }
+    else o = { name: s[1], note: s[2], url: s[3] };
+    o.type = t; o.name = String(o.name || ''); o.note = String(o.note || ''); o.url = HTTP.test(String(o.url || '').trim()) ? String(o.url).trim() : '';
+    if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
+    return o;
+  }
+  function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* The list item the detail layer shows: name (a "Hotel" tag for 'h'), note, and one "Open the source" link where a URL exists. */
+  function sourceRow(s, refs) {
+    var x = sourceItem(s, refs);
+    var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
+    /* a plain link ('l') is a sentence, not a name: not set in bold */
+    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
+      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -2192,7 +2249,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       hotel: [H.name, type, H.country === 'Other' ? C.COUNTRY_LABEL.Other : H.country].filter(Boolean).join(' · '),
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
-      answers: C.QUESTIONS.map(function (q, i) { return { n: i + 1, title: q.title, q: q.q, a: ({ y: 'Yes', n: 'No', u: 'Not sure' })[rec.Q[q.id]] || 'Not answered' }; }),
+      /* v2.5.1: each answer also carries what it means (aiMeaning): state, line, ask, ifNo. */
+      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
@@ -2236,7 +2294,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
@@ -2694,7 +2752,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE });
     return b;
   }
-  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a }; }); }
+  /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card. */
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a, m: L.aiMeaningText(a) }; }); }
   function sources(TQ, stop) {
     var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
     (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
@@ -2727,10 +2786,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
     b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });
     if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });
-    if (m.ai.carried.length) { b.push({ k: 'label', t: m.ai.carriedLabel }); m.ai.carried.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (m.ai.find.length) { b.push({ k: 'label', t: 'To find out' }); m.ai.find.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
-    if (m.ai.q1Unsure) b.push({ k: 'p', t: m.ai.q1Unsure });
-    b.push({ k: 'label', t: 'Your five answers' }); b = b.concat(answers(m));
+    /* v2.5.1: the conditions, the "to find out" list and the Q1 note now stand under each answer (answers(m)), as on the card. */
+    b.push({ k: 'label', t: 'Your five answers and what each means' }); b = b.concat(answers(m));
 
     b.push({ k: 'h', t: 'Where it sits' }, { k: 'lead', t: m.path });
     if (m.useTask) { b.push({ k: 'p', t: m.useTask }); if (m.useHow) b.push({ k: 'p', t: m.useHow }); b.push({ k: 'p', t: m.useLevel }); if (m.catName) b.push({ k: 'p', t: m.catName }); }
@@ -2808,8 +2865,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         case 'li': room(LH(9.8) + (b.sub ? LH(8.6) : 0)); f('normal', 9.8, 35); doc.text('–', M + 1, y + LH(9.8) * 0.75); text(b.t, M + 5, 9.8, 'normal', 35); if (b.sub) { y += 0.3; text(b.sub, M + 5, 8.6, 'normal', 100); } y += 1.2; break;
         case 'src': room(LH(8.8)); f('normal', 8.8, 90); doc.text('–', M + 1, y + LH(8.8) * 0.75); text(b.t, M + 5, 8.8, 'normal', 70); y += 0.8; break;
         case 'q': {
-          f('normal', 9.8); var qh = doc.splitTextToSize(safe(b.t), TW - 6).length * LH(9.8) + LH(9.8) + 2; room(qh);
-          f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); y += 2; break;
+          f('normal', 9.8); var qh = doc.splitTextToSize(safe(b.t), TW - 6).length * LH(9.8) + LH(9.8) + 2; if (b.m) { f('normal', 9); qh += doc.splitTextToSize(safe(b.m), TW - 6).length * LH(9) + 0.5; } room(qh);
+          f('bold', 9.8, 35); doc.text(String(b.n) + '.', M, y + LH(9.8) * 0.75); text(b.t, M + 6, 9.8, 'normal', 35); text(b.a, M + 6, 9.8, 'bold', 25); if (b.m) { y += 0.4; text(b.m, M + 6, 9, 'normal', 70); } y += 2; break;
         }
         case 'item': {
           f('normal', 9.4); var ih = (doc.splitTextToSize(safe(b.check), TW - 3).length + (b.ex ? doc.splitTextToSize(safe(b.ex), TW - 3).length : 0) + (b.action ? doc.splitTextToSize(safe(b.action), TW - 3).length : 0) + 2) * LH(9.6) + 6; room(Math.min(ih, 60));
@@ -3173,6 +3230,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (t.q1Unsure) h += '<p>' + esc(t.q1Unsure) + '</p>';
     return h;
   }
+  /* v2.5.1 (owner, 24 Nov 2026): the result's "Is this an AI problem?" card explains every one of the five answers (title, the
+     person's answer, what it means for this decision: R2Logic.aiMeaning), under the verdict word. Full width, sized to content. */
+  var AI_CHIP = { y: 'a-yes', n: 'a-no', u: 'a-unknown' };
+  function aiCard(m) {
+    return '<div class="aiv ' + vClass(L.verdict(rec.Q).key) + '"><p class="vsent" id="ai-head">' + esc(m.ai.head) + '</p>' + (m.ai.second ? '<p><strong>' + esc(m.ai.second) + '</strong></p>' : '') +
+      '<ol class="aiq" id="ai-rows">' + m.answers.map(function (a) {
+        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + (AI_CHIP[a.state] || 'a-na') + '">' + esc(a.a) + '</span></div>' +
+          '<p>' + esc(a.line) + (a.ask ? ' <strong>' + esc(a.ask) + '</strong>' : '') + '</p>' + (a.ifNo ? '<p class="meta">' + esc(a.ifNo) + '</p>' : '') + '</li>';
+      }).join('') + '</ol></div>';
+  }
   var LV_CLASS = { ready: 'v-go', almost: 'v-hold', notready: 'v-stop', noinfo: 'v-open' };
 
   // ---------- "Your checks in this browser" and files ----------
@@ -3414,7 +3481,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       (m.assist ? '<p id="assist"><strong>' + esc(m.assist) + '</strong></p>' : '') + // v2.5, owner O3
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
-    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
+    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
@@ -3488,6 +3555,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
   }
+  /* v2.5.1: external links inside the hub. The hub's frame sits in the claude.ai artifact sandbox, where a target="_blank" link in a
+     nested frame does not open; the hub opens it from the top page instead ({ hub: 'link', url }, tools/hub/CONTRACTS.md). Only once
+     the hub has answered the ping (host.pong); on its own the page keeps ordinary links. Same-origin links are left alone. */
+  document.addEventListener('click', function (e) {
+    if (!host.pong || e.defaultPrevented) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null; if (!a || a.hasAttribute('download')) return;
+    var u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.origin === location.origin) return;
+    e.preventDefault();
+    try { window.parent.postMessage({ hub: 'link', url: u.href }, location.origin); } catch (x) { /* the hub is gone */ }
+  }, true);
   function saveFile(name, blob) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
@@ -3633,10 +3711,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
   function detailHtml(id) {
     var u = USE[id], dt = (D.detail || {})[id] || { srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
-    var src = function (s) {
-      var name = s[0] === 'h' ? '<span class="tag">Hotel</span> ' + esc(s[1]) : esc(s[1]);
-      return '<li data-src="' + esc(s[0]) + '"><b>' + name + '</b>' + (s[2] ? ': ' + esc(s[2]) : '') + (s[3] ? ' <a href="' + esc(s[3]) + '" target="_blank" rel="noopener">Open the source</a>' : '') + '</li>';
-    };
+    var src = function (s) { return L.sourceRow(s); }; // v2.5.1: every source type, one link per URL (R2Logic.sourceRow)
     return '<div class="dhead"><div><p class="kicker">' + esc([d.name, d.cat].filter(Boolean).join(' · ')) + '</p><h2 id="detail-title">' + esc(uName(u)) + '</h2>' + (cn ? '<p class="meta" id="detail-catname">' + esc(cn) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
       (tu && tu.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') +

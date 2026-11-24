@@ -16,6 +16,7 @@
   var RULES = 'v2.5 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
+  var Q1_UNSURE = 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.';
   var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
@@ -89,7 +90,56 @@
       carriedLabel: v.carried.length ? (also.length < v.carried.length ? 'What this means' : 'Conditions carried forward') : '',
       carried: v.carried.map(function (c) { return c.text + (c.add ? ' ' + c.add : ''); }),
       find: v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }),
-      q1Unsure: v.q1Unsure ? 'If question 1 turns out to be No, this is not suitable for AI: rules or ordinary automation will do it.' : '' };
+      q1Unsure: v.q1Unsure ? Q1_UNSURE : '' };
+  }
+
+  /* v2.5.1 (owner, 24 Nov 2026): what each of the five answers means for this decision, for the result's "Is this an AI problem?"
+     card and the PDF. Only the questions' own words (yesIf, noIf, outcome, add, who; Q1 Not sure: the existing q1Unsure sentence).
+     Returns { state: 'y' | 'n' | 'u' | '', answer, line, ask, ifNo }:
+       Yes       line = "Met: <the Yes-if test>"
+       No        line = the consequence already defined (outcome + add; Q4 No = assistant only)
+       Not sure  line = "To find out: yes if ...; no if ...", ask = "Ask <who>.", ifNo = what a No would mean */
+  function lcFirst(t) { t = String(t || ''); return /^[A-Z](?:[a-z]|\s)/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+  function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
+  function aiMeaning(id, ans) {
+    var q = QBY[id], a = Q_OK[ans] ? ans : '';
+    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '' };
+    if (!q) return o;
+    if (a === 'y') o.line = 'Met: ' + lcFirst(q.yesIf);
+    else if (a === 'n') o.line = q.outcome + (q.add ? ' ' + q.add : '');
+    else if (a === 'u') {
+      o.line = 'To find out: yes if ' + lcFirst(noStop(q.yesIf)) + '; no if ' + lcFirst(noStop(q.noIf)) + '.';
+      o.ask = 'Ask ' + q.who + '.';
+      o.ifNo = id === 'q1' ? Q1_UNSURE : 'If it turns out to be No, then ' + lcFirst(q.outcome);
+    } else o.line = 'Not answered yet.';
+    return o;
+  }
+  /* One line of plain text per question (PDF sub-line, copy texts). */
+  function aiMeaningText(x) { return [x.line, x.ask, x.ifNo].filter(Boolean).join(' '); }
+
+  /* ---------- v2.5.1: one source of the detail layer ----------
+     build.mjs bundles the catalogue's sources as [type, name, note, url] ('r' resolved through the catalogue's source list, 'l' moved
+     to that shape). sourceItem also reads the catalogue's raw shapes, so a raw entry can never print a URL as text or a bare key:
+       'c' / 'h' [type, name, note, url] · 'l' [type, text, url] · 'r' [type, refKey, note] with refs[refKey] = [citation, url, ...]
+     Returns { type, name, note, url } with url '' unless it is http(s). */
+  var HTTP = /^https?:\/\/[^\s"<>]+$/i;
+  function sourceItem(s, refs) {
+    s = Array.isArray(s) ? s : []; var t = s[0], o;
+    if (t === 'l' && s.length < 4) o = { name: s[1], note: '', url: s[2] };
+    else if (t === 'r' && s.length < 4) { var r = (refs || {})[s[1]] || []; o = { name: r[0] || s[1], note: s[2], url: r[1] }; }
+    else o = { name: s[1], note: s[2], url: s[3] };
+    o.type = t; o.name = String(o.name || ''); o.note = String(o.note || ''); o.url = HTTP.test(String(o.url || '').trim()) ? String(o.url).trim() : '';
+    if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
+    return o;
+  }
+  function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* The list item the detail layer shows: name (a "Hotel" tag for 'h'), note, and one "Open the source" link where a URL exists. */
+  function sourceRow(s, refs) {
+    var x = sourceItem(s, refs);
+    var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
+    /* a plain link ('l') is a sentence, not a name: not set in bold */
+    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
+      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -432,7 +482,8 @@
       hotel: [H.name, type, H.country === 'Other' ? C.COUNTRY_LABEL.Other : H.country].filter(Boolean).join(' · '),
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
-      answers: C.QUESTIONS.map(function (q, i) { return { n: i + 1, title: q.title, q: q.q, a: ({ y: 'Yes', n: 'No', u: 'Not sure' })[rec.Q[q.id]] || 'Not answered' }; }),
+      /* v2.5.1: each answer also carries what it means (aiMeaning): state, line, ask, ifNo. */
+      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
@@ -476,7 +527,7 @@
   }
   var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
