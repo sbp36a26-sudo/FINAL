@@ -58,11 +58,11 @@
       '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, use case. Hotel name only if they tick it.</span></div>' +
       '<div><b>2 · Questions</b><span>Five questions on whether the job needs AI (a No on the first stops the check), ten must-haves, then six to nine questions for the chosen use case (none after “None of these fits”).</span></div>' +
       '<div><b>3 · Points and score</b><span>Yes 2 · Planned, not done yet 1 · No 0' + (J.UNKNOWN_SCORES_ZERO ? ' · Don\'t know yet 0 (team judgement)' : '. “Don\'t know yet” is left out') + '. An answer a copy holds that is no longer offered counts as not answered; the table names it. The score is points ÷ points possible, rounded down, shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”. It is the hotel\'s own answers; nobody checked them. No score is shown under “' + esc(LV.noinfo.name) + '”.</span></div>' +
-      '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, or below ' + T.ALMOST + '%: ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
-        (J.LEGAL_HOLDS_TOP || J.CARRIED_NO_HOLDS_TOP ? ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from questions 2 to 5' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) : '') +
+      '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, below ' + T.ALMOST + '%' + (J.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes (team judgement, rules v2.5)' : '') + ': ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
+        ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from question 2, 3 or 5' + (J.Q4_NO_HOLDS_TOP ? ' or 4' : '') : '', J.NOT_SURE_HOLDS_TOP ? 'a question of step 2 is “Not sure”' : '', J.READY_MIN_TAIL_YES ? 'fewer than half the answered questions for the use case are Yes' : '', J.NONE_BEST_ALMOST ? 'no use case was chosen' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) +
         '. Everything else: ' + esc(LV.almost.name) + '. The reason is printed under the verdict.</span></div>' +
       '<div><b>5 · Kept</b><span>In the hotel\'s browser and file. A copy reaches this page only if they press “Share a copy”; they can withdraw it from any step.</span></div>' +
-      '</div><p class="meta">The cut-offs are the team\'s judgement and have not been tested with hotels. A copy made with earlier rules is recomputed here; the list shows what the hotel saw and marks it “earlier rules”. Sources: reports/Council - Do you need AI v2.md and reports/audit-readiness-2/cleanup_inventory_v2.md (24 Nov 2026).</p>';
+      '</div><p class="meta">The cut-offs are the team\'s judgement and have not been tested with hotels. A copy made with earlier rules is recomputed here; the list shows what the hotel saw and marks it “earlier rules”. Sources: reports/Council - Do you need AI v2.md, reports/Council - Do you need AI v2.4.md and reports/audit-readiness-2/cleanup_inventory_v2.md and _v3.md (24 Nov 2026).</p>';
   }
   function flowCard() {
     return '<section class="panel" id="flowcard"><h3>Where the data goes</h3><p class="meta">This page lists two kinds of shared copy. Each is worked out with its own rules.</p>' + dynCard() +
@@ -100,6 +100,8 @@
 
   /* A copy from "Do you need AI?" v2: recomputed with its rules; every answer with its points. */
   /* A copy whose use case is no longer in the catalogue: what the hotel saw, and its must-have answers; nothing is recomputed. */
+  /* Audit v3 L2: an answer the copy holds, in the hotel page's own words (an old Partly is named as such, never shown plainly). */
+  function goneWord(raw) { var st = DL.answerState(raw); return st === 'blank' ? 'Not answered' : DL.answerWord({ old: DL.oldOf(raw), state: st }); }
   function detailGone(s) {
     var A = s.answers || {};
     return '<section class="panel" data-kind="dyn" data-gone="1"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
@@ -107,7 +109,7 @@
       '<p><strong>' + esc(s.useName || s.useId) + '</strong></p>' +
       '<p class="warnline" id="gone">This use case (' + esc(s.useId) + ') is no longer in the catalogue, so the copy cannot be recomputed. What the hotel saw when it shared: ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(dynScore(s.pct)) + ', ' + esc(s.met) + ' of ' + esc(s.gates) + ' must-haves at Yes.</p>' +
       '<p class="meta" id="made-with">Shared ' + esc(fmt(s.sharedAt)) + ' · made with rules ' + esc(s.rules || 'not recorded') + (s.named ? ' · hotel name shared' : ' · no hotel name') + '</p></section>' +
-      '<section class="panel"><h3>Must-have answers</h3><ul class="tight">' + DC.MUSTS.map(function (m) { return '<li>' + esc(m.name) + ': <strong>' + esc(DC.ANSWER_WORD[A[m.id]] || 'Not answered') + '</strong></li>'; }).join('') + '</ul></section>' + delPanel();
+      '<section class="panel"><h3>Must-have answers</h3><ul class="tight">' + DC.MUSTS.map(function (m) { return '<li>' + esc(m.name) + ': <strong>' + esc(goneWord(A[m.id])) + '</strong></li>'; }).join('') + '</ul></section>' + delPanel();
   }
   function detailDyn(s) {
     if (dynGone(s)) return detailGone(s);

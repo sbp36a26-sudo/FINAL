@@ -47,8 +47,8 @@ Rebuilt on 24 Nov 2026 to `.claude/skills/clean-up/SKILL.md`: one transition tab
 - `#app[data-state]` (the step), `data-level` (on the result), `data-verdict` (five questions), `data-storage`, `data-check`, `data-dl`, `data-bridge`, `data-store`.
 - `window.Readiness2.state()`: step, id, hotel, Q, verdict, A, By, cat, dept, use, T, TBy, tailored ids, ctx, events, level, pct, counts, must, confirm, missing, storage, notice, storeNotice, checks, snaps, inHub, download, bridge, share, sharedAt, shareStore, sharingOn, history.
 - `window.Readiness2.send(event, arg)`: the same events the controls send; returns false when refused. `.events()` lists the navigation events accepted now.
-- `.record()`, `.store()`, `.resultModel()`, `.summaryText()`, `.pdfModel()`, `.pdfName()`, `.fileDoc()`, `.openFileText(text)`, `.shareDoc()`.
-- Stable ids: `#begin`, `#next`, `#back`, `#change`, `#edit`, `#new-top`, `#new-check`, `#pdf`, `#copy`, `#print`, `#save-file`, `#to-register`, `#share-btn`, `#unshare`, `#file-open`, `a-<question id>-<answer>` on every answer, `u-<use id>`, `cat-<area>`, `dept-<id>`, `h-type`, `h-name`, `h-role`, `h-country`.
+- `.record()`, `.store()`, `.resultModel()`, `.pdfModel()`, `.pdfName()`, `.fileDoc()`, `.openFileText(text)`, `.shareDoc()` (`.summaryText()` was removed in v2.5 with Copy summary).
+- Stable ids: `#begin`, `#next`, `#back`, `#change`, `#edit`, `#new-top`, `#new-check`, `#pdf`, `#save-file`, `#to-register`, `#share-btn`, `#unshare`, `#file-open`, `a-<question id>-<answer>` on every answer, `u-<use id>`, `cat-<area>`, `dept-<id>`, `h-type`, `h-name`, `h-role`, `h-country`.
 
 ## Proof
 
@@ -78,3 +78,25 @@ New AX: `state()` adds `from`, `tqSig`, `elsewhere`, `fileNote`, `corrupt`, `rul
 Note for drivers: in-app Back uses the browser's history, so two `send('back')` in one tick race with `popstate` (true before v2.1 as well); send one, then read the state.
 
 Proof: unit logic 7,473 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,204. Browser: `walk.cjs` 832, `v21.cjs` 592 (1280 and 390 px, standalone and in the hub, old-version data from `tests/fixtures/v2.0-*.json`). No console errors, no horizontal scroll, 44 px targets.
+
+## v2.3 / v2.4 (24 Nov 2026): what the third clean-up audit found
+
+`reports/audit-readiness-2/cleanup_inventory_v3.md` (read-only, on commit `eb2f956`) listed two machines the v2.1 table above did not have: the **DETAIL layer** (v2.4: `ui.detail` and `ui.detailFrom`, four fields for one state, no `data-` handle) and the **old answer per question** (v2.3: a saved Partly or Doesn't apply kept in the record and shown as unanswered). It also listed the copy box, the share fields across a file replace or a tab merge, "Since last time" across question sets, and undeclared page state. Faults: H1, M1 to M5, L1 to L5. Fixed in v2.5.
+
+## v2.5 (24 Nov 2026): third clean-up pass
+
+| Machine | Action in v2.5 | What changed |
+|---|---|---|
+| DETAIL layer | Made explicit | `ui.layer = null | { use, from, step, check }`. Opened by `[data-act=detail]`; closed by Close, Esc, a click outside the drawer's box (`getBoundingClientRect`, M3), and by **any step or check change** in `afterMove` (M1 browser or phone Back, M2 a `#use=` link or any store event) and in `follow()` when another tab removed the check. One close path, `closeDetail(moved)`: on a move, focus goes to `#view`, otherwise back to the opener. `syncDetail()` also refuses a layer whose step or check is not the one on screen. AX: `#app[data-layer]`, `state().layer`, `state().detail` (the use id, as before). Phone Back closing only the sheet (a history entry for the layer) was not built: the inventory's minimum fix is in place and the step behind changes as Back says. |
+| Share fields (SHARE / STORE / TABS) | One rule | "The share fields of a check belong to this browser and survive any replacement of its answers": `F.keepShare(to, had)`, used by `reduce('import')` (H1) and by `mergeTabs` when this tab keeps its own answers (M4). `shareStale()` then marks the copy out of date when the answers differ. The replace question says "The project team’s copy of this check stays shared; you can still withdraw it." (`#file-keeps-share`). A file of a check not in this browser still opens unshared (v2.1 L11). |
+| COPY BOX | Made explicit | `ui.copy = null | { from: 'who:<role>' | 'vendor', text }`, drawn next to its button (after the person's list, inside the vendor fold), never in `#actions`; cleared by the next copy and by any move (M5). AX: `state().copyBox` (boolean, as before), `state().copyFrom`. |
+| Old answer per question | Named | `L.answerState(raw)` → `'yes' | 'planned' | 'no' | 'unknown' | 'old' | 'blank'`; `open()` items carry `old` and `word`; an old answer's task reads "Answer again: “…” (the earlier answer “Partly” is no longer offered)" (L1); "Start with", the action plan and the Team tab (`goneWord`, L2) use `answerWord`. |
+| Since last time | Keyed | snapshots carry `sig` (the use case's question signature); two snapshots of one use and rules but other questions are listed "asked with other questions, not compared line by line" (L3). |
+| Page-only state | Declared | `ui.dlKind`, `ui.fileInfo` in the `ui` literal; `fileInfo` cleared by "Keep the one here" and any move; both in `state()` (L5). |
+| Sharing switch | One constant | `SHARING_DEFAULT = false` (owner O7). Withdrawing works with sharing off: the share panel stays for a check that has a copy (with its withdraw button), and the header line, "Your checks" and the remove dialog are unchanged. The test switch `window.R2_TEST_SHARING` (set only by `walk.cjs` and `v21.cjs` before load) proves the share paths for when it is switched back on. |
+
+Dead code removed: `L.summaryText` and `Readiness2.summaryText` (Copy summary left in v2.3; its test assertions now read the PDF), `C.SYSTEMS_NOTE`, `C.READY_NONE` (O4 makes it unreachable), `p`/`na` in `C.ANSWER_WORD`, the `.exbtn[aria-expanded]` CSS and its "What does this do?" comment, `catLink(d, u)` → `detailButton(u)`. Kept: `'use-case-catalogue'` in the hub's `OPENABLE` (the bridge stays open; its comment now says no frame sends it).
+
+Tests renamed or replaced (audit v3 section 4): `logic.test.mjs` "Copy summary carries …" → the PDF carries the same words in the same order; `v21.test.mjs` and `browser/v21.cjs` "… in the copy text and the PDF" → "… in the PDF"; `browser/v23.cjs` checks the words "What does this do?" and one button per use-case row (not `#ex-gx-2`, a prefix the must-haves use too); `v22.test.mjs` header. The reproductions became `tests/v25.test.mjs` (U1, U3, U4, H1, M4, L1 to L5, dead code) and `tests/browser/v25.cjs` (R1 to R6, T1, T2); both failed on v2.4 (unit 70 of 116 failing; browser 26 failing before it stopped at the missing `#rm-withdraw`) and pass on v2.5.
+
+Proof: unit logic 7,477 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,203 · v22 809 · v23 264 · v25 116. Browser (1280 and 390 px): `walk.cjs` 860, `v21.cjs` 610, `v23.cjs` 144, `v25.cjs` 137. Team tab: readiness-check `mustfirst.cjs` 238, `planned.cjs` 86. No console errors, no horizontal scroll.

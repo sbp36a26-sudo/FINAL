@@ -39,6 +39,8 @@
         { k: 'p', t: 'Because you answered No to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
     }
     b.push({ k: 'h', t: 'Result' }, { k: 'lead', t: m.levelName + ' · ' + m.scoreHead, id: 'level' }, { k: 'lead', t: m.reason, id: 'reason' }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' }, { k: 'p', t: m.levelLine }, { k: 'p', t: m.mustLine, id: 'must-line' });
+    if (m.pilot) b.push({ k: 'p', t: m.pilot, small: true, id: 'pilot' }); // v2.5, council BUILD NOW 11
+    if (m.assist) b.push({ k: 'lead', t: m.assist, id: 'assist' }); // v2.5, owner O3
     if (m.law) b.push({ k: 'lead', t: m.law, id: 'law' });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
@@ -47,7 +49,7 @@
 
     b.push({ k: 'h', t: m.firstLabel });
     if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes.' });
-    m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: f.who + ': ' + f.text, sub: f.sub }); });
+    m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: (f.who ? f.who + ': ' : '') + f.text, sub: f.sub }); }); // v2.5: a hold (BUILD NOW 3) has no person
 
     b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });
     if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });

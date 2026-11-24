@@ -14,6 +14,9 @@ async function mk(b, w, touch, opt) {
   const ctx = await b.newContext({ viewport: { width: w, height: touch ? 844 : 900 }, hasTouch: touch, isMobile: touch, acceptDownloads: true });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
+  /* v2.5 (owner O7): sharing is off in the page (SHARING_DEFAULT = false). This walk proves the share paths for when it is
+     switched back on, so it sets the page's test switch before load. tests/browser/v25.cjs proves the page with sharing off. */
+  await ctx.addInitScript(() => { window.R2_TEST_SHARING = true; });
   if (opt.init) await ctx.addInitScript(opt.init);
   const p = await ctx.newPage(); p._errs = [];
   p.on('pageerror', e => p._errs.push(String(e)));
@@ -118,7 +121,8 @@ async function walk(p, f, tag, plan, shots) {
   const m = await f.evaluate(() => window.Readiness2.resultModel());
   ok((await f.textContent('#level-name')) === m.levelName && (await f.textContent('#score')) === m.scoreHead && (await f.textContent('#must-line')) === m.mustLine, tag + ': verdict, "' + m.scoreHead + '" and the must-haves line on the screen');
   const box = await f.evaluate(() => [...document.querySelectorAll('#result > *')].map(e => e.id || e.querySelector('[id]').id));
-  ok(box.join() === 'level-name,score,must-line' && !(await f.$('#res-hotel')) && !(await f.$('#result #reason, #result #score-sub, #result #level-line, #result #cap, #result #law')), tag + ': owner: the verdict box holds only the verdict, the score and the must-haves line (' + box.join() + ')');
+  /* v2.5 (owner O5): one short line (#box-reason) joins the box only for "Not ready yet" and a held verdict. */
+  ok(box.join() === (m.boxLine ? 'level-name,score,box-reason,must-line' : 'level-name,score,must-line') && (!m.boxLine || (await f.textContent('#box-reason')) === m.boxLine) && !(await f.$('#res-hotel')) && !(await f.$('#result #reason, #result #score-sub, #result #level-line, #result #cap, #result #law')), tag + ': owner: the verdict box holds only the verdict, the score and the must-haves line (' + box.join() + ')');
   ok((await f.$('#how #score-sub')) && (await f.textContent('#how #score-sub')) === m.scoreSub && (await f.$('#how #level-line')), tag + ': the points and the honesty text moved to "How this was worked out"');
   ok(/the answers are your own and nobody checks them/.test(await f.textContent('.foot')), tag + ': one honesty line in the footer');
   ok((s.level === 'noinfo' ? m.scoreHead === 'No score yet: you answered ' + s.counts.known + ' of ' + s.counts.total + ' questions.' : m.scoreHead === 'Score: ' + s.pct + '%' && /^\d+ of \d+ points on /.test(m.scoreSub)) && m.scoreSub.endsWith('Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.') && !/% ready/.test(await f.textContent('#view')), tag + ': score wording (v2.1: "Score: n%" or "No score yet", never "% ready")');
@@ -141,7 +145,7 @@ async function walk(p, f, tag, plan, shots) {
   // the PDF words equal the screen's
   const pm = await f.evaluate(() => window.Readiness2.pdfModel().blocks.map(b => [b.t, b.sub, b.check, b.answer].filter(Boolean).join(' | ')).join('\n'));
   const scr = await f.evaluate(() => ({ level: document.querySelector('#level-name').textContent, score: document.querySelector('#score').textContent, sub: document.querySelector('#score-sub').textContent, line: document.querySelector('#level-line').textContent, must: document.querySelector('#must-line').textContent,
-    first: [...document.querySelectorAll('#first li')].map(li => li.childNodes[0].textContent + li.childNodes[1].textContent), todo: [...document.querySelectorAll('#plan ul.todo li span:first-child')].map(x => x.textContent), areas: [...document.querySelectorAll('#areas .brow')].map(x => x.querySelector('.lbl').textContent + ': ' + x.querySelector('.pct').textContent), method: [...document.querySelectorAll('#method li')].map(x => x.textContent) }));
+    first: [...document.querySelectorAll('#first li')].map(li => li.hasAttribute('data-hold') ? li.childNodes[0].textContent : li.childNodes[0].textContent + li.childNodes[1].textContent), /* v2.5: a hold (BUILD NOW 3) names no person */ todo: [...document.querySelectorAll('#plan ul.todo li span:first-child')].map(x => x.textContent), areas: [...document.querySelectorAll('#areas .brow')].map(x => x.querySelector('.lbl').textContent + ': ' + x.querySelector('.pct').textContent), method: [...document.querySelectorAll('#method li')].map(x => x.textContent) }));
   ok(pm.includes(scr.level + ' · ' + scr.score) && pm.includes(scr.sub) && pm.includes(scr.line) && pm.includes(scr.must) && scr.first.every(t => pm.includes(t)) && scr.todo.every(t => pm.includes(t)) && scr.method.every(t => pm.includes(t)) && scr.areas.every(t => t.endsWith('–') || pm.includes(t.replace(/%$/, '% ·'))), tag + ': the PDF carries the screen\'s words (verdict, score, base, first three, plan, areas, method)');
   for (const k of ['vendor', 'legal', 'answers', 'method']) { const d = await f.$(`details[data-fold="${k}"] > summary`); if (d) await d.click(); }
   await check(f, tag + ' result'); await S('6-result');

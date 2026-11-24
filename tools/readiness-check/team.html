@@ -1241,7 +1241,7 @@ details.fold[open] > summary{margin-bottom:12px}
   /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
   var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
   var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet', p: 'Partly', na: 'Doesn’t apply' }; // p, na: only to name an old answer (Team tab)
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -1261,7 +1261,7 @@ details.fold[open] > summary{margin-bottom:12px}
       why: 'AI keeps costing money after launch: the subscription, fees based on use, connecting it to your systems, training, and staff time to check results.',
       good: 'A budget line covering subscription, set-up and connection to your systems, training and running costs.',
       blocks: ['Recurring subscription or usage budget'],
-      ev: [['40.95% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+      ev: [['41% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['35% of hotels named high set-up costs as a barrier.', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in Austria, France, Germany, Greece, Italy and Switzerland, Jan–Apr 2025.']],
       act: 'Write a 12-month budget line for the full cost (subscription, set-up, connection, training, running costs).' },
     { id: 'm3', gate: 'F2, O1', name: 'A number to improve, approved', who: 'owner',
@@ -1271,7 +1271,7 @@ details.fold[open] > summary{margin-bottom:12px}
       good: 'The number (KPI), today’s figure and the target, approved in writing and dated.',
       blocks: ['KPI baseline and scale/stop rule', 'Approved goal and clear approval path'],
       ev: [['“Lack of senior management buy-in in many companies also appears problematic.”', 'OECD, The Adoption of Artificial Intelligence in Firms, May 2025. Base: survey of 840 enterprises in G7 countries, 2022–23, plus interviews.'],
-           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending.' },
     { id: 'm4', gate: 'T1', name: 'Systems that can connect', who: 'it', ex: true,
       q: 'Can new AI tools easily be plugged in to your existing infrastructure?',
@@ -1279,8 +1279,8 @@ details.fold[open] > summary{margin-bottom:12px}
       why: 'An AI tool that cannot read from and write back to your hotel systems leaves staff copying data by hand.',
       good: 'For each system you want to connect, its provider has confirmed that other software can connect to the version you use.',
       blocks: ['Two-way link to core systems (PMS, CRS, POS, accounting)'],
-      ev: [['45.91% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['46% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Ask the provider of each system you want to connect (for example {ex}) whether other software can read from it and write back to it.' },
     { id: 'm5', gate: 'D5', name: 'Data protection contact involved', who: 'dpo',
       q: 'Has your data protection contact been told about this plan?',
@@ -1288,7 +1288,7 @@ details.fold[open] > summary{margin-bottom:12px}
       why: 'If the tool handles guest or staff data, data protection law asks for a written contract with the vendor and sometimes a written risk check. Your data protection contact knows what applies.',
       good: 'Your data protection contact knows which guest or staff data the tool would use and has said what is needed before you start.',
       blocks: ['Lawful basis and vendor data agreement'],
-      ev: [['52.36% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['“Such legal act must be in writing, including in electronic form.” (on the contract between a hotel and a vendor that processes its personal data)', 'EDPB Guidelines 07/2020 on the concepts of controller and processor, version 2.1.']],
       act: 'Tell your data protection contact about the plan and ask what is needed before any guest or staff data goes into a tool.' },
     { id: 'm6', name: 'A person who checks the AI', who: 'dept',
@@ -1296,23 +1296,23 @@ details.fold[open] > summary{margin-bottom:12px}
       why: 'AI is never right every time. Someone must be able to catch a wrong result and put it right before it is used.',
       good: 'A named role that checks the results, knows which results must be checked before they are used, and can stop or correct the tool.',
       blocks: ['Human reviewer who checks or overrides AI output'],
-      ev: [['56.80% of EU accommodation businesses that had considered AI but did not use it named a lack of clarity about the legal consequences.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
+      ev: [['57% of EU accommodation businesses that had considered AI but did not use it named a lack of clarity about the legal consequences.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
       act: 'Name the person who checks the AI’s results, and decide which results they must check before they count.' },
     { id: 'm7', name: 'Data you can reach and keep correct', who: 'dept',
       q: 'Is each piece of data this tool needs held in a system, with a named person who keeps it correct?',
       why: 'AI works from your data. If the facts are on paper, out of date or spread over systems that disagree, the tool gives wrong answers that sound sure.',
       good: 'You can name where each piece of data sits, and a named person checks it at set times.',
       blocks: ['Historical operational data', 'Curated knowledge and hotel content (FAQ, SOPs, menus, policies)'],
-      ev: [['42.61% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['43% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'List the data the tool needs and the system each piece sits in, and name who keeps it right.' },
     { id: 'm8', name: 'Staff told, and able to report errors', who: 'dept',
       q: 'Have the staff involved been told about the plan, and do they know who to tell when the tool gets something wrong?',
       why: 'Staff who were not told work around a tool, and errors nobody reports are never fixed.',
       good: 'The staff involved have heard the plan from their manager, and one named person collects what goes wrong.',
       blocks: ['Frontline adoption and change support'],
-      ev: [['69.89% of EU accommodation businesses that had considered AI but did not use it named a lack of relevant expertise, the most common reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['70% of EU accommodation businesses that had considered AI but did not use it named a lack of relevant expertise, the most common reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Tell the staff concerned about the plan, and name the person they tell when the tool gets something wrong.' },
     { id: 'm9', name: 'Rules for staff on AI tools', who: 'gm',
       q: 'Do you have written rules telling staff what they must not type into AI tools?',
@@ -1363,7 +1363,6 @@ details.fold[open] > summary{margin-bottom:12px}
     lg: 'your energy and utility meters, accounting system, HR records and contract files'
   };
   var SYSTEMS_FALLBACK = 'your PMS (booking system), POS (tills), accounting or HR systems';
-  var SYSTEMS_NOTE = 'Typical systems by department (the examples under the two systems questions): the team’s own list, based on the catalogue’s use cases, not a survey.';
 
   /* ---------- the result: verdict names and the lines under them ---------- */
   var LEVELS = {
@@ -1372,11 +1371,38 @@ details.fold[open] > summary{margin-bottom:12px}
     notready: { name: 'Not ready yet', line: 'The list below shows what to do first.' },
     noinfo: { name: 'Not enough information yet', line: 'Find out first, then come back: the list below says whom to ask.' }
   };
-  /* v2.1: the line under the top verdict when no use case was chosen (audit M6), and under "Almost ready" when the top verdict was held back. */
-  var READY_NONE = 'Every must-have is in place. No use case was chosen, so nothing else was checked.';
+  /* v2.1: the line under "Almost ready" when the top verdict was held back (legal items, a No or a Not sure in step 2).
+     v2.5: "None of these fits" can no longer reach the top verdict (owner O4), so the v2.1 READY_NONE line is gone. */
   var ALMOST_HELD = 'Your answers would otherwise allow a start. Settle what is named above before you sign anything.';
   /* v2.1, council item 7 (final copy): under any verdict when the use is labelled high-risk or flagged for sensitive personal data. It points to the existing block; it states no law. */
   var LAW_LINE = 'This score does not cover the law. This use has legal items to check first (see “EU AI Act” below). Do not start a pilot before a named person has checked them.';
+  /* ---------- v2.5 (24 Nov 2026): reports/Council - Do you need AI v2.4.md, BUILD NOW items and owner decisions O1 to O5 (copy as given there) ---------- */
+  /* BUILD NOW 1: under "Not ready yet" when no must-have is No but fewer than half are Yes (O1: "Almost ready" needs at least half). {n}: Yes, {m}: must-haves. */
+  var ALMOST_FEW_MUST = 'No must-have is at No, but only {n} of {m} are in place. “Planned” is not done yet: finish these before you talk to vendors.';
+  /* BUILD NOW 2: under "Almost ready" when every must-have is Yes but fewer than half the tailored questions are (O1). */
+  var READY_FEW_TAIL = 'Every must-have is in place. For this use case, {y} of {n} questions are Yes and {p} are planned: finish the planned ones before the pilot starts.';
+  /* O4: "None of these fits" reaches "Almost ready" at best. */
+  var NONE_ALMOST = 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.';
+  /* BUILD NOW 3: a held verdict lists its hold as item 1 of "Start with". */
+  var HOLD = {
+    carried: 'Settle this first: in step 2 you answered No to “{title}”. {outcome}',
+    legal: 'Settle this first: this use has legal items to check (see “EU AI Act” below). A named person must check them before a pilot.',
+    notsure: 'Settle this first: you answered Not sure to {titles} in step 2. {find}',
+    none: 'Settle this first: no use case chosen. The must-haves are in place, but nothing was checked for a particular tool.'
+  };
+  /* O5: one short line in the verdict box, only for "Not ready yet" and a held verdict. */
+  var BOX = { held: 'Held back: {why}.', legal: 'legal items to check', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
+  /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
+  var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
+  /* O3: a No on question 4 is a condition on how the tool is used, not a hold. */
+  var ASSIST_LINE = 'Use it as an assistant only: a person checks every result before it counts.';
+  /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
+  var CONSIST = {
+    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.',
+    m7: 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.'
+  };
+  /* Audit v3 H1: the replace question, when the check in this browser has a shared copy. */
+  var FILE_KEEPS_SHARE = 'The project team’s copy of this check stays shared; you can still withdraw it.';
   var AREAS_HEAD = 'What is in place, by area'; // v2.1, council item 6: counts, not percentages
   var AREA_WORD = { strong: 'Strong', gaps: 'Gaps to close', weak: 'Weak', thin: 'Too little to say' };
   var SCORE_NOTE = 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.'; // v2.1, council item 1
@@ -1404,9 +1430,10 @@ details.fold[open] > summary{margin-bottom:12px}
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
       'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
+      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, lack of clarity about the legal consequences 56.80%, data protection and privacy 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
       'HES-SO Valais-Wallis, “How AI is (and isn’t) transforming European hospitality”, survey news (9 Jul 2025).',
       'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
-      'State of Hotel AI, Fall 2026 (29 Sep 2026).',
+      'State of Hotel AI, Fall 2026 (29 Sep 2026), commissioned by Destination AI, research by Josiah Mackenzie (Actabl, a hotel software company): a global survey, vendor-linked, not comparable with the European figures.',
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
       'EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.1 (adopted 7 Jul 2021).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
@@ -1438,10 +1465,11 @@ details.fold[open] > summary{margin-bottom:12px}
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
-    READY_NONE: READY_NONE, ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
+    ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
-    SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK, SYSTEMS_NOTE: SYSTEMS_NOTE };
+    SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
+    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, ASSIST_LINE: ASSIST_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);
 
@@ -1453,11 +1481,14 @@ details.fold[open] > summary{margin-bottom:12px}
       Rules v2.1 (24 Nov 2026, after the clean-up audit and the council on v2.0): the three switches in JUDGEMENT.
       Rules v2.3 (24 Nov 2026, owner): four answers on steps 3 and 5 (Yes, Planned, No, Don't know yet). "Partly" (p) and
       "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
-   3. resultModel(rec, env): every word of the result page. The screen and the PDF read it (summaryText too, kept for tests and the Team tab), so they agree. */
+      Rules v2.5 (24 Nov 2026, owner decisions O1 to O4 of reports/Council - Do you need AI v2.4.md): two caps on "Planned" and three
+      holds, each a named constant in JUDGEMENT; points unchanged.
+   3. resultModel(rec, env): every word of the result page. The screen and the PDF read it, so they agree. The Team tab reads
+      evaluate(), method(), open() and answerWord(). */
 (function (root) {
   'use strict';
   var C = root.R2Content;
-  var RULES = 'v2.3 (24 Nov 2026)';
+  var RULES = 'v2.5 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var Q_OK = { y: 1, n: 1, u: 1 };
   var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
@@ -1484,8 +1515,19 @@ details.fold[open] > summary{margin-bottom:12px}
                            team's sheet flags as handling sensitive personal data. The tool cannot check the legal items, so the
                            best verdict is "Almost ready" and the result says why. false: the line under the verdict only.
      CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 (C-R-I-S-P) holds back the top verdict, with
-                           the reason shown. false: it is carried as a condition only (rules v2). */
-  var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true };
+                           the reason shown. false: it is carried as a condition only (rules v2). Since v2.5 it covers
+                           questions 2, 3 and 5; question 4 has its own switch below.
+     Rules v2.5 (24 Nov 2026), owner decisions on the council of v2.4 (team judgement, not tested with hotels):
+     ALMOST_MIN_MUST_YES   (O1 c) "Almost ready" needs at least this share (%) of the must-haves at Yes; below it the verdict is
+                           "Not ready yet", because "Planned" is not done yet. 0 switches the cap off.
+     READY_MIN_TAIL_YES    (O1 c) "Ready to start a pilot" needs at least this share (%) of the tailored questions that were
+                           answered (Yes, Planned or No) at Yes; otherwise the top verdict is held back. 0 switches it off.
+     NOT_SURE_HOLDS_TOP    (O2 b) true: any "Not sure" in step 2 holds the top verdict back, with the reason shown.
+     Q4_NO_HOLDS_TOP       (O3 b) false: a No on question 4 (safety net) does not hold the top verdict; it is shown as a
+                           condition ("Use it as an assistant only ..."). true: it holds like a No on questions 2, 3, 5.
+     NONE_BEST_ALMOST      (O4 b) true: with "None of these fits" the best verdict is "Almost ready" (nothing to pilot). */
+  var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,
+    ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true };
   /* Does the use have legal items to check first? high: the AI Register's provisional label is High-risk (TQ.highRisk, set by
      build.mjs from the register's label file); sens: the team's sheet flags sensitive personal data (the add-on question). */
   function legalFlags(TQ, useId) {
@@ -1569,27 +1611,32 @@ details.fold[open] > summary{margin-bottom:12px}
   function areaWord(pts, max) { return !max ? 'thin' : pts * 100 >= T.STRONG * max ? 'strong' : pts * 100 >= T.GAPS * max ? 'gaps' : 'weak'; }
   var AREA_WORD_MIN = 2; // an area gets a word (Strong / Gaps to close / Weak) only with two or more known answers (council, item 6)
 
-  /* The score and the verdict (rules v2.3).
+  /* The score and the verdict (rules v2.5).
      Score = points earned / points possible over every question asked (must-haves + tailored). An answer that is no longer
      offered (it.old) counts as not answered, like a blank. "Don't know yet" counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "to find out".
      No score is shown under "Not enough information yet" (ev.pct is null there; ev.pts and ev.max keep the sum).
      Verdict, in this order:
        noinfo    more than half the questions unknown
-       notready  any must-have at No, or the score below 50%
+       notready  any must-have at No, the score below 50%, or (v2.5, O1) fewer than half the must-haves at Yes
        ready     every must-have Yes, the score 75% or more, and fewer than a quarter of the questions unknown,
-                 unless a switch in JUDGEMENT holds the top verdict back (legal items to check; a No carried from step 2)
+                 unless a switch in JUDGEMENT holds the top verdict back: legal items to check; a No carried from step 2
+                 (questions 2, 3, 5); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
+                 (v2.5, O1); "None of these fits" (v2.5, O4)
        almost    everything else (50 to 74%; a must-have not Yes but none at No; 75%+ with a quarter or more unknown; a held top verdict)
-     ev.reason: the plain sentence shown under the verdict name ("Because ..."). ev.held: what held the top verdict back, if anything. */
+     ev.reason: the plain sentence that heads "Start with" ("Because ..."). ev.held: what held the top verdict back, in this order:
+     'legal', 'carried', 'notsure', 'tail', 'none'. ev.box: the one short line in the verdict box (O5), '' unless the verdict is
+     "Not ready yet" or held. ev.kind: why the verdict is what it is (for the line under it). */
   function evaluate(rec, TQ) {
     var items = questions(rec, TQ), c = { total: 0, known: 0, unknown: 0, yes: 0, planned: 0, no: 0 }, pts = 0, max = 0;
-    var must = { n: 0, yes: 0, planned: 0, no: 0, unknown: 0 }, area = {}, zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
+    var must = { n: 0, yes: 0, planned: 0, no: 0, unknown: 0 }, tail = { n: 0, known: 0, yes: 0, planned: 0, no: 0 }, area = {}, zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
     items.forEach(function (it) {
       var g = area[it.a] = area[it.a] || { k: it.a, name: it.a === 'must' ? 'Must-haves' : it.name, n: 0, known: 0, yes: 0, unknown: 0, pts: 0, max: 0 };
       c.total++; g.n++;
-      if (it.grp === 'must') must.n++;
+      if (it.grp === 'must') must.n++; else tail.n++;
       if (!it.v || it.v === 'k') { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
       c.known++; g.known++; pts += POINTS[it.v]; max += 2; g.pts += POINTS[it.v]; g.max += 2; if (it.v === 'y') g.yes++;
-      var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w; if (it.grp === 'must') must[w]++;
+      var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w;
+      if (it.grp === 'must') must[w]++; else { tail.known++; tail[w]++; }
     });
     must.allYes = must.yes === must.n; must.anyNo = must.no > 0;
     var areas = ['must'].concat(AK).filter(function (k) { return area[k] && area[k].n > 0; }).map(function (k) {
@@ -1598,55 +1645,76 @@ details.fold[open] > summary{margin-bottom:12px}
     var manyUnknown = c.unknown * 100 > T.UNKNOWN_NOINFO * c.total, fewUnknown = c.unknown * 100 < T.UNKNOWN_READY * c.total;
     var namesOf = function (st) { return items.filter(function (it) { return it.grp === 'must' && (st === 'open' ? it.state !== 'yes' : it.state === st); }).map(function (it) { return it.name; }).join('; '); };
     var missing = n_(must.no, 'must-have is', 'must-haves are') + ' missing: ' + namesOf('no') + '.';
-    var lf = legalFlags(TQ, rec.use), carried = verdict(rec.Q).carried, held = [];
-    var level, why, reason;
+    var v = verdict(rec.Q), lf = legalFlags(TQ, rec.use), none = rec.use === 'none', held = [];
+    var carried = v.carried.filter(function (x) { return x.id !== 'q4' || JUDGEMENT.Q4_NO_HOLDS_TOP; });
+    var level, why, reason, kind, box = '';
+    var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
-      level = 'noinfo'; why = 'more than half the questions are “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')';
+      level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')';
       reason = 'Because more than half the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').' + (must.anyNo ? ' Already known: ' + missing : '');
     }
-    else if (must.anyNo) { level = 'notready'; why = n_(must.no, 'must-have is', 'must-haves are') + ' answered No'; reason = 'Because ' + missing + ' A missing must-have outweighs the score.'; }
+    else if (must.anyNo) { level = 'notready'; kind = 'mustNo'; why = n_(must.no, 'must-have is', 'must-haves are') + ' answered No'; reason = 'Because ' + missing + ' A missing must-have outweighs the score.'; box = 'Because ' + n_(must.no, 'must-have is', 'must-haves are') + ' No.'; }
     else if (pts * 100 < T.ALMOST * max) {
-      level = 'notready'; why = 'the score is below ' + T.ALMOST + '%';
+      level = 'notready'; kind = 'score'; why = 'the score is below ' + T.ALMOST + '%'; box = 'Because the score is below ' + T.ALMOST + '%.';
       reason = 'Because fewer than half the points are in place.' + (zero && c.unknown ? ' “Don’t know yet” counts as 0 points.' : '');
+    }
+    else if (fewMust) {
+      level = 'notready'; kind = 'fewMust'; why = 'only ' + must.yes + ' of ' + must.n + ' must-haves are Yes (“' + C.LEVELS.almost.name + '” needs at least half)';
+      reason = 'Because only ' + must.yes + ' of ' + must.n + ' must-haves are Yes, and “' + C.LEVELS.almost.name + '” needs at least half of them at Yes.';
+      box = 'Because only ' + must.yes + ' of ' + must.n + ' must-haves are Yes.';
     }
     else if (must.allYes && pts * 100 >= T.READY * max && fewUnknown) {
       if (JUDGEMENT.LEGAL_HOLDS_TOP && lf.any) held.push('legal');
       if (JUDGEMENT.CARRIED_NO_HOLDS_TOP && carried.length) held.push('carried');
+      if (JUDGEMENT.NOT_SURE_HOLDS_TOP && v.find.length) held.push('notsure');
+      if (JUDGEMENT.READY_MIN_TAIL_YES && tail.n && tail.yes * 100 < JUDGEMENT.READY_MIN_TAIL_YES * tail.known) held.push('tail');
+      if (JUDGEMENT.NONE_BEST_ALMOST && none) held.push('none');
       if (held.length) {
-        level = 'almost'; var parts = [];
+        level = 'almost'; kind = 'held'; var parts = [];
         if (held.indexOf('legal') >= 0) parts.push('this use has legal items to check first (the “EU AI Act” part of this result lists them). This tool cannot check them, so it does not give the top verdict for this use.');
         if (held.indexOf('carried') >= 0) parts.push('you answered No in step 2 to ' + carried.map(function (x) { return '“' + QBY[x.id].title + '” (' + x.text.replace(/\.$/, '') + ')'; }).join(' and ') + '. The top verdict is held back until that is settled.');
+        if (held.indexOf('notsure') >= 0) parts.push('you answered Not sure to ' + notSureTitles(v) + ' in step 2. The top verdict is held back until that is found out.');
+        if (held.indexOf('tail') >= 0) parts.push('only ' + tail.yes + ' of the ' + n_(tail.known, 'question', 'questions') + ' you answered for this use case ' + (tail.yes === 1 ? 'is' : 'are') + ' Yes. The top verdict needs at least half of them at Yes.');
+        if (held.indexOf('none') >= 0) parts.push('no use case was chosen: the must-haves are in place, but nothing was checked for a particular tool.');
         reason = 'Because ' + parts.join(' Also because ');
-        why = held.map(function (h) { return h === 'legal' ? 'the use has legal items to check first' : 'a No from step 2 is still open'; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
+        why = held.map(function (h) { return { legal: 'the use has legal items to check first', carried: 'a No from step 2 is still open', notsure: 'a Not sure from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
+        box = C.BOX.held.replace('{why}', held.map(function (h) { return C.BOX[h]; }).join('; '));
       } else {
-        level = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
+        level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
         reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are “Don’t know yet”.';
       }
     }
     else {
-      level = 'almost';
+      level = 'almost'; kind = 'almost';
       if (!must.allYes) { why = n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet (none is No)'; reason = 'Because ' + n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet: ' + namesOf('open') + '.'; }
       else if (pts * 100 < T.READY * max) { why = 'the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%'; reason = 'Because the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%. The top verdict needs ' + T.READY + '% or more.'; }
       else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
     }
-    return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, areas: areas, level: level, why: why, reason: reason, held: held,
-      legal: lf, carried: carried.map(function (x) { return x.id; }), mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
+    return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
+      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }), q4No: !!(rec.Q && rec.Q.q4 === 'n' && !v.stop),
+      mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
+  /* “Complex judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
+  function notSureTitles(v) { return v.find.map(function (x) { return '“' + QBY[x.id].title + '”'; }).join(' and '); }
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
   /* ---------- to-do: one plain task per open item ---------- */
   var RANK = { no: 0, unknown: 2, planned: 3 };
+  /* v2.5 (council BUILD NOW 5, owner O6 a): a tailored question's task is the team-worded question itself, not the workbook's
+     action shorthand (it.act stays in the data for a later wording pass). Must-have actions are hand-written and stay.
+     Audit v3 L1: an answer that is no longer offered reads "Answer again", never "Find out". */
   function task(it) {
-    var d = fmtDate(it.by);
-    return it.state === 'planned' ? 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act)
-      : it.state === 'unknown' ? 'Find out: “' + it.q + '”'
-      : it.act;
+    var d = fmtDate(it.by), tail = it.grp === 'tail';
+    if (it.old) return 'Answer again: “' + it.q + '” (the earlier answer “' + OLD[it.old] + '” is no longer offered)';
+    if (it.state === 'unknown') return 'Find out: “' + it.q + '”';
+    if (it.state === 'planned') return tail ? 'Finish: ' + it.q + (d ? ' (' + plannedBy(it) + ')' : '') : 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act);
+    return tail ? 'Make this a Yes: ' + it.q : it.act;
   }
   /* Open items, weakest first: must-haves before tailored questions; within each No, Don't know yet, Planned; then the order asked. */
   function open(ev) {
     return ev.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return RANK[x.it.state] != null; })
       .sort(function (x, y) { return (x.it.grp === 'must' ? 0 : 1) - (y.it.grp === 'must' ? 0 : 1) || RANK[x.it.state] - RANK[y.it.state] || x.i - y.i; })
-      .map(function (x) { var it = x.it; return { key: it.key, must: it.grp === 'must', who: it.who, name: it.name, state: it.state, text: task(it), q: it.q }; });
+      .map(function (x) { var it = x.it; return { key: it.key, must: it.grp === 'must', who: it.who, name: it.name, state: it.state, old: it.old, word: answerWord(it), text: task(it), q: it.q }; });
   }
   /* "planned by 15 Jan 2027", or "was planned by 1 Jan 2001, overdue" once the date has passed (it.overdue is set by resultModel). */
   function plannedBy(it) { var d = fmtDate(it.by); return !d ? '' : it.overdue ? 'was planned by ' + d + ', overdue' : 'planned by ' + d; }
@@ -1659,6 +1727,16 @@ details.fold[open] > summary{margin-bottom:12px}
   var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Don’t know yet' };
   /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such (Team tab). */
   function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
+  /* Audit v3 L1: one name for every saved answer of steps 3 and 5, used by the page and the Team tab.
+     'yes' | 'planned' | 'no' | 'unknown' (Don't know yet) | 'old' (Partly or Doesn't apply, no longer offered) | 'blank'. */
+  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no', k: 'unknown' }[raw] || 'blank'; }
+  /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3?, m7? } */
+  function consistLines(rec) {
+    var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
+    if ((Q.q5 === 'n' || Q.q5 === 'u') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
+    if ((Q.q3 === 'n' || Q.q3 === 'u') && A.m7 === 'y') o.m7 = C.CONSIST.m7;
+    return o;
+  }
 
   /* ---------- where it sits ---------- */
   /* v2.2: the name this tool shows for a use case: the team's plain name (TQ.uses[id].plain, data/wording.json) or the catalogue's.
@@ -1717,9 +1795,13 @@ details.fold[open] > summary{margin-bottom:12px}
   /* ---------- return visit: snapshots of the result ---------- */
   /* A snapshot belongs to one use case and one rules version (use: the use id, 'none', or '' in snapshots kept by rules v2,
      which did not record it). Only snapshots of the same use and the same rules are compared line by line. */
-  function snapshot(ev, at, use) { return { at: at, level: ev.level, pct: ev.pct, pts: ev.pts, max: ev.max, known: ev.counts.known, total: ev.counts.total, mustYes: ev.must.yes, mustN: ev.must.n, rules: RULES, use: use || '' }; }
-  function sameSnap(a, b) { return !!a && !!b && ['level', 'pts', 'max', 'known', 'total', 'mustYes', 'mustN', 'rules', 'use'].every(function (k) { return (a[k] == null ? '' : a[k]) === (b[k] == null ? '' : b[k]); }); }
+  /* Audit v3 L3: sig, the signature of the use case's tailored questions at the time (TQ.uses[use].sig; '' before v2.5). */
+  function snapshot(ev, at, use, sig) { return { at: at, level: ev.level, pct: ev.pct, pts: ev.pts, max: ev.max, known: ev.counts.known, total: ev.counts.total, mustYes: ev.must.yes, mustN: ev.must.n, rules: RULES, use: use || '', sig: sig || '' }; }
+  function sameSnap(a, b) { return !!a && !!b && ['level', 'pts', 'max', 'known', 'total', 'mustYes', 'mustN', 'rules', 'use', 'sig'].every(function (k) { return (a[k] == null ? '' : a[k]) === (b[k] == null ? '' : b[k]); }); }
+  /* Were two snapshots of one use case asked with other questions? Only when both carry a signature. */
+  function otherQs(a, b) { return !!(a.sig && b.sig && a.sig !== b.sig); }
   var EARLIER_RULES = 'worked out with earlier rules';
+  var OTHER_QS = 'asked with other questions, not compared line by line'; // audit v3 L3
   /* The snapshots that belong to the last one's use case: the same use, or a v2 snapshot that carries none. */
   function snapsOf(snaps) {
     var b = snaps && snaps[snaps.length - 1]; if (!b) return [];
@@ -1729,9 +1811,9 @@ details.fold[open] > summary{margin-bottom:12px}
      rules is listed and marked, never compared line by line. null on a first visit. */
   function since(snaps) {
     var mine = snapsOf(snaps); if (mine.length < 2) return null;
-    var b = mine[mine.length - 1], before = mine.slice(0, -1), same = before.filter(function (s) { return s.rules === b.rules; }), a = same[same.length - 1];
+    var b = mine[mine.length - 1], before = mine.slice(0, -1), same = before.filter(function (s) { return s.rules === b.rules && !otherQs(s, b); }), a = same[same.length - 1];
     var pc = function (s) { return s.pct == null ? 'no score' : s.pct + '%'; };
-    var row = function (s) { return fmtDate(s.at) + ': ' + C.LEVELS[s.level].name + ', ' + pc(s) + ', ' + s.mustYes + ' of ' + s.mustN + ' must-haves' + (s.rules !== b.rules ? ' (' + EARLIER_RULES + ')' : ''); };
+    var row = function (s) { return fmtDate(s.at) + ': ' + C.LEVELS[s.level].name + ', ' + pc(s) + ', ' + s.mustYes + ' of ' + s.mustN + ' must-haves' + (s.rules !== b.rules ? ' (' + EARLIER_RULES + ')' : otherQs(s, b) ? ' (' + OTHER_QS + ')' : ''); };
     var lines = [], head;
     if (a) {
       head = 'Since last time (' + fmtDate(a.at) + ')';
@@ -1742,7 +1824,7 @@ details.fold[open] > summary{margin-bottom:12px}
     } else {
       var o = before[before.length - 1];
       head = 'Your earlier result (' + fmtDate(o.at) + ')';
-      lines.push('It was ' + EARLIER_RULES + ' (' + (o.rules || 'not recorded') + '), so it is not compared line by line with today’s.');
+      lines.push(o.rules !== b.rules ? 'It was ' + EARLIER_RULES + ' (' + (o.rules || 'not recorded') + '), so it is not compared line by line with today’s.' : 'It was ' + OTHER_QS + '.');
       lines.push('Then: ' + C.LEVELS[o.level].name + ', ' + pc(o) + ', ' + o.mustYes + ' of ' + o.mustN + ' must-haves at Yes.');
     }
     return { head: head, lines: lines, compared: !!a, earlier: before.slice().reverse().map(row) };
@@ -1757,11 +1839,15 @@ details.fold[open] > summary{margin-bottom:12px}
     out.push(ev.pct != null ? 'Your points: ' + ev.pts + ' of ' + ev.max + ' possible = ' + ev.pct + '% (rounded down).'
       : 'No score is shown while more than half the questions are “Don’t know yet”' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
     ev.areas.forEach(function (g) { out.push(areaLine(g) + ' (' + g.pts + ' of ' + g.max + ' points; ' + g.known + ' of ' + g.n + ' answered).'); });
-    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions “Don’t know yet”. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No. “' + C.LEVELS.noinfo.name + '”: more than half the questions “Don’t know yet”.');
+    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions “Don’t know yet”. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions “Don’t know yet”.');
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
     if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
     if (JUDGEMENT.LEGAL_HOLDS_TOP) out.push('Team judgement: a use that the AI Register labels high-risk, or that the team’s sheet flags as handling sensitive personal data, does not get the top verdict here, because this tool cannot check its legal items.');
-    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on questions 2 to 5 of step 2 holds the top verdict back until it is settled.');
+    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3 or 5 of step 2 holds the top verdict back until it is settled.' + (JUDGEMENT.Q4_NO_HOLDS_TOP ? ' So does a No on question 4.' : ' A No on question 4 does not: it means the tool is used as an assistant only, which the result shows as a condition.'));
+    if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
+    if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
+    if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement (rules v2.5): a “Not sure” in step 2 holds the top verdict back until it is found out.');
+    if (JUDGEMENT.NONE_BEST_ALMOST) out.push('Team judgement (rules v2.5): with “None of these fits” the best verdict is “' + C.LEVELS.almost.name + '”, because nothing was checked for a particular tool.');
     out.push('Your verdict is “' + C.LEVELS[ev.level].name + '”. ' + ev.reason);
     if (ev.mustOnly) out.push(C.MUST_ONLY);
     out.push('The answers are your own and nobody checks them. The cut-offs are the team’s judgement and have not been tested with hotels. Rules ' + RULES + '.');
@@ -1788,6 +1874,26 @@ details.fold[open] > summary{margin-bottom:12px}
     return base + ' ' + C.SCORE_NOTE;
   }
 
+  /* The line under the verdict (in "How this was worked out"), v2.5: BUILD NOW 1 and 2, O4. */
+  function levelLine(ev) {
+    if (ev.kind === 'fewMust') return C.ALMOST_FEW_MUST.replace('{n}', ev.must.yes).replace('{m}', ev.must.n);
+    if (ev.kind !== 'held') return C.LEVELS[ev.level].line;
+    var h = ev.held;
+    if (h.indexOf('legal') >= 0 || h.indexOf('carried') >= 0 || h.indexOf('notsure') >= 0) return C.ALMOST_HELD;
+    if (h.indexOf('tail') >= 0) return C.READY_FEW_TAIL.replace('{y}', ev.tail.yes).replace('{n}', ev.tail.n).replace('{p}', ev.tail.planned);
+    return C.NONE_ALMOST;
+  }
+  /* "Settle this first: ..." for each hold that needs its own line (BUILD NOW 3; O2, O4). A 'tail' hold needs none: its
+     planned and missing questions are already the open items. */
+  function holdItems(ev, v) {
+    var out = [], h = ev.held;
+    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Is this an AI problem?', hold: 'carried' }); });
+    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Is this an AI problem?', hold: 'notsure' });
+    if (h.indexOf('legal') >= 0) out.push({ who: '', text: C.HOLD.legal, sub: 'EU AI Act', hold: 'legal' });
+    if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
+    return out;
+  }
+
   /* ---------- the whole result, in words ----------
      env: { cat (catalogue model), TQ, RC (the readiness check's RCLogic, optional), M (its model), hotel: rec.hotel, today } */
   function resultModel(rec, env) {
@@ -1807,18 +1913,20 @@ details.fold[open] > summary{margin-bottom:12px}
       useLevel: u ? useLevelLine(u) : '', catName: catalogueName(TQ, u), useName: u ? useLabel(TQ, u) : '',
       none: rec.use === 'none' ? noneLine(cat.nUses) : '',
       levelName: C.LEVELS[ev.level].name,
-      levelLine: ev.level === 'ready' && ev.mustOnly ? C.READY_NONE : ev.level === 'almost' && ev.held.length ? C.ALMOST_HELD : C.LEVELS[ev.level].line,
+      levelLine: levelLine(ev),
       reason: ev.reason, held: ev.held.slice(), law: ev.legal.any ? C.LAW_LINE : '',
+      boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '', assist: ev.q4No ? C.ASSIST_LINE : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
       cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
       mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: tu && tu.draft ? C.DRAFT + '. These questions come from a draft row the team has not reviewed yet.' : '',
       areasHead: C.AREAS_HEAD,
       areas: ev.areas.map(function (g) { return { k: g.k, name: g.name, yes: g.yes, n: g.n, unknown: g.unknown, count: g.yes + ' of ' + g.n, share: g.n ? Math.round(100 * g.yes / g.n) : 0, word: g.word ? C.AREA_WORD[g.word] : '', cls: g.word || 'none', line: areaLine(g) }; }),
       method: method(ev), since: since(rec.snaps) };
-    var all = open(ev);
-    o.first = all.slice(0, 3).map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + STATE_WORD[a.state] }; });
+    /* BUILD NOW 3: a held verdict lists what holds it as item 1 (who: '': the line names the step it comes from). */
+    var holds = holdItems(ev, v), all = open(ev);
+    o.first = holds.concat(all.map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + a.word }; })).slice(0, 3);
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
-    o.people = byPerson(ev).map(function (p) { return { who: p.who, name: p.name, items: p.items.map(function (a) { return { text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + STATE_WORD[a.state], must: a.must, state: a.state }; }) }; });
+    o.people = byPerson(ev).map(function (p) { return { who: p.who, name: p.name, items: p.items.map(function (a) { return { text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + a.word, must: a.must, state: a.state }; }) }; });
     o.itemList = ev.items.map(function (it) { return { key: it.key, grp: it.grp, name: it.name, q: it.q, answer: answerWord(it) + (it.state === 'planned' && fmtDate(it.by) ? ' (' + plannedBy(it) + ')' : ''), state: it.state }; });
     /* Vendor questions and the provisional AI Act label: the readiness check's own functions and data (rules v4 wording). */
     o.vendor = []; o.legal = null; o.notTool = !!(u && u.notTool);
@@ -1835,36 +1943,18 @@ details.fold[open] > summary{margin-bottom:12px}
     o.registerName = u ? u.n.replace(/\s*\(.*$/, '') : '';
     return o;
   }
-  /* The result as plain text (Copy summary). who: optional role key → only that person's list (the copy-per-person buttons). */
+  /* One person's list as plain text (the "Copy for …" buttons). v2.5: Copy summary's summaryText was removed (audit v3, dead code). */
   function personText(m, p, useName) {
     return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
-  function summaryText(m) {
-    var out = [];
-    out.push('Do you need AI? Result' + (m.hotel ? ' for ' + m.hotel : '') + ' (' + m.date + ')');
-    out.push('', m.levelName + ' · ' + m.scoreHead, m.reason, m.scoreSub, m.levelLine, m.mustLine);
-    if (m.law) out.push(m.law);
-    if (m.cap) out.push(m.cap); if (m.mustOnly) out.push(m.mustOnly); if (m.draft) out.push(m.draft);
-    out.push('', 'Is this an AI problem? ' + m.ai.head + (m.ai.second ? ' ' + m.ai.second : ''));
-    m.ai.carried.forEach(function (c) { out.push('- ' + c); }); m.ai.find.forEach(function (f) { out.push('- To find out: ' + f); });
-    out.push('', 'Where it sits: ' + m.path);
-    out.push('', m.areasHead + ':'); m.areas.forEach(function (a) { out.push('- ' + a.line); });
-    if (m.first.length) { out.push('', m.firstLabel + ':'); m.first.forEach(function (f, i) { out.push((i + 1) + '. ' + f.who + ': ' + f.text); }); }
-    if (m.people.length) { out.push('', 'Action plan by person:'); m.people.forEach(function (p) { out.push(p.name + ':'); p.items.forEach(function (a) { out.push('- ' + a.text + (a.must ? ' (must-have)' : '')); }); }); }
-    if (m.vendor.length) { out.push('', 'Questions for the vendor:'); m.vendor.forEach(function (q, i) { out.push((i + 1) + '. ' + q); }); }
-    if (m.legal) out.push('', 'EU AI Act (provisional, not legal advice): ' + m.legal.name + (m.legal.applies ? ', ' + m.legal.applies : '') + '. ' + m.legal.why);
-    out.push('', 'Student prototype by EHL SBP Group 36 for HFTP, not legal advice. Content as of ' + C.AS_OF + '.');
-    return out.join('\n');
-  }
-
   var api = { RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
     pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
-    resultModel: resultModel, summaryText: summaryText, personText: personText };
+    resultModel: resultModel, personText: personText, answerState: answerState, consistLines: consistLines, levelLine: levelLine, holdItems: holdItems, OTHER_QS: OTHER_QS };
   root.R2Logic = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);
@@ -1929,11 +2019,11 @@ details.fold[open] > summary{margin-bottom:12px}
       '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, use case. Hotel name only if they tick it.</span></div>' +
       '<div><b>2 · Questions</b><span>Five questions on whether the job needs AI (a No on the first stops the check), ten must-haves, then six to nine questions for the chosen use case (none after “None of these fits”).</span></div>' +
       '<div><b>3 · Points and score</b><span>Yes 2 · Planned, not done yet 1 · No 0' + (J.UNKNOWN_SCORES_ZERO ? ' · Don\'t know yet 0 (team judgement)' : '. “Don\'t know yet” is left out') + '. An answer a copy holds that is no longer offered counts as not answered; the table names it. The score is points ÷ points possible, rounded down, shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”. It is the hotel\'s own answers; nobody checked them. No score is shown under “' + esc(LV.noinfo.name) + '”.</span></div>' +
-      '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, or below ' + T.ALMOST + '%: ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
-        (J.LEGAL_HOLDS_TOP || J.CARRIED_NO_HOLDS_TOP ? ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from questions 2 to 5' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) : '') +
+      '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, below ' + T.ALMOST + '%' + (J.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes (team judgement, rules v2.5)' : '') + ': ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
+        ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from question 2, 3 or 5' + (J.Q4_NO_HOLDS_TOP ? ' or 4' : '') : '', J.NOT_SURE_HOLDS_TOP ? 'a question of step 2 is “Not sure”' : '', J.READY_MIN_TAIL_YES ? 'fewer than half the answered questions for the use case are Yes' : '', J.NONE_BEST_ALMOST ? 'no use case was chosen' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) +
         '. Everything else: ' + esc(LV.almost.name) + '. The reason is printed under the verdict.</span></div>' +
       '<div><b>5 · Kept</b><span>In the hotel\'s browser and file. A copy reaches this page only if they press “Share a copy”; they can withdraw it from any step.</span></div>' +
-      '</div><p class="meta">The cut-offs are the team\'s judgement and have not been tested with hotels. A copy made with earlier rules is recomputed here; the list shows what the hotel saw and marks it “earlier rules”. Sources: reports/Council - Do you need AI v2.md and reports/audit-readiness-2/cleanup_inventory_v2.md (24 Nov 2026).</p>';
+      '</div><p class="meta">The cut-offs are the team\'s judgement and have not been tested with hotels. A copy made with earlier rules is recomputed here; the list shows what the hotel saw and marks it “earlier rules”. Sources: reports/Council - Do you need AI v2.md, reports/Council - Do you need AI v2.4.md and reports/audit-readiness-2/cleanup_inventory_v2.md and _v3.md (24 Nov 2026).</p>';
   }
   function flowCard() {
     return '<section class="panel" id="flowcard"><h3>Where the data goes</h3><p class="meta">This page lists two kinds of shared copy. Each is worked out with its own rules.</p>' + dynCard() +
@@ -1971,6 +2061,8 @@ details.fold[open] > summary{margin-bottom:12px}
 
   /* A copy from "Do you need AI?" v2: recomputed with its rules; every answer with its points. */
   /* A copy whose use case is no longer in the catalogue: what the hotel saw, and its must-have answers; nothing is recomputed. */
+  /* Audit v3 L2: an answer the copy holds, in the hotel page's own words (an old Partly is named as such, never shown plainly). */
+  function goneWord(raw) { var st = DL.answerState(raw); return st === 'blank' ? 'Not answered' : DL.answerWord({ old: DL.oldOf(raw), state: st }); }
   function detailGone(s) {
     var A = s.answers || {};
     return '<section class="panel" data-kind="dyn" data-gone="1"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
@@ -1978,7 +2070,7 @@ details.fold[open] > summary{margin-bottom:12px}
       '<p><strong>' + esc(s.useName || s.useId) + '</strong></p>' +
       '<p class="warnline" id="gone">This use case (' + esc(s.useId) + ') is no longer in the catalogue, so the copy cannot be recomputed. What the hotel saw when it shared: ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(dynScore(s.pct)) + ', ' + esc(s.met) + ' of ' + esc(s.gates) + ' must-haves at Yes.</p>' +
       '<p class="meta" id="made-with">Shared ' + esc(fmt(s.sharedAt)) + ' · made with rules ' + esc(s.rules || 'not recorded') + (s.named ? ' · hotel name shared' : ' · no hotel name') + '</p></section>' +
-      '<section class="panel"><h3>Must-have answers</h3><ul class="tight">' + DC.MUSTS.map(function (m) { return '<li>' + esc(m.name) + ': <strong>' + esc(DC.ANSWER_WORD[A[m.id]] || 'Not answered') + '</strong></li>'; }).join('') + '</ul></section>' + delPanel();
+      '<section class="panel"><h3>Must-have answers</h3><ul class="tight">' + DC.MUSTS.map(function (m) { return '<li>' + esc(m.name) + ': <strong>' + esc(goneWord(A[m.id])) + '</strong></li>'; }).join('') + '</ul></section>' + delPanel();
   }
   function detailDyn(s) {
     if (dynGone(s)) return detailGone(s);

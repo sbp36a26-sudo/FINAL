@@ -23,7 +23,7 @@ ok(eq(C.Q_ANSWERS, [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']]), 'the five C-
 ok(!('NA' in C) || C.NA == null, 'no "Doesn\'t apply" option left in the content');
 ok(eq(Object.keys(L.A_OK).sort(), ['k', 'n', 'pl', 'y']), 'logic accepts only the four answers');
 ok(L.POINTS.y === 2 && L.POINTS.pl === 1 && L.POINTS.n === 0 && !('p' in L.POINTS), 'points: Yes 2, Planned 1, No 0; no Partly');
-ok(L.RULES === 'v2.3 (24 Nov 2026)', 'rules version bumped: ' + L.RULES);
+ok(L.RULES === 'v2.5 (24 Nov 2026)', 'rules version bumped (v2.3, now v2.5): ' + L.RULES);
 const app = rd('src/app.js');
 ok(!/C\.NA\b|\['na'/.test(app), 'app.js: step 5 no longer adds a "Doesn\'t apply" option');
 ok(/radios\(m\.id, C\.ANSWERS,/.test(app) && /radios\(q\.id, C\.ANSWERS,/.test(app), 'app.js: steps 3 and 5 render C.ANSWERS (the four) and nothing else');
@@ -99,15 +99,15 @@ ok(L.answerWord(es.items.find(it => it.key === 'fi1')) === 'Don’t know yet' &&
 const team = readFileSync(join(root, '../readiness-check/src/team.js'), 'utf8');
 ok(/DL\.answerWord\(it\)/.test(team) && !/Partly 1/.test(team.slice(team.indexOf('function dynCard'), team.indexOf('function flowCard'))), 'team.js: rows use the answer word; the v2 rules card no longer lists Partly');
 ok(!/Doesn\\'t apply/.test(team.slice(team.indexOf('function dynCard'), team.indexOf('function flowCard'))), 'team.js: the v2 rules card no longer lists Doesn\'t apply');
-ok(DC_word(), 'team.js: a copy whose use case is gone still names an old must-have answer');
-function DC_word() { return C.ANSWER_WORD.p === 'Partly' && C.ANSWER_WORD.na === 'Doesn’t apply'; }
+// v2.5 (audit v3 L2): the gone-use copy names an old answer with answerWord, as the hotel's page does, so ANSWER_WORD needs no p / na
+ok(/goneWord\(A\[m\.id\]\)/.test(team) && L.answerWord({ old: 'p', state: 'unknown' }) === 'Not answered (earlier answer: Partly, no longer offered)', 'team.js: a copy whose use case is gone still names an old must-have answer');
 
 // ---------- 6. the wording that explains the score ----------
 const fin = finished(F, D, 'rm-1'); fin.A.m2 = 'pl'; fin.T.sk1 = 'n'; fin.T.fi1 = 'k';
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 const m = L.resultModel(fin, env), meth = m.method.join('\n'), pdfT = P.model(fin, env).blocks.map(x => x.t).join('\n');
 ok(m.method[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.', 'how this was worked out: the four answers and their points: ' + m.method[0]);
-for (const [tag, t] of [['method', meth], ['summary', L.summaryText(m)], ['PDF', pdfT], ['score note', m.scoreSub + ' ' + C.SCORE_NOTE]]) ok(!/Partly|partly|Doesn’t apply|does not apply|Doesn't apply/.test(t), tag + ': no Partly or Doesn\'t apply');
+for (const [tag, t] of [['method', meth], ['PDF', pdfT], ['score note', m.scoreSub + ' ' + C.SCORE_NOTE]]) ok(!/Partly|partly|Doesn’t apply|does not apply|Doesn't apply/.test(t), tag + ': no Partly or Doesn\'t apply');
 const all = L.resultModel(finished(F, D, 'rm-1'), env);
 ok(P.model(finished(F, D, 'rm-1'), env).blocks.some(x => x.t === 'Every question is answered Yes.'), 'PDF: "Every question is answered Yes." (no "or does not apply")');
 ok(all.level === 'ready', 'all Yes is still Ready');
@@ -121,11 +121,11 @@ ok(all.level === 'ready', 'all Yes is still Ready');
     const id = d.id + '-' + (i + 1), b = D.detail[id]; ids.push(id);
     const want = (u.srcs || []).map(s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || '']);
     nSrc += want.length;
-    ok(b && b.ai === (u.ai || '') && eq(b.srcs, want), id + ': bundled detail equals the catalogue entry (technique and ' + want.length + ' sources, in its order)');
+    ok(b && !('ai' in b) && eq(b.srcs, want), id + ': bundled detail equals the catalogue entry (' + want.length + ' sources, in its order; v2.5: no technique notes, council BUILD NOW 8)');
     const cu = D.cat.depts.find(x => x.id === d.id).uses[i]; ok(cu.n === u.n && cu.task === u.task && (cu.use || '') === (u.use || ''), id + ': name, task and rating from the catalogue');
   }));
   ok(ids.length === 99 && eq(Object.keys(D.detail).sort(), ids.slice().sort()), 'detail for all 99 use cases, none left over');
-  ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['ai', 'srcs'])), 'only the fields the layer needs are bundled');
+  ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['srcs'])), 'only the fields the layer needs are bundled (v2.5: srcs only; the technique notes were dropped, council BUILD NOW 8)');
   ok(Object.values(D.detail).every(x => x.srcs.every(s => ['c', 'h', 'r', 'l'].includes(s[0]) && s[1] && (!s[3] || /^https?:\/\//.test(s[3])))), 'every source has a type, a name and, where given, an http(s) link (' + nSrc + ' sources)');
   ok(!/data-act="catalogue"|use-case-catalogue\/index\.html/.test(app), 'app.js: no link or hub message to the catalogue tab is left');
   ok((app.match(/data-act="detail"/g) || []).length === 2 && /Details and sources/.test(app) && (app.match(/>More detail</g) || []).length === 1 && !/data-act="explain"/.test(app), 'two buttons open the layer: step 4 row and the result (owner 24 Nov 2026: no "What does this do?" button)');

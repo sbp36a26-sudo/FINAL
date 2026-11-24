@@ -87,7 +87,7 @@
   /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
   var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
   var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet', p: 'Partly', na: 'Doesn’t apply' }; // p, na: only to name an old answer (Team tab)
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -107,7 +107,7 @@
       why: 'AI keeps costing money after launch: the subscription, fees based on use, connecting it to your systems, training, and staff time to check results.',
       good: 'A budget line covering subscription, set-up and connection to your systems, training and running costs.',
       blocks: ['Recurring subscription or usage budget'],
-      ev: [['40.95% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+      ev: [['41% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['35% of hotels named high set-up costs as a barrier.', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in Austria, France, Germany, Greece, Italy and Switzerland, Jan–Apr 2025.']],
       act: 'Write a 12-month budget line for the full cost (subscription, set-up, connection, training, running costs).' },
     { id: 'm3', gate: 'F2, O1', name: 'A number to improve, approved', who: 'owner',
@@ -117,7 +117,7 @@
       good: 'The number (KPI), today’s figure and the target, approved in writing and dated.',
       blocks: ['KPI baseline and scale/stop rule', 'Approved goal and clear approval path'],
       ev: [['“Lack of senior management buy-in in many companies also appears problematic.”', 'OECD, The Adoption of Artificial Intelligence in Firms, May 2025. Base: survey of 840 enterprises in G7 countries, 2022–23, plus interviews.'],
-           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending.' },
     { id: 'm4', gate: 'T1', name: 'Systems that can connect', who: 'it', ex: true,
       q: 'Can new AI tools easily be plugged in to your existing infrastructure?',
@@ -125,8 +125,8 @@
       why: 'An AI tool that cannot read from and write back to your hotel systems leaves staff copying data by hand.',
       good: 'For each system you want to connect, its provider has confirmed that other software can connect to the version you use.',
       blocks: ['Two-way link to core systems (PMS, CRS, POS, accounting)'],
-      ev: [['45.91% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['46% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Ask the provider of each system you want to connect (for example {ex}) whether other software can read from it and write back to it.' },
     { id: 'm5', gate: 'D5', name: 'Data protection contact involved', who: 'dpo',
       q: 'Has your data protection contact been told about this plan?',
@@ -134,7 +134,7 @@
       why: 'If the tool handles guest or staff data, data protection law asks for a written contract with the vendor and sometimes a written risk check. Your data protection contact knows what applies.',
       good: 'Your data protection contact knows which guest or staff data the tool would use and has said what is needed before you start.',
       blocks: ['Lawful basis and vendor data agreement'],
-      ev: [['52.36% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['“Such legal act must be in writing, including in electronic form.” (on the contract between a hotel and a vendor that processes its personal data)', 'EDPB Guidelines 07/2020 on the concepts of controller and processor, version 2.1.']],
       act: 'Tell your data protection contact about the plan and ask what is needed before any guest or staff data goes into a tool.' },
     { id: 'm6', name: 'A person who checks the AI', who: 'dept',
@@ -142,23 +142,23 @@
       why: 'AI is never right every time. Someone must be able to catch a wrong result and put it right before it is used.',
       good: 'A named role that checks the results, knows which results must be checked before they are used, and can stop or correct the tool.',
       blocks: ['Human reviewer who checks or overrides AI output'],
-      ev: [['56.80% of EU accommodation businesses that had considered AI but did not use it named a lack of clarity about the legal consequences.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
+      ev: [['57% of EU accommodation businesses that had considered AI but did not use it named a lack of clarity about the legal consequences.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
       act: 'Name the person who checks the AI’s results, and decide which results they must check before they count.' },
     { id: 'm7', name: 'Data you can reach and keep correct', who: 'dept',
       q: 'Is each piece of data this tool needs held in a system, with a named person who keeps it correct?',
       why: 'AI works from your data. If the facts are on paper, out of date or spread over systems that disagree, the tool gives wrong answers that sound sure.',
       good: 'You can name where each piece of data sits, and a named person checks it at set times.',
       blocks: ['Historical operational data', 'Curated knowledge and hotel content (FAQ, SOPs, menus, policies)'],
-      ev: [['42.61% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['43% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'List the data the tool needs and the system each piece sits in, and name who keeps it right.' },
     { id: 'm8', name: 'Staff told, and able to report errors', who: 'dept',
       q: 'Have the staff involved been told about the plan, and do they know who to tell when the tool gets something wrong?',
       why: 'Staff who were not told work around a tool, and errors nobody reports are never fixed.',
       good: 'The staff involved have heard the plan from their manager, and one named person collects what goes wrong.',
       blocks: ['Frontline adoption and change support'],
-      ev: [['69.89% of EU accommodation businesses that had considered AI but did not use it named a lack of relevant expertise, the most common reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026. Base: 107 hotel company leaders, worldwide, Aug–Sep 2026.']],
+      ev: [['70% of EU accommodation businesses that had considered AI but did not use it named a lack of relevant expertise, the most common reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
+           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Tell the staff concerned about the plan, and name the person they tell when the tool gets something wrong.' },
     { id: 'm9', name: 'Rules for staff on AI tools', who: 'gm',
       q: 'Do you have written rules telling staff what they must not type into AI tools?',
@@ -209,7 +209,6 @@
     lg: 'your energy and utility meters, accounting system, HR records and contract files'
   };
   var SYSTEMS_FALLBACK = 'your PMS (booking system), POS (tills), accounting or HR systems';
-  var SYSTEMS_NOTE = 'Typical systems by department (the examples under the two systems questions): the team’s own list, based on the catalogue’s use cases, not a survey.';
 
   /* ---------- the result: verdict names and the lines under them ---------- */
   var LEVELS = {
@@ -218,11 +217,38 @@
     notready: { name: 'Not ready yet', line: 'The list below shows what to do first.' },
     noinfo: { name: 'Not enough information yet', line: 'Find out first, then come back: the list below says whom to ask.' }
   };
-  /* v2.1: the line under the top verdict when no use case was chosen (audit M6), and under "Almost ready" when the top verdict was held back. */
-  var READY_NONE = 'Every must-have is in place. No use case was chosen, so nothing else was checked.';
+  /* v2.1: the line under "Almost ready" when the top verdict was held back (legal items, a No or a Not sure in step 2).
+     v2.5: "None of these fits" can no longer reach the top verdict (owner O4), so the v2.1 READY_NONE line is gone. */
   var ALMOST_HELD = 'Your answers would otherwise allow a start. Settle what is named above before you sign anything.';
   /* v2.1, council item 7 (final copy): under any verdict when the use is labelled high-risk or flagged for sensitive personal data. It points to the existing block; it states no law. */
   var LAW_LINE = 'This score does not cover the law. This use has legal items to check first (see “EU AI Act” below). Do not start a pilot before a named person has checked them.';
+  /* ---------- v2.5 (24 Nov 2026): reports/Council - Do you need AI v2.4.md, BUILD NOW items and owner decisions O1 to O5 (copy as given there) ---------- */
+  /* BUILD NOW 1: under "Not ready yet" when no must-have is No but fewer than half are Yes (O1: "Almost ready" needs at least half). {n}: Yes, {m}: must-haves. */
+  var ALMOST_FEW_MUST = 'No must-have is at No, but only {n} of {m} are in place. “Planned” is not done yet: finish these before you talk to vendors.';
+  /* BUILD NOW 2: under "Almost ready" when every must-have is Yes but fewer than half the tailored questions are (O1). */
+  var READY_FEW_TAIL = 'Every must-have is in place. For this use case, {y} of {n} questions are Yes and {p} are planned: finish the planned ones before the pilot starts.';
+  /* O4: "None of these fits" reaches "Almost ready" at best. */
+  var NONE_ALMOST = 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.';
+  /* BUILD NOW 3: a held verdict lists its hold as item 1 of "Start with". */
+  var HOLD = {
+    carried: 'Settle this first: in step 2 you answered No to “{title}”. {outcome}',
+    legal: 'Settle this first: this use has legal items to check (see “EU AI Act” below). A named person must check them before a pilot.',
+    notsure: 'Settle this first: you answered Not sure to {titles} in step 2. {find}',
+    none: 'Settle this first: no use case chosen. The must-haves are in place, but nothing was checked for a particular tool.'
+  };
+  /* O5: one short line in the verdict box, only for "Not ready yet" and a held verdict. */
+  var BOX = { held: 'Held back: {why}.', legal: 'legal items to check', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
+  /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
+  var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
+  /* O3: a No on question 4 is a condition on how the tool is used, not a hold. */
+  var ASSIST_LINE = 'Use it as an assistant only: a person checks every result before it counts.';
+  /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
+  var CONSIST = {
+    m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.',
+    m7: 'In step 2 you said the information is not yet digital and up to date. Check both answers say the same.'
+  };
+  /* Audit v3 H1: the replace question, when the check in this browser has a shared copy. */
+  var FILE_KEEPS_SHARE = 'The project team’s copy of this check stays shared; you can still withdraw it.';
   var AREAS_HEAD = 'What is in place, by area'; // v2.1, council item 6: counts, not percentages
   var AREA_WORD = { strong: 'Strong', gaps: 'Gaps to close', weak: 'Weak', thin: 'Too little to say' };
   var SCORE_NOTE = 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.'; // v2.1, council item 1
@@ -250,9 +276,10 @@
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
       'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
+      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, lack of clarity about the legal consequences 56.80%, data protection and privacy 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
       'HES-SO Valais-Wallis, “How AI is (and isn’t) transforming European hospitality”, survey news (9 Jul 2025).',
       'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
-      'State of Hotel AI, Fall 2026 (29 Sep 2026).',
+      'State of Hotel AI, Fall 2026 (29 Sep 2026), commissioned by Destination AI, research by Josiah Mackenzie (Actabl, a hotel software company): a global survey, vendor-linked, not comparable with the European figures.',
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
       'EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.1 (adopted 7 Jul 2021).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
@@ -284,9 +311,10 @@
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
-    READY_NONE: READY_NONE, ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
+    ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
-    SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK, SYSTEMS_NOTE: SYSTEMS_NOTE };
+    SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
+    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, ASSIST_LINE: ASSIST_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -67,7 +67,8 @@ export function tqModel(J, labels) {
 }
 
 /* v2.4 (owner, 24 Nov 2026): the detail layer. Each use case's catalogue entry, read from the catalogue page's <script id="data">
-   at build time (one source of truth, never copied by hand): { <use id>: { ai, srcs: [[type, name, note, url]] } }.
+   at build time (one source of truth, never copied by hand): { <use id>: { srcs: [[type, name, note, url]] } }.
+   v2.5 (council BUILD NOW 8): the catalogue's "AI technique" research notes are no longer bundled; they stay in the catalogue tab.
    Sources keep the catalogue's types: 'c' company, 'h' hotel (the catalogue shows a "Hotel" tag), 'r' a study in the catalogue's
    source list (name and link resolved from it, as the catalogue page does), 'l' a plain link. Only the entries the catalogue shows. */
 export function detailModel(catHtml) {
@@ -80,7 +81,7 @@ export function detailModel(catHtml) {
       if (s[0] === 'c' || s[0] === 'h') return [s[0], s[1], s[2] || '', s[3] || ''];
       return ['l', s[1], '', s[2] || ''];
     });
-    out[d.id + '-' + (i + 1)] = { ai: u.ai || '', srcs };
+    out[d.id + '-' + (i + 1)] = { srcs };
   }));
   return out;
 }

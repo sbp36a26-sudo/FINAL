@@ -70,6 +70,9 @@
   }
   /* The check as it goes into a file: whether a copy was shared belongs to this browser, not to the file (audit L11). */
   function forFile(r) { var o = copy(r); o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; return o; }
+  /* Audit v3 H1, M4: one rule for every replacement of a check's answers (a file, another tab's version kept or not):
+     the share fields come from the browser's own record, never from what replaces it. */
+  function keepShare(to, had) { if (had) { to.sharedAt = had.sharedAt || null; to.sharedMode = had.sharedMode || null; to.sharedSig = had.sharedSig || null; } return to; }
   function localToday() { var dt = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); }
   function blankStore() { var r = blank(); var s = { v: V, cur: r.id, checks: {} }; s.checks[r.id] = r; return s; }
   function cur(store) { return store.checks[store.cur]; }
@@ -133,7 +136,7 @@
   function cleanSnap(s) {
     s = obj(s); if (typeof s.at !== 'string' || ['ready', 'almost', 'notready', 'noinfo'].indexOf(s.level) < 0) return null;
     var n = function (v) { return typeof v === 'number' && isFinite(v) && v >= 0 ? v : 0; };
-    return { at: s.at.slice(0, 40), level: s.level, pct: typeof s.pct === 'number' ? n(s.pct) : null, pts: n(s.pts), max: n(s.max), known: n(s.known), total: n(s.total), mustYes: n(s.mustYes), mustN: n(s.mustN), rules: str(s.rules, 40), use: /^[\w-]{0,20}$/.test(str(s.use, 20)) ? str(s.use, 20) : '' };
+    return { at: s.at.slice(0, 40), level: s.level, pct: typeof s.pct === 'number' ? n(s.pct) : null, pts: n(s.pts), max: n(s.max), known: n(s.known), total: n(s.total), mustYes: n(s.mustYes), mustN: n(s.mustN), rules: str(s.rules, 40), use: /^[\w-]{0,20}$/.test(str(s.use, 20)) ? str(s.use, 20) : '', sig: /^[\w-]{0,40}$/.test(str(s.sig, 40)) ? str(s.sig, 40) : '' }; // sig: audit v3 L3
   }
   /* One saved check → a clean record, or null.
      info.useChanged: the saved use case was renamed in the catalogue or is no longer in it (the person picks again, step 4).
@@ -314,6 +317,9 @@
       }
       case 'import': {
         var ri = cleanRec(arg, env, {}, { file: true }); if (!ri) return no;
+        /* Audit v3 H1: the share fields of a check belong to this browser and survive any replacement of its answers. A file
+           replacing a check whose copy is shared keeps that copy known (shareStale() marks it out of date when the answers differ). */
+        keepShare(ri, own(store.checks, ri.id) ? store.checks[ri.id] : null);
         if (!own(store.checks, ri.id) && listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
         s = withRec(store, ri); s.cur = ri.id; if (rec.id !== ri.id && !listed(rec)) delete s.checks[rec.id];
         return { store: s, ok: true };
@@ -396,7 +402,7 @@
     var other = theirs.checks[mine.cur];
     if (!other) { s.checks[rec.id] = rec; if (listed(rec)) elsewhere = 'removed'; }
     else if (answersOf(other) === answersOf(rec)) { var keep = copy(other); keep.step = rec.step; s.checks[rec.id] = keep; } // same answers: take the other tab's share state and history
-    else { s.checks[rec.id] = rec; elsewhere = 'changed'; }
+    else { s.checks[rec.id] = keepShare(copy(rec), other); elsewhere = 'changed'; } // audit v3 M4: this tab's answers, the store's share fields
     return { store: s, elsewhere: elsewhere };
   }
   function histRead(st) {
@@ -409,7 +415,7 @@
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { MAX_CHECKS: MAX_CHECKS, forFile: forFile, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
+  var api = { MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
     V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,

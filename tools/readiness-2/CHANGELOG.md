@@ -1,6 +1,64 @@
 # Do you need AI? (formerly "AI starting point", "Readiness 2.0"): changelog
 
-## v2.3 / v2.4 (24 Nov 2026): four answers, a quieter result page, the detail layer. Rules v2.3. Not committed, not published.
+## v2.5 (24 Nov 2026): the council on v2.4, the owner's decisions O1 to O9, clean-up inventory v3. Rules v2.5. Not committed, not published.
+
+Inputs: `reports/Council - Do you need AI v2.4.md` (section 5, BUILD NOW 1 to 12, owner decisions O1 to O9) and `reports/audit-readiness-2/cleanup_inventory_v3.md` (H1, M1 to M5, L1 to L5, dead code, stale tests). The owner said "do everything now" and took the council's recommendation on each decision. Storage key, store version (2), file format, hub message shapes, ids, `data-*` and `data-state` hooks are unchanged. Records saved by v2.0 to v2.4 open: new fixture `tests/fixtures/v2.4-saved.json`, saved by the committed v2.4 page in a real browser before any change (a shared check, a "None of these fits" check, a saved file, the team's test copy).
+
+**Rules v2.5 (team judgement, not tested with hotels; each named in `JUDGEMENT` in `src/logic.js` and in "How this was worked out"). Points unchanged: Yes 2, Planned 1, No 0, Don't know yet 0.**
+- O1 (c) `ALMOST_MIN_MUST_YES: 50`: "Almost ready" needs at least half the must-haves at Yes; below that, "Not ready yet" ("Planned" is not done yet). `READY_MIN_TAIL_YES: 50`: "Ready to start a pilot" needs at least half the tailored questions that were answered at Yes; otherwise the top verdict is held back.
+- O2 (b) `NOT_SURE_HOLDS_TOP: true`: any "Not sure" in step 2 holds the top verdict ("Because you answered Not sure to “Complex judgement” in step 2. …").
+- O3 (b) `Q4_NO_HOLDS_TOP: false`: a No on question 4 no longer holds the top verdict; the result shows "Use it as an assistant only: a person checks every result before it counts." (`#assist`). `CARRIED_NO_HOLDS_TOP` covers questions 2, 3 and 5.
+- O4 (b) `NONE_BEST_ALMOST: true`: with "None of these fits" the best verdict is "Almost ready", with "No use case chosen: the must-haves are in place, but nothing was checked for a particular tool."
+- Results kept under rules v2 to v2.3 show "worked out with earlier rules" and are not compared line by line (fixture check).
+
+**Owner decisions on the page.** O5 (b): one short line in the verdict box (`#box-reason`) only for "Not ready yet" ("Because 1 must-have is No.", "Because only 0 of 10 must-haves are Yes.", "Because the score is below 50%.") and a held verdict ("Held back: legal items to check.", "… a No in step 2", "… Not sure in step 2", "… fewer than half the questions for this use case are Yes", "… no use case chosen"); otherwise the box stays verdict, score, must-haves line; the top verdict keeps its name. O6 (a): see BUILD NOW 5; `act` stays in the data for the later wording pass. O7 (b): `SHARING_DEFAULT = false` in `src/app.js`: no share fold and no "Share a copy" on a new result, in the hub too; a check that already has a copy keeps its panel ("Sharing with the project team is switched off.") with its withdraw button, and the header line, "Your checks" and the remove dialog still withdraw. **To switch sharing back on:** set `SHARING_DEFAULT = true` in `src/app.js`, run `node tools/readiness-2/build.mjs` and `node tools/build-hub.mjs`. O8 no change (decide after the test). O9 must-have 4 wording kept.
+
+**Council BUILD NOW (copy as given in the report).**
+1. Under "Not ready yet" when no must-have is No but fewer than half are Yes: "No must-have is at No, but only {n} of 10 are in place. “Planned” is not done yet: finish these before you talk to vendors." (With O1 this case is "Not ready yet", not "Almost ready"; the old "Almost ready" line stays when half or more are Yes.)
+2. Under the held verdict when fewer than half the tailored questions are Yes: "Every must-have is in place. For this use case, {y} of {n} questions are Yes and {p} are planned: finish the planned ones before the pilot starts."
+3. Never "Nothing open." under a held verdict: the hold is item 1 of "Start with" ("Settle this first: in step 2 you answered No to “{title}”. {outcome}", "Settle this first: this use has legal items to check (see “EU AI Act” below). A named person must check them before a pilot."; for O2 and O4 the same frame with the step 2 "Not sure" and the "no use case chosen" line). A hold names no person; the PDF prints it without one.
+4. Superseded by O3 (b): question 4 no longer holds.
+5. A tailored item's task is the team-worded question: "Make this a Yes: {question}", "Finish: {question}" (+ "(planned by …)"), "Find out: “{question}”"; on screen, in "Start with", the copy-per-person text, the PDF and the Team tab. Must-have actions unchanged.
+6. "Copy for IT" (the role's display name, never lower-cased; only a leading "The" reads "the"); the toast too.
+7. Step 3 lines under must-haves 3 and 7 when step 2 says otherwise (`#consist-m3`, `#consist-m7`); no blocking.
+8. Detail layer: the "AI technique" research notes are gone (no longer bundled: 99 entries, `srcs` only); "The catalogue’s own description (research wording)" under "For the detail-minded". Kept: what it does, how the AI works, how common, catalogue name, examples and sources.
+9. Sources: "State of Hotel AI, Fall 2026" now names its commissioner and researcher, from the team's opened source (`research_notes/AI starting point/research.md`: "research by Josiah Mackenzie (Actabl), commissioned by Destination AI"), and its base adds "global survey, vendor-linked; not comparable with the European figures" (four figures, must-haves 3, 4, 7, 8). Eurostat shares are whole numbers on screen (70%, 57%, 52%, 46%, 43%, 41%; the cover's 70% and 46%); the exact shares are listed in "Where this comes from" under the must-haves.
+10. Docs and screenshots: README journey table, this entry and the `7e0530e` entry above, `docs/PROJECT_CONTEXT.md`; `reports/readiness-2-screens/wording/` retaken (same file names; the "picker-panel-open" shots now show the detail layer, the button they showed is gone).
+11. Under the top verdict (`#pilot-gloss`, PDF): "A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3." No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion.
+12. Session kit (no code): `reports/Do you need AI - session kit.md`, built from section 5 (c) of the council report.
+
+**Clean-up inventory v3** (each reproduction is now a test that failed on v2.4 and passes: `tests/v25.test.mjs`, `tests/browser/v25.cjs`).
+- H1: replacing a shared check with a saved file keeps its share fields (`F.keepShare` in `reduce('import')`); the replace question adds "The project team’s copy of this check stays shared; you can still withdraw it."; the copy can be withdrawn afterwards (R5, with sharing off).
+- M1, M2, M3: the detail layer is one state, `ui.layer = { use, from, step, check }`, closed by any step or check change (browser Back, a `#use=` link, a store event; focus to `#view`) and only by a click outside the drawer's box; `#app[data-layer]`. The minimum fix for phone Back is in place; Back closing only the sheet was not built.
+- M4: two tabs: this tab keeps its answers and takes the store's share fields.
+- M5: the copy box opens next to its button (after the person's list, inside the vendor fold).
+- L1, L2: an old Partly reads "Answer again: …" and "Not answered (earlier answer: Partly, no longer offered)" in "Start with", the action plan and the Team tab (one helper `L.answerState`).
+- L3: snapshots carry the question signature; other questions are "asked with other questions, not compared line by line".
+- L4: README, comments, CLEANUP (stable ids without `#copy`, `#print`), the `7e0530e` entry, hub-bar comment.
+- L5: `ui.dlKind`, `ui.fileInfo` declared, cleared on "Keep the one here" and any move, in `state()`.
+- Dead code removed: `summaryText` (logic and AX), `SYSTEMS_NOTE`, `READY_NONE`, `p`/`na` in `ANSWER_WORD`, the old explainer CSS, `catLink` (now `detailButton(u)`). The hub's `'use-case-catalogue'` open entry is kept (comment fixed).
+
+**Changed test expectations (each because the old one encoded a rule or a feature the owner changed, or a bug fixed here):**
+- logic: the independent arithmetic follows rules v2.5; "exactly 75% → Ready" uses a set with 3 of 4 answered tailored questions at Yes (the old set, 3 of 8, is now held: new assertion); "exactly 50% → Almost ready" uses 5 must-haves at Yes (all Planned is now "Not ready yet": new assertion); "exactly half unknown" is "not Not enough information yet" (it is now "Not ready yet", 1 of 10 must-haves Yes); "None of these fits" all Yes is "Almost ready" (O4); the Copy summary check reads the PDF.
+- pdf: a hold in "Start with" has no person.
+- v21: rules v2.5; `JUDGEMENT` has the five new constants; B6 no longer lists question 4 (O3) and "Not sure" now holds (O2); the method line names questions 2, 3, 5; M6 "None of these fits" is "Almost ready" with the O4 line; the copy-text halves now read the PDF.
+- v22: header (the explainer browser proof no longer exists); the summary check reads the PDF.
+- v23: rules v2.5; the gone-use copy names an old answer with `answerWord` (L2); the bundled detail has `srcs` only (BUILD NOW 8).
+- browser walk: the verdict box may hold `#box-reason` (O5); a hold in "Start with" has no person; sharing paths run with the test switch on (O7).
+- browser v21: "None of these fits" is "Almost ready"; rules v2.5 in the share document, file and Team tab rules card; the copy text is gone; test switch on.
+- browser v23: the layer shows "The catalogue’s own description (research wording)" and no "AI technique"; the no-explainer check reads the words and counts one button per row.
+
+**Proof.** Unit: logic 7,477 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,203 · v22 809 · v23 264 · v25 116 (failed 70 of 116 on v2.4). Browser (1280 and 390 px, standalone and hub): walk 860 · v21 610 · v23 144 · v25 137. Hub 21; readiness-check flow 101, logic 35, mustfirst 22, planned 49, v4 81, browser mustfirst 238, planned 86; register 143 + 64; AI Act guide 2,644; catalogue 328; assessment 12. Screenshots: `reports/readiness-2-screens/v25/` (results for all-Planned must-haves, one must-have No, None fits, Ready; the detail layer and its sources; desktop and phone at 2x) and `wording/`.
+
+**Headlines of the council's nine patterns on gx-2 (rules v2.5):** A all must-haves Planned: Not ready yet · Score: 72% · Because only 0 of 10 must-haves are Yes. B all tailored Planned: Almost ready · Score: 77% · Held back: fewer than half the questions for this use case are Yes. C all Yes: Ready to start a pilot · Score: 100%. D Q5 No: Almost ready · Score: 100% · Held back: a No in step 2. E Q1 Not sure: Almost ready · Score: 100% · Held back: Not sure in step 2. F tailored all Don't know yet: Almost ready · Score: 55%. G None of these fits: Almost ready · Score: 100% · Held back: no use case chosen. H one must-have No: Not ready yet · Score: 94% · Because 1 must-have is No. I Q4 No: Ready to start a pilot · Score: 100%, with the assistant-only condition.
+
+**Still open:** the five timed manager sessions; controller, deletion date and contact for shared copies (then O7 can be switched back); the wording pass on the 661 actions (O6 b); O8 (order of steps); D7 and lawyer sign-off of the provisional AI Act label; phone Back closing only the detail sheet.
+
+## v2.4, owner change of 24 Nov 2026 (commit `7e0530e`)
+
+The "What does this do?" button on each use-case row of step 4 was removed: "Details and sources" opens the same content in the detail layer. "Start a new check" moved from the very bottom of the result to the top row, beside Download (PDF). Screens refreshed in `eb2f956`.
+
+## v2.3 / v2.4 (24 Nov 2026): four answers, a quieter result page, the detail layer. Rules v2.3. Committed (`a918c13`, `7e0530e`), not published.
 
 Three owner decisions of 24 Nov 2026.
 

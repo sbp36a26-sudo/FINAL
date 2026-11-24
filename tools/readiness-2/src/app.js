@@ -6,13 +6,18 @@
    ui    = what is on screen now, never saved:
      confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
      missing  after a refused "Next": the id of the first unanswered question ('type' on step 1, 'where' on step 4), outlined; else null
-     copy     true while the copy box (clipboard fallback) is open; copyText: what it shows
+     copy     COPY BOX (clipboard fallback, audit v3 M5): null | { from: 'who:<role key>' | 'vendor', text }; drawn next to the button
+              that opened it; cleared by the next copy or any step change
+     layer    DETAIL layer (v2.4; made explicit in v2.5, audit v3 M1 to M3): null | { use, from (opener id), step, check }.
+              Closed by Close, Esc, a click outside the drawer, and by any step or check change (afterMove), so it never
+              stays open over a screen it does not belong to. #app[data-layer] holds the open use id.
      open     which folded explanations are open (kept across re-renders)
-     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'
+     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; dlKind: 'pdf' | 'file' | null (which one)
      share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
               v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
               so a copy can be withdrawn from any step, from the stop screen and from "Your checks".
-     file     a check read from a file that is waiting for the "replace?" answer; else null
+     file     a check read from a file that is waiting for the "replace?" answer; else null. fileInfo: what that file's check lost on
+              the way in ('useChanged' | 'questionsChanged' | null), said once it opens; cleared by "Keep the one here" and any move
      notice   'useChanged' after a restore whose use case moved in or left the catalogue (shown on step 4);
               'questionsChanged' when its tailored questions changed since it was answered (shown on step 5); else null
      elsewhere  TABS (F.mergeTabs): null | 'changed' | 'removed': another tab of this browser changed or removed the open check
@@ -27,8 +32,13 @@
   var $ = function (id) { return document.getElementById(id); };
   var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf, RC = window.RCLogic || null, S = window.RCStore || null;
   /* Sharing a copy with the project team (opt-in, to the hub's "Team: readiness results" tab). One switch: false switches
-     sharing off (withdrawing a copy that was already shared still works). */
-  var SHARING_ON = true;
+     sharing off (withdrawing a copy that was already shared still works, from every place it did before).
+     v2.5 (owner O7, 24 Nov 2026): off for the timed sessions with hotel managers, because the controller, a deletion date and a
+     contact for shared copies are not named yet. To switch sharing back on, set SHARING_DEFAULT to true and rebuild
+     (node tools/readiness-2/build.mjs, then node tools/build-hub.mjs). The browser tests that prove the sharing paths set
+     window.R2_TEST_SHARING before the page loads; nothing on the page or in the hub sets it. */
+  var SHARING_DEFAULT = false;
+  var SHARING_ON = SHARING_DEFAULT || window.R2_TEST_SHARING === true;
   var D, CAT, TQ, M = null;
   try { D = JSON.parse($('r2-data').textContent); CAT = D.cat; TQ = D.tq; if (RC && D.rc) M = RC.model({ rdy: D.rc.rdy, cat: CAT, reg: D.rc.reg }); }
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
@@ -109,7 +119,7 @@
   var store = load() || F.blankStore();
   var rec = F.cur(store);
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, detail: null, detailFrom: null, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, share: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
@@ -156,7 +166,7 @@
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
     if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-withdraw') || $('rm-yes'); if (y) y.focus(); return true; }
-    if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; render(); return true; }
+    if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; render(); return true; }
     if (ev === 'remove-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
@@ -215,7 +225,8 @@
   }
   /* ev: the event that moved the step (written into history by the HISTORY machine), or null for a pop (already in history). */
   function afterMove(prev, ev, force) {
-    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = false; ui.file = null; skipRun = 0;
+    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = null; ui.file = null; ui.fileInfo = null; skipRun = 0;
+    if (ui.layer && (rec.step !== prev || force)) closeDetail(true); // audit v3 M1, M2: the layer belongs to one step of one check
     if (rec.step !== prev || force) { ui.notice = (ui.notice === 'useChanged' && rec.step === 'where') || (ui.notice === 'questionsChanged' && rec.step === 'tailored') ? ui.notice : null; ui.elsewhere = null; ui.fileNote = null; }
     if (ev && (rec.step !== prev || force)) histMove(ev, prev);
     takeSnap();
@@ -238,7 +249,7 @@
   /* Return visits: on the result page, keep a dated snapshot whenever the result differs from the last one kept. */
   function takeSnap() {
     if (rec.step !== 'result' || storage === 'newer') return;
-    var sn = L.snapshot(L.evaluate(rec, TQ), new Date().toISOString(), rec.use), last = rec.snaps[rec.snaps.length - 1];
+    var sn = L.snapshot(L.evaluate(rec, TQ), new Date().toISOString(), rec.use, (TQ.uses[rec.use] || {}).sig || ''), last = rec.snaps[rec.snaps.length - 1];
     if (L.sameSnap(last, sn)) return;
     var r = F.reduce(store, 'snap', sn, ENV); if (r.ok) apply(r);
   }
@@ -338,6 +349,7 @@
   function fileConfirm() {
     if (!ui.confirm || ui.confirm.kind !== 'file' || !ui.file) return '';
     return '<div class="confirmline" data-confirm="file" role="group" aria-label="Replace this check?"><p><strong>This check is already in this browser.</strong> Replace it with the one from the file?</p>' +
+      (recOf(ui.file.id) && recOf(ui.file.id).sharedAt && S ? '<p class="meta" id="file-keeps-share">' + esc(C.FILE_KEEPS_SHARE) + '</p>' : '') + // audit v3 H1
       '<div class="btnrow"><button type="button" class="btn warn" data-act="import-yes" id="import-yes">Replace with the file</button><button type="button" class="btn" data-act="confirm-no" id="import-no">Keep the one here</button></div></div>';
   }
   function myChecks() {
@@ -372,7 +384,7 @@
     return (pre ? '<p class="pathline" id="preselected">You came here for: <b>' + esc(uName(pre)) + '</b>. It is already chosen in step 4.</p>' : '') +
       '<section class="panel intro" id="intro-why"><h2>Why this tool</h2>' +
       '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, are the basics in place, and what does this particular use need?</p>' +
-      '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (69.89%) and systems that do not fit together (45.91%). Source: Eurostat, ICT usage survey, early 2025.</p></section>' +
+      '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (70%) and systems that do not fit together (46%). Source: Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2).</p></section>' +
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
@@ -434,7 +446,7 @@
       pdfButton('Download (PDF)') + '</div></section>' + sources('q');
   }
   function vMust() {
-    var sy = L.systemsFor(rec);
+    var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
     var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2>Must-haves</h2>' +
       '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Each one needs an answer; “Don’t know yet” is fine and goes on your to-do list.</p>' +
       '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' +
@@ -446,14 +458,14 @@
         evidence(m.ev, L.shareLines(m, TQ));
       return '<fieldset class="qa' + (ui.missing === m.id ? ' missing' : '') + '" id="f-' + m.id + '" aria-labelledby="t-' + m.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname">' + esc(m.name) + '</p><p class="qtext" id="t-' + m.id + '">' + esc(m.q) + '</p>' +
-        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + byField(m.id, rec.A[m.id], rec.By[m.id]) + needLine(m.id) +
+        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + (cons[m.id] ? '<p class="consist" id="consist-' + m.id + '" role="note">' + esc(cons[m.id]) + '</p>' : '') + byField(m.id, rec.A[m.id], rec.By[m.id]) + needLine(m.id) +
         fold('why-' + m.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';
     h += sources('must') + nav('Back', 'Next: where in the hotel?');
     return h;
   }
   var useLevel = L.useLevel;
-  function catLink(d, u) {
+  function detailButton(u) {
     /* v2.4 (owner): no leaving the tool. "Details and sources" opens the detail layer over this page. */
     return '<button type="button" class="exbtn" data-act="detail" data-detail="' + esc(u.id) + '" data-x="row" id="dt-' + esc(u.id) + '">Details and sources</button>';
   }
@@ -475,10 +487,10 @@
     var d = DEPT[rec.dept];
     if (d && d.cat === rec.cat) {
       h += '<h3>3. Use case</h3><p class="meta">Choose the one that matches your problem. “How common” is the catalogue’s rating of how widely hotels use it.</p><div class="ucs" role="radiogroup" aria-label="Use case">' + d.uses.map(function (u) {
-        var on = rec.use === u.id; // owner 24 Nov 2026: no "What does this do?" button on the row; "Details and sources" holds it
+        var on = rec.use === u.id; // owner 24 Nov 2026: one button per row, "Details and sources" (opens the detail layer)
         return '<label class="uc' + (on ? ' on' : '') + '" for="u-' + u.id + '"><input type="radio" name="use" id="u-' + u.id + '" value="' + u.id + '" data-use="' + u.id + '"' + (on ? ' checked' : '') + '>' +
           '<span class="ucbody"><span class="ucn">' + esc(uName(u)) + '</span>' +
-          '<span class="ucm"><span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + catLink(d, u) + '</span></span></label>';
+          '<span class="ucm"><span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + detailButton(u) + '</span></span></label>';
       }).join('') + '</div>';
     }
     var noneOn = rec.use === 'none';
@@ -542,24 +554,27 @@
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
     var regHref = '../register/index.html#' + registerHash();
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
-    /* Owner, 24 Nov 2026 (second decision): the top row holds only "Download (PDF)". "Save as file" sits in "Your checks in this
-       browser", "Add to the AI Register" in the EU AI Act fold, "Start a new check" at the very bottom; Copy summary and Print are gone. */
+    /* Owner, 24 Nov 2026: the top row holds "Download (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
+       "Your checks in this browser", "Add to the AI Register" in the EU AI Act fold; Copy summary and Print are gone. */
     var toReg = u && !u.notTool ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
-    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' + // owner 24 Nov 2026: next to Download (PDF)
-      (ui.copy ? '<div class="copybox" id="copybox"><p class="meta">Copying is blocked here. Select the text and copy it:</p><textarea id="copytext" rows="12" readonly>' + esc(ui.copyText) + '</textarea></div>' : '');
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 24 Nov 2026: next to Download (PDF)
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
       /* Owner, 24 Nov 2026: the box shows only the verdict, the score and the must-haves line. The reason and the notes move to
-         "Start with …"; the points, the honesty text and the verdict's line to "How this was worked out". */
+         "Start with …"; the points, the honesty text and the verdict's line to "How this was worked out".
+         v2.5 (owner O5): one short line in the box, only for "Not ready yet" and a held verdict (#box-reason). */
       '<h1 id="level-name">' + esc(m.levelName) + '</h1>' +
       '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + esc(m.scoreHead) + '</span></div>' +
+      (m.boxLine ? '<p class="boxline" id="box-reason">' + esc(m.boxLine) + '</p>' : '') +
       '<p class="countline" id="must-line">' + esc(m.mustLine) + '</p></section>';
+    if (m.pilot) h += '<p class="meta pilotgloss" id="pilot-gloss">' + esc(m.pilot) + '</p>'; // v2.5, council BUILD NOW 11
     h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
+      (m.assist ? '<p id="assist"><strong>' + esc(m.assist) + '</strong></p>' : '') + // v2.5, owner O3
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
-      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li><b>' + esc(f.who) + ':</b> ' + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
+      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
@@ -567,10 +582,10 @@
       return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' to find out' : ''].filter(Boolean).join(' · ')) + '</span></div>';
     }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
     h += '<section class="panel" id="plan"><h2>Action plan by person</h2>' + (m.people.length ? '<p class="meta">One list per person. Copy it into an email or a message.</p>' + m.people.map(function (p) {
-      return '<div class="person" data-who="' + p.who + '"><div class="personhead"><h3>' + esc(p.name) + ' <span class="meta">(' + p.items.length + ')</span></h3><button type="button" class="btn small" data-act="copy-who" data-who="' + p.who + '" id="copy-' + p.who + '">Copy for ' + esc(p.name.toLowerCase().replace(/^the /, 'the ')) + '</button></div><ul class="todo">' +
-        p.items.map(function (a) { return '<li><span>' + esc(a.text) + '</span><span class="meta">' + esc(a.tag) + '</span></li>'; }).join('') + '</ul></div>';
+      return '<div class="person" data-who="' + p.who + '"><div class="personhead"><h3>' + esc(p.name) + ' <span class="meta">(' + p.items.length + ')</span></h3><button type="button" class="btn small" data-act="copy-who" data-who="' + p.who + '" id="copy-' + p.who + '">' + esc(copyLabel(p.name)) + '</button></div><ul class="todo">' +
+        p.items.map(function (a) { return '<li><span>' + esc(a.text) + '</span><span class="meta">' + esc(a.tag) + '</span></li>'; }).join('') + '</ul>' + copyBox('who:' + p.who) + '</div>';
     }).join('') : '<p>Nothing open.</p>') + '</section>';
-    if (m.vendor.length) h += row('vendor', 'Questions for the vendor (' + m.vendor.length + ')', '<div class="btnrow"><button type="button" class="btn small" data-act="copy-vendor" id="copy-vendor">Copy all</button></div><ol class="tight" id="vendor-list">' + m.vendor.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>');
+    if (m.vendor.length) h += row('vendor', 'Questions for the vendor (' + m.vendor.length + ')', '<div class="btnrow"><button type="button" class="btn small" data-act="copy-vendor" id="copy-vendor">Copy all</button></div>' + copyBox('vendor') + '<ol class="tight" id="vendor-list">' + m.vendor.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>', ' id="vendor"');
     if (m.legal) {
       var l = m.legal, it = function (i) { return '<li>' + esc(i.text) + ' <span class="meta">' + esc(i.sub) + '</span></li>'; };
       h += row('legal', 'EU AI Act: provisional label, not legal advice', '<p class="meta" id="legal-note">' + esc(m.legalNote) + '</p><p><span class="chip c-label" id="legal-label">' + esc(l.name) + '</span> ' + (l.applies ? '<span class="meta">' + esc(l.applies) + '</span> ' : '') + esc(l.why) + '</p>' +
@@ -589,8 +604,14 @@
     h += '<div class="navrow noprint"><button type="button" class="btn back" data-act="back" id="back">Back</button><span class="spacer"></span><button type="button" class="linkbtn" data-act="edit" id="edit">Change answers from the start</button></div>';
     return h;
   }
-  function copyText(t, what) {
-    function fallback() { ui.copy = true; ui.copyText = t; render(); var ta = $('copytext'); if (ta) { ta.focus(); ta.select(); } }
+  /* v2.5 (council BUILD NOW 6): the role's display name, never lower-cased ("Copy for IT"); only a leading "The" reads "the". */
+  function copyLabel(name) { return 'Copy for ' + String(name).replace(/^The /, 'the '); }
+  /* Audit v3 M5: the copy box (clipboard refused) is drawn next to the button that asked for it. */
+  function copyBox(from) {
+    return ui.copy && ui.copy.from === from ? '<div class="copybox" id="copybox" data-from="' + esc(from) + '"><p class="meta">Copying is blocked here. Select the text and copy it:</p><textarea id="copytext" rows="12" readonly>' + esc(ui.copy.text) + '</textarea></div>' : '';
+  }
+  function copyText(t, what, from) {
+    function fallback() { ui.copy = { from: from, text: t }; render(); var ta = $('copytext'); if (ta) { ta.focus({ preventScroll: true }); ta.select(); ta.scrollIntoView({ block: 'nearest' }); } }
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { toast(what + ' copied.'); }, fallback);
       else fallback();
@@ -763,15 +784,16 @@
     $('hdr').innerHTML = header();
     $('view').innerHTML = VIEWS[rec.step]();
     syncDetail();
-    if (keep && $(keep) && keep !== 'view' && !(ui.detail && !$('detail').contains($(keep)))) $(keep).focus({ preventScroll: true });
+    if (keep && $(keep) && keep !== 'view' && !(ui.layer && !$('detail').contains($(keep)))) $(keep).focus({ preventScroll: true });
   }
 
   /* ---------- v2.4 (owner, 24 Nov 2026): the detail layer ----------
      A native <dialog> (#detail, outside #view) opened with showModal(): a drawer on the right on a desktop, a full-screen sheet on
-     a phone. ui.detail holds the open use id and ui.detailFrom the id of the button that opened it, so the layer survives render()
-     and focus goes back to that button when it closes (Close, Esc). The page behind keeps its step, its state and its scroll. */
+     a phone. ui.layer = { use, from, step, check } (v2.5, audit v3 M1 to M3: one field instead of two, and it remembers the step and
+     the check it was opened on), so the layer survives render() and focus goes back to the opener when it closes (Close, Esc, a
+     click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
   function detailHtml(id) {
-    var u = USE[id], dt = (D.detail || {})[id] || { ai: '', srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
+    var u = USE[id], dt = (D.detail || {})[id] || { srcs: [] }, d = DEPT[(F.deptOfUse(ENV, id) || {}).id] || {}, tu = TQ.uses[id], x = L.explain(D.ex, id), cn = L.catalogueName(TQ, u);
     var src = function (s) {
       var name = s[0] === 'h' ? '<span class="tag">Hotel</span> ' + esc(s[1]) : esc(s[1]);
       return '<li data-src="' + esc(s[0]) + '"><b>' + name + '</b>' + (s[2] ? ': ' + esc(s[2]) : '') + (s[3] ? ' <a href="' + esc(s[3]) + '" target="_blank" rel="noopener">Open the source</a>' : '') + '</li>';
@@ -781,29 +803,35 @@
       (tu && tu.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') +
       (x ? '<p><b>What it does:</b> ' + esc(D.ex[id].does) + '</p><p><b>How the AI works:</b> ' + esc(D.ex[id].how) + '</p>' : '') +
       '<p id="detail-level"><b>' + esc(L.useLevelLine(u)) + '</b></p>' +
-      '<h3>For the detail-minded</h3><p><b>Catalogue description:</b> ' + esc(u.task) + '</p>' + (dt.ai ? '<p><b>AI technique:</b> ' + esc(dt.ai) + '</p>' : '') +
+      /* v2.5 (council BUILD NOW 8): no research or fact-check notes; the catalogue's text is labelled as research wording. */
+      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(u.task) + '</p>' +
       '<h3>Examples and sources (' + dt.srcs.length + ')</h3>' + (dt.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + dt.srcs.map(src).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
       '<p class="meta">From the hub’s Use-Case Catalogue, as of ' + esc(C.AS_OF) + '. A source link opens in a new browser tab.</p></div>';
   }
   function syncDetail() {
     var dlg = $('detail'); if (!dlg || typeof dlg.showModal !== 'function') return;
-    var id = ui.detail && USE[ui.detail] ? ui.detail : null;
-    if (!id) { ui.detail = null; if (dlg.open) dlg.close(); return; }
+    var L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
+    if (!id) { ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg.open) dlg.close(); return; }
+    $('app').setAttribute('data-layer', id);
     if (dlg.getAttribute('data-use') !== id) { dlg.innerHTML = detailHtml(id); dlg.setAttribute('data-use', id); }
     if (!dlg.open) { dlg.showModal(); var c = $('detail-close'); if (c) c.focus(); }
   }
-  function openDetail(id, from) { if (!USE[id]) return; ui.detail = id; ui.detailFrom = from || null; syncDetail(); }
+  function openDetail(id, from) { if (!USE[id]) return; ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id }; syncDetail(); }
   /* Every way out (Close, Esc, a click on the backdrop) runs this at once, so the state never waits for the dialog's own
      asynchronous close event (a render() in between would open it again). */
-  function closeDetail() {
-    var dlg = $('detail'), from = ui.detailFrom; ui.detail = null; ui.detailFrom = null;
+  /* moved: true when the step or the check changed (afterMove then puts focus on #view). */
+  function closeDetail(moved) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer');
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
-    var b = from && $(from); if (b) b.focus({ preventScroll: true });
+    var b = !moved && from && $(from); if (b) b.focus({ preventScroll: true });
   }
   (function () { var dlg = $('detail'); if (!dlg) return;
     dlg.addEventListener('cancel', function () { closeDetail(); }); // Esc
-    dlg.addEventListener('close', function () { if (ui.detail) closeDetail(); }); // any other close
-    dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDetail(); }); /* a click on the backdrop */ })();
+    dlg.addEventListener('close', function () { if (ui.layer) closeDetail(); }); // any other close
+    /* A click on the backdrop. Audit v3 M3: the dialog element itself also fills the empty part of the drawer under short content,
+       so the click must also fall outside the drawer's box. */
+    dlg.addEventListener('click', function (e) { if (e.target !== dlg) return; var r = dlg.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeDetail(); }); })();
 
   // ---------- events ----------
   document.addEventListener('click', function (e) {
@@ -813,8 +841,8 @@
     if (act === 'detail-close') { e.preventDefault(); closeDetail(); return; }
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
-    else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.toLowerCase()); }
-    else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions'); }
+    else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.replace(/^The /, 'the '), 'who:' + p.who); }
+    else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions', 'vendor'); }
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
     else if (act === 'share') shareSend('share');
@@ -858,7 +886,9 @@
   function follow() {
     var x = readStore(store.cur); if (!x || !x.store) return;
     var m = F.mergeTabs(store, x.store);
-    store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; render();
+    store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; ui.fileInfo = null;
+    if (m.elsewhere === 'removed' && ui.layer) closeDetail(true); // audit v3 M2
+    render();
   }
   window.addEventListener('storage', function (e) { if (e.key === F.KEY) follow(); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) follow(); });
@@ -883,7 +913,8 @@
         from: rec.from || '', tqSig: rec.tqSig || '', elsewhere: ui.elsewhere, fileNote: ui.fileNote, corrupt: ui.corrupt, rules: L.RULES, judgement: Object.assign({}, L.JUDGEMENT),
         reason: ev ? ev.reason : null, held: ev ? ev.held.slice() : null, score: ev ? L.scoreHead(ev) : null,
         ctx: c, events: F.events(rec.step, c), level: ev ? ev.level : null, pct: ev ? ev.pct : null, counts: ev ? ev.counts : null, must: ev ? ev.must : null,
-        confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, detail: ui.detail, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
+        confirm: ui.confirm, missing: ui.missing, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
+        dlKind: ui.dlKind, fileInfo: ui.fileInfo, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
         inHub: host.pong, inFrame: IN_FRAME, download: ui.dl, bridge: host.state, share: sharePhase(), sharedAt: rec.sharedAt, shareStore: S ? S.state() : null, sharingOn: SHARING_ON,
         history: { d: hist.d, prev: hist.prev } };
     },
@@ -892,7 +923,6 @@
     send: send,
     events: function () { return F.events(rec.step, ctx()); },
     resultModel: function () { var m = model(); delete m.ev; return m; },
-    summaryText: function () { return L.summaryText(model()); },
     pdfModel: function () { return P.model(rec, env()); },
     pdfName: pdfName,
     fileDoc: fileDoc,

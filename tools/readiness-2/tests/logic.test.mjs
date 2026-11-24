@@ -1,9 +1,10 @@
-// "Do you need AI?" v2 rules (src/logic.js): the five questions, the score in % and the verdict (rules v2.1; the v2.1 switches: tests/v21.test.mjs).
+// "Do you need AI?" v2 rules (src/logic.js): the five questions, the score in % and the verdict (rules v2.5; the v2.1 switches: tests/v21.test.mjs;
+// the v2.5 caps and holds, owner O1 to O4: tests/v25.test.mjs).
 // Run: node tools/readiness-2/tests/logic.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { load, data, tester, finished, root } from './load.mjs';
-const { C, L, F, RC } = load();
+const { C, L, F, RC, P } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('logic');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -99,11 +100,14 @@ function expect(rec) {
   mv.concat(tv).forEach(v => { total++; if (v === 'k' || !v) unk++; pts += P[v || 'k']; max += 2; });
   const allYes = mv.every(v => v === 'y'), anyNo = mv.some(v => v === 'n'), ratio = max ? pts / max : null;
   const lab = LABELS.find(u => u.id === rec.use), legal = !!(lab && lab.base === 'high') || !!(rec.use && rec.use !== 'none' && TQ.uses[rec.use].add.includes('sens'));
-  const carriedNo = ['q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'n');
+  // v2.5: Q4 No no longer holds (O3); any Not sure holds (O2); "Almost ready" needs half the must-haves at Yes and the top verdict
+  // half the answered tailored questions at Yes (O1); "None of these fits" is "Almost ready" at best (O4)
+  const carriedNo = ['q2', 'q3', 'q5'].some(q => rec.Q[q] === 'n'), notSure = ['q1', 'q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'u');
+  const mustYes = mv.filter(v => v === 'y').length, tKnown = tv.filter(v => v === 'y' || v === 'pl' || v === 'n'), tailFew = tKnown.filter(v => v === 'y').length * 2 < tKnown.length;
   let level;
   if (unk / total > 0.5) level = 'noinfo';
-  else if (anyNo || ratio < 0.5) level = 'notready';
-  else if (allYes && ratio >= 0.75 && unk / total < 0.25 && !legal && !carriedNo) level = 'ready';
+  else if (anyNo || ratio < 0.5 || mustYes * 2 < mv.length) level = 'notready';
+  else if (allYes && ratio >= 0.75 && unk / total < 0.25 && !legal && !carriedNo && !notSure && !tailFew && rec.use !== 'none') level = 'ready';
   else level = 'almost';
   return { level, pct: level === 'noinfo' ? null : Math.floor(100 * pts / max), known: total - unk, total, pts, max };
 }
@@ -112,14 +116,17 @@ const U = 'gx-2', NQ = TQ.uses[U].qs.length; // 8 tailored questions
 ok(NQ === 8, 'gx-2 has 8 tailored questions (fixture for the edges)');
 let e = same(mk(U, [], []), 'all Yes'); ok(e.level === 'ready' && e.pct === 100 && !e.cap, 'all Yes → Ready to start a pilot, 100%');
 // 75% edge with every must-have Yes: 18 questions, 36 points possible; 27 = 75%, 26 = 72%
-e = same(mk(U, [], ['n', 'n', 'n', 'n', 'pl', 'y', 'y', 'y']), '27 of 36'); ok(e.pts === 27 && e.max === 36 && e.pct === 75 && e.level === 'ready', 'exactly 75% → Ready');
+// (v2.5: the top verdict also needs half the answered tailored questions at Yes, so the 75% set has 3 Yes of 4 answered)
+e = same(mk(U, [], ['y', 'y', 'y', 'pl', 'k', 'k', 'k', 'k']), '27 of 36'); ok(e.pts === 27 && e.max === 36 && e.pct === 75 && e.level === 'ready', 'exactly 75% → Ready');
+e = same(mk(U, [], ['n', 'n', 'n', 'n', 'pl', 'y', 'y', 'y']), '27 of 36, 3 of 8 tailored Yes'); ok(e.pct === 75 && e.level === 'almost' && e.held.join() === 'tail', 'v2.5: 75% with fewer than half the tailored questions at Yes is held back');
 e = same(mk(U, [], ['n', 'n', 'n', 'n', 'n', 'y', 'y', 'y']), '26 of 36'); ok(e.pct === 72 && e.level === 'almost', '72% → Almost ready');
 // display never rounds up over a cut-off: 74.x% shows 74
 e = L.evaluate(mk('rm-3', [], ['n', 'n', 'n', 'n', 'y', 'y']), TQ); ok(e.pts === 24 && e.max === 32 && e.pct === 75, 'rm-3 24/32 = 75%');
 e = same(mk('rm-1', ['y','y','y','y','y','y','y','y','y','y'], ['n','n','n','n','pl','pl']), 'rm-1 22/32'); ok(e.pct === 68 && e.level === 'almost', '68.75% is shown as 68%, Almost ready');
-// 50% edge (no must-have at No): musts all Planned = 10 points of 20; tailored all Planned = 8 of 16 → 18/36 = 50%
-e = same(mk(U, rep('pl', 10), rep('pl', 8)), '50%'); ok(e.pct === 50 && e.level === 'almost', 'exactly 50% → Almost ready');
-e = same(mk(U, rep('pl', 10), ['n'].concat(rep('pl', 7))), '47%'); ok(e.pct === 47 && e.level === 'notready', 'below 50% → Not ready yet');
+// 50% edge (no must-have at No; v2.5: half the must-haves at Yes): 5 Yes + 5 Planned = 15 of 20; tailored 3 Planned = 3 of 16 → 18/36 = 50%
+e = same(mk(U, rep('y', 5).concat(rep('pl', 5)), rep('pl', 3).concat(rep('n', 5))), '50%'); ok(e.pct === 50 && e.level === 'almost', 'exactly 50% → Almost ready');
+e = same(mk(U, rep('y', 5).concat(rep('pl', 5)), rep('pl', 2).concat(rep('n', 6))), '47%'); ok(e.pct === 47 && e.level === 'notready', 'below 50% → Not ready yet');
+e = same(mk(U, rep('pl', 10), rep('pl', 8)), 'all Planned, 50%'); ok(e.pct === 50 && e.level === 'notready' && e.kind === 'fewMust', 'v2.5 (O1): 50% with no must-have at Yes → Not ready yet (was Almost ready)');
 // cap by must-haves
 ['pl', 'k'].forEach(v => { e = same(mk(U, [v], []), 'one must-have ' + v); ok(e.level === 'almost' && e.cap && e.pct === (v === 'k' ? 94 : 97), 'a must-have at ' + v + ' caps the result at Almost ready even at ' + e.pct + '%'); });
 e = same(mk(U, ['n'], []), 'one must-have No'); ok(e.level === 'notready' && e.pct === 94, 'any must-have at No → Not ready yet, even at 94%');
@@ -128,7 +135,7 @@ for (let i = 0; i < 10; i++) { const m = rep('y', 10); m[i] = 'pl'; ok(L.evaluat
 e = same(mk(U, [], ['k', 'k', 'k', 'k', 'y', 'y', 'y', 'y']), '4 of 18 unknown'); ok(e.level === 'ready' && e.counts.unknown === 4, '4 of 18 unknown (22%) → still Ready');
 e = same(mk(U, [], ['k', 'k', 'k', 'k', 'k', 'y', 'y', 'y']), '5 of 18 unknown'); ok(e.level === 'almost' && e.pct === 72 && e.pts === 26 && e.max === 36, '5 of 18 unknown (28%): 26 of 36 points = 72% (v2.1: unknown scores 0), not Ready');
 e = same(mk('rm-3', [], ['k', 'k', 'k', 'k', 'y', 'y']), '4 of 16 unknown'); ok(e.level === 'almost', 'exactly a quarter unknown is not "fewer than a quarter"');
-e = same(mk(U, ['y', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k'], []), '9 of 18 unknown'); ok(e.level === 'almost', 'exactly half unknown is not "more than half"');
+e = same(mk(U, ['y', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k'], []), '9 of 18 unknown'); ok(e.level !== 'noinfo' && e.pct === 50, 'exactly half unknown is not "more than half" (v2.5: Not ready yet, 1 of 10 must-haves at Yes)');
 e = same(mk(U, rep('k', 10), []), '10 of 18 unknown'); ok(e.level === 'noinfo', 'more than half unknown → Not enough information yet');
 e = same(mk(U, rep('k', 10), rep('k', 8)), 'all unknown'); ok(e.level === 'noinfo' && e.pct === null && L.scoreHead(e) === 'No score yet: you answered 0 of 18 questions.', 'nothing known → no score, Not enough information yet');
 e = same(mk(U, ['n'].concat(rep('k', 9)), rep('k', 8)), 'No plus unknowns'); ok(e.level === 'noinfo', 'more than half unknown comes first, even with a must-have at No');
@@ -136,7 +143,7 @@ e = same(mk(U, ['n'].concat(rep('k', 9)), rep('k', 8)), 'No plus unknowns'); ok(
 e = same(mk(U, [], ['na', 'na', 'y', 'y', 'y', 'y', 'y', 'y']), 'two old na'); ok(e.counts.total === 18 && e.counts.unknown === 2 && e.pct === 88 && !('na' in e.counts), 'an old "Doesn\'t apply" counts as not answered');
 e = same(mk(U, ['p'], ['p']), 'two old p'); ok(e.counts.unknown === 2 && e.pts === 32 && e.level === 'almost' && e.cap && !('partly' in e.counts), 'an old "Partly" counts as not answered and caps a must-have');
 // None of these fits: must-haves only
-e = same(mk('none', [], []), 'none all yes'); ok(e.mustOnly && e.counts.total === 10 && e.level === 'ready', '"None of these fits": must-haves only, and can still be Ready');
+e = same(mk('none', [], []), 'none all yes'); ok(e.mustOnly && e.counts.total === 10 && e.level === 'almost' && e.held.join() === 'none', '"None of these fits": must-haves only; v2.5 (O4): Almost ready at best (was Ready)');
 e = same(mk('none', ['pl', 'pl', 'pl', 'pl', 'pl', 'n'], []), 'none with a No'); ok(e.level === 'notready' && e.mustOnly, 'none + a must-have No → Not ready yet');
 ok(L.resultModel(mk('none', [], []), { cat: D.cat, TQ }).mustOnly === C.MUST_ONLY && /must-haves only/.test(C.MUST_ONLY), 'the result says it rests on the must-haves only');
 // Planned scores 1 point (v2.3: Partly is gone)
@@ -174,7 +181,9 @@ const hr = L.resultModel(mk('hr-2', [], []), env); ok(hr.legal.name === RC.legal
 ok(L.resultModel(mk('lg-4', [], []), env).legal === null && L.resultModel(mk('lg-4', [], []), env).notTool, 'lg-4 (a document, not a tool): no label, said so');
 ok(m.method.some(t => /^Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0\.$/.test(t)) && m.method.some(t => /^Must-haves: \d+ of 10 in place.*\(\d+ of \d+ points; \d+ of 10 answered\)\.$/.test(t)) && m.method.some(t => /^Cut-offs: /.test(t) && /75% or more/.test(t) && /50% to 74%/.test(t) && /more than half/.test(t)) && m.method.some(t => /not been tested with hotels/.test(t)), 'how this was worked out: points, per area, cut-offs, caveat');
 ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): /.test(t)).length === 7, 'points per area, seven lines');
-const txt = L.summaryText(m); ok(txt.includes(m.levelName + ' · ' + m.scoreHead + '\n' + m.reason + '\n' + m.scoreSub) && txt.includes('Action plan by person:') && txt.includes('Content as of 24 Nov 2026'), 'Copy summary carries the verdict with the score beside it, the reason, the points, and the plan');
+// v2.5 (audit v3): Copy summary and summaryText are gone; the PDF carries the same words in the same order
+const pb = P.model(r, env).blocks, pi = pb.findIndex(b => b.t === m.levelName + ' · ' + m.scoreHead);
+ok(pi > 0 && pb[pi + 1].t === m.reason && pb[pi + 2].t === m.scoreSub && pb.some(b => b.k === 'h' && b.t === 'Action plan by person') && pb.some(b => /as of 24 Nov 2026/.test(b.t || '')), 'the PDF carries the verdict with the score beside it, the reason, the points, and the plan');
 ok(L.personText(m, m.people[0], '').startsWith('Do you need AI? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
 // draft use cases and evidence lines
 const drafts = Object.keys(TQ.uses).filter(k => TQ.uses[k].draft).sort();

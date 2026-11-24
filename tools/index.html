@@ -411,7 +411,8 @@ td.gap-hi { background: var(--warn-wash); }
   /* machine:end */
 
   var SRC = { team: 'readiness-check/team.html' }; // the team page still lives in the readiness check's folder (which stays published)
-  /* Tools a frame may open with { hub: 'open' }. 23 Nov 2026: + 'readiness-2' and 'use-case-catalogue' (Do you need AI? links to a department's sources).
+  /* Tools a frame may open with { hub: 'open' }. 23 Nov 2026: + 'readiness-2' and 'use-case-catalogue'. Since 24 Nov 2026 (Do you need AI?
+     v2.4) no frame sends 'use-case-catalogue' (its detail layer replaced the links); the entry is kept so the bridge stays open for later.
      24 Nov 2026: 'readiness-check' stays openable for old links (the AI Register's "check readiness" link with #use=<id>); it opens readiness-2 with the same hash. */
   var OPENABLE = { 'readiness-check': 1, register: 1, 'ai-act-guide': 1, 'readiness-2': 1, 'use-case-catalogue': 1 };
   var TIMEOUT_MS = 6000; // capability lookups and db calls answer before the frames' own 8 s / 12 s timeouts

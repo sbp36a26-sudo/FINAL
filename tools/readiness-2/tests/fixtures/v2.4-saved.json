@@ -1,0 +1,301 @@
+{
+ "_about": "Saved by the committed page v2.4 (rules v2.3, 24 Nov 2026), before any v2.5 change, by driving the real page (scratchpad capture.cjs). store: the localStorage value (check 1 gx-2 shared as a test copy, check 2 None of these fits); file: Save as file of check 1 before it was shared; team: the test copy list; seen: what v2.4 showed.",
+ "store": {
+  "v": 2,
+  "cur": "dynmwuppdk82073w",
+  "checks": {
+   "dynmwuppd0c1ghkq": {
+    "id": "dynmwuppd0c1ghkq",
+    "step": "result",
+    "hotel": {
+     "name": "Hotel Fixture",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "y",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "u"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "pl",
+     "m3": "y",
+     "m4": "pl",
+     "m5": "y",
+     "m6": "y",
+     "m7": "k",
+     "m8": "y",
+     "m9": "pl",
+     "m10": "y"
+    },
+    "By": {
+     "m2": "2027-03-01"
+    },
+    "cat": "Guest-facing",
+    "dept": "gx",
+    "use": "gx-2",
+    "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+    "from": "",
+    "tqSig": "1823a2a472",
+    "T": {
+     "pe1": "y",
+     "sk1": "pl",
+     "fi1": "y",
+     "te1": "n",
+     "da1": "k",
+     "or1": "y",
+     "or2": "pl",
+     "x-auto": "y"
+    },
+    "TBy": {},
+    "snaps": [
+     {
+      "at": "2026-11-24T13:10:03.935Z",
+      "level": "almost",
+      "pct": 69,
+      "pts": 25,
+      "max": 36,
+      "known": 16,
+      "total": 18,
+      "mustYes": 6,
+      "mustN": 10,
+      "rules": "v2.3 (24 Nov 2026)",
+      "use": "gx-2"
+     }
+    ],
+    "share": {
+     "named": false
+    },
+    "sharedAt": "2026-11-24T13:10:04.488Z",
+    "sharedMode": "local",
+    "sharedSig": "[{\"q1\":\"y\",\"q2\":\"y\",\"q3\":\"y\",\"q4\":\"y\",\"q5\":\"u\"},{\"m1\":\"y\",\"m2\":\"pl\",\"m3\":\"y\",\"m4\":\"pl\",\"m5\":\"y\",\"m6\":\"y\",\"m7\":\"k\",\"m8\":\"y\",\"m9\":\"pl\",\"m10\":\"y\"},{\"m2\":\"2027-03-01\"},\"gx-2\",{\"pe1\":\"y\",\"sk1\":\"pl\",\"fi1\":\"y\",\"te1\":\"n\",\"da1\":\"k\",\"or1\":\"y\",\"or2\":\"pl\",\"x-auto\":\"y\"},{},\"independent\",\"gm\",\"France\",false,\"\"]",
+    "updated": "2026-11-24T13:10:04.488Z"
+   },
+   "dynmwuppdk82073w": {
+    "id": "dynmwuppdk82073w",
+    "step": "result",
+    "hotel": {
+     "name": "Hotel Fixture",
+     "role": "gm",
+     "type": "group",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "y",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "y",
+     "m3": "y",
+     "m4": "y",
+     "m5": "y",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {},
+    "cat": "Operational",
+    "dept": "hk",
+    "use": "none",
+    "useName": "",
+    "from": "",
+    "tqSig": "",
+    "T": {},
+    "TBy": {},
+    "snaps": [
+     {
+      "at": "2026-11-24T13:10:04.551Z",
+      "level": "ready",
+      "pct": 100,
+      "pts": 20,
+      "max": 20,
+      "known": 10,
+      "total": 10,
+      "mustYes": 10,
+      "mustN": 10,
+      "rules": "v2.3 (24 Nov 2026)",
+      "use": "none"
+     }
+    ],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-24T13:10:04.551Z"
+   }
+  }
+ },
+ "file": {
+  "kind": "hftp-do-you-need-ai",
+  "v": 2,
+  "rules": "v2.3 (24 Nov 2026)",
+  "savedAt": "2026-11-24T13:10:04.153Z",
+  "check": {
+   "id": "dynmwuppd0c1ghkq",
+   "step": "result",
+   "hotel": {
+    "name": "Hotel Fixture",
+    "role": "gm",
+    "type": "independent",
+    "country": "France"
+   },
+   "Q": {
+    "q1": "y",
+    "q2": "y",
+    "q3": "y",
+    "q4": "y",
+    "q5": "u"
+   },
+   "A": {
+    "m1": "y",
+    "m2": "pl",
+    "m3": "y",
+    "m4": "pl",
+    "m5": "y",
+    "m6": "y",
+    "m7": "k",
+    "m8": "y",
+    "m9": "pl",
+    "m10": "y"
+   },
+   "By": {
+    "m2": "2027-03-01"
+   },
+   "cat": "Guest-facing",
+   "dept": "gx",
+   "use": "gx-2",
+   "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+   "from": "",
+   "tqSig": "1823a2a472",
+   "T": {
+    "pe1": "y",
+    "sk1": "pl",
+    "fi1": "y",
+    "te1": "n",
+    "da1": "k",
+    "or1": "y",
+    "or2": "pl",
+    "x-auto": "y"
+   },
+   "TBy": {},
+   "snaps": [
+    {
+     "at": "2026-11-24T13:10:03.935Z",
+     "level": "almost",
+     "pct": 69,
+     "pts": 25,
+     "max": 36,
+     "known": 16,
+     "total": 18,
+     "mustYes": 6,
+     "mustN": 10,
+     "rules": "v2.3 (24 Nov 2026)",
+     "use": "gx-2"
+    }
+   ],
+   "share": {
+    "named": false
+   },
+   "sharedAt": null,
+   "sharedMode": null,
+   "sharedSig": null,
+   "updated": "2026-11-24T13:10:03.935Z"
+  }
+ },
+ "team": {
+  "dynmwuppd0c1ghkq": {
+   "kind": "dyn",
+   "v": 2,
+   "rules": "v2.3 (24 Nov 2026)",
+   "useId": "gx-2",
+   "useName": "AI chat assistant for guests in several languages, before booking and during the stay (website, WhatsApp, booking-site inbox)",
+   "dept": "gx",
+   "cat": "Guest-facing",
+   "role": "gm",
+   "type": "independent",
+   "country": "France",
+   "Q": {
+    "q1": "y",
+    "q2": "y",
+    "q3": "y",
+    "q4": "y",
+    "q5": "u"
+   },
+   "answers": {
+    "m1": "y",
+    "m2": "pl",
+    "m3": "y",
+    "m4": "pl",
+    "m5": "y",
+    "m6": "y",
+    "m7": "k",
+    "m8": "y",
+    "m9": "pl",
+    "m10": "y"
+   },
+   "tailored": {
+    "pe1": "y",
+    "sk1": "pl",
+    "fi1": "y",
+    "te1": "n",
+    "da1": "k",
+    "or1": "y",
+    "or2": "pl",
+    "x-auto": "y"
+   },
+   "by": {
+    "m2": "2027-03-01"
+   },
+   "tby": {},
+   "level": "almost",
+   "pct": 69,
+   "known": 16,
+   "total": 18,
+   "met": 6,
+   "gates": 10,
+   "open": 8,
+   "reason": "Because 4 must-haves are not Yes yet: Budget for the full first year; Systems that can connect; Data you can reach and keep correct; Rules for staff on AI tools.",
+   "held": [],
+   "snaps": [
+    {
+     "at": "2026-11-24T13:10:03.935Z",
+     "level": "almost",
+     "pct": 69,
+     "met": 6,
+     "rules": "v2.3 (24 Nov 2026)"
+    }
+   ],
+   "sharedAt": "2026-11-24T13:10:04.469Z",
+   "named": false
+  }
+ },
+ "seen": {
+  "check1": {
+   "id": "dynmwuppd0c1ghkq",
+   "level": "almost",
+   "levelName": "Almost ready",
+   "scoreHead": "Score: 69%",
+   "mustLine": "6 of 10 must-haves in place · 3 planned · 1 to find out",
+   "reason": "Because 4 must-haves are not Yes yet: Budget for the full first year; Systems that can connect; Data you can reach and keep correct; Rules for staff on AI tools.",
+   "rules": "v2.3 (24 Nov 2026)"
+  },
+  "check2": {
+   "id": "dynmwuppdk82073w",
+   "level": "ready",
+   "levelName": "Ready to start a pilot",
+   "scoreHead": "Score: 100%"
+  }
+ }
+}

@@ -71,7 +71,7 @@ async function toMust(f) {
       const dt = DATA.detail['gx-2'], plain = DATA.tq.uses['gx-2'].plain, cu = DATA.cat.depts.find(d => d.id === 'gx').uses[1];
       ok((await f.textContent('#detail-title')) === plain && /^Catalogue name: /.test(await f.textContent('#detail-catname')) && /Guest/.test(await f.textContent('#detail .kicker')), tag + ': plain name, catalogue name, department and area');
       const body = await f.textContent('#detail');
-      ok(body.includes('What it does: ' + DATA.ex['gx-2'].does) && body.includes('How the AI works: ' + DATA.ex['gx-2'].how) && body.includes('Catalogue description: ' + cu.task) && body.includes('AI technique: ' + dt.ai) && /How common in hotels: (High|Medium|Low) \(Use-Case Catalogue rating\)\./.test(body), tag + ': what it does, how it works, catalogue description, AI technique, how common');
+      ok(body.includes('What it does: ' + DATA.ex['gx-2'].does) && body.includes('How the AI works: ' + DATA.ex['gx-2'].how) && body.includes('The catalogue’s own description (research wording): ' + cu.task) && !/AI technique/.test(body) && /How common in hotels: (High|Medium|Low) \(Use-Case Catalogue rating\)\./.test(body), tag + ': what it does, how it works, the catalogue description (research wording), how common; no AI technique notes (v2.5, BUILD NOW 8)');
       ok((await f.$$('#detail-srcs li')).length === dt.srcs.length && dt.srcs.length > 0 && (await f.$$eval('#detail-srcs a', e => e.every(a => a.target === '_blank' && /^https?:/.test(a.href) && a.rel.includes('noopener')))), tag + ': the catalogue\'s ' + dt.srcs.length + ' sources, links open in a new browser tab');
       ok((await f.$$eval('#detail-srcs li[data-src="h"] .tag', e => e.map(x => x.textContent))).every(t => t === 'Hotel'), tag + ': hotel sources keep the catalogue\'s "Hotel" label');
       const box = await f.evaluate(() => { const r = document.querySelector('#detail').getBoundingClientRect(); return { l: r.left, r: r.right, w: r.width, h: r.height, vw: innerWidth, vh: innerHeight }; });
@@ -94,7 +94,8 @@ async function toMust(f) {
       await f.focus('#dt-gx-2'); await p.keyboard.press('Space'); await f.waitForSelector('#detail[open]'); await f.waitForFunction(() => document.activeElement && document.activeElement.id === 'detail-close'); await p.waitForTimeout(100); await p.keyboard.press('Enter');
       await f.waitForFunction(() => !document.querySelector('#detail[open]')); ok((await active(f)) === 'dt-gx-2', tag + ': Space opens, Enter on Close closes, focus back');
       // owner 24 Nov 2026: no "What does this do?" button on the row; "Details and sources" is the only way in on step 4
-      ok(!(await f.$('#ex-gx-2')), tag + ': no "What does this do?" button on the row');
+      /* Audit v3 section 4: #ex- is also the must-haves' example prefix, so check the words and the one button per row. */
+      ok(!(await f.$('text=What does this do?')) && (await f.$$eval('#where .ucs:not(.nonefits) .uc', e => e.length > 0 && e.every(x => x.querySelectorAll('button').length === 1))), tag + ': no "What does this do?" button; one button per use-case row');
       await f.click('#dt-gx-2'); await f.waitForSelector('#detail[open]');
       ok((await st(f)).detail === 'gx-2', tag + ': "Details and sources" opens the layer again');
       // not printed

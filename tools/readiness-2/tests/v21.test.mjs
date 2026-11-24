@@ -30,7 +30,7 @@ const storeWith = (...recs) => { const s = { v: 2, cur: recs[0].id, checks: {} }
 // ====================================================================================================================
 // H2 + council items 1, 2, 3: the headline never contradicts itself
 // ====================================================================================================================
-ok(L.RULES === 'v2.3 (24 Nov 2026)', 'rules version bumped (v2.1, now v2.3: four answers)');
+ok(L.RULES === 'v2.5 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answers, now v2.5: owner O1 to O4)');
 {
   // the three rows the audit marked bold (machine 5), on rm-1
   const n = TQ.uses['rm-1'].qs.length;
@@ -40,12 +40,12 @@ ok(L.RULES === 'v2.3 (24 Nov 2026)', 'rules version bumped (v2.1, now v2.3: four
     ['must-haves Yes, tailored all "Don\'t know yet"', mk('rm-1', [], rep('k', n)), 'almost']
   ];
   cases.forEach(([tag, r, level]) => {
-    const m = L.resultModel(r, env), txt = L.summaryText(m), pdf = pdfText(r);
+    const m = L.resultModel(r, env), pdf = pdfText(r); // v2.5: Copy summary (summaryText) is gone; the PDF is the text that leaves the page
     ok(m.level === level, tag + ': ' + level + ' (got ' + m.level + ')');
-    ok(![everyWord(m), txt, pdf].some(t => /\d+% ready/.test(t)), tag + ': "% ready" appears nowhere (screen words, copy text, PDF)');
+    ok(![everyWord(m), pdf].some(t => /\d+% ready/.test(t)), tag + ': "% ready" appears nowhere (screen words, PDF)');
     ok(/^(Score: \d+%|No score yet: you answered \d+ of \d+ questions\.)$/.test(m.scoreHead), tag + ': the score reads "Score: n%" or "No score yet: …": ' + m.scoreHead);
-    ok(m.reason.startsWith('Because ') && txt.includes(m.reason) && pdf.includes(m.reason), tag + ': the reason is a visible line, on screen, in the copy text and in the PDF: ' + m.reason);
-    ok(txt.includes(m.levelName + ' · ' + m.scoreHead) && pdf.includes(m.levelName + ' · ' + m.scoreHead), tag + ': copy text and PDF carry the same verdict and score string');
+    ok(m.reason.startsWith('Because ') && pdf.includes(m.reason), tag + ': the reason is a visible line, on screen and in the PDF: ' + m.reason);
+    ok(pdf.includes(m.levelName + ' · ' + m.scoreHead), tag + ': the PDF carries the verdict and score string');
   });
   // item 1: the wording of the score
   // v2.3: Partly → Planned, Doesn't apply → No
@@ -57,7 +57,7 @@ ok(L.RULES === 'v2.3 (24 Nov 2026)', 'rules version bumped (v2.1, now v2.3: four
   // item 2: no score under "Not enough information yet"
   const none = L.resultModel(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []), env);
   ok(none.level === 'noinfo' && none.scoreHead === 'No score yet: you answered 4 of 10 questions.' && none.ev.pct === null && !/%/.test(none.scoreHead + none.scoreSub), 'item 2: "No score yet: you answered 4 of 10 questions." and no percentage (the council\'s none-6-result case)');
-  ok(L.summaryText(none).includes('Not enough information yet · No score yet: you answered 4 of 10 questions.') && !/Score: \d/.test(L.summaryText(none)) && !/Score: \d/.test(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []))), 'item 2: the same in the copy text and the PDF');
+  ok(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), [])).includes('Not enough information yet · No score yet: you answered 4 of 10 questions.') && !/Score: \d/.test(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []))), 'item 2: the same in the PDF');
   ok(L.snapshot(none.ev, '2026-11-24T10:00:00.000Z', 'none').pct === null, 'item 2: no percentage goes into the history or a shared copy either');
   // item 3: the reason in the verdict line (final copy)
   ok(L.evaluate(mk('gx-2', ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'n'], []), TQ).reason === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.', 'item 3: must-have at No (final copy)');
@@ -83,7 +83,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   m.ev.areas.forEach(g => ok((g.known >= 2) === !!g.word, 'item 6: ' + g.name + ' has a word only with two or more known answers (' + g.known + ')'));
   const one = L.resultModel(mk('rm-1', [], ['y', 'y', 'y', 'y', 'n', 'y']), env).areas.find(a => a.k === 'da');
   ok(one.line === 'Data: 0 of 1 in place' && one.word === '', 'item 6: "Data: 0 of 1 in place", no "Weak" from one answer');
-  ok(L.summaryText(m).includes('What is in place, by area:') && !/Score per area/.test(L.summaryText(m) + pdfText(r)) && pdfText(r).includes('Must-haves: 6 of 10 in place'), 'item 6: the same heading and rows in the copy text and the PDF');
+  ok(pdfText(r).includes('What is in place, by area') && !/Score per area/.test(pdfText(r)) && pdfText(r).includes('Must-haves: 6 of 10 in place'), 'item 6: the same heading and rows in the PDF');
   ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): \d+ of \d+ in place/.test(t)).length === 7 && !m.method.some(t => /^(Must-haves|People|Skills|Data)[^.]*= \d+%/.test(t)), 'item 6: the working-out lists the areas as counts with their points, no area percentage');
 }
 {
@@ -95,7 +95,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   Object.keys(TQ.uses).forEach(id => {
     const flagged = TQ.highRisk.includes(id) || sens.includes(id);
     [mk(id, [], []), mk(id, ['n'], []), mk(id, rep('k', 10), [])].forEach(r => { const m = L.resultModel(r, env); ok((m.law === C.LAW_LINE) === flagged, id + ' (' + m.level + '): the law line is shown ' + (flagged ? 'under every verdict' : 'never')); });
-    if (flagged) { const m = L.resultModel(mk(id, [], []), env); ok(m.legal && m.legal.items.length >= 1, id + ': the “EU AI Act” block the line points to exists and lists items'); ok(L.summaryText(m).includes(C.LAW_LINE) && pdfText(mk(id, [], [])).includes(C.LAW_LINE), id + ': the law line is in the copy text and the PDF'); }
+    if (flagged) { const m = L.resultModel(mk(id, [], []), env); ok(m.legal && m.legal.items.length >= 1, id + ': the “EU AI Act” block the line points to exists and lists items'); ok(pdfText(mk(id, [], [])).includes(C.LAW_LINE), id + ': the law line is in the PDF'); }
   });
   ok(L.resultModel(mk('none', [], []), env).law === '', 'item 7: no law line without a use case');
 }
@@ -117,7 +117,7 @@ ok(TQ.uses['gx-2'].qs.some(q => q.q === 'Is it agreed how you will tell guests t
 // ====================================================================================================================
 // Team judgement: B2, B5, B6, each behind one named constant
 // ====================================================================================================================
-ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true }), 'the three switches, all on');
+ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true, ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true }), 'the three v2.1 switches, all on (v2.5 adds five named constants, owner O1 to O4)');
 {
   const J = L.JUDGEMENT, flip = (k, f) => { J[k] = false; try { f(); } finally { J[k] = true; } };
   // B2
@@ -140,20 +140,21 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(L.method(L.evaluate(mk('gx-2', [], []), TQ)).some(t => t.startsWith('Team judgement: a use that the AI Register labels high-risk')), 'B5: listed in "How this was worked out" as team judgement');
   ok(L.evaluate(mk('hr-2', ['n'], []), TQ).level === 'notready' && L.evaluate(mk('hr-2', ['n'], []), TQ).held.length === 0, 'B5: only the top verdict is held; a must-have No is still "Not ready yet"');
   // B6
-  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information ready', 'Fix the data first'], ['q4', 'Safety net', 'AI as an assistant only: a person checks every result before it counts'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
+  // v2.5 (owner O3): question 4 no longer holds the top verdict (tests/v25.test.mjs); questions 2, 3 and 5 still do
+  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information ready', 'Fix the data first'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
     const r6 = mk('gx-2', [], []); r6.Q[q] = 'n'; const e6 = L.evaluate(r6, TQ);
     ok(e6.level === 'almost' && eq(e6.held, ['carried']) && e6.pct === 100, 'B6: a No on ' + q + ' blocks the top verdict');
     ok(e6.reason === 'Because you answered No in step 2 to “' + title + '” (' + out + '). The top verdict is held back until that is settled.', 'B6: the reason is shown: ' + e6.reason);
   });
   let r6 = mk('gx-2', [], []); r6.Q.q3 = 'u';
-  ok(L.evaluate(r6, TQ).level === 'ready', 'B6: "Not sure" in step 2 does not block (only a No does)');
+  ok(L.evaluate(r6, TQ).level === 'almost' && eq(L.evaluate(r6, TQ).held, ['notsure']), 'B6 / v2.5 (owner O2): a "Not sure" in step 2 now holds the top verdict too (was: only a No)');
   r6 = mk('gx-2', [], []); r6.Q.q3 = 'n';
   flip('CARRIED_NO_HOLDS_TOP', () => ok(L.evaluate(r6, TQ).level === 'ready' && L.resultModel(r6, env).ai.carried.length === 1, 'B6 off: the No is carried as a condition only'));
-  ok(L.method(L.evaluate(r6, TQ)).some(t => t === 'Team judgement: a No on questions 2 to 5 of step 2 holds the top verdict back until it is settled.'), 'B6: listed in "How this was worked out" as team judgement');
+  ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3 or 5 of step 2 holds the top verdict back until it is settled\. A No on question 4 does not/.test(t)), 'B6 (v2.5 wording, O3): listed in "How this was worked out" as team judgement');
   r6 = mk('hr-2', [], []); r6.Q.q5 = 'n'; const both = L.evaluate(r6, TQ);
   ok(eq(both.held, ['legal', 'carried']) && /^Because this use has legal items .* Also because you answered No in step 2 to “Proof”/.test(both.reason), 'B5 + B6 together: both reasons, in one sentence each');
   // the switches are named in the source where the owner flips them
-  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true \};/.test(rd('src/logic.js')), 'one named constant each, in one line of src/logic.js');
+  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, Q4_NO_HOLDS_TOP: false, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage
   ok(L.evaluate(mk('gx-2', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 99, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 99 use cases');
 }
@@ -163,8 +164,9 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
 // ====================================================================================================================
 {
   const m = L.resultModel(mk('none', [], []), env);
-  ok(m.level === 'ready' && m.levelLine === 'Every must-have is in place. No use case was chosen, so nothing else was checked.' && !/use case needs/.test(m.levelLine) && m.mustOnly === C.MUST_ONLY, 'M6: none + all Yes: the line does not speak of "this use case"; the limit is named');
-  ok(!/use case needs/.test(L.summaryText(m)) && !/use case needs/.test(pdfText(mk('none', [], []))), 'M6: nor do the copy text and the PDF');
+  // v2.5 (owner O4): none + all Yes is "Almost ready" with the council's line (was "Ready" with the v2.1 line)
+  ok(m.level === 'almost' && m.levelLine === 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.' && !/use case needs/.test(m.levelLine) && m.mustOnly === C.MUST_ONLY, 'M6: none + all Yes: the line does not speak of "this use case"; the limit is named');
+  ok(!/use case needs/.test(pdfText(mk('none', [], []))), 'M6: nor does the PDF');
 }
 
 // ====================================================================================================================
@@ -306,7 +308,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   const team = rd('../readiness-check/src/team.js'), built = rd('../readiness-check/team.html');
   ok(/whose use case is no longer in the catalogue/.test(team) && /function dynGone/.test(team), 'M7b: a "Do you need AI?" copy with an unknown use id has its own count and is listed');
   ok(/Do you need AI\? \(rules /.test(team) && /Earlier Readiness check \(rules /.test(team) && /Score: n%/.test(team), 'M7a: the rules card has a block for each kind of copy');
-  ok(built.includes('"highRisk":["res-8","hr-2","hr-5"]') && built.includes("RULES = 'v2.3 (24 Nov 2026)'"), 'M7: the team page is rebuilt with rules v2.1 and the high-risk list');
+  ok(built.includes('"highRisk":["res-8","hr-2","hr-5"]') && built.includes("RULES = 'v2.5 (24 Nov 2026)'"), 'M7: the team page is rebuilt with the current rules (v2.5) and the high-risk list');
   ok(!/[A-Z]{3}-\d{3}-\d{2}/.test(rd('src/app.js')) && /Research record entries/.test(team), 'item 8: the ids are shown on the Team tab only');
 }
 
@@ -350,7 +352,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   const od = mk('gx-2', ['pl'], []); od.By.m1 = '2001-01-01';
   ok(F.cleanRec(JSON.parse(JSON.stringify(od)), ENV, {}).By.m1 === '2001-01-01', 'L5: a past date saved earlier is kept');
   const om = L.resultModel(od, env);
-  ok(om.first[0].text.endsWith('(was planned by 1 Jan 2001, overdue).') && om.itemList[0].answer === 'Planned (was planned by 1 Jan 2001, overdue)' && !/\(planned by 1 Jan 2001\)/.test(L.summaryText(om)), 'L5: and shown as "was planned by 1 Jan 2001, overdue"');
+  ok(om.first[0].text.endsWith('(was planned by 1 Jan 2001, overdue).') && om.itemList[0].answer === 'Planned (was planned by 1 Jan 2001, overdue)' && !/\(planned by 1 Jan 2001\)/.test(P.model(od, env).blocks.map(b => [b.t, b.sub].join(' ')).join('\n')), 'L5: and shown as "was planned by 1 Jan 2001, overdue" (screen and PDF)');
   ok(/min="' \+ L\.localIso\(\) \+ '"/.test(app), 'L5: the date field has min = today');
   // L6
   ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && /mode === 'local' && storage === 'ok' \? 'Outside the project hub/.test(app), 'L6: with storage not ok, neither "kept here until you remove it" nor "a test copy in this browser"');

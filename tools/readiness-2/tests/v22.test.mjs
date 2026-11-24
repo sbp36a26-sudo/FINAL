@@ -1,5 +1,7 @@
 // "Do you need AI?" v2.2 (24 Nov 2026): the team's plain wording (data/wording.json) and the use-case explainer (data/explain.json).
-// The browser proof (the "What does this do?" button and panel) was run with a Playwright script outside the repo; screenshots in reports/readiness-2-screens/wording/.
+// The data checks below still apply. The v2.2 browser proof of the explainer button no longer applies: that button was removed on
+// 24 Nov 2026 (commit 7e0530e) and "Details and sources" opens the detail layer (tests/browser/v23.cjs, v25.cjs; v25.cjs retakes
+// the screenshots in reports/readiness-2-screens/wording/).
 // Run: node tools/readiness-2/tests/v22.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,7 +54,7 @@ const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: 
 const rm = L.resultModel(finished(F, D, 'rm-1'), env);
 ok(rm.path.endsWith(W.names['rm-1']) && rm.useName === W.names['rm-1'] && rm.catName === 'Catalogue name: ' + D.cat.depts[0].uses[0].n, 'result: plain name in "Where it sits", catalogue name in small text');
 ok(rm.useTask === 'What it does: ' + E['rm-1'].does && rm.useHow === 'How the AI works: ' + E['rm-1'].how && rm.useLevel === L.useLevelLine(D.cat.depts[0].uses[0]), 'result: what it does and how the AI works replace the catalogue task text');
-ok(L.summaryText(rm).includes('Where it sits: ' + rm.path), 'summary: the plain name');
+ok(P.model(finished(F, D, 'rm-1'), env).blocks.some(b => b.k === 'lead' && b.t === rm.path), 'PDF: the plain name in "Where it sits" (v2.5: Copy summary is gone)');
 const pt = P.model(finished(F, D, 'rm-1'), env).blocks.map(b => b.t).join('\n');
 ok(pt.includes(rm.useTask) && pt.includes(rm.useHow) && pt.includes(rm.catName) && pt.includes(rm.path), 'PDF: plain name, what it does, how it works, catalogue name');
 const rmNoEx = L.resultModel(finished(F, D, 'rm-1'), Object.assign({}, env, { ex: null }));

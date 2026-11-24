@@ -35,7 +35,7 @@ function mk(use, musts, tail, o) {
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
   const need = [m.levelName + ' · ' + m.scoreHead, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.ai.q1Unsure, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
-    .concat(m.ai.carried, m.ai.find, m.areas.map(a => a.line), m.first.map(f => f.who + ': ' + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
+    .concat(m.ai.carried, m.ai.find, m.areas.map(a => a.line), m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.method, m.answers.map(a => a.title + ': ' + a.q), m.answers.map(a => 'Your answer: ' + a.a), m.itemList.map(i => i.q), m.itemList.map(i => 'Your answer: ' + i.answer),
       m.legal ? [m.legalNote, m.legal.why, m.legal.country, m.legal.labour].concat(m.legal.could, m.legal.items.map(i => i.text), m.legal.items.map(i => i.sub)) : [], m.since ? [m.since.head].concat(m.since.lines) : []).filter(Boolean);
   const missing = need.filter(x => !t.includes(x));
