@@ -91,7 +91,7 @@ async function walk(p, f, tag, plan, shots) {
     const dept = plan.use.split('-')[0];
     await click(f, `[data-cat="${AREA[dept]}"]`); await click(f, '#dept-' + dept);
     ok(await f.isVisible(`label[for="u-${plan.use}"]`), tag + ': the use case is offered');
-    await click(f, `label[for="u-${plan.use}"]`);
+    await click(f, `label[for="u-${plan.use}"] .ucn`);
     await check(f, tag + ' where'); await S('4-where');
     await click(f, '#next');
     ok((await f.getAttribute('#app', 'data-state')) === 'tailored', tag + ': step 5 Questions for this use case');

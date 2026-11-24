@@ -300,7 +300,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       await p.click('#begin'); await p.selectOption('#h-type', 'independent'); await p.click('#next');
       for (const q of ['q1', 'q2', 'q3', 'q4', 'q5']) await p.click(`label[for="a-${q}-y"]`); await p.click('#next');
       for (let i = 1; i <= 10; i++) await p.click(`label[for="a-m${i}-y"]`); await p.click('#next');
-      await p.click('#cat-commercial'); await p.click('#dept-rm'); await p.click('label[for="u-rm-1"]'); await p.click('#next');
+      await p.click('#cat-commercial'); await p.click('#dept-rm'); await p.click('label[for="u-rm-1"] .ucn'); await p.click('#next');
       for (const t of (await state(p)).tailored) await p.click(`label[for="a-${t}-y"]`); await p.click('#next');
       ok((await state(p)).step === 'result', wtag + ' M4: a finished check (seven history entries)');
       // L10: Change answers from the start → Q1 No → stop; Back shows q, then hotel, never stop again

@@ -99,19 +99,19 @@ Risk: medium; WAAPI is interruptible and leaves no state.
 
 ## Builder checklist
 
-- [ ] 1 Side stripes → full borders; print rule added; print preview unchanged
-- [ ] 2 `.stephead h2` up, `.crisp` down
-- [ ] 3 No uppercase/tracking on `.kicker`, `.itemname`, `.yn-head`
-- [ ] 4 `:focus-visible` rings via `:has()`; `.missing` in `--lo`
-- [ ] 5 Phone option grid; `.opts` gap 8px
-- [ ] 6 Hover gated; `.opt`/`.uc` hover; press scale; tap highlight off
-- [ ] 7 70ch measure in panels
-- [ ] 8 Question spacing; result folds as ruled list
-- [ ] 9 `#actions` after `#result`; one primary
-- [ ] 10 CSS-drawn marks; `::selection`, `accent-color`, `caret-color`
-- [ ] 11–12, 14 Small text floor; `.uc` padding; progress contrast
-- [ ] 13 Four motions from JS, reduced-motion path checked
-- [ ] 15 Font loading checked in the hub
-- [ ] Every `id`, `data-*`, `data-state` still present; `tests/` green; `pdf.test.mjs` output identical
-- [ ] Light and dark, 390 / 760 / 1280px, keyboard only, 200% zoom, AA contrast re-measured
-- [ ] Beside the sibling tools: still one family
+- [x] 1 Side stripes → full borders; print rule added; print preview unchanged (print render compared side by side; only the 14px text floor shows)
+- [x] 2 `.stephead h2` up, `.crisp` down
+- [x] 3 No uppercase/tracking on `.kicker`, `.itemname`, `.yn-head`
+- [x] 4 `:focus-visible` rings via `:has()`; `.missing` in `--lo`
+- [x] 5 Phone option grid; `.opts` gap 8px (plus line-height 1.25 in the grid so two-line options stay compact)
+- [x] 6 Hover gated; `.opt`/`.uc` hover; press scale; tap highlight off (`.uc` hover uses `--bg`, not `--line2`: small grey text on `--line2` fell to 4.4:1 in dark)
+- [x] 7 70ch measure in panels
+- [x] 8 Question spacing; result folds as ruled list (the tightening sits on `#result + #actions`, since item 9 puts the actions there)
+- [x] 9 `#actions` after `#result`; one primary
+- [x] 10 CSS-drawn marks; `::selection`, `accent-color`, `caret-color`
+- [x] 11–12, 14 Small text floor; `.uc` padding; progress contrast (`--ctl` alone was 2.95:1 on the light page: segments use `--ctl` mixed 15% towards ink in light (3.7:1) and 32% towards the page in dark (3.4:1, 2.5:1 apart from the accent))
+- [x] 13 Four motions from JS, reduced-motion path checked (fold motion only when the person opens it, not when a re-render restores an open fold)
+- [x] 15 Font loading checked in the hub: Plex Sans and Condensed load standalone and in the hub frame (local serve); not changed
+- [x] Every `id`, `data-*`, `data-state` still present; `tests/` green; `pdf.test.mjs` output identical (pdf.js untouched)
+- [x] Light and dark, 390 / 1280px (and 320, 640 = 200% zoom), keyboard focus, AA contrast re-measured; 760px not shot separately
+- [ ] Beside the sibling tools: still one family (tokens and fonts unchanged; not compared side by side with the catalogue, AI Act guide and Register in this pass)

@@ -28,6 +28,28 @@ Inputs: `reports/audit-readiness-2/cleanup_inventory_v2.md` (23 faults) and `rep
 
 Tests: logic 7,473 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,204; browser walk 832, `tests/browser/v21.cjs` 592.
 
+## Design pass (24 Nov 2026): look and feel only
+
+Spec: `reports/audit-readiness-2/design_pass_plan.md` (items 1–14 done, 15 checked). Skills used (`.claude/skills/`): Impeccable (`SKILL.md`, `reference/craft-floor.md`, `typeset.md`, `layout.md`, `polish.md`, `adapt.md`, `animate.md`), taste-skill (`references/system.md`, `motion.md`), Emil Kowalski's `emil-design-eng`, `review-animations/STANDARDS.md` and `mobile-native`. No wording, question, flow, scoring, data, token, font or hook change; print and PDF unchanged.
+
+| Item | What changed |
+|---|---|
+| 1 | Side stripes gone: verdicts and the Yes / No / Not sure boxes have a full 1px border; "by when" and "Not sure?" lines lose their bar; print keeps its 4px left rule |
+| 2 | Step titles 1.75rem (1.5rem on phones); C-R-I-S-P 1.25rem in ink, so the title leads |
+| 3 | Small labels (step kicker, must-have names, Yes/No heads) in sentence case, no tracking |
+| 4 | Focus ring on answers only for keyboard (`:has(input:focus-visible)`); a skipped question is outlined in red, not in the focus blue |
+| 5 | Phones: answer scales with four or more options sit in a steady two-column grid; gap 8px |
+| 6 | Hover only on mouse devices; hover on answers and use-case rows; press scales to 0.97 (off under reduced motion); no tap flash |
+| 7 | Text in panels capped at 70 characters a line |
+| 8 | More space between questions; reference folds on the result are a ruled list, not cards |
+| 9 | Result: the verdict comes first, the actions below it; one primary (PDF), the rest quiet text buttons (same ids and `data-act`) |
+| 10 | Chevrons, Back mark and the answer tick drawn in CSS (no glyphs); selection, caret, form controls and underline offset in the palette |
+| 11, 12, 14 | Small text floor 14px (13px for chips and tags); use-case rows padded inside their tint; progress segments ≥3:1 against the page in both themes |
+| 13 | Motion in four places: step arrival (180ms), fold opening (150ms, only when the person opens it), result bars grow once (400ms), toast entry; reduced motion: opacity only |
+| 15 | IBM Plex Sans and Condensed load in the standalone page and inside the hub (checked locally; the browser tests block font requests, so their screenshots use the fallback) |
+
+Screens before and after: `reports/readiness-2-screens/design-pass/` (before in `before/`).
+
 ## v2.0 (24 Nov 2026): new flow, tailored questions, percentage plus verdict; replaces the Readiness check tab
 
 Owner's decision of 24 Nov 2026. Full notes: `research_notes/Do you need AI v2/build_notes.md`.
