@@ -9,6 +9,7 @@ const { C, L, F, P, RC } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('pdf');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const PG = P.PAGE;
 const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), today: '2026-11-24' };
 
 const jctx = { atob, btoa, console, TextEncoder, TextDecoder }; jctx.self = jctx; jctx.globalThis = jctx;
@@ -22,7 +23,7 @@ function spyPdf(log) {
   } };
 }
 function drawn(m) { const log = []; const r = P.draw(m, spyPdf(log), font); return { r, log }; }
-const texts = m => m.blocks.map(b => [b.t, b.a, b.m, b.name, b.check, b.answer, b.sub].filter(Boolean).join(' | '));
+const texts = m => m.blocks.map(b => [b.t, b.a, b.m, b.name, b.check, b.answer, b.sub, b.box].filter(Boolean).join(' | '));
 const all = m => texts(m).join('\n');
 const heads = m => m.blocks.filter(b => b.k === 'h').map(b => b.t);
 function mk(use, musts, tail, o) {
@@ -34,7 +35,7 @@ function mk(use, musts, tail, o) {
 /* Every word of the result model must be in the PDF, as it is. */
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
-  const need = [m.levelName + ' · ' + m.scoreHead, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
+  const need = [m.levelName + ' · ' + m.scoreHead, m.boxLine, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
     /* v2.5.1: the AI-problem section explains each answer (line, ask, ifNo) instead of the carried / to-find-out lists. */
     .concat(m.answers.map(a => a.line), m.answers.map(a => a.ask), m.answers.map(a => a.ifNo), m.areas.map(a => a.line), m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.method, m.answers.map(a => a.title + ': ' + a.q), m.answers.map(a => 'Your answer: ' + a.a), m.itemList.map(i => i.q), m.itemList.map(i => 'Your answer: ' + i.answer),
@@ -50,8 +51,12 @@ let r = mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', '
 let { m, pdf, t } = sameWords(r, 'gx-2');
 ok(eq(heads(pdf), ['Result', 'Start with these three', 'Is this an AI problem?', 'Where it sits', 'What is in place, by area', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label', 'Every question and your answer', 'How this was worked out', 'Sources']), 'sections, in the result page\'s order');
 ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
+/* PDF redesign: page 1: the box (verdict, score, the short reason line, the must-haves line), the reason and the points under it,
+   then "Start with"; a page break before "Is this an AI problem?". */
 const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
-ok(lv.t === 'Not ready yet · Score: 69%' && why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 36 points on 18 questions: 16 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them.'), 'the verdict with the score, the reason, then the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
+ok(lv.k === 'verdict' && lv.t === 'Not ready yet · Score: 69%' && lv.name === 'Not ready yet' && lv.score === 'Score: 69%' && lv.box === 'Because 1 must-have is No.' && lv.sub === m.mustLine && lv.tone === 'lo' &&
+  why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 36 points on 18 questions: 16 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them.'), 'the verdict box (name, score, box line, must-haves line, colour), then the reason, the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
+ok(pdf.blocks.filter(b => b.k === 'page').length === 1 && pdf.blocks[pdf.blocks.findIndex(b => b.k === 'page') + 1].t === 'Is this an AI problem?' && pdf.run.hotel === m.hotel && pdf.run.date === m.date && pdf.blocks.some(b => b.k === 'meta' && b.t === 'Use case: ' + m.useName), 'page 1 is the summary (a page break before the five questions); the use case on page 1; the running header\'s hotel and date');
 ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
 ok(t.includes('Finish: Agree the KPI this tool must improve') && t.includes('(planned by 15 Jan 2027).') && t.includes('Your answer: Planned (planned by 15 Jan 2027)') && t.includes('Your answer: No') && !/Partly|Doesn’t apply|does not apply/.test(t), 'planned dates are shown; no Partly or Doesn\'t apply anywhere (v2.3)');
 ok(pdf.blocks.filter(b => b.k === 'item').length === 18 && pdf.blocks.filter(b => b.k === 'q').length === 5, '18 questions with answers, and the five questions');
@@ -76,19 +81,41 @@ ok(n === 220, '220 answer sets (every use case at least once) checked word for w
 r = finished(F, D, '', { Q: { q1: 'n', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf);
 ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered No to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Is each case different enough that fixed “if this, then that” rules cannot handle it?', 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
 ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: No', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
-let d = drawn(pdf); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
+let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
 
 // ---------- drawing ----------
-function noOverflow(log, tag) { const bad = log.filter(l => l.x + l.w > 210 - 18 + 0.6 || l.x < 17.9 || l.y > 297 - 8); ok(bad.length === 0, tag + ': no line runs past the margins ' + JSON.stringify(bad.slice(0, 2))); }
+/* PDF redesign: margins 20 mm; the body between the running header (y < 16) and the footer (y > 297 - 16). */
+function noOverflow(log, tag) { const bad = log.filter(l => l.x + l.w > PG.W - PG.M + 0.6 || l.x < PG.M - 0.1 || l.y > PG.H - 8 || l.y < 10); ok(bad.length === 0, tag + ': no line runs past the margins ' + JSON.stringify(bad.slice(0, 2))); }
+function body(l) { return l.y > 16 && l.y < PG.H - 16; }
+function layout(mdl, d, tag) {
+  const N = d.r.pages, byPage = p => d.log.filter(l => l.page === p);
+  ok(d.log.filter(body).every(l => l.y <= PG.BOT + 0.5), tag + ': no body line below the bottom margin');
+  let feet = 0, heads = 0;
+  for (let p = 1; p <= N; p++) { const ls = byPage(p).map(l => l.line); if (ls.includes(P.FOOT_L) && ls.includes('page ' + p + ' of ' + N)) feet++; if (p > 1 && ls.some(l => l.startsWith('Do you need AI? · ') && byPage(p).find(x => x.line === l).y < 15)) heads++; }
+  ok(feet === N, tag + ': the footer (prototype line, "page n of N") on every page (' + feet + ' of ' + N + ')');
+  ok(heads === N - 1, tag + ': the running header (tool, hotel, date) on every page after the first');
+  /* no heading, sub-heading or table head as the last line of a page */
+  const hd = mdl.blocks.filter(b => P.sticky(b)).map(b => P.safe(b.t)).concat(['Question']);
+  const orphans = [];
+  for (let p = 1; p <= N; p++) { const ls = byPage(p).filter(body); if (!ls.length) continue; const last = ls.reduce((a, l) => l.y >= a.y ? l : a); if (hd.some(h => h === last.line || h.length > 70 && h.startsWith(last.line))) orphans.push(p + ': ' + last.line); }
+  ok(orphans.length === 0, tag + ': no heading as the last line of a page ' + JSON.stringify(orphans));
+  ok(!mdl.stop ? byPage(1).some(l => l.line.startsWith(mdl.blocks.find(b => b.k === 'verdict').name)) && !byPage(1).some(l => l.line === 'Is this an AI problem?') : N === 1, tag + ': page 1 is the summary (the verdict on it, the five questions start on page 2)');
+}
 for (const [tag, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'pl'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
   const mdl = P.model(rec, env); d = drawn(mdl);
   ok(d.r.pages >= 2 && d.r.pages <= 9 && d.r.footers.length === d.r.pages && d.r.footers.every((f, i) => f === P.footer(i + 1, d.r.pages)), tag + ': ' + d.r.pages + ' pages, a footer with "page n of N" on each');
-  noOverflow(d.log, tag);
+  noOverflow(d.log, tag); layout(mdl, d, tag);
   const printed = d.log.map(l => l.line).join(' ').replace(/\s+/g, ' ');
   ok(['What is in place, by area', 'Action plan by person', 'How this was worked out'].every(hh => printed.includes(hh)) && printed.includes(L.resultModel(rec, env).scoreHead), tag + ': the headings and the score are drawn');
   ok(!/\?{2,}/.test(printed.replace(/\?”/g, '')), tag + ': no run of unprintable characters');
   ok(d.r.doc.output('arraybuffer').byteLength > 20000, tag + ': a real PDF comes out');
 }
+// page count and layout over many answer sets
+seed = 5; let pc = [];
+for (let i = 0; i < 99; i += 3) { const use = uses[i], rec = mk(use, F.MUST_IDS.map(() => pick(['y', 'pl', 'n', 'k'])), TQ.uses[use].qs.map(() => pick(['y', 'pl', 'n', 'k'])), { Q: { q1: pick(['y', 'u']), q2: pick(['y', 'n', 'u']), q3: 'y', q4: pick(['y', 'n']), q5: 'y' } });
+  const mdl = P.model(rec, env); d = drawn(mdl); pc.push(d.r.pages); noOverflow(d.log, 'layout ' + use); layout(mdl, d, 'layout ' + use); }
+ok(Math.min(...pc) >= 4 && Math.max(...pc) <= 9, 'page count sane over 33 use cases: ' + Math.min(...pc) + ' to ' + Math.max(...pc) + ' pages');
+d = drawn(P.model(finished(F, D, '', { Q: { q1: 'n', q2: 'n', q3: 'n', q4: 'n', q5: 'n' }, A: {}, step: 'stop' }), env)); ok(d.r.pages === 1, 'stop PDF with five No answers: still one page');
 ok(P.safe('é ł ø € › “x” → ✓ 汉') === 'é ł ø € › “x” → ? ?', 'characters the font lacks print as "?"');
 // ---------- file names ----------
 ok(P.fileName('Hôtel de la Paix', '2026-11-24') === 'Do-you-need-AI_Hotel-de-la-Paix_2026-11-24.pdf' && P.fileName('', '2026-11-24') === 'Do-you-need-AI_assessment_2026-11-24.pdf' && P.fileName('../../x<y>|z', '2026-11-24') === 'Do-you-need-AI_x-y-z_2026-11-24.pdf', 'file names: safe ASCII');

@@ -1,5 +1,17 @@
 # Do you need AI? (formerly "AI starting point", "Readiness 2.0"): changelog
 
+## PDF redesign (24 Nov 2026). Not committed, not published.
+
+Owner: "the PDF needs to have better output and look more appealing". Only `src/pdf.js` and `tests/pdf.test.mjs` changed; words, rules, storage and the screen are unchanged.
+
+**What was poor (before, `reports/readiness-2-screens/pdf/before/`):** everything in one grey; the verdict was a bold body line, no stronger than the reason under it; page 1 ran straight into the five questions; areas, the action plan and the legal items were dash lists (nothing to tick); every answer took three stacked lines (two pages for 18 questions); seven sizes of type; no running header; the footer on one line; headings kept with "about 24 mm", not with their content.
+
+**Now (`after/`):** A4, 20 mm side margins, four sizes (title 20, heading 12.5, body 9.5, small 8; the verdict word 17), Register Sans, the tool's colours. Page 1 is the summary: hotel, use case (new label "Use case:"; the use case's name, or "None of these fits"), date, the verdict box in the verdict's colour (soft fill, a coloured edge: verdict, score, the box's short reason line as on screen, the must-haves line), the reason and the points under it, then "Start with". The five questions start on page 2 as a card (answer in a coloured tag, its meaning under it); areas as a table with bars; the action plan by person with tick boxes; numbered vendor questions; the AI Act label in the accent colour, its items with tick boxes; every answer as a two-column table ("Question" / "Your answer", the head repeated on each page, the answer in its colour); method and sources in small type. Running header (tool, hotel, date) from page 2; footer "Do you need AI? · student prototype, not legal advice" left, "page n of N" right. Each block is measured before it is drawn: no block splits, a heading keeps its first block with it, the areas table stays whole; the stop version stays one page (tighter gaps).
+
+**Fixed:** the box's short reason line (`#box-reason`) was missing from the PDF; it is now in the box.
+
+**Tests** (`tests/pdf.test.mjs`, 482 → 714): changed expectations: the verdict block is `k: 'verdict'` (name, score, box, must-haves line, colour); `texts()` reads `box`; the words check includes the box line; margins 20 mm. New: page 1 is the summary (one page break, before the five questions); the running header and the footer on every page; no line past the margins or the bottom margin; no heading, sub-heading or table head as a page's last line (fails 10 times with keep-with-next off); page count 4 to 9 over 33 use cases; stop with five No answers still one page. All suites and browser walks green (walk 860, v21 610, v23 144, v25 137, v251 54).
+
 ## v2.5.1 (24 Nov 2026): sources open in the hub; the "Is this an AI problem?" card explains every answer. Not committed, not published.
 
 Two owner-reported problems in the published hub. Rules (v2.5), storage, file format, ids and the existing hub messages are unchanged.
