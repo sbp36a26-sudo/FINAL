@@ -203,6 +203,7 @@
       return s;
     }
     if (v > V) info.newer = true;
+    if (v < V) info.older = true; // v2.6.1 (inventory v4 B4): saved by an older page (for a storage event: another tab still open on it)
     var cs = obj(raw.checks);
     /* At most MAX_CHECKS: the open one (info.keep: this tab's; else the store's) always, then the newest by "last changed" (audit L4). */
     var open = own(cs, info.keep) ? info.keep : raw.cur;
@@ -403,9 +404,18 @@
      tab holds different answers for the open check (this tab keeps its own until the person loads the other version),
      'removed' when the other tab removed it; null otherwise. */
   function answersOf(r) { return JSON.stringify([r.hotel, r.Q, r.A, r.By, r.cat, r.dept, r.use, r.T, r.TBy, !!(r.share && r.share.named)]); }
-  function mergeTabs(mine, theirs) {
+  /* opt.older (v2.6.1, inventory v4 B4): theirs was written by an older page still open in another tab (store version below V).
+     Such a page drops the fields it does not know (qv), so a check this tab holds would come back in what looks like the old
+     meaning and be turned round a second time. Then every check this tab already holds stays this tab's own; only checks this
+     tab does not know are taken (they were made in the older page, so reading them in the old meaning is right). */
+  function mergeTabs(mine, theirs, opt) {
     var rec = cur(mine), s = { v: V, cur: mine.cur, checks: {} }, elsewhere = null;
     if (theirs.notice) s.notice = theirs.notice;
+    if (opt && opt.older) {
+      Object.keys(mine.checks).forEach(function (k) { s.checks[k] = mine.checks[k]; });
+      Object.keys(theirs.checks).forEach(function (k) { if (!own(mine.checks, k) && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
+      return { store: s, elsewhere: null };
+    }
     Object.keys(theirs.checks).forEach(function (k) { if (k !== mine.cur && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
     var other = theirs.checks[mine.cur];
     if (!other) { s.checks[rec.id] = rec; if (listed(rec)) elsewhere = 'removed'; }

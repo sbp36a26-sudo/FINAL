@@ -165,7 +165,7 @@ ok(!/hub: 'link'|id="hublink"/.test(readFileSync(join(root, '../use-case-catalog
   ok(n === 99 && !bad.length && urls > 0, 'C: the layer of all ' + n + ' use cases passes the hub\'s check (' + urls + ' source links)' + (bad.length ? ': ' + bad.join(' ') : ''));
   ok(/function detailData\(id\) \{ return L\.detailData\(/.test(app) && /x\.srcs\.map\(L\.sourceRowItem\)/.test(app), 'C: the page\'s own dialog is drawn from the same data');
   ok(/var inHub = !!host\.pong;/.test(app) && /if \(inHub\) hubPost\(\{ hub: 'detail', id: id, data: detailData\(id\) \}\);/.test(app), 'C: inside the hub (after the pong) the layer goes to the hub');
-  ok(/m\.hub === 'detail-closed' && ui\.layer && ui\.layer\.hub && m\.id === ui\.layer\.use\) closeDetail\(false, m\.focus === false\)/.test(app), 'C: the hub\'s close comes back to the opener');
+  ok(/m\.hub === 'detail-closed' && ui\.layer && ui\.layer\.hub && m\.id === ui\.layer\.use\) closeDetail\(false, m\.focus === false, true\)/.test(app), 'C: the hub\'s close comes back to the opener (v2.6.1: marked as the hub\'s own, so it is not echoed back)');
   ok(/if \(L2 && L2\.hub\) hubPost\(\{ hub: 'detail-close' \}\)/.test(app), 'C: when the page drops the layer it tells the hub');
 }
 {

@@ -2124,7 +2124,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   /* Audit v3 L1: one name for every saved answer of steps 3 and 5, used by the page and the Team tab.
      'yes' | 'planned' | 'no' | 'unknown' (Don't know yet) | 'old' (Partly or Doesn't apply, no longer offered) | 'blank'. */
   function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no', k: 'unknown' }[raw] || 'blank'; }
-  /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3?, m7? } */
+  /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3? } (v2.6: the must-have 7 line is gone) */
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
     if ((Q.q5 === 'n' || Q.q5 === 'u') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
@@ -2558,6 +2558,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       return s;
     }
     if (v > V) info.newer = true;
+    if (v < V) info.older = true; // v2.6.1 (inventory v4 B4): saved by an older page (for a storage event: another tab still open on it)
     var cs = obj(raw.checks);
     /* At most MAX_CHECKS: the open one (info.keep: this tab's; else the store's) always, then the newest by "last changed" (audit L4). */
     var open = own(cs, info.keep) ? info.keep : raw.cur;
@@ -2758,9 +2759,18 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      tab holds different answers for the open check (this tab keeps its own until the person loads the other version),
      'removed' when the other tab removed it; null otherwise. */
   function answersOf(r) { return JSON.stringify([r.hotel, r.Q, r.A, r.By, r.cat, r.dept, r.use, r.T, r.TBy, !!(r.share && r.share.named)]); }
-  function mergeTabs(mine, theirs) {
+  /* opt.older (v2.6.1, inventory v4 B4): theirs was written by an older page still open in another tab (store version below V).
+     Such a page drops the fields it does not know (qv), so a check this tab holds would come back in what looks like the old
+     meaning and be turned round a second time. Then every check this tab already holds stays this tab's own; only checks this
+     tab does not know are taken (they were made in the older page, so reading them in the old meaning is right). */
+  function mergeTabs(mine, theirs, opt) {
     var rec = cur(mine), s = { v: V, cur: mine.cur, checks: {} }, elsewhere = null;
     if (theirs.notice) s.notice = theirs.notice;
+    if (opt && opt.older) {
+      Object.keys(mine.checks).forEach(function (k) { s.checks[k] = mine.checks[k]; });
+      Object.keys(theirs.checks).forEach(function (k) { if (!own(mine.checks, k) && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
+      return { store: s, elsewhere: null };
+    }
     Object.keys(theirs.checks).forEach(function (k) { if (k !== mine.cur && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
     var other = theirs.checks[mine.cur];
     if (!other) { s.checks[rec.id] = rec; if (listed(rec)) elsewhere = 'removed'; }
@@ -3056,7 +3066,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 /* Do you need AI? v2 (folder, tool id and storage key keep the name readiness-2): the page.
    State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content).
    This file only draws the current state and turns clicks into send(event).
-   store = everything saved (localStorage['hftp-readiness2-v1'], version 2): the checks of this browser and which one is open.
+   store = everything saved (localStorage['hftp-readiness2-v1'], version 3): the checks of this browser and which one is open.
    rec   = the open check (F.cur(store)).
    ui    = what is on screen now, never saved:
      confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
@@ -3079,7 +3089,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      fileNote 'old' after a file from the earlier Readiness check was chosen; else null
      corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
    host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
-   host.pong  true once the hub bar has answered our ping; only then do links become hub messages
+   host.pong  true once the hub bar has answered our ping; only then do "Add to the AI Register" and the detail layer become hub messages
    storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
    hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry */
 (function () {
@@ -3249,7 +3259,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       return send('import', f, { notice: ui.fileInfo });
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
-      /* Refused "Next": point at the first open question (Q1 No always goes on to the stop screen, so never here). */
+      /* Refused "Next": point at the first open question (Q1 Yes always goes on to the stop screen, so never here). */
       ui.missing = firstOpen(rec.step); render();
       var m = document.querySelector('.missing'); if (m) { m.scrollIntoView({ block: 'center' }); var fi = m.querySelector('input, select'); if (fi) fi.focus({ preventScroll: true }); }
       return false;
@@ -3714,7 +3724,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
       /* v2.6: the hub closed its detail layer (Close, Esc, backdrop: focus back to the opener; another hub tab: focus stays). */
-      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false);
+      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false, true);
     });
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
@@ -3758,7 +3768,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }, 30);
     return true;
   }
-  /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 2, rules, savedAt, check }. */
+  /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 3 (F.V), rules, savedAt, check }. */
   var FILE_KIND = 'hftp-do-you-need-ai';
   var OLD_KIND = 'hftp-readiness-check'; // files of the earlier Readiness check (audit L8)
   function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; }
@@ -3903,8 +3913,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      asynchronous close event (a render() in between would open it again). */
   /* moved: true when the step or the check changed (afterMove then puts focus on #view). noFocus: the hub closed it because
      the person went to another tab. */
-  function closeDetail(moved, noFocus) {
-    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
+  /* fromHub: the hub closed it ({ hub: 'detail-closed' }). Any other close of a layer the hub drew (a step or check change: browser
+     or phone Back, a #use= link, another tab removing the check) tells the hub, which takes its layer down (v2.6.1, inventory v4 B1:
+     before, the hub's layer stayed over the new step and Esc no longer reached it). */
+  function closeDetail(moved, noFocus, fromHub) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from, hubDrawn = !!(ui.layer && ui.layer.hub); ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
+    if (hubDrawn && !fromHub) hubPost({ hub: 'detail-close' });
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
     var b = !moved && !noFocus && from && $(from); if (b) b.focus({ preventScroll: true });
   }
@@ -3971,7 +3985,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      taken over; if the other tab changed or removed the open check itself, a line says so (F.mergeTabs). */
   function follow() {
     var x = readStore(store.cur); if (!x || !x.store) return;
-    var m = F.mergeTabs(store, x.store);
+    /* v2.6.1 (inventory v4 B3): a newer version saved the store in another tab: shown, never written over (as on load). */
+    if (x.info.newer) storage = 'newer';
+    var m = F.mergeTabs(store, x.store, { older: !!x.info.older });
     store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; ui.fileInfo = null;
     if (m.elsewhere === 'removed' && ui.layer) closeDetail(true); // audit v3 M2
     render();

@@ -378,6 +378,10 @@
       if (x && tool === S.tool) openHubDetail(x, e.source, tool); return; // only for the tab on screen
     }
     if (m.hub === 'detail-close') { if (detail.open && detail.win === e.source) closeHubDetail(false, true); return; }
+    /* v2.6.1 (inventory v4 B2): a ping comes from a page that has just loaded in the frame (a reload, a new address). It knows
+       nothing of a layer drawn for the page before it, so that layer closes (quietly; focus back into the frame). Not the frame's
+       load event: that can fire late, after the person already opened the layer, while fonts are still loading. */
+    if (m.hub === 'ping' && detail.open && detail.win === e.source) closeHubDetail(true, true);
     if (m.hub === 'ping') { cap('downloads').then(function (dl) { try { e.source.postMessage({ hub: 'pong', downloads: !!dl }, location.origin); } catch (err) { /* frame gone */ } }); return; }
     if (m.hub === 'download') onDownload(m, e.source);
   });

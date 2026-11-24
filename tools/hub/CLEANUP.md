@@ -44,3 +44,7 @@ Scope: `hub/hub-bar.html` and the generated `tools/index.html` (rebuild with `no
 - A hash change in the assessment (for example "Archive" finishing after you switched tabs) brings the assessment tab back. This is rare and harmless.
 - On claude.ai the artifact runs in a sandboxed frame. If `pushState` is blocked there, tabs simply do not join Back/forward (caught, same as before). Check this once on the live hub after republishing.
 - Republish needs `assessment/flows.js` added to the artifact's files (new file, see `assessment/CLEANUP.md`).
+
+## v2.6.1 (24 Nov 2026): the detail layer
+
+From `reports/audit-readiness-2/cleanup_inventory_v4.md`. The hub's detail layer (`#hub-detail`, `detail = { open, tool, id, win, el }`) now also closes when the "Do you need AI?" frame drops its own layer state for any reason (the frame sends `detail-close`; before, browser Back or a `#use=` link left the hub's layer over the new step, with Esc no longer reaching it) and when that frame pings again (a page newly loaded under the layer). Shapes unchanged; see `CONTRACTS.md`. Proof: `readiness-2/tests/browser/v261.cjs`, `readiness-2/tests/v261.test.mjs`.

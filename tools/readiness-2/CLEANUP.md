@@ -7,7 +7,7 @@ Rebuilt on 24 Nov 2026 to `.claude/skills/clean-up/SKILL.md`: one transition tab
 | Machine | Where | States | Events | Action |
 |---|---|---|---|---|
 | FLOW (where the person is) | `src/flow.js` `FLOW`, `reachable`, `placeStep`, `flowNext` | `start`, `hotel`, `q`, `stop`, `must`, `where`, `tailored`, `result` | `begin`, `next`, `back`, `change`, `edit`, `pop(step)` | Explicit table with guards; `rec.step` has one writer (`reduce`). |
-| STORE (the checks of this browser) | `src/flow.js` `reduce`, `migrate`, `cleanRec` | `{ v: 2, cur, checks, notice }` | `new`, `open`, `remove`, `import`, `preselect`, `snap`, `seen`, `profile`, `share`, `shared`, `unshared`, plus the record events `hotel`, `answer`, `by`, `cat`, `dept`, `use` | One reducer; every load goes through `migrate` (v1 → v2, junk dropped, step placed back, newer version never written over). |
+| STORE (the checks of this browser) | `src/flow.js` `reduce`, `migrate`, `cleanRec` | `{ v: 3, cur, checks, notice }` (version 2 before v2.6) | `new`, `open`, `remove`, `import`, `preselect`, `snap`, `seen`, `profile`, `share`, `shared`, `unshared`, plus the record events `hotel`, `answer`, `by`, `cat`, `dept`, `use` | One reducer; every load goes through `migrate` (v1 → v2, junk dropped, step placed back, newer version never written over). |
 | CONFIRM | `confirmNext` | `null`, `{kind:'remove', id}`, `{kind:'file'}` | `ask`, `yes`, `no`, `nav` | Explicit; `yes` fires once and only for what was asked. |
 | BRIDGE (does the hub save files?) | `bridgeNext` | `none`, `pending`, `yes`, `no` | `yes`, `no`, `timeout`, `error` | The readiness check's own table; the 12 s timeout is an event. |
 | DOWNLOAD (PDF or file) | `dlNext` | `idle`, `making`, `waiting`, `saving` | `start`, `made`, `bridge`, `done`, `fail` | One download at a time; both buttons disabled unless `idle`. |
@@ -19,8 +19,8 @@ Rebuilt on 24 Nov 2026 to `.claude/skills/clean-up/SKILL.md`: one transition tab
 ## Guards (all tested)
 
 - `hotel → q` needs "how the hotel is run".
-- `q → stop` when Q1 is No, whatever the rest; `q → must` only with all five answered.
-- `stop` is reachable only while Q1 is No; `must`, `where`, `tailored`, `result` never while Q1 is No (256 context combinations and an exhaustive 4-event walk from the stop screen).
+- `q → stop` when Q1 is Yes (v2.6; No before), whatever the rest; `q → must` only with all five answered.
+- `stop` is reachable only while Q1 is Yes; `must`, `where`, `tailored`, `result` never while Q1 is Yes (v2.6; No before) (256 context combinations and an exhaustive 4-event walk from the stop screen).
 - `must → where` needs every must-have answered ("Don't know yet" counts).
 - `where → tailored` with a use case; `where → result` with "None of these fits".
 - `tailored → result` needs every tailored question answered.
@@ -100,3 +100,21 @@ Dead code removed: `L.summaryText` and `Readiness2.summaryText` (Copy summary le
 Tests renamed or replaced (audit v3 section 4): `logic.test.mjs` "Copy summary carries …" → the PDF carries the same words in the same order; `v21.test.mjs` and `browser/v21.cjs` "… in the copy text and the PDF" → "… in the PDF"; `browser/v23.cjs` checks the words "What does this do?" and one button per use-case row (not `#ex-gx-2`, a prefix the must-haves use too); `v22.test.mjs` header. The reproductions became `tests/v25.test.mjs` (U1, U3, U4, H1, M4, L1 to L5, dead code) and `tests/browser/v25.cjs` (R1 to R6, T1, T2); both failed on v2.4 (unit 70 of 116 failing; browser 26 failing before it stopped at the missing `#rm-withdraw`) and pass on v2.5.
 
 Proof: unit logic 7,477 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,203 · v22 809 · v23 264 · v25 116. Browser (1280 and 390 px): `walk.cjs` 860, `v21.cjs` 610, `v23.cjs` 144, `v25.cjs` 137. Team tab: readiness-check `mustfirst.cjs` 238, `planned.cjs` 86. No console errors, no horizontal scroll.
+
+## v2.6.1 (24 Nov 2026): fourth clean-up pass
+
+From `reports/audit-readiness-2/cleanup_inventory_v4.md` (scope: v2.6, its hub glue and the Team tab reader). Two machines changed in v2.6 and were checked again: the **DETAIL layer**, now drawn in two places (this page's own `<dialog>` standalone, the hub's `#hub-detail` inside the hub), and the **STORE**, now `{ v: 3, cur, checks, notice }` with a per-record step 2 question set (`qv: 2`) and the one-time `R2Logic.legacyQ` migration.
+
+| Machine | Action in v2.6.1 | What changed |
+|---|---|---|
+| DETAIL layer across the frame boundary | One rule, both sides | `ui.layer.hub` true means the hub draws it. `closeDetail(moved, noFocus, fromHub)` is the one way the layer drops; every drop the hub did not start sends `{ hub: 'detail-close' }` (B1: a step or check change, browser or phone Back, a `#use=` link, another tab removing the check). The hub drops its layer on Close, Esc, the dimmed area, another hub tab, the frame's `detail-close`, and a new `ping` from that frame (B2: the page under it reloaded). Message shapes unchanged (`tools/hub/CONTRACTS.md`). |
+| TABS across versions | Two guards | `follow()` sets `storage = 'newer'` when another tab saved a newer store (B3: it used to merge and write its own older store back). `F.migrate` sets `info.older` for a store below version 3; `F.mergeTabs(mine, theirs, { older })` then keeps every check this tab holds and takes only the checks it does not know (B4: an already-open v2.5 tab strips `qv`, so its write-back would have turned question 1 round a second time and dropped questions 3 and 4 on this tab's checks). |
+| STORE migration (`qv`) | Left | Checked: one reader (`cleanRec`) for store, file, v1 record and import; `copy()` always carries `qv`; a v2.6 store read again is not turned twice; a check that stood on its result reopens on step 2; a stop stays a stop. |
+| Team tab copies | Left | `team.js` reads `qv` per copy (`dynRec`); a pre-v2.6 copy is recomputed with questions 3 and 4 unanswered and flagged by the "hotel saw" line when the verdict moved. |
+| FLOW, CONFIRM, BRIDGE, DOWNLOAD, SHARE, HISTORY, COPY BOX | Left | No fault found. |
+
+AX: unchanged handles (`#app[data-layer]`, `data-layer-host="hub"`, `state().layer.hub`, `HFTPHub.state().detail`); `state().storage` now turns `'newer'` while the page is open.
+
+Dead code removed: the register's `host.hub` flag (set on `pong`, read nowhere since the link bridge went in v2.6). Stale docs and comments fixed: README (assistant-only rule, must-have 7 line, file version 3, the v2.6 store claim about older tabs, the v2.5.1 test list), `CONTRACTS.md` bridge row (`link` → the detail messages), app.js header (store version 3, file version 3, Q1 Yes stops), logic.js `consistLines` comment, `tests/v251.test.mjs` header; this file's guard lines (Q1 Yes stops since v2.6).
+
+Proof: unit `tests/v261.test.mjs` (26; 19 failed on v2.6), browser `tests/browser/v261.cjs` (45 at 1280 and 390 px; 12 failed on v2.6, and the stale layer then blocked the tool so the run could not go on without pressing Close). Changed expectation: `tests/v26.test.mjs` reads the hub's close as `closeDetail(false, m.focus === false, true)` (the third argument stops the echo). All suites green: unit logic 7,477 · flow 5,986 · questions 917 · pdf 714 · build 120 · v21 1,205 · v22 818 · v23 264 · v25 115 · v251 83 · v26 90 · v261 26; browser walk 862 · v21 616 · v23 100 · v25 137 · v251 50 · v26 91 · v261 45; Team tab mustfirst 238 · planned 86; hub 30.

@@ -1806,7 +1806,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   // ---------- exports ----------
   /* host.state is the download-bridge machine (src/machines.js: hostStart, hostSend): none | pending | yes | no. */
   function parentSameOrigin() { try { return window.parent.location.origin === window.location.origin; } catch (e) { return false; } }
-  var host = { state: M.hostStart(window.parent !== window, window.parent !== window && parentSameOrigin()), hub: false, waiters: [], seq: 0, calls: {}, direct: null }; // hub: the hub answered the ping (v2.5.1 link bridge)
+  var host = { state: M.hostStart(window.parent !== window, window.parent !== window && parentSameOrigin()), waiters: [], seq: 0, calls: {}, direct: null };
   function hostEvent(ev) {
     var was = host.state; host.state = M.hostSend(host.state, ev);
     if (was === 'pending' && host.state !== 'pending') host.waiters.splice(0).forEach(function (f) { f(); });
@@ -1822,7 +1822,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     window.addEventListener('message', function (e) {
       if (e.source !== window.parent || !e.data || typeof e.data !== 'object') return;
       var m = e.data;
-      if (m.hub === 'pong') { host.hub = true; hostEvent({ type: 'pong', downloads: !!m.downloads }); }
+      if (m.hub === 'pong') { hostEvent({ type: 'pong', downloads: !!m.downloads }); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
     });
     try { window.parent.postMessage({ hub: 'ping' }, window.location.origin); } catch (e) { hostEvent({ type: 'timeout' }); }

@@ -1,7 +1,7 @@
 /* Do you need AI? v2 (folder, tool id and storage key keep the name readiness-2): the page.
    State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content).
    This file only draws the current state and turns clicks into send(event).
-   store = everything saved (localStorage['hftp-readiness2-v1'], version 2): the checks of this browser and which one is open.
+   store = everything saved (localStorage['hftp-readiness2-v1'], version 3): the checks of this browser and which one is open.
    rec   = the open check (F.cur(store)).
    ui    = what is on screen now, never saved:
      confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
@@ -24,7 +24,7 @@
      fileNote 'old' after a file from the earlier Readiness check was chosen; else null
      corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
    host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
-   host.pong  true once the hub bar has answered our ping; only then do links become hub messages
+   host.pong  true once the hub bar has answered our ping; only then do "Add to the AI Register" and the detail layer become hub messages
    storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
    hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry */
 (function () {
@@ -194,7 +194,7 @@
       return send('import', f, { notice: ui.fileInfo });
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
-      /* Refused "Next": point at the first open question (Q1 No always goes on to the stop screen, so never here). */
+      /* Refused "Next": point at the first open question (Q1 Yes always goes on to the stop screen, so never here). */
       ui.missing = firstOpen(rec.step); render();
       var m = document.querySelector('.missing'); if (m) { m.scrollIntoView({ block: 'center' }); var fi = m.querySelector('input, select'); if (fi) fi.focus({ preventScroll: true }); }
       return false;
@@ -659,7 +659,7 @@
       if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); }
       else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
       /* v2.6: the hub closed its detail layer (Close, Esc, backdrop: focus back to the opener; another hub tab: focus stays). */
-      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false);
+      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false, true);
     });
     try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
     setTimeout(function () { hostSend('timeout'); }, 12000);
@@ -703,7 +703,7 @@
     }, 30);
     return true;
   }
-  /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 2, rules, savedAt, check }. */
+  /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 3 (F.V), rules, savedAt, check }. */
   var FILE_KIND = 'hftp-do-you-need-ai';
   var OLD_KIND = 'hftp-readiness-check'; // files of the earlier Readiness check (audit L8)
   function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; }
@@ -848,8 +848,12 @@
      asynchronous close event (a render() in between would open it again). */
   /* moved: true when the step or the check changed (afterMove then puts focus on #view). noFocus: the hub closed it because
      the person went to another tab. */
-  function closeDetail(moved, noFocus) {
-    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
+  /* fromHub: the hub closed it ({ hub: 'detail-closed' }). Any other close of a layer the hub drew (a step or check change: browser
+     or phone Back, a #use= link, another tab removing the check) tells the hub, which takes its layer down (v2.6.1, inventory v4 B1:
+     before, the hub's layer stayed over the new step and Esc no longer reached it). */
+  function closeDetail(moved, noFocus, fromHub) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from, hubDrawn = !!(ui.layer && ui.layer.hub); ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
+    if (hubDrawn && !fromHub) hubPost({ hub: 'detail-close' });
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
     var b = !moved && !noFocus && from && $(from); if (b) b.focus({ preventScroll: true });
   }
@@ -916,7 +920,9 @@
      taken over; if the other tab changed or removed the open check itself, a line says so (F.mergeTabs). */
   function follow() {
     var x = readStore(store.cur); if (!x || !x.store) return;
-    var m = F.mergeTabs(store, x.store);
+    /* v2.6.1 (inventory v4 B3): a newer version saved the store in another tab: shown, never written over (as on load). */
+    if (x.info.newer) storage = 'newer';
+    var m = F.mergeTabs(store, x.store, { older: !!x.info.older });
     store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; ui.fileInfo = null;
     if (m.elsewhere === 'removed' && ui.layer) closeDetail(true); // audit v3 M2
     render();

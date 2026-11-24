@@ -1,6 +1,6 @@
 // "Do you need AI?" v2.5.1 (24 Nov 2026), two owner-reported problems in the published hub:
 //  1. "None of the sources open": every catalogue source of all 99 use cases renders with a readable name, its note and exactly one
-//     link per URL (no URL printed as text, no bare source key); the link goes through the hub ({ hub: 'link', url }) inside the hub.
+//     link per URL (no URL printed as text, no bare source key). (v2.5.1 sent links through the hub; v2.6 replaced that with the hub-drawn layer.)
 //  2. The result's "Is this an AI problem?" card explains every one of the five answers (title, answer, what it means), on the page
 //     and in the PDF, from the questions' own words.
 // Run: node tools/readiness-2/tests/v251.test.mjs

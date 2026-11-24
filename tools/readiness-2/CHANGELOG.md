@@ -1,5 +1,19 @@
 # Do you need AI? (formerly "AI starting point", "Readiness 2.0"): changelog
 
+## v2.6.1 (24 Nov 2026): clean-up inventory v4. Rules v2.6 unchanged. Not committed, not published.
+
+Clean-up skill on v2.6 (commit `eebd0d9`), its hub glue and the Team tab reader: `reports/audit-readiness-2/cleanup_inventory_v4.md`. No wording, question, scoring or design change. Ids, `data-*` / `data-state` hooks, the storage key, store and file version (3) and the hub message shapes are unchanged.
+
+**Fixed (each first proved by a test that failed on v2.6):**
+- **B1 (high)** The hub's detail layer stayed open over the tool after the tool's own step or check changed (browser or phone Back, a `#use=` link, another tab removing the check): `closeDetail()` dropped the layer state without telling the hub. The stale layer then covered the new step, Esc went to the frame and no longer reached it, and only its Close button got the person out. Now every drop the hub did not start sends `{ hub: 'detail-close' }` (`closeDetail(moved, noFocus, fromHub)`).
+- **B2 (low)** The hub's layer stayed up when the tool's frame reloaded under it. The hub now closes it (quietly, focus into the frame) when that frame pings again.
+- **B3 (medium)** A page open while another tab saved a **newer** store merged it and wrote its own older store back (`follow()` never looked at the version). It now turns read-only (`storage = 'newer'`, the existing "newer version" line), as on load.
+- **B4 (medium)** A v2.5 page already open in another tab writes the store back as version 2 without `qv`; this page then turned question 1 round a second time and dropped questions 3 and 4 on every check it held. `F.migrate` now reports `info.older`, and `F.mergeTabs(mine, theirs, { older })` keeps this tab's own version of every check it holds and takes only checks it does not know (read once in the old meaning).
+
+**Dead code and stale docs:** the register's `host.hub` flag (left from the removed link bridge; register rebuilt); README (assistant-only rule, must-have 7 line, file `v: 3`, the claim that an open older tab never writes back, the test list), `tools/hub/CONTRACTS.md` bridge row (no `link`; the detail messages) and detail section, `CLEANUP.md` (store version 3, Q1 Yes stops, v2.6.1 section), `tools/hub/CLEANUP.md`, app.js and logic.js comments, `tests/v251.test.mjs` header.
+
+**Tests:** new `tests/v261.test.mjs` (26) and `tests/browser/v261.cjs` (45: B1 to B4 at 1280 and 390 px, plus a guard that `detail-close`, `ping` and `detail` from another hub frame change nothing). Changed expectation: `tests/v26.test.mjs` reads the hub's close with the new third argument. Guard: every one of the 99 layers passes the hub's own `hubDetail` check (G1).
+
 ## v2.6 (24 Nov 2026): question 1 turned round, new questions 3 and 4, source links that open in the hub. Rules v2.6. Not committed, not published.
 
 Owner decisions of 24 Nov 2026 (A, B, C) and the coordinator's change to C after the owner's test in the claude.ai viewer.
