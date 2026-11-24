@@ -60,7 +60,7 @@ async function walk(p, f, tag, plan, shots) {
   await click(f, '#next');
   ok((await f.getAttribute('#app', 'data-state')) === 'q', tag + ': step 2');
   ok((await f.textContent('#crisp')) === 'C-R-I-S-P' && /Complex judgement · Return · Information ready · Safety net · Proof/.test((await f.textContent('.crisp-key')).replace(/\s+/g, ' ')), tag + ': C-R-I-S-P header and key');
-  ok((await f.$$eval('.qa .qtext', e => e.map(x => x.textContent))).join('|') === ['Is this task too varied for fixed rules (if this, then that)?', 'Is this task frequent or costly enough to be worth improving?', 'Is the information it needs digital and up to date?', 'Can mistakes be caught before they harm anyone?', 'Can you name the number that should improve, and today’s figure?'].join('|'), tag + ': the five questions as worded');
+  ok((await f.$$eval('.qa .qtext', e => e.map(x => x.textContent))).join('|') === ['Is each case different enough that fixed “if this, then that” rules cannot handle it?', 'Is this task frequent or costly enough to be worth improving?', 'Is the information it needs digital and up to date?', 'Can mistakes be caught before they harm anyone?', 'Do you know which number should improve, and what it is today?'].join('|'), tag + ': the five questions as worded');
   ok((await f.$$('details[data-fold^="why-"]')).length === 5 && (await f.$$('details[data-fold^="why-"][open]')).length === 0, tag + ': five "Why this matters" folds, closed: only the question shows');
   await click(f, 'details[data-fold="why-q1"] > summary');
   ok(await f.isVisible('#whyshort-q1') && await f.isVisible('#yes-q1') && await f.isVisible('#no-q1') && await f.isVisible('#guard-q1') && (await f.textContent('#yes-q1 .yn-head')) === 'Answer Yes if' && (await f.textContent('#no-q1 .yn-head')) === 'Answer No if', tag + ': Why this matters: one-line reason, Yes and No boxes with examples, "Not sure?" on Q1');
@@ -105,7 +105,7 @@ async function walk(p, f, tag, plan, shots) {
     ok(/Area: People\./.test(w) && /Resource intensity \(team judgement, not evidence-based\): (Light|Moderate|Heavy): /.test(w) && /(Based on \d+ entr(y|ies) in the team’s research record \(not yet published\)\.|The team’s judgement from the catalogue description; no source entry\.|Evidence: team draft)/.test(w) && !/[A-Z]{3}-\d{3}-\d{2}|evidence pack/.test(w), tag + ': tailored why: area, intensity with its definition, a plain evidence line without ids (v2.1)');
     if (plan.draft) ok(await f.isVisible('#draft-note') && /Draft questions: team to review/.test(await f.textContent('#draft-note')) && /Evidence: team draft/.test(w), tag + ': draft use case is marked "Draft questions: team to review"');
     else ok(!(await f.$('#draft-note')), tag + ': no draft note');
-    if (plan.addon) { ok(await f.isVisible('#f-' + plan.addon), tag + ': the add-on question ' + plan.addon); if (plan.addon === 'x-sens') { ok((await f.textContent('#t-x-sens')) === 'Has a data protection impact assessment (DPIA) been done for this tool?' && (await f.$$eval('#f-x-sens .opts label', e => e.map(x => x.textContent))).includes('Checked: not required (confirmed in writing)'), tag + ': DPIA question with the neutral wording and its "not required" answer'); } }
+    if (plan.addon) { ok(await f.isVisible('#f-' + plan.addon), tag + ': the add-on question ' + plan.addon); if (plan.addon === 'x-sens') { ok((await f.textContent('#t-x-sens')) === 'Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?' && (await f.$$eval('#f-x-sens .opts label', e => e.map(x => x.textContent))).includes('Checked: not required (confirmed in writing)'), tag + ': DPIA question with the neutral wording and its "not required" answer'); } }
     ok((await f.$$eval('#f-' + first + ' .opts label', e => e.map(x => x.textContent))).join('|') === 'Yes|Planned, not done yet|Partly|No|Don’t know yet|Doesn’t apply', tag + ': tailored scale adds "Doesn\'t apply"');
     await click(f, '#next'); s = await state(f); ok(s.step === 'tailored' && s.missing === first, tag + ': Next with tailored questions unanswered is refused');
     for (const [i, id] of s.tailored.entries()) await answer(f, id, plan.tail[i] || 'y');
@@ -186,10 +186,10 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         ok(clip.startsWith('Do you need AI? Result for Hotel Alpenblick') && /Not ready yet · Score: \d+%\nBecause 1 must-have is missing: Rules for staff on AI tools\. A missing must-have outweighs the score\.\n\d+ of 34 points on 17 questions: 16 answered, 1 “Don’t know yet” \(0 points each\)\./.test(clip) && !/% ready/.test(clip) && /Action plan by person:/.test(clip), wtag + ': Copy summary');
         const who = await p.getAttribute('#plan [data-act="copy-who"]', 'data-who'); await p.click('#plan [data-act="copy-who"]'); await p.waitForTimeout(150);
         clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-        ok(/^Do you need AI\? · AI chat and messaging assistant/.test(clip) && /\nFor: /.test(clip) && /Could you help with these\?/.test(clip) && !!who, wtag + ': copy per person');
+        ok(/^Do you need AI\? · AI chat assistant for guests/.test(clip) && /\nFor: /.test(clip) && /Could you help with these\?/.test(clip) && !!who, wtag + ': copy per person');
         await p.click('details[data-fold="vendor"] > summary').catch(() => {}); if (!(await p.isVisible('#copy-vendor'))) await p.click('details[data-fold="vendor"] > summary');
         await p.click('#copy-vendor'); await p.waitForTimeout(150); clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-        ok(/^Questions about AI chat and messaging assistant/.test(clip) && /1\. Can you show the tool working on our own systems and data/.test(clip), wtag + ': copy vendor questions');
+        ok(/^Questions about AI chat assistant for guests/.test(clip) && /1\. Can you show the tool working on our own systems and data/.test(clip), wtag + ': copy vendor questions');
         // PDF download
         const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#pdf')]);
         const pdfPath = path.join(OUT, wtag + '-' + dl.suggestedFilename()); await dl.saveAs(pdfPath);
@@ -213,7 +213,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         ok(o.p._errs.length === 0, wtag + ': file open: no console errors ' + o.p._errs.join('|')); await o.ctx.close();
         // saved-check list: start a new check, then open and remove
         await p.click('#new-check'); s = await state(p); ok(s.step === 'start' && s.checks.length === 1 && s.hotel.name === 'Hotel Alpenblick', wtag + ': Start a new check → cover; the finished check is listed; hotel details carried over');
-        ok(/AI chat and messaging assistant/.test(await p.textContent('#mychecks')) && /Not ready yet · Score: \d+%/.test(await p.textContent('#mychecks')), wtag + ': Your checks shows the use case, verdict and score');
+        ok(/AI chat assistant for guests/.test(await p.textContent('#mychecks')) && /Not ready yet · Score: \d+%/.test(await p.textContent('#mychecks')), wtag + ': Your checks shows the use case, verdict and score');
         await check(p, wtag + ' cover with checks'); await shot(p, wtag + '-8-your-checks');
         const id = s.checks[0];
         await p.click(`#mychecks [data-act="remove"][data-id="${id}"]`); ok((await state(p)).confirm.kind === 'remove' && await p.isVisible('#rm-yes'), wtag + ': Remove asks first');
@@ -272,7 +272,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
     // ---------- old #use= link, standalone ----------
     {
       const { ctx, p } = await mk(b, w, touch); await p.goto(BASE + 'readiness-2/index.html#use=hr-2');
-      let s = await state(p); ok(s.step === 'start' && s.use === 'hr-2' && s.dept === 'hr' && /You came here for: AI recruiting/.test(await p.textContent('#preselected')) && !/use=/.test(p.url()), wtag + ': #use=hr-2 preselects the use case and clears the hash');
+      let s = await state(p); ok(s.step === 'start' && s.use === 'hr-2' && s.dept === 'hr' && /You came here for: Recruiting with AI/.test(await p.textContent('#preselected')) && !/use=/.test(p.url()), wtag + ': #use=hr-2 preselects the use case and clears the hash');
       await p.reload(); ok((await state(p)).use === 'hr-2' && (await state(p)).from === 'link' && (await state(p)).checks.length === 0, wtag + ': reload keeps it; a check that only came from a link is not listed yet (v2.1, audit L9)');
       await p.goto(BASE + 'readiness-2/index.html#use=zz-99'); ok((await state(p)).use === 'hr-2', wtag + ': an unknown use id in the hash is ignored');
       await ctx.close();
@@ -304,7 +304,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         await check(f, wtag + ' hub share'); if (w === 1280) await shot(p, wtag + '-hub-share', f);
         await p.click('#hubBar button[data-tool="team"]'); const tf = await hubFrame(p, 'team'); await tf.waitForFunction(() => window.ReadinessTeam && window.ReadinessTeam.state().phase !== 'loading');
         const ts = await tf.evaluate(() => window.ReadinessTeam.state()); ok(ts.phase === 'ready' && ts.count === 1 && ts.old === 0, wtag + ' hub: the Team tab lists the shared copy');
-        const tv = await tf.textContent('#view'); ok(/Do you need AI\?/.test(tv) && /AI chat and messaging assistant/.test(tv) && /Not ready yet/.test(tv) && (await tf.textContent('#dyn-score')) === 'Score: ' + s.pct + '%' && /^Because /.test(await tf.textContent('#dyn-reason')) && /Every answer and its points/.test(tv) && /Working out, step by step/.test(tv), wtag + ' hub: the Team tab recomputes it: same verdict and score');
+        const tv = await tf.textContent('#view'); ok(/Do you need AI\?/.test(tv) && /AI chat assistant for guests/.test(tv) && /Not ready yet/.test(tv) && (await tf.textContent('#dyn-score')) === 'Score: ' + s.pct + '%' && /^Because /.test(await tf.textContent('#dyn-reason')) && /Every answer and its points/.test(tv) && /Working out, step by step/.test(tv), wtag + ' hub: the Team tab recomputes it: same verdict and score');
         ok(!/Hotel Alpenblick/.test(tv), wtag + ' hub: the hotel name is not shared unless ticked');
         ok(await noH(tf), wtag + ' hub team: no horizontal scroll'); if (w === 1280) await shot(p, wtag + '-hub-team', tf);
         ok((tf._errs || []).length === 0 && p._errs.length === 0, wtag + ' hub team: no console errors ' + p._errs.join('|'));
@@ -325,7 +325,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
       await p.waitForFunction(() => window.HFTPHub.state().tool === 'readiness-2'); f = await hubFrame(p, 'readiness-2');
       await f.waitForFunction(() => window.Readiness2.state().use === 'hr-2', null, { timeout: 15000 });
       let s = await state(f); ok(s.use === 'hr-2' && s.step === 'start' && s.from === 'link' && s.checks.length === 1 && !(await p.$('#hubFrame iframe[title="readiness-check"]')), wtag + ' hub: an old readiness-check link with #use=hr-2 lands in Do you need AI? with hr-2 preselected (the finished check is kept)');
-      ok(/You came here for: AI recruiting/.test(await f.textContent('#preselected')), wtag + ' hub: the cover says what was preselected');
+      ok(/You came here for: Recruiting with AI/.test(await f.textContent('#preselected')), wtag + ' hub: the cover says what was preselected');
       if (w === 1280) await shot(p, wtag + '-hub-old-link', f);
       ok(p._errs.length === 0, wtag + ' hub: no console errors ' + p._errs.slice(0, 3).join(' | '));
       await ctx.close();

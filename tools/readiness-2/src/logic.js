@@ -206,12 +206,20 @@
   var STATE_WORD = { yes: 'Yes', planned: 'Planned', partly: 'Partly', no: 'No', unknown: 'Don’t know yet', na: 'Doesn’t apply' };
 
   /* ---------- where it sits ---------- */
-  function pathParts(rec, cat) {
+  /* v2.2: the name this tool shows for a use case: the team's plain name (TQ.uses[id].plain, data/wording.json) or the catalogue's.
+     Records, links and the hub keep the id and the catalogue name (u.n); only what a person reads changes. */
+  function useLabel(TQ, u) { var t = u && TQ && TQ.uses && TQ.uses[u.id]; return (t && t.plain) || (u ? u.n : ''); }
+  /* "Catalogue name: …" in small text where the plain name differs (result, PDF, the explainer), so the catalogue entry is easy to find. */
+  function catalogueName(TQ, u) { return u && useLabel(TQ, u) !== u.n ? 'Catalogue name: ' + u.n : ''; }
+  function useLevelLine(u) { return 'How common in hotels: ' + useLevel(u) + ' (Use-Case Catalogue rating).'; }
+  /* The use-case explainer (data/explain.json): "What it does" and "How the AI works", or null when the page carries none. */
+  function explain(ex, id) { var x = ex && id && ex[id]; return x ? { does: 'What it does: ' + x.does, how: 'How the AI works: ' + x.how } : null; }
+  function pathParts(rec, cat, TQ) {
     var p = [], d = (cat && cat.depts || []).filter(function (x) { return x.id === rec.dept; })[0], u = d && d.uses.filter(function (x) { return x.id === rec.use; })[0];
     if (rec.use === 'none') { if (rec.cat) p.push(rec.cat); if (d) p.push(d.name); p.push('None of these fits'); return p; }
     if (rec.cat) p.push(rec.cat);
     if (d) p.push(d.name);
-    if (u) p.push(u.n);
+    if (u) p.push(useLabel(TQ, u));
     return p;
   }
   function useOf(rec, cat) { var d = (cat && cat.depts || []).filter(function (x) { return x.id === rec.dept; })[0]; return (d && d.uses.filter(function (x) { return x.id === rec.use; })[0]) || null; }
@@ -338,8 +346,10 @@
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
       answers: C.QUESTIONS.map(function (q, i) { return { n: i + 1, title: q.title, q: q.q, a: ({ y: 'Yes', n: 'No', u: 'Not sure' })[rec.Q[q.id]] || 'Not answered' }; }),
-      path: pathParts(rec, cat).join(' › ') || 'Nothing chosen.',
-      useTask: u ? 'What AI does: ' + u.task : '', useLevel: u ? 'How common in hotels: ' + useLevel(u) + ' (Use-Case Catalogue rating).' : '',
+      path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
+      /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
+      useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
+      useLevel: u ? useLevelLine(u) : '', catName: catalogueName(TQ, u), useName: u ? useLabel(TQ, u) : '',
       none: rec.use === 'none' ? noneLine(cat.nUses) : '',
       levelName: C.LEVELS[ev.level].name,
       levelLine: ev.level === 'ready' && ev.mustOnly ? C.READY_NONE : ev.level === 'almost' && ev.held.length ? C.ALMOST_HELD : C.LEVELS[ev.level].line,
@@ -397,7 +407,7 @@
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD,
     verdict: verdict, verdictText: verdictText, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
-    pathParts: pathParts, useOf: useOf, useLevel: useLevel, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
+    pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
     resultModel: resultModel, summaryText: summaryText, personText: personText };
   root.R2Logic = api;

@@ -73,7 +73,7 @@ ok(n === 220, '220 answer sets (every use case at least once) checked word for w
 
 // ---------- the stop version ----------
 r = finished(F, D, '', { Q: { q1: 'n', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf);
-ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered No to: “Is this task too varied for fixed rules (if this, then that)?”'), 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
+ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered No to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Is each case different enough that fixed “if this, then that” rules cannot handle it?', 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
 ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: No', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
 let d = drawn(pdf); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
 

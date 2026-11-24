@@ -1,11 +1,11 @@
-// Checks data/usecase-questions.json. Flags: fewer than 6 or more than 10 questions, a question over 30 words, no question mark
+// Checks data/usecase-questions.json. Flags: fewer than 6 or more than 10 questions, a question over 30 words (35 in the team's plain wording), no question mark
 // at the end (or one in the middle), a leftover semicolon, a duplicate within a use case, a legal reference that must not reach
 // a hotel (article numbers, "see D7"), an empty area the workbook has content for, and a file that differs from what the generator makes now.
 // Run:   node tools/readiness-2/data/check-questions.mjs         (exit code 1 when anything is flagged)
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generate, inputs, words, MAX_WORDS, MIN_Q, MAX_Q, AREAS, items } from './build-questions.mjs';
+import { generate, inputs, words, MAX_WORDS, MAX_WORDS_WORDED, MIN_Q, MAX_Q, AREAS, items } from './build-questions.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export function check(J, src) {
@@ -17,7 +17,7 @@ export function check(J, src) {
     u.qs.forEach(x => {
       const tag = id + '.' + x.id;
       if (ids.has(x.id)) f(tag, 'duplicate question id'); ids.add(x.id);
-      if (words(x.q) > MAX_WORDS) f(tag, words(x.q) + ' words: ' + x.q);
+      if (words(x.q) > (x.worded ? MAX_WORDS_WORDED : MAX_WORDS)) f(tag, words(x.q) + ' words: ' + x.q);
       if (!/\?$/.test(x.q)) f(tag, 'no question mark at the end: ' + x.q);
       if (/\?./.test(x.q)) f(tag, 'question mark in the middle: ' + x.q);
       if (/;/.test(x.q)) f(tag, 'leftover semicolon: ' + x.q);

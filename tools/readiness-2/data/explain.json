@@ -236,7 +236,7 @@
   "how": "Image recognition identifies the discarded food, and analysis of past data shows where waste comes from."
  },
  "kc-2": {
-  "does": "Finds the 14 EU allergens in the menu text, labels the dishes and translates the menus.",
+  "does": "Finds the 14 EU allergens (EU Regulation 1169/2011, Annex II) in the menu text, labels the dishes and translates the menus.",
   "how": "It reads the menu text to find allergens; the provider says this is AI but does not explain how."
  },
  "kc-3": {

@@ -8,6 +8,7 @@
      missing  after a refused "Next": the id of the first unanswered question ('type' on step 1, 'where' on step 4), outlined; else null
      copy     true while the copy box (clipboard fallback) is open; copyText: what it shows
      open     which folded explanations are open (kept across re-renders)
+     explain  the use case whose "What does this do?" panel is open on step 4 (v2.2), or null; one at a time, kept across re-renders
      dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'
      share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
               v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
@@ -109,9 +110,11 @@
   var store = load() || F.blankStore();
   var rec = F.cur(store);
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, explain: null, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
-  function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, today: L.localIso() }; }
+  function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, ex: D.ex, today: L.localIso() }; }
+  /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
+  function uName(u) { return L.useLabel(TQ, u); }
   function recOf(id) { return Object.prototype.hasOwnProperty.call(store.checks, id) ? store.checks[id] : null; }
   function model() { return L.resultModel(rec, env()); }
   function tailQs() { return L.useQs(TQ, rec.use); }
@@ -196,7 +199,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
+      adoptProfile(); ui.open = {}; ui.explain = null; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -311,7 +314,7 @@
   // ---------- "Your checks in this browser" and files ----------
   function checkLine(r) {
     var v = L.verdict(r.Q), u = USE[r.use];
-    var name = u ? u.n : r.use === 'none' ? 'No use case (“None of these fits”)' : 'No use case chosen yet';
+    var name = u ? uName(u) : r.use === 'none' ? 'No use case (“None of these fits”)' : 'No use case chosen yet';
     var status;
     if (v.stop) status = 'Not suitable for AI';
     else if (F.reachable('result', F.ctxOf(r, ENV))) { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
@@ -351,7 +354,7 @@
     var pre = rec.from === 'link' ? USE[rec.use] : null, range = L.tailRange(TQ); // audit L3: only for a use case that came from a link
     var NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'], num = function (n) { return NUM[n] || String(n); };
     var rangeText = range[0] === range[1] ? num(range[0]) : num(range[0]) + ' to ' + num(range[1]);
-    return (pre ? '<p class="pathline" id="preselected">You came here for: <b>' + esc(pre.n) + '</b>. It is already chosen in step 4.</p>' : '') +
+    return (pre ? '<p class="pathline" id="preselected">You came here for: <b>' + esc(uName(pre)) + '</b>. It is already chosen in step 4.</p>' : '') +
       '<section class="panel intro" id="intro-why"><h2>Why this tool</h2>' +
       '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, are the basics in place, and what does this particular use need?</p>' +
       '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (69.89%) and systems that do not fit together (45.91%). Source: Eurostat, ICT usage survey, early 2025.</p></section>' +
@@ -438,6 +441,20 @@
   function catLink(d) {
     return '<a href="../use-case-catalogue/index.html#' + esc(d.id) + '" data-act="catalogue" data-dept="' + esc(d.id) + '"' + (host.pong ? '' : ' target="_blank" rel="noopener"') + '>Sources in the Use-Case Catalogue</a>';
   }
+  /* v2.2: "What does this do?" under each use case of step 4. A real button (inside the row's label, so a click on it does not
+     choose the row: the click handler cancels it), with an inline panel after the row; the open use case is ui.explain, so the
+     panel survives render(). */
+  function explainButton(u, open) {
+    return '<button type="button" class="exbtn" data-act="explain" data-ex="' + esc(u.id) + '" id="ex-' + esc(u.id) + '" aria-expanded="' + open + '" aria-controls="exp-' + esc(u.id) + '">' + (open ? 'Hide: what does this do?' : 'What does this do?') + '</button>';
+  }
+  function explainPanel(u, d) {
+    var x = L.explain(D.ex, u.id), tu = TQ.uses[u.id], cn = L.catalogueName(TQ, u);
+    return '<div class="explain" id="exp-' + esc(u.id) + '" role="region" aria-label="' + esc('What ' + uName(u) + ' does') + '">' +
+      (x ? '<p><b>What it does:</b> ' + esc(D.ex[u.id].does) + '</p><p><b>How the AI works:</b> ' + esc(D.ex[u.id].how) + '</p>' : '<p>' + esc('What AI does: ' + u.task) + '</p>') +
+      '<p class="meta">' + esc(L.useLevelLine(u)) + '</p>' + (cn ? '<p class="meta">' + esc(cn) + '</p>' : '') +
+      (tu && tu.draft ? '<p class="meta exdraft"><strong>' + esc(C.DRAFT) + '.</strong> Its questions in step 5 come from a draft row.</p>' : '') +
+      '<p><a class="linkbtn" href="../use-case-catalogue/index.html#' + esc(d.id) + '" data-act="catalogue" data-dept="' + esc(d.id) + '"' + (host.pong ? '' : ' target="_blank" rel="noopener"') + '>See it in the Use-Case Catalogue</a></p></div>';
+  }
   function vWhere() {
     var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h2>Where in the hotel?</h2>' +
       '<p class="sub">Pick the area, then the department. If one of its use cases matches your problem, choose it: the next step asks what that use needs. If none does, say so: the result then rests on the must-haves only.</p>' +
@@ -456,10 +473,11 @@
     var d = DEPT[rec.dept];
     if (d && d.cat === rec.cat) {
       h += '<h3>3. Use case</h3><p class="meta">Choose the one that matches your problem. “How common” is the catalogue’s rating of how widely hotels use it.</p><div class="ucs" role="radiogroup" aria-label="Use case">' + d.uses.map(function (u) {
-        var on = rec.use === u.id;
+        var on = rec.use === u.id, ex = ui.explain === u.id;
         return '<label class="uc' + (on ? ' on' : '') + '" for="u-' + u.id + '"><input type="radio" name="use" id="u-' + u.id + '" value="' + u.id + '" data-use="' + u.id + '"' + (on ? ' checked' : '') + '>' +
-          '<span class="ucbody"><span class="ucn">' + esc(u.n) + '</span><span class="uct">What AI does: ' + esc(u.task) + '</span>' +
-          '<span class="ucm"><span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + catLink(d) + '</span></span></label>';
+          '<span class="ucbody"><span class="ucn">' + esc(uName(u)) + '</span><span class="uct">What AI does: ' + esc(u.task) + '</span>' +
+          '<span class="ucm">' + explainButton(u, ex) + '<span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + catLink(d) + '</span></span></label>' +
+          (ex ? explainPanel(u, d) : '');
       }).join('') + '</div>';
     }
     var noneOn = rec.use === 'none';
@@ -467,7 +485,7 @@
       '<span class="ucbody"><span class="ucn">None of these fits my problem</span><span class="uct">Step 5 is skipped. The result uses the must-haves only, and says so.</span></span></label></div>';
     if (ui.missing === 'where') h += '<p class="needline" role="alert">Choose the use case that matches your problem, or “None of these fits my problem”.</p>';
     h += '</section>';
-    var p = L.pathParts(rec, CAT);
+    var p = L.pathParts(rec, CAT, TQ);
     h += '<p class="pathline" id="pathline">' + (p.length ? 'Your choice: ' + p.map(function (x, i) { return i === p.length - 1 ? '<b>' + esc(x) + '</b>' : esc(x); }).join(' › ') : 'Nothing chosen yet.') + '</p>';
     h += sources('where');
     h += nav('Back', noneOn ? 'See the result' : 'Next: questions for this use case');
@@ -476,7 +494,7 @@
   function vTailored() {
     var u = USE[rec.use], tu = TQ.uses[rec.use], qs = tu.qs;
     var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2>Questions for this use case</h2>' +
-      '<p class="sub"><b id="tail-use">' + esc(u.n) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. They come from the team’s resource analysis of this use case; the must-haves are not asked again.</p>' +
+      '<p class="sub"><b id="tail-use">' + esc(uName(u)) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. They come from the team’s resource analysis of this use case; the must-haves are not asked again.</p>' +
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') +
       (tu.draft ? '<p class="savewarn" id="draft-note" role="note"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') + '</div>';
@@ -541,7 +559,7 @@
       (m.cap ? '<p id="cap">' + esc(m.cap) + '</p>' : '') + (m.mustOnly ? '<p id="must-only"><strong>' + esc(m.mustOnly) + '</strong></p>' : '') + (m.draft ? '<p id="draft"><strong>' + esc(m.draft) + '</strong></p>' : '') + '</section>';
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li><b>' + esc(f.who) + ':</b> ' + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes or does not apply.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
-      '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p>' + esc(m.useTask) + '</p><p class="meta">' + esc(m.useLevel) + '</p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
+      '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
       return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' to find out' : ''].filter(Boolean).join(' · ')) + '</span></div>';
     }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
@@ -555,7 +573,7 @@
       h += row('legal', 'EU AI Act: provisional label, not legal advice', '<p class="meta" id="legal-note">' + esc(m.legalNote) + '</p><p><span class="chip c-label" id="legal-label">' + esc(l.name) + '</span> ' + (l.applies ? '<span class="meta">' + esc(l.applies) + '</span> ' : '') + esc(l.why) + '</p>' +
         l.could.map(function (c) { return '<p class="meta">' + esc(c) + '</p>'; }).join('') + (l.itemsHead ? '<h4>' + esc(l.itemsHead) + '</h4>' : l.items.length ? '<h4>Items to check</h4>' : '') +
         (l.items.length ? '<ul class="tight" id="legal-items">' + l.items.map(it).join('') + '</ul>' : '') + (l.labour ? '<p class="meta">' + esc(l.labour) + '</p>' : '') + '<p class="meta">' + esc(l.country) + '</p>', ' id="legal"');
-    } else if (m.notTool) h += row('legal', 'EU AI Act', '<p>“' + esc(u.n) + '” is a document, not an AI tool, so the AI Register has no label for it.</p>', ' id="legal"');
+    } else if (m.notTool) h += row('legal', 'EU AI Act', '<p>“' + esc(uName(u)) + '” is a document, not an AI tool, so the AI Register has no label for it.</p>', ' id="legal"');
     var grp = '';
     h += row('answers', 'Every question and your answer (' + m.itemList.length + ')', m.itemList.map(function (itm) {
       var g = itm.grp === 'must' ? 'Must-haves' : 'Questions for this use case', head = g !== grp ? '<h4>' + g + '</h4>' : ''; grp = g;
@@ -681,7 +699,7 @@
   // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
   function shareDoc() {
     var m = model(), ev = m.ev, named = rec.share.named, u = USE[rec.use];
-    var d = { kind: 'dyn', v: 2, rules: L.RULES, useId: rec.use, useName: u ? u.n : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
+    var d = { kind: 'dyn', v: 2, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
       Q: Object.assign({}, rec.Q), answers: Object.assign({}, rec.A), tailored: Object.assign({}, rec.T), by: Object.assign({}, rec.By), tby: Object.assign({}, rec.TBy),
       level: ev.level, pct: ev.pct, known: ev.counts.known, total: ev.counts.total, met: ev.must.yes, gates: ev.must.n, open: L.open(ev).length,
       reason: ev.reason, held: ev.held.slice(),
@@ -748,11 +766,12 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act]'); if (!t) return;
     var act = t.getAttribute('data-act'), m;
+    if (act === 'explain') { e.preventDefault(); var xid = t.getAttribute('data-ex'); ui.explain = ui.explain === xid ? null : xid; render(); return; } // v2.2: never chooses the row
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
     else if (act === 'copy') copyText(L.summaryText(model()), 'Summary');
-    else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + USE[rec.use].n : ''), 'List for ' + p.name.toLowerCase()); }
-    else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? USE[rec.use].n : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions'); }
+    else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.toLowerCase()); }
+    else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions'); }
     else if (act === 'print') window.print();
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }

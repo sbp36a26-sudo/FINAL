@@ -57,7 +57,7 @@
     b.push({ k: 'label', t: 'Your five answers' }); b = b.concat(answers(m));
 
     b.push({ k: 'h', t: 'Where it sits' }, { k: 'lead', t: m.path });
-    if (m.useTask) b.push({ k: 'p', t: m.useTask }, { k: 'p', t: m.useLevel });
+    if (m.useTask) { b.push({ k: 'p', t: m.useTask }); if (m.useHow) b.push({ k: 'p', t: m.useHow }); b.push({ k: 'p', t: m.useLevel }); if (m.catName) b.push({ k: 'p', t: m.catName }); }
     if (m.none) b.push({ k: 'p', t: m.none });
 
     b.push({ k: 'h', t: m.areasHead }); m.areas.forEach(function (a) { b.push({ k: 'li', t: a.line, id: 'area-' + a.k }); });

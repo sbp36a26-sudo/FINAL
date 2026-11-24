@@ -42,13 +42,13 @@ ok(combos === 243 && stops === 81, 'all 243 combinations checked, 81 of them sto
 
 // ---------- wording (owner, 24 Nov 2026) ----------
 ok(eq(C.QUESTIONS.map(q => q.q), [
-  'Is this task too varied for fixed rules (if this, then that)?',
+  'Is each case different enough that fixed “if this, then that” rules cannot handle it?',
   'Is this task frequent or costly enough to be worth improving?',
   'Is the information it needs digital and up to date?',
   'Can mistakes be caught before they harm anyone?',
-  'Can you name the number that should improve, and today’s figure?']), 'the five questions, simpler wording; Q2 is the owner\'s own');
+  'Do you know which number should improve, and what it is today?']), 'the five questions, the team\'s plain wording (v2.2, data/wording.json); Q2 is the owner\'s own');
 ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information ready', 'Safety net', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
-C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= 14 && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
+C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= 15 && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');
 ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading');
 ok(C.HONEST === 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.', 'honesty line');
@@ -73,7 +73,7 @@ ok(TQ.matrixTotal === 90 && TQ.blocks.length === 20, 'matrix: 20 blocks over 90 
 ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of 90') && /foundation layer/.test(L.shareLines(L.MUST.m1, TQ)[0]), 'm1: 90 of 90, foundation layer');
 const shareOf = id => TQ.blocks.find(b => b.name === L.MUST[id].blocks[0]).n;
 ok(eq(['m1', 'm2', 'm3', 'm4', 'm5'].map(shareOf), [90, 77, 58, 58, 22]) && eq(['m6', 'm7', 'm8', 'm9', 'm10'].map(shareOf), [59, 48, 35, 30, 30]), 'order: the gates by share, then the rest by share');
-ok(C.MUSTS[2].q === 'Has the person who decides on spending approved the KPI this tool must improve, with today’s figure and the target?', 'KPI must-have keeps the owner\'s wording');
+ok(C.MUSTS[2].q === 'Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?', 'KPI must-have in the team\'s plain wording (v2.2)');
 ok(C.MUSTS[3].q.includes('the systems you want to connect it to'), 'systems must-have: "the systems you want to connect it to"');
 ok(L.systemsFor({}).fallback && L.systemsFor({ dept: 'fo' }).text === C.SYSTEMS.fo && L.systemsFor({ dept: 'fo', use: 'none' }).fallback, 'systems examples: generic before the department is known, by department after');
 ok(eq(Object.keys(C.SYSTEMS).sort(), D.cat.depts.map(d => d.id).sort()), 'systems examples for every catalogue department');

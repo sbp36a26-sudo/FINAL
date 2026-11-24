@@ -8,7 +8,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { load, data, envOf, tester, finished, root } from './load.mjs';
 import { tqSig, tqModel } from '../build.mjs';
-import { frame } from '../data/build-questions.mjs';
+import { frame, generate, inputs } from '../data/build-questions.mjs';
+const G = generate({ ...inputs(), wording: null }); // v2.2: the generator's text before the team's plain wording
 const { C, L, F, P, RC } = load();
 const D = data(), TQ = D.tq, ENV = envOf(D, F);
 const { ok, done } = tester('v21');
@@ -110,7 +111,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
 ok(C.TAIL_TODAY === 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.' && rd('src/app.js').includes('C.TAIL_TODAY'), 'item 9: the step 5 intro (final copy), on the page');
 // item 10: the three generator frames (the full set: tests/questions.test.mjs)
 ok(frame('or', ['Tell guests they are dealing with AI']).q === 'Is it agreed how you will tell guests they are dealing with AI?' && frame('or', ['hand-off rules']).q === 'Are there written hand-off rules?' && frame('fi', ['Subscription', 'possible commission on bookings']).q.endsWith('subscription, and possible commission on bookings?'), 'item 10: the three frame fixes');
-ok(TQ.uses['gx-2'].qs.some(q => q.q === 'Is it agreed how you will tell guests they are dealing with AI?') && TQ.uses['gx-2'].qs.some(q => q.q === 'Are there written hand-off rules?') && !Object.values(TQ.uses).some(u => u.qs.some(q => /^Has this been done: tell /.test(q.q))), 'item 10: the built page carries the new wording');
+ok(TQ.uses['gx-2'].qs.some(q => q.q === 'Is it agreed how you will tell guests they are dealing with AI?') && G.uses['gx-2'].qs.some(q => q.q === 'Are there written hand-off rules?') && TQ.uses['gx-2'].qs.some(q => q.q === 'Are there written rules for when the tool passes a guest to a staff member?') && !Object.values(TQ.uses).some(u => u.qs.some(q => /^Has this been done: tell /.test(q.q))), 'item 10: the built page carries the new wording');
 
 // ====================================================================================================================
 // Team judgement: B2, B5, B6, each behind one named constant
@@ -216,7 +217,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
 // M5: the questions a check was answered against
 // ====================================================================================================================
 {
-  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(TQ.uses[k].qs)) && eq(D.tq, tqModel(JSON.parse(rd('data/usecase-questions.json')), JSON.parse(rd('../register/data/uc-labels.json')))), 'M5: every use case carries the signature of its questions, built by build.mjs');
+  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(G.uses[k].qs)) && eq(D.tq, tqModel(JSON.parse(rd('data/usecase-questions.json')), JSON.parse(rd('../register/data/uc-labels.json')))), 'M5: every use case carries the signature of its questions, built by build.mjs');
   const qs = JSON.parse(JSON.stringify(TQ.uses['rm-1'].qs)); const before = tqSig(qs); qs[0].q = qs[0].q.replace('?', ' today?');
   ok(tqSig(qs) !== before && tqSig(qs.slice(0, -1)) !== before && tqSig(JSON.parse(JSON.stringify(TQ.uses['rm-1'].qs))) === before, 'M5: the signature changes when a text changes or a question is dropped, and only then');
   let s = storeWith(mk('rm-1', [], [], { step: 'where' }));

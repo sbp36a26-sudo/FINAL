@@ -3,11 +3,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, data, tester } from './load.mjs';
-import { generate, inputs, frame, items, clean, words, forUse, ADDON, peShape, skShape, orShape, MAX_WORDS } from '../data/build-questions.mjs';
+import { generate, inputs, frame, items, clean, words, forUse, ADDON, peShape, skShape, orShape, MAX_WORDS, MAX_WORDS_WORDED } from '../data/build-questions.mjs';
 import { check } from '../data/check-questions.mjs';
 const { ok, done } = tester('questions');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const J = JSON.parse(readFileSync(join(root, 'data/usecase-questions.json'), 'utf8')), src = inputs(), D = data();
+/* v2.2: G = the generator's own text, before the team's plain wording (data/wording.json) is applied last. */
+const G = generate({ ...src, wording: null });
 
 const flags = check(J, src);
 ok(flags.length === 0, 'the checker flags nothing: ' + flags.slice(0, 3).join(' | '));
@@ -19,10 +21,10 @@ let n = 0;
 ids.forEach(id => {
   const u = J.uses[id];
   ok(u.qs.length >= 6 && u.qs.length <= 10, id + ': 6 to 10 questions (' + u.qs.length + ')');
-  ok(u.qs.every(q => words(q.q) <= MAX_WORDS), id + ': no question over 30 words');
+  ok(G.uses[id].qs.every(q => words(q.q) <= MAX_WORDS) && u.qs.every(q => words(q.q) <= (q.worded ? MAX_WORDS_WORDED : MAX_WORDS)), id + ': no generated question over 30 words (35 in the team wording, v2.2)');
   ok(u.qs.every(q => /\?$/.test(q.q) && !/;/.test(q.q)), id + ': question marks, no semicolons');
   ok(new Set(u.qs.map(q => q.q.toLowerCase())).size === u.qs.length && new Set(u.qs.map(q => q.id)).size === u.qs.length, id + ': no duplicates');
-  ok((u.add || []).every(k => u.qs.some(q => q.id === 'x-' + k && q.q === ADDON[k].q)), id + ': every flagged add-on has its question');
+  ok((u.add || []).every(k => G.uses[id].qs.some(q => q.id === 'x-' + k && q.q === ADDON[k].q) && u.qs.some(q => q.id === 'x-' + k)), id + ': every flagged add-on has its question');
   ok(u.qs.filter(q => q.kind === 'addon').length === (u.add || []).length, id + ': no add-on question without a flag');
   ok(['pe', 'sk', 'fi', 'da'].every(a => u.qs.some(q => q.a === a && q.kind !== 'addon')), id + ': people, skills, money and data are each asked');
   ok(eq(D.tq.uses[id].qs.map(q => [q.id, q.q, q.a]), u.qs.map(q => [q.id, q.q, q.a])), id + ': the page carries these questions');
@@ -59,7 +61,7 @@ ok(eq([peShape('GM signs off strategy'), peShape('Chef'), peShape('incentives fo
 ok(clean('Tell callers they speak to AI (EU AI Act Art. 50 – see D7)') === 'Tell callers they speak to AI' && clean('GDPR consent management (see D7)') === 'GDPR consent management' && eq(items('Disclose AI to guests (AI Act Art. 50; FADP in CH – see D7); hand-off rules'), ['Tell guests they are dealing with AI', 'hand-off rules']) && eq(items('—'), []), 'legal references and "see D7" never reach a question; "—" is empty');
 ok(!Object.values(J.uses).some(u => u.qs.some(q => /see D7|\bArt\.|Annex/.test(q.q + q.act + (q.from || '')))), 'no article number or "see D7" anywhere in the output');
 // the three examples of the build notes
-const qOf = id => J.uses[id].qs.map(q => q.q);
+const qOf = id => G.uses[id].qs.map(q => q.q); // the generator's text (v2.2: before the plain wording)
 ok(eq(qOf('gx-2'), [
   'Is it agreed that the guest-service lead monitors conversations, and staff take over hand-offs?',
   'Can the people involved maintain knowledge base and review transcripts?',
@@ -69,8 +71,8 @@ ok(eq(qOf('gx-2'), [
   'Is it agreed how you will tell guests they are dealing with AI?',
   'Are there written hand-off rules?',
   'Are there written limits on what the tool may do by itself, and a named person who can switch it off?']), 'gx-2 (guest chat): the eight questions');
-ok(qOf('hr-2').length === 7 && qOf('hr-2')[0] === 'Is it agreed that the HR manager reviews every decision?' && qOf('hr-2')[6] === ADDON.sens.q && J.uses['hr-2'].qs[5].edited === true, 'hr-2 (AI recruiting): seven questions, the DPIA add-on last, one hand edit');
-ok(qOf('fo-8').length === 6 && J.uses['fo-8'].draft && qOf('fo-8')[0] === 'Is it agreed that the front-office or housekeeping supervisor owns the found-items log?', 'fo-8 (a draft use case): six questions from the draft row');
+ok(qOf('hr-2').length === 7 && qOf('hr-2')[0] === 'Is it agreed that the HR manager reviews every decision?' && qOf('hr-2')[6] === ADDON.sens.q && G.uses['hr-2'].qs[5].edited === true, 'hr-2 (AI recruiting): seven questions, the DPIA add-on last, one hand edit');
+ok(qOf('fo-8').length === 6 && G.uses['fo-8'].draft && qOf('fo-8')[0] === 'Is it agreed that the front-office or housekeeping supervisor owns the found-items log?', 'fo-8 (a draft use case): six questions from the draft row');
 // overrides: few, each with a reason, each matching a question
 const ov = JSON.parse(readFileSync(join(root, 'data/overrides.json'), 'utf8')).edits, edited = Object.values(J.uses).flatMap(u => u.qs.filter(q => q.edited)).length;
 ok(Object.keys(ov).length === edited && edited <= 20 && Object.values(ov).every(o => o.reason && o.reason.length > 20 && /\?$/.test(o.q)), edited + ' hand edits, all through overrides.json, each with a reason');

@@ -302,3 +302,12 @@ ol.tight,ul.tight{padding-left:22px;display:flex;flex-direction:column;gap:6px;m
   .score{font-size:1.625rem}
 }
 @media print{ .toprow,.noprint,details.fold > summary::after{display:none!important} details.fold{break-inside:avoid} }
+
+/* ===== v2.2 (24 Nov 2026): use-case explainer on step 4 ("What does this do?"). Kept in one block for the merge with the design pass. ===== */
+.uc .ucm .exbtn{font:inherit;font-size:0.875rem;font-weight:600;color:var(--accent);background:var(--panel);border:1px solid var(--accent);border-radius:6px;padding:4px 12px;min-height:44px;min-width:44px;cursor:pointer;display:inline-flex;align-items:center}
+.uc .ucm .exbtn:hover{background:var(--accent-soft)}
+.uc .ucm .exbtn[aria-expanded="true"]{background:var(--accent-soft)}
+.explain{margin:0 4px 12px 38px;padding:12px 14px;border-left:3px solid var(--accent);background:var(--bg);border-radius:0 6px 6px 0;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+.explain .linkbtn{font-size:0.9375rem}
+@media (max-width:560px){ .explain{margin-left:0} }
+@media print{ .exbtn,.explain{display:none!important} }

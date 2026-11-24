@@ -1,4 +1,4 @@
-# Do you need AI? (v2.1, prototype)
+# Do you need AI? (v2.2, prototype)
 
 Hub tab **Do you need AI?** (tooltip "Is AI the answer, and is your hotel ready for it?"). Since 24 Nov 2026 it **replaces the Readiness check tab** in the hub: one tool that asks whether the job needs AI at all, checks the must-haves, asks tailored questions for the chosen use case and ends with a **verdict and a score in %** (v2.1: worded "Score: n%", never "% ready") (owner's decision of 24 Nov 2026, overriding the earlier "no score" rule for this tool). The folder `tools/readiness-2/`, the tool id `readiness-2` and the storage key `hftp-readiness2-v1` are unchanged. `tools/readiness-check/` stays in the repo and stays published as a file, so old bookmarks open.
 
@@ -13,7 +13,7 @@ For hotel managers who know nothing about AI. Not yet tested with real managers.
 | 2 Is this an AI problem? | `q` | C-R-I-S-P: five one-sentence questions, Yes / No / Not sure, each with the "Why this matters" fold (one-line reason, "Answer Yes if" and "Answer No if" side by side with examples, "Not sure?" on Q1). |
 | Stop | `stop` | Q1 = No → "This is not suitable for AI." with why, what to do instead, **Change my answers**, **Start again**, **Download (PDF)**. No event, history entry or saved record gets past it. |
 | 3 Must-haves | `must` | Ten things to have in place before an AI project starts. Scale Yes / Planned, not done yet / Partly / No / Don't know yet, "By when?" for Planned. Every one needs an answer. Collapsed "Why this matters": the reason, what counts as Yes, the share from the team's resource analysis ("needed for 90 of 90 use cases …, team judgement, not a survey") and sourced figures with base and date. |
-| 4 Where in the hotel? | `where` | Area › department › use case from the Use-Case Catalogue (99, all selectable), or **None of these fits my problem**. `#use=<id>` preselects a use case. |
+| 4 Where in the hotel? | `where` | Area › department › use case from the Use-Case Catalogue (99, all selectable), or **None of these fits my problem**. `#use=<id>` preselects a use case. Each row shows the team's plain name (v2.2) and a **What does this do?** button that opens an inline panel under the row: what it does, how the AI works, how common in hotels (catalogue rating), the catalogue name where it differs, the draft note for the 8 draft use cases, and **See it in the Use-Case Catalogue** (hub `open` bridge; a plain link outside the hub). Pressing it never chooses the row; one panel at a time (`ui.explain`). |
 | 5 Questions for this use case | `tailored` | 6 to 9 questions generated from the owner's workbook row for that use case, plus the add-on questions it flags. Same scale plus "Doesn't apply". Skipped for "None of these fits". The 8 use cases without a workbook row are marked "Draft questions: team to review". |
 | Result | `result` | Verdict, the reason ("Because …"), "Score: 73%" with the points and question counts next to it (or "No score yet: …"), must-have line, the law line on high-risk or sensitive-data uses, Start with these three, the AI-problem verdict and carried conditions, where it sits, what is in place by area (counts), action plan by person with a copy button each, vendor questions, the provisional AI Act label, every answer, how it was worked out, sharing (opt-in), Your checks, sources. Top row: Download (PDF), Copy summary, Print, Save as file, Add to the AI Register, Start a new check. |
 
@@ -37,6 +37,8 @@ For hotel managers who know nothing about AI. Not yet tested with real managers.
 | `data/build-questions.mjs` | Deterministic generator → `usecase-questions.json`. One question per resource cell with content; a cell is split in two only when its question would exceed 30 words, when its items need different kinds of question, or to reach six. Add-on questions from the archetype sheet. Draft rows (from `tools/readiness/index.html`) for the 8 use cases the workbook lacks. |
 | `data/check-questions.mjs` | Checker: 6 to 10 per use case, at most 30 words, question mark, no semicolon, no duplicate, no article number or "see D7", every workbook cell asked, file equals the generator's output. |
 | `data/overrides.json` | The only place for hand edits (16, each with a reason). |
+| `data/wording.json` | v2.2: the team's plain wording (24 Nov 2026), applied by the generator **last**, after the overrides: `names` (99 plain use-case names, stored as `plain`), `qs` (661 question texts, `<use>|<qid>`; a changed text is marked `worded`), `core` (21 fields of the five questions and the must-haves, written into `src/content.js`). A key that matches nothing stops the build. Ids, areas, who, actions and `from` are unchanged. The signature `sig` is taken before the wording, so a wording-only change keeps saved answers. Team-worded questions may run to 35 words (one does: rm-1.te1, 31). |
+| `data/explain.json` | v2.2: per use case `does` and `how` for the explainer; inlined by `build.mjs` as `ex` (must cover exactly the 99). |
 
 After the catalogue or the workbook changes: `python3 -I tools/readiness-2/data/extract-excel.py` (workbook only), `node tools/readiness-2/data/build-questions.mjs`, `node tools/readiness-2/data/check-questions.mjs`, `node tools/readiness-2/build.mjs`, `node tools/readiness-check/build.mjs` (the team page carries the questions too).
 
@@ -49,6 +51,7 @@ After the catalogue or the workbook changes: `python3 -I tools/readiness-2/data/
 - **Tabs**: which check is open is kept per tab in `sessionStorage['hftp-readiness2-cur']`; unreadable saved data is set aside under `hftp-readiness2-v1-corrupt`.
 - **Sharing (opt-in, `SHARING_ON` in `src/app.js`)**: a copy goes to `readiness/<viewer id>/checks/<check id>` through the hub's db bridge (the Readiness check's `store.js`, same message shapes), with `kind: 'dyn'`, `v: 2`. The red **Team: readiness results** tab lists and recomputes both old checks and these copies. Outside claude.ai it is a test copy in this browser. A copy can be withdrawn from any step, the stop screen and "Your checks" (v2.1).
 - Hub messages, the shared profile key and other tools' keys are unchanged.
+- **Names (v2.2)**: a record keeps the use id and the **catalogue** name (`useName`, checked on load); only what a person reads uses the plain name. The share copy's `useName` is the plain name, and the Team tab shows the plain name for older copies too. "Add to the AI Register" still sends the catalogue name.
 
 ## Files, build, tests
 
@@ -62,6 +65,7 @@ node tools/readiness-2/tests/flow.test.mjs       # transitions, guards, stop, st
 node tools/readiness-2/tests/pdf.test.mjs        # PDF text equals the result's wording; drawing; file names
 node tools/readiness-2/tests/build.test.mjs      # inlined data equals its sources; same AI Register inputs as the readiness check
 node tools/readiness-2/tests/v21.test.mjs        # v2.1: every audit fault, every council item, the three switches, v2.0 records
+node tools/readiness-2/tests/v22.test.mjs        # v2.2: every wording key applied, unknown keys refused, saved answers kept, explainer data for all 99
 node tools/readiness-2/tests/browser/walk.cjs    # Playwright; serve tools/ on 8815 first (see its first lines)
 node tools/readiness-2/tests/browser/v21.cjs     # Playwright; serve tools/ on 8817 (R2_BASE for another address)
 ```

@@ -126,7 +126,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       await p.evaluate(() => { const R = window.Readiness2; R.send('next'); R.send('cat', 'Guest-facing'); R.send('dept', 'gx'); R.send('use', 'gx-2'); R.send('next'); });
       ok((await text(p, '#tail-today')) === 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.', wtag + ': item 9: step 5 intro');
       const qs = await p.$$eval('#view fieldset.qa .qtext', e => e.map(x => x.textContent));
-      ok(qs.includes('Is it agreed how you will tell guests they are dealing with AI?') && qs.includes('Are there written hand-off rules?') && !qs.some(q => /^Has this been done: tell|, and also .*\?$/.test(q) && !/ and .*, and also /.test(q)), wtag + ': item 10: the reworded questions are on the page');
+      ok(qs.includes('Is it agreed how you will tell guests they are dealing with AI?') && qs.includes('Are there written rules for when the tool passes a guest to a staff member?') /* v2.2: the team's plain wording */ && !qs.some(q => /^Has this been done: tell|, and also .*\?$/.test(q) && !/ and .*, and also /.test(q)), wtag + ': item 10: the reworded questions are on the page');
       const t5 = await allText(p);
       ok(/Based on \d+ entr(y|ies) in the team’s research record \(not yet published\)\./.test(t5) && !/[A-Z]{3}-\d{3}-\d{2}/.test(t5) && !/evidence pack/i.test(t5), wtag + ': item 8 / M8: step 5 with every fold open shows a plain evidence line, no ids');
       await check(p, wtag + ' tailored');

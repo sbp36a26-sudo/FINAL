@@ -21,6 +21,8 @@
      with the level the hotel saw and cannot be recomputed (dynGone); it is no longer counted as "old v2 format". */
   function isDyn(d) { return !!(d && d.kind === 'dyn' && d.v === 2 && DL && DTQ); }
   function dynGone(d) { return isDyn(d) && !!d.useId && d.useId !== 'none' && !DTQ.uses[d.useId]; }
+  /* v2.2: the plain use-case name "Do you need AI?" shows (data/wording.json), also for copies shared before it had one. */
+  function dynUse(s) { var t = DTQ && DTQ.uses[s.useId]; return (t && t.plain) || s.useName; }
   function dynScore(p) { return p == null ? 'no score' : 'Score: ' + p + '%'; }
   function dynRec(s) { return { Q: s.Q || {}, A: s.answers || {}, By: s.by || {}, use: s.useId || 'none', dept: s.dept || '', cat: s.cat || '', T: s.tailored || {}, TBy: s.tby || {}, hotel: { type: s.type, country: s.country, role: s.role, name: s.named ? s.hotelName || '' : '' }, snaps: [] }; }
   function send(ev, n) { var to = F.teamNext(t, ev, n); if (!to) return false; t = to; return true; }
@@ -80,7 +82,7 @@
     if (t.phase === 'empty') h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
     subs.forEach(function (s) {
       if (isDyn(s)) {
-        h += '<button type="button" class="sub-row" data-act="sel" data-kind="dyn"' + (dynGone(s) ? ' data-gone="1"' : '') + ' data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">Do you need AI? · ' + esc(s.useName || (dynGone(s) ? s.useId : 'no use case (“None of these fits”)')) + (dynGone(s) ? ' (no longer in the catalogue)' : '') + '</span><span class="btnrow"><span class="chip c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span><span class="meta">' + esc(dynScore(s.pct)) + ' · ' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + (s.rules && s.rules !== DL.RULES ? ' · earlier rules' : '') + '</span></span></button>';
+        h += '<button type="button" class="sub-row" data-act="sel" data-kind="dyn"' + (dynGone(s) ? ' data-gone="1"' : '') + ' data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">Do you need AI? · ' + esc(dynUse(s) || (dynGone(s) ? s.useId : 'no use case (“None of these fits”)')) + (dynGone(s) ? ' (no longer in the catalogue)' : '') + '</span><span class="btnrow"><span class="chip c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span><span class="meta">' + esc(dynScore(s.pct)) + ' · ' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + (s.rules && s.rules !== DL.RULES ? ' · earlier rules' : '') + '</span></span></button>';
         return;
       }
       var lv = L.LEVELS[s.level] || L.LEVELS.open;
@@ -114,7 +116,7 @@
     var rowOf = function (it) { return '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.q) + '</td><td>' + esc(DL.STATE_WORD[it.state]) + (it.by ? '<br><span class="meta">by ' + esc(DL.fmtDate(it.by)) + '</span>' : '') + '</td><td class="num">' + esc(pts(it)) + '</td></tr>'; };
     var h = '<section class="panel" data-kind="dyn"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
       '<span class="chip big c-' + DYN_CHIP[e.level] + '">' + esc(DC.LEVELS[e.level].name) + '</span></div>' +
-      '<p><strong>' + esc(s.useName || 'No use case chosen (“None of these fits”)') + '</strong></p>' +
+      '<p><strong>' + esc(dynUse(s) || 'No use case chosen (“None of these fits”)') + '</strong></p>' +
       '<p><strong id="dyn-reason">' + esc(e.reason) + '</strong></p>' +
       '<p><strong id="dyn-score">' + esc(DL.scoreHead(e)) + '</strong> <span class="meta">' + esc(DL.scoreSub(e)) + '</span></p><p>' + esc(DL.mustLine(e)) + '</p>' +
       (tu ? '<p class="meta" id="dyn-evidence">Research record entries behind this use case’s questions (team only, not shown to hotels): ' + esc(tu.draft ? 'none (draft row)' : tu.ev || 'none (team judgement from the catalogue description)') + '</p>' : '') +

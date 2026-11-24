@@ -4,7 +4,7 @@
 // The catalogue's <script id="data"> is read here at build time, never copied by hand: rebuild after the catalogue changes.
 // Run after editing anything in src/ or the catalogue:   node tools/readiness-2/build.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { tqSig } from './data/build-questions.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,17 +53,24 @@ export function rcModel(rdyHtml, labels, ref) {
     uc: rdy.uc.map(u => ({ id: u.id, int: u.int, arch: u.arch, add: u.add, r: { te: u.r.te, fi: u.r.fi }, chk: u.chk })), addons: rdy.addons };
   return { rdy: rdyUsed, reg };
 }
-/* The signature of one use case's tailored questions: a saved check carries it, so answers given to other questions are
-   never read as answers to these (v2.1, audit M5). It changes when a question's id, area or text changes, or one is added or removed. */
-export function tqSig(qs) { return createHash('sha1').update(JSON.stringify(qs.map(q => [q.id, q.a, q.q]))).digest('hex').slice(0, 10); }
+/* The signature of one use case's tailored questions (v2.1, audit M5): since v2.2 computed by the generator before the team's plain
+   wording is applied, and stored per use case in data/usecase-questions.json (sig), so a wording-only change keeps saved answers. */
+export { tqSig };
 /* The tailored questions as the page needs them (the generator's notes and the per-question "edited" marks stay in the JSON file).
    labels (the AI Register's label file): the use cases whose provisional label is High-risk, for the "legal items first" rule (v2.1). */
 export function tqModel(J, labels) {
   const uses = {};
-  Object.entries(J.uses).forEach(([id, u]) => { uses[id] = { int: u.int, arch: u.arch, add: u.add, ev: u.ev, draft: u.draft, ...(u.draft ? { draftNote: u.draftNote } : {}), sig: tqSig(u.qs),
+  Object.entries(J.uses).forEach(([id, u]) => { uses[id] = { int: u.int, arch: u.arch, add: u.add, ev: u.ev, draft: u.draft, ...(u.draft ? { draftNote: u.draftNote } : {}), sig: u.sig || tqSig(u.qs), ...(u.plain ? { plain: u.plain } : {}),
     qs: u.qs.map(q => { const o = { id: q.id, a: q.a, q: q.q, kind: q.kind, who: q.who, act: q.act, from: q.from }; if (q.addon) o.addon = q.addon; if (q.help) o.help = q.help; if (q.na) o.na = q.na; return o; }) }; });
   const highRisk = ((labels && labels.uses) || []).filter(u => u.base === 'high' && uses[u.id]).map(u => u.id);
   return { uses, highRisk, intensity: J.intensity, arch: J.arch, areas: J.areas, addonWhy: J.addonWhy, blocks: J.blocks, matrixTotal: J.matrixTotal, nFromWorkbook: J.nFromWorkbook, nDraft: J.nDraft };
+}
+
+/* The use-case explainer (v2.2, data/explain.json): { <use id>: { does, how } } for every catalogue use case, nothing left over. */
+export function explainModel(E, ids) {
+  const bad = ids.filter(id => !E[id] || typeof E[id].does !== 'string' || !E[id].does.trim() || typeof E[id].how !== 'string' || !E[id].how.trim()), extra = Object.keys(E).filter(id => !ids.includes(id));
+  if (bad.length || extra.length) throw new Error('data/explain.json is out of step with the catalogue (missing or empty: ' + bad.join(' ') + '; left over: ' + extra.join(' ') + ')');
+  return Object.fromEntries(ids.map(id => [id, { does: E[id].does, how: E[id].how }]));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -75,7 +82,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const missing = ids.filter(id => !J.uses[id] || J.uses[id].name !== cat.depts.flatMap(d => d.uses).find(u => u.id === id).n), extra = Object.keys(J.uses).filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase-questions.json is out of step with the catalogue (missing or renamed: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + '). Run: node tools/readiness-2/data/build-questions.mjs');
   const rc = rcModel(read('../readiness/index.html'), labels, JSON.parse(read('../register/data/reference.json')));
-  const data = { cat, tq: tqModel(J, labels), rc, builtOn: new Date().toISOString().slice(0, 10) };
+  const ex = explainModel(JSON.parse(read('data/explain.json')), ids);
+  const data = { cat, tq: tqModel(J, labels), rc, ex, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   /* PDF: jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it. */
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
