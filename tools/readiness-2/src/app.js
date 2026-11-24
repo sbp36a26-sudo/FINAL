@@ -163,6 +163,19 @@
     takeSnap();
     save(); render();
     if (rec.step !== prev || force) { window.scrollTo(0, 0); $('view').focus({ preventScroll: true }); }
+    if (rec.step !== prev) arrive();
+  }
+  /* Design pass: a short arrival when the step changes, and the result bars grow once. Started here, at the event, because render()
+     replaces #view on every answer (CSS entry animations would replay). Reduced motion: opacity only, no movement. */
+  var calm = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  function ease(el, dy, ms) {
+    if (!el || !el.animate) return;
+    try { el.animate(calm.matches ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(' + dy + 'px)' }, { opacity: 1, transform: 'none' }], { duration: ms, easing: 'cubic-bezier(.23,1,.32,1)' }); } catch (e) {}
+  }
+  function arrive() {
+    ease($('view'), 6, 180);
+    if (rec.step !== 'result' || calm.matches) return;
+    Array.prototype.forEach.call(document.querySelectorAll('#areas .track i'), function (i) { try { i.animate([{ transform: 'scaleX(0)', transformOrigin: 'left' }, { transform: 'scaleX(1)', transformOrigin: 'left' }], { duration: 400, easing: 'cubic-bezier(.23,1,.32,1)' }); } catch (e) {} });
   }
   /* Return visits: on the result page, keep a dated snapshot whenever the result differs from the last one kept. */
   function takeSnap() {
@@ -442,7 +455,7 @@
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
     var regHref = '../register/index.html#' + registerHash();
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
-    h += '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') +
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') +
       '<button type="button" class="btn" data-act="copy" id="copy">Copy summary</button><button type="button" class="btn" data-act="print" id="print">Print</button>' +
       '<button type="button" class="btn" data-act="save-file" id="save-file"' + (ui.dl !== 'idle' ? ' disabled' : '') + '>Save as file</button>' +
       (u && !u.notTool ? '<a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a>' : '') +
@@ -456,6 +469,7 @@
       '<div class="scorerow"><span class="score" id="score">' + esc(m.scoreHead) + '</span><span class="scoresub" id="score-sub">' + esc(m.scoreSub) + '</span></div>' +
       '<p id="level-line">' + esc(m.levelLine) + '</p><p class="countline" id="must-line">' + esc(m.mustLine) + '</p>' +
       (m.cap ? '<p id="cap">' + esc(m.cap) + '</p>' : '') + (m.mustOnly ? '<p id="must-only"><strong>' + esc(m.mustOnly) + '</strong></p>' : '') + (m.draft ? '<p id="draft"><strong>' + esc(m.draft) + '</strong></p>' : '') + '</section>';
+    h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li><b>' + esc(f.who) + ':</b> ' + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes or does not apply.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p>' + esc(m.useTask) + '</p><p class="meta">' + esc(m.useLevel) + '</p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
@@ -659,7 +673,7 @@
     else if (t.id === 'file-open') { if (t.files && t.files[0]) loadRecord(t.files[0]); t.value = ''; }
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches && t.matches('input[data-h="name"]')) send('hotel', { k: 'name', v: t.value }, { quiet: true }); });
-  document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold')) ui.open[d.getAttribute('data-fold')] = d.open; }, true);
+  document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold')) { var k = d.getAttribute('data-fold'), was = !!ui.open[k]; ui.open[k] = d.open; if (d.open && !was) ease(d.querySelector(':scope > .morebody, :scope > .foldbody'), 4, 150); } }, true);
   /* Back/forward. Our own entry for this check → pop to its step. Anything else (a hash change, a hub entry, another check's entry) is
      not a step of this check: the step stays and the entry is marked as ours. */
   window.addEventListener('popstate', function (e) {
