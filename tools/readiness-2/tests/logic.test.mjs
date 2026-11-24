@@ -46,7 +46,7 @@ ok(eq(C.QUESTIONS.map(q => q.q), [
   'Is this task frequent or costly enough to be worth improving?',
   'Is the information it needs digital and up to date?',
   'Can mistakes be caught before they harm anyone?',
-  'Do you know which number should improve, and what it is today?']), 'the five questions, the team\'s plain wording (v2.2, data/wording.json); Q2 is the owner\'s own');
+  'Do you know which KPI should improve, and what it is today?']), 'the five questions, the team\'s plain wording (v2.2, data/wording.json); Q2 is the owner\'s own');
 ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information ready', 'Safety net', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
 C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= 15 && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');

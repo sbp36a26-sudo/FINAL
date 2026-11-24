@@ -49,7 +49,7 @@
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
-      q: 'Do you know which number should improve, and what it is today?',
+      q: 'Do you know which KPI should improve, and what it is today?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Without a starting figure nobody can tell whether the tool worked, and the decision to keep or stop it turns into opinion.',
