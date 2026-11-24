@@ -102,7 +102,9 @@
       return '<div class="hdrtop"><p class="meta">A student project by EHL for HFTP · prototype</p>' + link + '</div><h1>AI readiness check</h1>' +
         '<p class="sub"><strong>Is your hotel ready to adopt this AI tool?</strong> Not about how AI assistants find your hotel.</p>' +
         '<p class="sub">One AI tool at a time. You get a verdict and a to-do list by person.</p>' +
-        '<p class="meta honest" id="honest">' + esc(HONEST) + '</p>';
+        '<p class="meta honest" id="honest">' + esc(HONEST) + '</p>' +
+        /* 24 Nov 2026 (audit of "Do you need AI?" v2.0, L8): this page left the hub; it stays so that earlier checks and files still open. */
+        '<p class="meta" id="replaced"><strong>This check was replaced by “Do you need AI?” on 24 Nov 2026.</strong> It stays here so that earlier checks and saved files still open. <a href="../readiness-2/index.html">Open “Do you need AI?”</a></p>';
     }
     var where = st.step === 'prep' ? 'What you will need' : st.step === 'review' ? 'Update open items' : st.step === 'result' ? 'Result' : stepLabel(st.step);
     return '<div class="hdrtop"><p class="hdrline"><strong>AI readiness check</strong> · ' + esc(x ? L.shortName(x) : '') + ' · ' + where + '</p>' + link + '</div>';

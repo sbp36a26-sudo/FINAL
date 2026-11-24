@@ -45,14 +45,30 @@ export function lower(s) {
 /* An inner colon would clash with the question's own colon: "Upsell platform: commission or subscription" → "upsell platform (commission or subscription)". */
 function inner(s) { const i = s.indexOf(': '); return i < 0 ? s : s.slice(0, i) + ' (' + s.slice(i + 2) + ')'; }
 const busy = x => /,| and | or /.test(x);
-/* "a and b" for two plain items; ", and also" when an item has its own commas or "and". */
+/* "a and b" for two plain items; ", and" when an item is long or has its own commas; ", and also" only when a joined item
+   has an "and" of its own, so the two cannot be confused (v2.1, council item 10). */
+const hasAnd = x => /\band\b/.test(x);
 function joinItems(list, fn) {
   const l = list.map(x => (fn || (y => inner(lower(y))))(x));
   if (l.length === 1) return l[0];
   if (l.length > 2 && !l.some(busy)) return l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1];
-  if (l.length === 2) return l[0] + (l.some(x => busy(x) || words(x) > 3) ? ', and also ' : ' and ') + l[1];
-  return l.slice(0, -1).join(', also ') + ', and also ' + l[l.length - 1];
+  const last = l.some(hasAnd) ? ', and also ' : ', and ';
+  if (l.length === 2) return l[0] + (l.some(x => busy(x) || words(x) > 3) ? last : ' and ') + l[1];
+  return l.slice(0, -1).join(', also ') + last + l[l.length - 1];
 }
+/* One organisation item that names a written thing reads as a plain question (v2.1, council item 10):
+   "hand-off rules" → "Are there written hand-off rules?"; "agency contract" → "Is there a written agency contract?".
+   Decided on the head noun (the words before "for", "on", "with" ...), so an item such as "human review before sending prices"
+   keeps the colon frame, where "written" in front of it would not be English. */
+const HEAD_MANY = /(?:^|[\s/-])(rules|limits|terms)$/i, HEAD_ONE = /(?:^|[\s/-])(rule|policy|plan|contract|agreement|notice|workflow)$/i;
+export function orWritten(item) {
+  const t = inner(lower(item)).replace(/^written /i, ''), head = t.split(/\s+(?:for|on|with|before|of|in|agreed|when|which)\b|\s*\(/)[0];
+  if (HEAD_MANY.test(head)) return 'Are there written ' + t + '?';
+  if (HEAD_ONE.test(head)) return 'Is there a written ' + t + '?';
+  return '';
+}
+/* "Tell guests they are dealing with AI" is asked as something to agree now, since the telling itself starts with the tool (v2.1, council item 10). */
+export function orTell(item) { const t = lower(item); return /^tell\b/i.test(t) ? 'Is it agreed how you will ' + t + '?' : ''; }
 
 /* ---------- shapes (what kind of phrase a cell item is) ---------- */
 /* People: "<who> <does something>" (a short sentence), "<who> as users", a plain role, or something else to have in place. */
@@ -112,7 +128,8 @@ export function frame(area, list) {
     case 'or': {
       const sh = list.map(orShape);
       if (sh[0] === 'legal') return { q: 'Has a named person checked what the law asks here: ' + t + '?', kind: 'legal' };
-      return sh.every(x => x === 'do') ? { q: 'Has this been done: ' + t + '?', kind: 'or-done' } : { q: 'Is this in place and written down: ' + t + '?', kind: 'or-written' };
+      if (sh.every(x => x === 'do')) return { q: (!many && orTell(first)) || 'Has this been done: ' + t + '?', kind: 'or-done' };
+      return { q: (!many && orWritten(first)) || 'Is this in place and written down: ' + t + '?', kind: 'or-written' }; // the colon frame stays for lists of two or more
     }
   }
   throw new Error('unknown area ' + area);

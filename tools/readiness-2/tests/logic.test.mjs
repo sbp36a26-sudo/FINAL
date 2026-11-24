@@ -1,6 +1,8 @@
-// "Do you need AI?" v2 rules (src/logic.js): the five questions, the readiness score in % and the verdict.
+// "Do you need AI?" v2 rules (src/logic.js): the five questions, the score in % and the verdict (rules v2.1; the v2.1 switches: tests/v21.test.mjs).
 // Run: node tools/readiness-2/tests/logic.test.mjs
-import { load, data, tester, finished } from './load.mjs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { load, data, tester, finished, root } from './load.mjs';
 const { C, L, F, RC } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('logic');
@@ -87,18 +89,22 @@ function mk(use, musts, tail) {
   return r;
 }
 const rep = (v, n) => Array(n).fill(v);
-// independent arithmetic
+// independent arithmetic (rules v2.1: "Don't know yet" counts as 0 points; no score under "Not enough information yet";
+// no top verdict for a use labelled high-risk or flagged for sensitive data, or with a No carried from questions 2 to 5)
+const LABELS = JSON.parse(readFileSync(join(root, '../register/data/uc-labels.json'), 'utf8')).uses;
 function expect(rec) {
-  const P = { y: 2, pl: 1, p: 1, n: 0 }; let pts = 0, max = 0, total = 0, unk = 0;
+  const P = { y: 2, pl: 1, p: 1, n: 0, k: 0 }; let pts = 0, max = 0, total = 0, unk = 0;
   const mv = F.MUST_IDS.map(id => rec.A[id]), tv = rec.use && rec.use !== 'none' ? TQ.uses[rec.use].qs.map(q => rec.T[q.id]) : [];
-  mv.concat(tv).forEach(v => { if (v === 'na') return; total++; if (v === 'k' || !v) { unk++; return; } pts += P[v]; max += 2; });
+  mv.concat(tv).forEach(v => { if (v === 'na') return; total++; if (v === 'k' || !v) unk++; pts += P[v || 'k']; max += 2; });
   const allYes = mv.every(v => v === 'y'), anyNo = mv.some(v => v === 'n'), ratio = max ? pts / max : null;
+  const lab = LABELS.find(u => u.id === rec.use), legal = !!(lab && lab.base === 'high') || !!(rec.use && rec.use !== 'none' && TQ.uses[rec.use].add.includes('sens'));
+  const carriedNo = ['q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'n');
   let level;
   if (unk / total > 0.5) level = 'noinfo';
   else if (anyNo || ratio < 0.5) level = 'notready';
-  else if (allYes && ratio >= 0.75 && unk / total < 0.25) level = 'ready';
+  else if (allYes && ratio >= 0.75 && unk / total < 0.25 && !legal && !carriedNo) level = 'ready';
   else level = 'almost';
-  return { level, pct: max ? Math.floor(100 * pts / max) : null, known: total - unk, total, pts, max };
+  return { level, pct: level === 'noinfo' ? null : Math.floor(100 * pts / max), known: total - unk, total, pts, max };
 }
 function same(rec, tag) { const e = L.evaluate(rec, TQ), x = expect(rec); ok(e.level === x.level && e.pct === x.pct && e.counts.known === x.known && e.counts.total === x.total, tag + ': ' + JSON.stringify(x) + ' got ' + e.level + ' ' + e.pct); return e; }
 const U = 'gx-2', NQ = TQ.uses[U].qs.length; // 8 tailored questions
@@ -114,16 +120,16 @@ e = same(mk('rm-1', ['y','y','y','y','y','y','y','y','y','y'], ['n','n','n','n',
 e = same(mk(U, rep('p', 10), rep('p', 8)), '50%'); ok(e.pct === 50 && e.level === 'almost', 'exactly 50% → Almost ready');
 e = same(mk(U, rep('p', 10), ['n'].concat(rep('p', 7))), '47%'); ok(e.pct === 47 && e.level === 'notready', 'below 50% → Not ready yet');
 // cap by must-haves
-['pl', 'p', 'k'].forEach(v => { e = same(mk(U, [v], []), 'one must-have ' + v); ok(e.level === 'almost' && e.cap && e.pct >= 97, 'a must-have at ' + v + ' caps the result at Almost ready even at ' + e.pct + '%'); });
+['pl', 'p', 'k'].forEach(v => { e = same(mk(U, [v], []), 'one must-have ' + v); ok(e.level === 'almost' && e.cap && e.pct === (v === 'k' ? 94 : 97), 'a must-have at ' + v + ' caps the result at Almost ready even at ' + e.pct + '%'); });
 e = same(mk(U, ['n'], []), 'one must-have No'); ok(e.level === 'notready' && e.pct === 94, 'any must-have at No → Not ready yet, even at 94%');
 for (let i = 0; i < 10; i++) { const m = rep('y', 10); m[i] = 'pl'; ok(L.evaluate(mk(U, m, []), TQ).level !== 'ready', 'top verdict impossible while ' + F.MUST_IDS[i] + ' is not Yes'); }
 // unknown-heavy
 e = same(mk(U, [], ['k', 'k', 'k', 'k', 'y', 'y', 'y', 'y']), '4 of 18 unknown'); ok(e.level === 'ready' && e.counts.unknown === 4, '4 of 18 unknown (22%) → still Ready');
-e = same(mk(U, [], ['k', 'k', 'k', 'k', 'k', 'y', 'y', 'y']), '5 of 18 unknown'); ok(e.level === 'almost' && e.pct === 100, '5 of 18 unknown (28%): 100% of what is known, but not Ready');
+e = same(mk(U, [], ['k', 'k', 'k', 'k', 'k', 'y', 'y', 'y']), '5 of 18 unknown'); ok(e.level === 'almost' && e.pct === 72 && e.pts === 26 && e.max === 36, '5 of 18 unknown (28%): 26 of 36 points = 72% (v2.1: unknown scores 0), not Ready');
 e = same(mk('rm-3', [], ['k', 'k', 'k', 'k', 'y', 'y']), '4 of 16 unknown'); ok(e.level === 'almost', 'exactly a quarter unknown is not "fewer than a quarter"');
 e = same(mk(U, ['y', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k', 'k'], []), '9 of 18 unknown'); ok(e.level === 'almost', 'exactly half unknown is not "more than half"');
 e = same(mk(U, rep('k', 10), []), '10 of 18 unknown'); ok(e.level === 'noinfo', 'more than half unknown → Not enough information yet');
-e = same(mk(U, rep('k', 10), rep('k', 8)), 'all unknown'); ok(e.level === 'noinfo' && e.pct === null && L.scoreHead(e) === 'No score yet', 'nothing known → no score, Not enough information yet');
+e = same(mk(U, rep('k', 10), rep('k', 8)), 'all unknown'); ok(e.level === 'noinfo' && e.pct === null && L.scoreHead(e) === 'No score yet: you answered 0 of 18 questions.', 'nothing known → no score, Not enough information yet');
 e = same(mk(U, ['n'].concat(rep('k', 9)), rep('k', 8)), 'No plus unknowns'); ok(e.level === 'noinfo', 'more than half unknown comes first, even with a must-have at No');
 // Doesn't apply: left out of points and of the question count
 e = same(mk(U, [], ['na', 'na', 'y', 'y', 'y', 'y', 'y', 'y']), 'two na'); ok(e.counts.total === 16 && e.counts.na === 2 && e.pct === 100, '"Doesn\'t apply" is left out altogether');
@@ -149,10 +155,10 @@ ok(nr === 1500 && Object.keys(seen).length === 4, '1,500 random answer sets chec
 const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), today: '2026-11-24' };
 let r = mk(U, ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y']); r.By.m3 = '2027-01-15';
 let m = L.resultModel(r, env);
-ok(/^\d+% ready$/.test(m.scoreHead), 'score reads "72% ready": ' + m.scoreHead);
-ok(m.scoreSub === 'from ' + m.ev.counts.known + ' of ' + m.ev.counts.total + ' questions you could answer; self-reported; cut-offs are the team’s judgement, not tested with hotels', 'the base and the caveat sit next to the score: ' + m.scoreSub);
+ok(m.scoreHead === 'Score: 73%' && !/ready/.test(m.scoreHead), 'score reads "Score: 73%", never "% ready": ' + m.scoreHead);
+ok(m.scoreSub === '25 of 34 points on 17 questions: 15 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.', 'the points, the question counts and the caveat sit next to the score: ' + m.scoreSub);
 ok(m.levelName === 'Not ready yet' && m.cap && /every must-have at Yes/.test(m.cap), 'verdict name and the must-have cap line');
-ok(m.areas[0].name === 'Must-haves' && m.areas.length === 7 && m.areas.every(a => /^\S.*: (\d+% · )?(Strong|Gaps to close|Weak|Too little to say) \(\d+ of \d+ answered\)$/.test(a.line)), 'score per area: must-haves + six areas, % and words');
+ok(m.areas[0].name === 'Must-haves' && m.areas.length === 7 && m.areas.every(a => /^\S.*: \d+ of \d+ in place( · (Strong|Gaps to close|Weak))?( · \d+ to find out)?$/.test(a.line) && !/%/.test(a.line)), 'what is in place, by area: must-haves + six areas, counts and words, no percentage');
 ok(m.first.length === 3 && m.firstLabel === 'Start with these three' && m.first[0].sub.startsWith('Must-have: Rules for staff on AI tools · your answer: No'), 'start with these three: the must-have at No first');
 ok(m.first[1].sub.includes('your answer: Partly') && m.first[2].sub.includes('Don’t know yet'), 'then Partly, then Don\'t know yet');
 ok(eq(m.people.map(p => p.who), C.WHO_ORDER.filter(w => m.people.some(p => p.who === w))) && m.people.every(p => p.name === C.WHO[p.who]), 'action plan by person, in the readiness check\'s order and names');
@@ -163,9 +169,9 @@ ok(m.vendor.length >= 4 && m.vendor[0] === 'Can you show the tool working on our
 ok(m.legal && m.legal.name && m.legalNote === 'Provisional label from the team’s AI Register, awaiting legal sign-off. Not a compliance verdict and not legal advice.' && !/Art\.\s?\d|Annex/.test(JSON.stringify(m.legal)), 'provisional AI Act label with the readiness check\'s neutral wording, no article numbers');
 const hr = L.resultModel(mk('hr-2', [], []), env); ok(hr.legal.name === RC.legal(env.M, env.M.UI['hr-2'], { country: 'France' }).name && hr.legal.items.length > 3 && hr.legal.applies.startsWith('applies from '), 'hr-2: the register\'s high-risk label, with items to check');
 ok(L.resultModel(mk('lg-4', [], []), env).legal === null && L.resultModel(mk('lg-4', [], []), env).notTool, 'lg-4 (a document, not a tool): no label, said so');
-ok(m.method.some(t => /Yes 2 · Planned, not done yet 1 · Partly 1 · No 0/.test(t)) && m.method.some(t => /^Must-haves: \d+ of \d+ points = \d+%/.test(t)) && m.method.some(t => /^Cut-offs: /.test(t) && /75% or more/.test(t) && /50% to 74%/.test(t) && /more than half/.test(t)) && m.method.some(t => /not been tested with hotels/.test(t)), 'how this was worked out: points, per area, cut-offs, caveat');
+ok(m.method.some(t => /Yes 2 · Planned, not done yet 1 · Partly 1 · No 0 · Don’t know yet 0/.test(t)) && m.method.some(t => /^Must-haves: \d+ of 10 in place.*\(\d+ of \d+ points; \d+ of 10 answered\)\.$/.test(t)) && m.method.some(t => /^Cut-offs: /.test(t) && /75% or more/.test(t) && /50% to 74%/.test(t) && /more than half/.test(t)) && m.method.some(t => /not been tested with hotels/.test(t)), 'how this was worked out: points, per area, cut-offs, caveat');
 ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): /.test(t)).length === 7, 'points per area, seven lines');
-const txt = L.summaryText(m); ok(txt.includes(m.levelName + ' · ' + m.scoreHead + ' (' + m.scoreSub + ')') && txt.includes('Action plan by person:') && txt.includes('Content as of 24 Nov 2026'), 'Copy summary carries the verdict, the score with its base, and the plan');
+const txt = L.summaryText(m); ok(txt.includes(m.levelName + ' · ' + m.scoreHead + '\n' + m.reason + '\n' + m.scoreSub) && txt.includes('Action plan by person:') && txt.includes('Content as of 24 Nov 2026'), 'Copy summary carries the verdict with the score beside it, the reason, the points, and the plan');
 ok(L.personText(m, m.people[0], '').startsWith('Do you need AI? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
 // draft use cases and evidence lines
 const drafts = Object.keys(TQ.uses).filter(k => TQ.uses[k].draft).sort();
@@ -174,11 +180,11 @@ ok(L.resultModel(mk('fo-8', [], []), env).draft.startsWith('Draft questions: tea
 Object.keys(TQ.uses).forEach(id => TQ.uses[id].qs.forEach(q => {
   const w = L.tailWhy(TQ, id, q), u = TQ.uses[id];
   ok(w[0] === 'Area: ' + TQ.areas[q.a] + '.' && w.some(t => t.startsWith('Resource intensity (team judgement, not evidence-based): ' + u.int + ': ')) &&
-    w.some(t => u.draft ? /^Evidence: team draft/.test(t) : u.ev ? t === 'Evidence rows in the team’s D6 evidence pack: ' + u.ev + '.' : t === 'Evidence: team judgement from the catalogue description.') &&
+    w.some(t => u.draft ? /^Evidence: team draft/.test(t) : u.ev ? t === 'Based on ' + u.ev.split(', ').length + (u.ev.split(', ').length === 1 ? ' entry' : ' entries') + ' in the team’s research record (not yet published).' : t === 'The team’s judgement from the catalogue description; no source entry.') && !w.some(t => /[A-Z]{3}-\d{3}-\d{2}/.test(t)) &&
     (!u.arch || w.some(t => t.startsWith('Type of tool (the team’s grouping): ' + TQ.arch[u.arch].n))), id + '.' + q.id + ': why-fold has area, type of tool, intensity and the evidence line');
 }));
 // return visits
-const s1 = L.snapshot(L.evaluate(mk(U, ['k', 'k'], []), TQ), '2026-11-20T09:00:00.000Z'), s2 = L.snapshot(L.evaluate(mk(U, [], []), TQ), '2026-11-24T09:00:00.000Z');
+const s1 = L.snapshot(L.evaluate(mk(U, ['k', 'k'], []), TQ), '2026-11-20T09:00:00.000Z', U), s2 = L.snapshot(L.evaluate(mk(U, [], []), TQ), '2026-11-24T09:00:00.000Z', U);
 ok(L.since([s1]) === null && L.sameSnap(s1, s1) && !L.sameSnap(s1, s2), 'first visit: nothing to compare');
 const sc = L.since([s1, s2]); ok(sc.head === 'Since last time (20 Nov 2026)' && sc.lines.some(t => t === 'Must-haves at Yes: 8 → 10 of 10.') && sc.lines.some(t => t === 'Verdict: Almost ready → Ready to start a pilot.'), 'since last time: score, must-haves, verdict');
 done();

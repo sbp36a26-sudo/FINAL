@@ -34,7 +34,7 @@ function mk(use, musts, tail, o) {
 /* Every word of the result model must be in the PDF, as it is. */
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
-  const need = [m.levelName + ' · ' + m.scoreHead, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.ai.q1Unsure, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
+  const need = [m.levelName + ' · ' + m.scoreHead, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.ai.head, m.ai.second, m.ai.q1Unsure, m.path, m.useTask, m.useLevel, m.none, m.firstLabel]
     .concat(m.ai.carried, m.ai.find, m.areas.map(a => a.line), m.first.map(f => f.who + ': ' + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.method, m.answers.map(a => a.title + ': ' + a.q), m.answers.map(a => 'Your answer: ' + a.a), m.itemList.map(i => i.q), m.itemList.map(i => 'Your answer: ' + i.answer),
       m.legal ? [m.legalNote, m.legal.why, m.legal.country, m.legal.labour].concat(m.legal.could, m.legal.items.map(i => i.text), m.legal.items.map(i => i.sub)) : [], m.since ? [m.since.head].concat(m.since.lines) : []).filter(Boolean);
@@ -47,10 +47,11 @@ function sameWords(rec, tag) {
 // ---------- a guest chatbot, mixed answers ----------
 let r = mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y']); r.By.m3 = '2027-01-15';
 let { m, pdf, t } = sameWords(r, 'gx-2');
-ok(eq(heads(pdf), ['Result', 'Start with these three', 'Is this an AI problem?', 'Where it sits', 'Score per area', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label', 'Every question and your answer', 'How this was worked out', 'Sources']), 'sections, in the result page\'s order');
-ok(pdf.blocks[0].t === 'Do you need AI? Readiness score and verdict' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
-const lv = pdf.blocks.find(b => b.id === 'level'), sub = pdf.blocks[pdf.blocks.indexOf(lv) + 1];
-ok(/^Not ready yet · \d+% ready$/.test(lv.t) && sub.id === 'score-sub' && /^from 15 of 17 questions you could answer; self-reported; cut-offs are the team’s judgement, not tested with hotels$/.test(sub.t), 'the percentage with its base and caveat right next to it: ' + lv.t + ' / ' + sub.t);
+ok(eq(heads(pdf), ['Result', 'Start with these three', 'Is this an AI problem?', 'Where it sits', 'What is in place, by area', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label', 'Every question and your answer', 'How this was worked out', 'Sources']), 'sections, in the result page\'s order');
+ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
+const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
+ok(lv.t === 'Not ready yet · Score: 73%' && why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 34 points on 17 questions: 15 answered, 2 “Don’t know yet” (0 points each). Your own answers; nobody checked them.'), 'the verdict with the score, the reason, then the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
+ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
 ok(t.includes('Finish: Agree the KPI this tool must improve') && t.includes('(planned by 15 Jan 2027).') && t.includes('Your answer: Planned (planned by 15 Jan 2027)') && t.includes('Your answer: Doesn’t apply'), 'planned dates and "Doesn\'t apply" are shown');
 ok(pdf.blocks.filter(b => b.k === 'item').length === 18 && pdf.blocks.filter(b => b.k === 'q').length === 5, '18 questions with answers, and the five questions');
 ok(!/\b(m\d+|pe1|x-auto)\b/.test(t) && !/\b(P1|F1|T1|D5a|G2s)\b/.test(t), 'no internal ids or codes in the PDF');
@@ -61,7 +62,7 @@ let x = sameWords(mk('fo-8', ['p'], []), 'fo-8 draft'); ok(x.t.includes('Draft q
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label') && x.pdf.blocks.filter(b => b.k === 'item').length === 10, '"None of these fits": must-haves only, said so; no vendor or label section');
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
 x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); ok(x.m.ai.carried.length === 4 && x.t.includes('If question 1 turns out to be No'), 'every carried condition and the Q1 "Not sure" line');
-r = mk('gx-2', [], []); r.snaps = [L.snapshot(L.evaluate(mk('gx-2', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z')];
+r = mk('gx-2', [], []); r.snaps = [L.snapshot(L.evaluate(mk('gx-2', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z', 'gx-2'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z', 'gx-2')];
 x = sameWords(r, 'since last time'); ok(x.t.includes('Since last time (20 Nov 2026)') && x.t.includes('Verdict: Not ready yet → Ready to start a pilot.'), 'the return-visit lines');
 x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed', country: 'Other' } }), 'no name'); ok(x.t.includes('Hotel: Managed or franchised · Other (outside the EU)') && !x.t.includes('Filled in by'), 'no hotel name, no role');
 // random sets over every use case: the words always match
@@ -73,7 +74,7 @@ ok(n === 220, '220 answer sets (every use case at least once) checked word for w
 // ---------- the stop version ----------
 r = finished(F, D, '', { Q: { q1: 'n', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf);
 ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.', 'Sources']) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered No to: “Is this task too varied for fixed rules (if this, then that)?”'), 'stop PDF: the heading, why, instead, the "Not sure" line, the because line');
-ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: No', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves/.test(t), 'stop PDF: the five answers, no score');
+ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: No', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
 let d = drawn(pdf); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
 
 // ---------- drawing ----------
@@ -83,7 +84,7 @@ for (const [tag, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'p
   ok(d.r.pages >= 2 && d.r.pages <= 9 && d.r.footers.length === d.r.pages && d.r.footers.every((f, i) => f === P.footer(i + 1, d.r.pages)), tag + ': ' + d.r.pages + ' pages, a footer with "page n of N" on each');
   noOverflow(d.log, tag);
   const printed = d.log.map(l => l.line).join(' ').replace(/\s+/g, ' ');
-  ok(['Score per area', 'Action plan by person', 'How this was worked out'].every(hh => printed.includes(hh)) && printed.includes(L.resultModel(rec, env).scoreHead), tag + ': the headings and the score are drawn');
+  ok(['What is in place, by area', 'Action plan by person', 'How this was worked out'].every(hh => printed.includes(hh)) && printed.includes(L.resultModel(rec, env).scoreHead), tag + ': the headings and the score are drawn');
   ok(!/\?{2,}/.test(printed.replace(/\?”/g, '')), tag + ': no run of unprintable characters');
   ok(d.r.doc.output('arraybuffer').byteLength > 20000, tag + ': a real PDF comes out');
 }

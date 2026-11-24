@@ -9,12 +9,12 @@
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'Do you need AI? Readiness score and verdict';
+  var TITLE = 'Do you need AI? Result', TITLE_STOP = 'Do you need AI? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
   var FOOT = 'Do you need AI? · student prototype, not legal advice · page ';
 
-  function head(m) {
-    var b = [{ k: 'title', t: TITLE }];
+  function head(m, stop) {
+    var b = [{ k: 'title', t: stop ? TITLE_STOP : TITLE }];
     if (m.hotel) b.push({ k: 'meta', t: 'Hotel: ' + m.hotel });
     if (m.filledBy) b.push({ k: 'meta', t: 'Filled in by: ' + m.filledBy });
     b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE });
@@ -22,7 +22,7 @@
   }
   function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, a: 'Your answer: ' + a.a }; }); }
   function sources(TQ, stop) {
-    var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : ''); };
+    var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
     (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
       b.push({ k: 'label', t: s[1] });
       if (S[s[0] + 'Note']) b.push({ k: 'p', t: N(S[s[0] + 'Note']), small: true });
@@ -33,12 +33,13 @@
 
   /* m: R2Logic.resultModel(rec, env). The words are the result page's own. */
   function model(rec, env) {
-    var m = L.resultModel(rec, env), b = head(m), v = L.verdict(rec.Q);
+    var v = L.verdict(rec.Q), m = L.resultModel(rec, env), b = head(m, v.stop);
     if (v.stop) {
       return { stop: true, blocks: b.concat([{ k: 'h', t: C.STOP.head }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
         { k: 'p', t: 'Because you answered No to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
     }
-    b.push({ k: 'h', t: 'Result' }, { k: 'lead', t: m.levelName + ' · ' + m.scoreHead, id: 'level' }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' }, { k: 'p', t: m.levelLine }, { k: 'p', t: m.mustLine, id: 'must-line' });
+    b.push({ k: 'h', t: 'Result' }, { k: 'lead', t: m.levelName + ' · ' + m.scoreHead, id: 'level' }, { k: 'lead', t: m.reason, id: 'reason' }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' }, { k: 'p', t: m.levelLine }, { k: 'p', t: m.mustLine, id: 'must-line' });
+    if (m.law) b.push({ k: 'lead', t: m.law, id: 'law' });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
     if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
@@ -59,7 +60,7 @@
     if (m.useTask) b.push({ k: 'p', t: m.useTask }, { k: 'p', t: m.useLevel });
     if (m.none) b.push({ k: 'p', t: m.none });
 
-    b.push({ k: 'h', t: 'Score per area' }); m.areas.forEach(function (a) { b.push({ k: 'li', t: a.line, id: 'area-' + a.k }); });
+    b.push({ k: 'h', t: m.areasHead }); m.areas.forEach(function (a) { b.push({ k: 'li', t: a.line, id: 'area-' + a.k }); });
 
     b.push({ k: 'h', t: 'Action plan by person' });
     if (!m.people.length) b.push({ k: 'p', t: 'Nothing open.' });
@@ -153,7 +154,7 @@
     return { doc: doc, pages: n, footers: footers };
   }
 
-  var api = { TITLE: TITLE, LINE: LINE, model: model, fileName: fileName, slug: slug, footer: footer, safe: safe, draw: draw };
+  var api = { TITLE: TITLE, TITLE_STOP: TITLE_STOP, LINE: LINE, model: model, fileName: fileName, slug: slug, footer: footer, safe: safe, draw: draw };
   root.R2Pdf = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);

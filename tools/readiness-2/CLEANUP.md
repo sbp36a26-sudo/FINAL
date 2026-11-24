@@ -53,3 +53,28 @@ Rebuilt on 24 Nov 2026 to `.claude/skills/clean-up/SKILL.md`: one transition tab
 ## Proof
 
 Unit: logic 7,473 · flow 5,987 · questions 913 · pdf 481 · build 120. Browser (`tests/browser/walk.cjs`): 822 checks at 1280 and 390 px, standalone and inside the hub: three full walks (guest chatbot `gx-2`, AI recruiting `hr-2` with the sensitive-data add-on, draft use case `fo-8`), "None of these fits", Q1 stop, reload mid-flow, Back/forward, saved-check list, file save/open, PDF download, v1 records, `#use=` links, old `readiness-check` link from the hub, team sharing and withdrawal, blocked storage. No console errors, no horizontal scroll, 44 px targets.
+
+## v2.1 (24 Nov 2026): second clean-up pass
+
+From `reports/audit-readiness-2/cleanup_inventory_v2.md` (18 machines, 23 faults). Three earlier claims above were wrong and are corrected here: "one download at a time" did not hold for *Save as file*; "SHARE: settled state comes from the record" failed when another check was opened mid-send; Back went dead after every store event.
+
+| Machine | Action in v2.1 | What changed |
+|---|---|---|
+| SHARE | Made explicit by check id | `ui.share = { phase, id }`; `reduce('shared' / 'unshared', { id })` writes to that check on any step; `withdrawCopy(id)`; controls on every step (`#unshare` in the header line, the result panel, `#unshare-<id>` in the list, `#rm-withdraw` in the remove dialog). A check removed mid-send has its copy taken back. |
+| HISTORY | One more rule | `F.histSkip`: entries of another check, and (going back) entries whose step is no longer reachable, are passed over; bounded at 60. |
+| TABS (new name) | Made explicit | `F.mergeTabs(mine, theirs)` → `elsewhere: null / 'changed' / 'removed'`; the open check is per tab; event `adopt` loads the other tab's version. |
+| Answers / questions | Versioned | `rec.tqSig` against `TQ.uses[id].sig`; `info.questionsChanged`, `info.useChanged` → `ui.notice`. |
+| Since last time | Keyed | snapshots carry `use` and `rules`; `L.snapsOf`, `L.since`. |
+| STORE | One guard | cap of 50 at write time (`{ ok: false, full: true }`) and on load (open check and newest kept). |
+| Hotel form + profile | Named | "empty means cleared": `clearProfile(k)`. Country "Other" clears the profile's country. |
+| Use-case selection | Named | `rec.from = 'link'`; `listed()` ignores a link-only use case. |
+| File save / open | Named | `F.forFile`, `cleanRec(..., { file: true })`, `ui.fileNote = 'old'`. |
+| Storage | Wording, one state | `ui.corrupt`; raw text kept under `F.CORRUPT_KEY`. |
+| Team page | Named | `dynGone(d)`; rules card per kind of copy. |
+| FLOW, CONFIRM, BRIDGE, DOWNLOAD, hub alias, page-only flags | Left | No fault, or one line (the file download now takes the same later tick as the PDF). |
+
+New AX: `state()` adds `from`, `tqSig`, `elsewhere`, `fileNote`, `corrupt`, `rules`, `judgement`, `reason`, `held`, `score`; `#reason[data-held]`, `#elsewhere[data-elsewhere]`, `#shared-line[data-share-state]`, `.mycheck[data-shared]`; events `adopt`, `remove-withdraw`.
+
+Note for drivers: in-app Back uses the browser's history, so two `send('back')` in one tick race with `popstate` (true before v2.1 as well); send one, then read the state.
+
+Proof: unit logic 7,473 · flow 5,987 · questions 917 · pdf 482 · build 120 · v21 1,204. Browser: `walk.cjs` 832, `v21.cjs` 592 (1280 and 390 px, standalone and in the hub, old-version data from `tests/fixtures/v2.0-*.json`). No console errors, no horizontal scroll, 44 px targets.

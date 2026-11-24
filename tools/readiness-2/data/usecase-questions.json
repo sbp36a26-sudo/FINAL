@@ -301,7 +301,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: RMS subscription (often per room), and also onboarding fee?",
+     "q": "Do you know what this will cost your hotel: RMS subscription (often per room), and onboarding fee?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: RMS subscription (often per room); onboarding fee.",
@@ -328,7 +328,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: rules for when staff override forecasts?",
+     "q": "Are there written rules for when staff override forecasts?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Rules for when staff override forecasts.",
@@ -533,7 +533,7 @@
     {
      "id": "da1",
      "a": "da",
-     "q": "Is this data ready, digital and up to date: same data as the RMS, and also clean KPI definitions?",
+     "q": "Is this data ready, digital and up to date: same data as the RMS, and clean KPI definitions?",
      "kind": "da-ready",
      "who": "dept",
      "act": "Get this data in order: Same data as the RMS; clean KPI definitions.",
@@ -590,7 +590,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: usage-based or premium tier, and also integration project?",
+     "q": "Do you know what this will cost your hotel: usage-based or premium tier, and integration project?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: Usage-based or premium tier; integration project.",
@@ -617,7 +617,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: human approval before agents change rates, and also action log?",
+     "q": "Is this in place and written down: human approval before agents change rates, and action log?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Human approval before agents change rates; action log.",
@@ -756,7 +756,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: rules on which offers may be priced automatically?",
+     "q": "Are there written rules on which offers may be priced automatically?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Rules on which offers may be priced automatically.",
@@ -851,7 +851,7 @@
     {
      "id": "sk1",
      "a": "sk",
-     "q": "Can the people involved read parity reports, and also know the contract terms with each channel?",
+     "q": "Can the people involved read parity reports, and know the contract terms with each channel?",
      "kind": "sk-do",
      "who": "dept",
      "act": "Train or brief the people involved: Read parity reports; know the contract terms with each channel.",
@@ -887,7 +887,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: written rules for when a lower rate is matched, with a floor price, and who follows up with the channel?",
+     "q": "Are there written rules for when a lower rate is matched, with a floor price, and who follows up with the channel?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Written rules for when a lower rate is matched, with a floor price, and who follows up with the channel.",
@@ -946,7 +946,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: telephony (SIP) integration, and also read/write PMS/CRS for bookings?",
+     "q": "Is this in place, or confirmed as possible: telephony (SIP) integration, and read/write PMS/CRS for bookings?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Telephony (SIP) integration; read/write PMS/CRS for bookings.",
@@ -964,7 +964,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Has this been done: tell callers they speak to AI?",
+     "q": "Is it agreed how you will tell callers they speak to AI?",
      "kind": "or-done",
      "who": "gm",
      "act": "Agree in writing: Tell callers they speak to AI.",
@@ -1112,7 +1112,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: contract terms with OTAs (parity)?",
+     "q": "Are there written contract terms with OTAs (parity)?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Contract terms with OTAs (parity).",
@@ -1240,7 +1240,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: walk policy agreed with front office?",
+     "q": "Is there a written walk policy agreed with front office?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Walk policy agreed with front office.",
@@ -1343,7 +1343,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: build or vendor fee, and also possible commission?",
+     "q": "Do you know what this will cost your hotel: build or vendor fee, and possible commission?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: Build or vendor fee; possible commission.",
@@ -1370,7 +1370,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: brand/contract rules for new channels?",
+     "q": "Are there written brand/contract rules for new channels?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Brand/contract rules for new channels.",
@@ -1523,7 +1523,7 @@
     {
      "id": "da1",
      "a": "da",
-     "q": "Is this data ready, digital and up to date: brand guidelines, and also approved facts about the hotel?",
+     "q": "Is this data ready, digital and up to date: brand guidelines, and approved facts about the hotel?",
      "kind": "da-ready",
      "who": "dept",
      "act": "Get this data in order: Brand guidelines; approved facts about the hotel.",
@@ -1532,7 +1532,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: staff AI-use policy (no guest data in public tools)?",
+     "q": "Is there a written staff AI-use policy (no guest data in public tools)?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Staff AI-use policy (no guest data in public tools).",
@@ -1724,7 +1724,7 @@
     {
      "id": "da1",
      "a": "da",
-     "q": "Is this data ready, digital and up to date: brand assets, and also rights to source images?",
+     "q": "Is this data ready, digital and up to date: brand assets, and rights to source images?",
      "kind": "da-ready",
      "who": "dept",
      "act": "Get this data in order: Brand assets; rights to source images.",
@@ -1806,7 +1806,7 @@
     {
      "id": "or2",
      "a": "or",
-     "q": "Is this in place and written down: agency contract?",
+     "q": "Is there a written agency contract?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: agency contract.",
@@ -1852,7 +1852,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: website structured data, and also bookable API where used?",
+     "q": "Is this in place, or confirmed as possible: website structured data, and bookable API where used?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Website structured data; bookable API where used.",
@@ -1982,7 +1982,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: per check-in or subscription, and also kiosk hardware if used?",
+     "q": "Do you know what this will cost your hotel: per check-in or subscription, and kiosk hardware if used?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: Per check-in or subscription; kiosk hardware if used.",
@@ -2009,7 +2009,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Has a named person checked what the law asks here: data retention for ID images, and also GDPR basis?",
+     "q": "Has a named person checked what the law asks here: data retention for ID images, and GDPR basis?",
      "kind": "legal",
      "who": "dpo",
      "act": "Ask your data protection contact or legal adviser what applies: Data retention for ID images; GDPR basis.",
@@ -2144,7 +2144,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: per verification fee, and also kiosk hardware if used?",
+     "q": "Do you know what this will cost your hotel: per verification fee, and kiosk hardware if used?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: Per verification fee; kiosk hardware if used.",
@@ -2342,7 +2342,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: price rules?",
+     "q": "Are there written price rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Price rules.",
@@ -2373,7 +2373,7 @@
     {
      "id": "sk1",
      "a": "sk",
-     "q": "Can the people involved read a risk score, and also know what it may not be used for?",
+     "q": "Can the people involved read a risk score, and know what it may not be used for?",
      "kind": "sk-do",
      "who": "dept",
      "act": "Train or brief the people involved: Read a risk score; know what it may not be used for.",
@@ -2391,7 +2391,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: link to the PMS or booking engine, and also ID scanning?",
+     "q": "Is this in place, or confirmed as possible: link to the PMS or booking engine, and ID scanning?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Link to the PMS or booking engine; ID scanning.",
@@ -2418,7 +2418,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: written rules on when a flag may lead to refusing a guest, and also no automatic refusals?",
+     "q": "Is this in place and written down: written rules on when a flag may lead to refusing a guest, and no automatic refusals?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Written rules on when a flag may lead to refusing a guest; no automatic refusals.",
@@ -2462,7 +2462,7 @@
     {
      "id": "sk1",
      "a": "sk",
-     "q": "Can the people involved maintain the avatar's knowledge base, and also review conversations?",
+     "q": "Can the people involved maintain the avatar's knowledge base, and review conversations?",
      "kind": "sk-do",
      "who": "dept",
      "act": "Train or brief the people involved: Maintain the avatar's knowledge base; review conversations.",
@@ -2498,7 +2498,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: hand-off rules to a person, and also guests can always reach staff?",
+     "q": "Is this in place and written down: hand-off rules to a person, and guests can always reach staff?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Hand-off rules to a person; guests can always reach staff.",
@@ -2567,7 +2567,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: staff phones or tablets, and also optional link to the PMS?",
+     "q": "Is this in place, or confirmed as possible: staff phones or tablets, and optional link to the PMS?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Staff phones or tablets; optional link to the PMS.",
@@ -2649,7 +2649,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: rule for urgent complaints?",
+     "q": "Is there a written rule for urgent complaints?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Rule for urgent complaints.",
@@ -2715,7 +2715,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Has this been done: tell guests they are dealing with AI?",
+     "q": "Is it agreed how you will tell guests they are dealing with AI?",
      "kind": "or-done",
      "who": "gm",
      "act": "Agree in writing: Tell guests they are dealing with AI.",
@@ -2724,7 +2724,7 @@
     {
      "id": "or2",
      "a": "or",
-     "q": "Is this in place and written down: hand-off rules?",
+     "q": "Are there written hand-off rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: hand-off rules.",
@@ -2900,7 +2900,7 @@
     {
      "id": "fi1",
      "a": "fi",
-     "q": "Do you know what this will cost your hotel: subscription, and also possible commission on bookings?",
+     "q": "Do you know what this will cost your hotel: subscription, and possible commission on bookings?",
      "kind": "fi-cost",
      "who": "fin",
      "act": "Get a price and add it to the budget: Subscription; possible commission on bookings.",
@@ -2927,7 +2927,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Has this been done: tell guests they are dealing with AI?",
+     "q": "Is it agreed how you will tell guests they are dealing with AI?",
      "kind": "or-done",
      "who": "gm",
      "act": "Agree in writing: Tell guests they are dealing with AI.",
@@ -2936,7 +2936,7 @@
     {
      "id": "or2",
      "a": "or",
-     "q": "Is this in place and written down: partner terms?",
+     "q": "Are there written partner terms?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: partner terms.",
@@ -2994,7 +2994,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: in-room Wi-Fi, and also links to PMS, task tool, room controls?",
+     "q": "Is this in place, or confirmed as possible: in-room Wi-Fi, and links to PMS, task tool, room controls?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: In-room Wi-Fi; links to PMS, task tool, room controls.",
@@ -3300,7 +3300,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: price-change rules?",
+     "q": "Are there written price-change rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Price-change rules.",
@@ -3452,7 +3452,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Has this been done: tell callers they are dealing with AI?",
+     "q": "Is it agreed how you will tell callers they are dealing with AI?",
      "kind": "or-done",
      "who": "gm",
      "act": "Agree in writing: Tell callers they are dealing with AI.",
@@ -3527,7 +3527,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: staff data and messaging rules?",
+     "q": "Are there written staff data and messaging rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Staff data and messaging rules.",
@@ -3602,7 +3602,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: plan for freed staff time?",
+     "q": "Is there a written plan for freed staff time?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Plan for freed staff time.",
@@ -3756,7 +3756,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: guest privacy notice for occupancy sensing?",
+     "q": "Is there a written guest privacy notice for occupancy sensing?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Guest privacy notice for occupancy sensing.",
@@ -3908,7 +3908,7 @@
     {
      "id": "da1",
      "a": "da",
-     "q": "Is this data ready, digital and up to date: accurate real-time room status, and also clean-time history?",
+     "q": "Is this data ready, digital and up to date: accurate real-time room status, and clean-time history?",
      "kind": "da-ready",
      "who": "dept",
      "act": "Get this data in order: Accurate real-time room status; clean-time history.",
@@ -3966,7 +3966,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: pods in every fitted room, and also alerts by e-mail to the hotel?",
+     "q": "Is this in place, or confirmed as possible: pods in every fitted room, and alerts by e-mail to the hotel?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Pods in every fitted room; alerts by e-mail to the hotel.",
@@ -3975,7 +3975,7 @@
     {
      "id": "da1",
      "a": "da",
-     "q": "Is this data ready, digital and up to date: room number for each pod, and also alert log with photos?",
+     "q": "Is this data ready, digital and up to date: room number for each pod, and alert log with photos?",
      "kind": "da-ready",
      "who": "dept",
      "act": "Get this data in order: Room number for each pod; alert log with photos.",
@@ -4043,7 +4043,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: BMS with open protocols (e.g. BACnet), and also metering?",
+     "q": "Is this in place, or confirmed as possible: BMS with open protocols (e.g. BACnet), and metering?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: BMS with open protocols (e.g. BACnet); metering.",
@@ -4061,7 +4061,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: comfort limits agreed with operations?",
+     "q": "Are there written comfort limits agreed with operations?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Comfort limits agreed with operations.",
@@ -4118,7 +4118,7 @@
     {
      "id": "te1",
      "a": "te",
-     "q": "Is this in place, or confirmed as possible: mobile app, and also link to PMS for room blocks?",
+     "q": "Is this in place, or confirmed as possible: mobile app, and link to PMS for room blocks?",
      "kind": "te-place",
      "who": "it",
      "act": "Put in place, or get confirmed: Mobile app; link to PMS for room blocks.",
@@ -4280,7 +4280,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: comfort and guest-complaint rules?",
+     "q": "Are there written comfort and guest-complaint rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Comfort and guest-complaint rules.",
@@ -4355,7 +4355,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: data access terms in OEM contract?",
+     "q": "Are there written data access terms in OEM contract?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Data access terms in OEM contract.",
@@ -4997,7 +4997,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: approval rules for orders?",
+     "q": "Are there written approval rules for orders?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Approval rules for orders.",
@@ -5125,7 +5125,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: approval workflow?",
+     "q": "Is there a written approval workflow?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Approval workflow.",
@@ -5381,7 +5381,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: approval limits?",
+     "q": "Are there written approval limits?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Approval limits.",
@@ -5456,7 +5456,7 @@
     {
      "id": "or2",
      "a": "or",
-     "q": "Is this in place and written down: rules for blocking payments?",
+     "q": "Are there written rules for blocking payments?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: rules for blocking payments.",
@@ -5737,7 +5737,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: audit-trail rules?",
+     "q": "Are there written audit-trail rules?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Audit-trail rules.",
@@ -6265,7 +6265,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: written check that a card or PIN would not be enough, and also staff representatives informed?",
+     "q": "Is this in place and written down: written check that a card or PIN would not be enough, and staff representatives informed?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Written check that a card or PIN would not be enough; staff representatives informed.",
@@ -6426,7 +6426,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: AI-use policy, and also no confidential data in public tools?",
+     "q": "Is this in place and written down: AI-use policy, and no confidential data in public tools?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: AI-use policy; no confidential data in public tools.",
@@ -6618,7 +6618,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: owner–operator data-sharing agreement?",
+     "q": "Is there a written owner–operator data-sharing agreement?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Owner–operator data-sharing agreement.",
@@ -6758,7 +6758,7 @@
     {
      "id": "or1",
      "a": "or",
-     "q": "Is this in place and written down: rules on what staff may build, who checks security and data protection, and who maintains a tool when its builder leaves?",
+     "q": "Are there written rules on what staff may build, who checks security and data protection, and who maintains a tool when its builder leaves?",
      "kind": "or-written",
      "who": "gm",
      "act": "Agree in writing: Rules on what staff may build, who checks security and data protection, and who maintains a tool when its builder leaves.",

@@ -9,9 +9,15 @@
      copy     true while the copy box (clipboard fallback) is open; copyText: what it shows
      open     which folded explanations are open (kept across re-renders)
      dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'
-     share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record)
+     share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
+              v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
+              so a copy can be withdrawn from any step, from the stop screen and from "Your checks".
      file     a check read from a file that is waiting for the "replace?" answer; else null
-     notice   'useChanged' after a restore whose use case moved in the catalogue; else null
+     notice   'useChanged' after a restore whose use case moved in or left the catalogue (shown on step 4);
+              'questionsChanged' when its tailored questions changed since it was answered (shown on step 5); else null
+     elsewhere  TABS (F.mergeTabs): null | 'changed' | 'removed': another tab of this browser changed or removed the open check
+     fileNote 'old' after a file from the earlier Readiness check was chosen; else null
+     corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
    host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
    host.pong  true once the hub bar has answered our ping; only then do links become hub messages
    storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
@@ -28,8 +34,8 @@
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
   var USE = {}, DEPT = {};
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
-  var ENV = { cat: CAT, tq: {}, countries: C.COUNTRIES };
-  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id }; }); });
+  var ENV = { cat: CAT, tq: {}, sig: {}, countries: C.COUNTRIES };
+  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
   var IN_FRAME = window.parent !== window;
   var FOREIGN_PARENT = IN_FRAME && (function () { try { var a = location.ancestorOrigins; return !!(a && a.length && a[0] !== location.origin); } catch (e) { return false; } })();
   var PROFILE = 'hftp-hotel-profile-v1';
@@ -40,17 +46,34 @@
   function opt(v, l, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; }
 
   // ---------- storage (versioned store, see F.migrate) ----------
-  var storage = 'ok', loadInfo = {};
-  function load() {
-    var s, info = {};
-    try { s = localStorage.getItem(F.KEY); } catch (e) { storage = 'blocked'; return null; }
+  var storage = 'ok', loadInfo = {}, corrupt = false;
+  /* TABS (audit M3): which check is open belongs to the tab (sessionStorage), not to the shared store, so two tabs can hold two checks. */
+  function tabCur() { try { return sessionStorage.getItem(F.CUR_KEY) || ''; } catch (e) { return ''; } }
+  function setTabCur() { try { sessionStorage.setItem(F.CUR_KEY, store.cur); } catch (e) { /* blocked */ } }
+  /* What is saved now → { store, info } | { blocked } | { corrupt: text } | null (nothing saved). Changes nothing. */
+  function readStore(keep) {
+    var s; try { s = localStorage.getItem(F.KEY); } catch (e) { return { blocked: true }; }
     if (!s) return null;
-    var raw; try { raw = JSON.parse(s); } catch (e) { return null; } // corrupt: start fresh, the first save replaces it
-    var r = F.migrate(raw, ENV, info); loadInfo = info;
-    if (r && info.newer) storage = 'newer';
-    return r;
+    var raw; try { raw = JSON.parse(s); } catch (e) { return { corrupt: s }; }
+    var info = { keep: keep }, r = F.migrate(raw, ENV, info);
+    return r ? { store: r, info: info } : { corrupt: s };
+  }
+  function load() {
+    var x = readStore(tabCur());
+    if (!x) return null;
+    if (x.blocked) { storage = 'blocked'; return null; }
+    if (x.corrupt != null) { // audit L12: say so and set the unreadable text aside before the first save replaces it
+      corrupt = true; try { localStorage.setItem(F.CORRUPT_KEY, x.corrupt); } catch (e) { /* blocked */ }
+      return null;
+    }
+    loadInfo = x.info;
+    if (x.info.newer) storage = 'newer';
+    /* Blank checks left behind by other tabs are not kept. */
+    Object.keys(x.store.checks).forEach(function (k) { if (k !== x.store.cur && !F.listed(x.store.checks[k])) delete x.store.checks[k]; });
+    return x.store;
   }
   function save() {
+    setTabCur();
     if (storage === 'newer') return;
     try {
       var s = JSON.parse(JSON.stringify(store)); s.checks[s.cur].updated = new Date().toISOString(); store.checks[store.cur].updated = s.checks[s.cur].updated;
@@ -74,12 +97,22 @@
     p.updatedAt = new Date().toISOString(); p.from = 'readiness';
     try { localStorage.setItem(PROFILE, JSON.stringify(p)); } catch (e) { /* blocked */ }
   }
+  /* Audit L2: "empty means cleared". A field the person empties on step 1 is taken out of the shared profile too, so it does not
+     come back on the next load. (Country "Other" has no code in the profile, so it clears the profile's country as well.) */
+  function clearProfile(k) {
+    if (storage !== 'ok') return;
+    var p = readProfile(); if (!p || !Object.prototype.hasOwnProperty.call(p, k)) return;
+    delete p[k]; p.updatedAt = new Date().toISOString(); p.from = 'readiness';
+    try { localStorage.setItem(PROFILE, JSON.stringify(p)); } catch (e) { /* blocked */ }
+  }
 
   var store = load() || F.blankStore();
   var rec = F.cur(store);
-  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, dl: 'idle', share: null, file: null, notice: loadInfo.useChanged ? 'useChanged' : null };
+  function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
+  var ui = { confirm: null, missing: null, copy: false, copyText: '', open: {}, dl: 'idle', share: null, file: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, today: L.localIso() }; }
+  function recOf(id) { return Object.prototype.hasOwnProperty.call(store.checks, id) ? store.checks[id] : null; }
   function model() { return L.resultModel(rec, env()); }
   function tailQs() { return L.useQs(TQ, rec.use); }
 
@@ -112,21 +145,41 @@
   var STORE_EV = { 'new': 1, open: 1, remove: 1, 'import': 1, preselect: 1 };
   function apply(r) { store = r.store; rec = F.cur(store); }
   /* opt.quiet: save without redrawing (typing in the hotel name). */
+  /* Remove a check now (the CONFIRM machine has already fired). */
+  function removeNow(id, msg) {
+    var prev = rec.step, prevId = rec.id, r = F.reduce(store, 'remove', id, ENV); if (!r.ok) { render(); return false; }
+    apply(r); if (rec.id !== prevId) { adoptProfile(); afterMove(prev, 'remove', true); } else { save(); render(); }
+    toast(msg); return true;
+  }
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
-    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-yes'); if (y) y.focus(); return true; }
+    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-withdraw') || $('rm-yes'); if (y) y.focus(); return true; }
     if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; render(); return true; }
     if (ev === 'remove-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
-      r = F.reduce(store, 'remove', arg, ENV); if (!r.ok) { render(); return false; }
-      apply(r); if (rec.id !== prevId) { adoptProfile(); afterMove(prev, 'remove', true); } else { save(); render(); }
-      toast('Check removed from this browser.'); return true;
+      return removeNow(arg, 'Check removed from this browser.');
     }
+    if (ev === 'remove-withdraw') {
+      /* Audit H1: a real button instead of a sentence that sent the person to a page they could not reach. The copy goes first; the check only if that worked. */
+      c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
+      if (!c.fire || !recOf(arg) || !S || ui.share) { render(); return false; }
+      ui.share = { phase: 'withdrawing', id: arg }; render();
+      withdrawCopy(arg).then(function () { ui.share = null; sharePatch('unshared', { id: arg }); removeNow(arg, 'Shared copy withdrawn and check removed from this browser.'); },
+        function (e) { ui.share = null; render(); toast(e && e.code === 'mode' ? 'This copy was shared from the project hub: open the check there to withdraw it. The check was kept.' : 'The shared copy could not be withdrawn, so the check was kept.'); });
+      return true;
+    }
+    if (ev === 'adopt') {
+      /* TABS: take the other tab's version of the open check. */
+      var x = readStore(rec.id);
+      if (x && x.store && x.store.checks[rec.id]) { store.checks[rec.id] = x.store.checks[rec.id]; rec = F.cur(store); ui.notice = noticeOf(x.info); }
+      ui.elsewhere = null; ui.missing = null; histAssert(); render(); return true;
+    }
+    if (ev === 'seen' && ui.corrupt) { ui.corrupt = false; if (!store.notice) { render(); return true; } }
     if (ev === 'import-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'file'); ui.confirm = c.c; var f = ui.file; ui.file = null;
       if (!c.fire || !f) { render(); return false; }
-      return send('import', f);
+      return send('import', f, { notice: ui.fileInfo });
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
       /* Refused "Next": point at the first open question (Q1 No always goes on to the stop screen, so never here). */
@@ -140,13 +193,16 @@
       if (!r.ok) histWrite('replace', { r2: rec.step, d: hist.d, prev: null, id: rec.id });
       afterMove(prev, null); return r.ok;
     }
-    if (!r.ok) return false;
+    if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.notice = null;
+      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
+    if (ev === 'hotel' && arg.v === '' && arg.k !== 'role') clearProfile(arg.k);
+    if (ev === 'hotel' && arg.k === 'country' && arg.v === 'Other') clearProfile('country');
+    if (ev === 'begin' || ev === 'next') ui.corrupt = false;
     if ((ev === 'begin' || ev === 'next') && store.notice) apply(F.reduce(store, 'seen', null, ENV)); // the one-time notice has been read
     if (rec.step !== prev) { afterMove(prev, ev); return true; }
     if (ev === 'use') ui.notice = null;
@@ -157,8 +213,8 @@
   }
   /* ev: the event that moved the step (written into history by the HISTORY machine), or null for a pop (already in history). */
   function afterMove(prev, ev, force) {
-    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = false; ui.file = null;
-    if (rec.step !== prev || force) ui.notice = rec.step === 'where' ? ui.notice : null;
+    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = false; ui.file = null; skipRun = 0;
+    if (rec.step !== prev || force) { ui.notice = (ui.notice === 'useChanged' && rec.step === 'where') || (ui.notice === 'questionsChanged' && rec.step === 'tailored') ? ui.notice : null; ui.elsewhere = null; ui.fileNote = null; }
     if (ev && (rec.step !== prev || force)) histMove(ev, prev);
     takeSnap();
     save(); render();
@@ -167,7 +223,7 @@
   /* Return visits: on the result page, keep a dated snapshot whenever the result differs from the last one kept. */
   function takeSnap() {
     if (rec.step !== 'result' || storage === 'newer') return;
-    var sn = L.snapshot(L.evaluate(rec, TQ), new Date().toISOString()), last = rec.snaps[rec.snaps.length - 1];
+    var sn = L.snapshot(L.evaluate(rec, TQ), new Date().toISOString(), rec.use), last = rec.snaps[rec.snaps.length - 1];
     if (L.sameSnap(last, sn)) return;
     var r = F.reduce(store, 'snap', sn, ENV); if (r.ok) apply(r);
   }
@@ -180,7 +236,18 @@
     if (storage === 'blocked') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
     if (storage === 'newer') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
     if (store.notice === 'v1') h += '<p class="savewarn" id="from-v1" role="status">' + esc(C.FROM_V1) + ' <button type="button" class="linkbtn" data-act="seen" id="seen">OK</button></p>';
-    return h;
+    if (ui.corrupt) h += '<p class="savewarn" id="corrupt" role="status">' + esc(C.CORRUPT) + ' <button type="button" class="linkbtn" data-act="seen" id="corrupt-ok">OK</button></p>';
+    if (ui.elsewhere) h += '<p class="savewarn" id="elsewhere" data-elsewhere="' + ui.elsewhere + '" role="status">' + esc(C.ELSEWHERE[ui.elsewhere]) + (ui.elsewhere === 'changed' ? ' Going on here keeps this tab’s answers. <button type="button" class="linkbtn" data-act="adopt" id="adopt">Load the other tab’s version</button>' : '') + '</p>';
+    return h + sharedLine();
+  }
+  /* Audit H1: a shared copy can be withdrawn from any step. The result has its own panel and the cover its list of checks. */
+  function sharedLine() {
+    if (!S || !rec.sharedAt || rec.step === 'result' || rec.step === 'start') return '';
+    var ph = sharePhase(), d = L.fmtDate(rec.sharedAt);
+    var text = rec.step === 'stop' ? 'The team still has your earlier result (shared ' + d + '). Withdraw it, or change your answers and send an updated copy from the result.'
+      : 'A copy of this check is with the project team (shared ' + d + '). It shows your answers as they were then.';
+    return '<p class="savewarn" id="shared-line" data-share-state="' + ph + '" role="status">' + esc(text) + ' ' +
+      (ph === 'withdrawing' ? '<span class="meta">Withdrawing…</span>' : '<button type="button" class="linkbtn" data-act="unshare" id="unshare">Withdraw shared copy</button>') + '</p>';
   }
   function listedIds() { return Object.keys(store.checks).filter(function (k) { return F.listed(store.checks[k]); }).sort(function (a, b) { return String(store.checks[b].updated).localeCompare(String(store.checks[a].updated)); }); }
   function header() {
@@ -200,7 +267,7 @@
   function row(key, title, body, attrs) {
     return '<details class="panel fold" data-fold="' + key + '"' + (attrs || '') + (ui.open[key] ? ' open' : '') + '><summary><span>' + title + '</span></summary><div class="foldbody">' + body + '</div></details>';
   }
-  function srcText(t) { return String(t).replace(/\{N\}/g, TQ.matrixTotal); }
+  function srcText(t) { return String(t).replace(/\{N\}/g, TQ.matrixTotal).replace(/\{U\}/g, CAT.nUses).replace(/\{D\}/g, TQ.nDraft); }
   function sources(step) {
     var list = C.SOURCES[step] || [], note = C.SOURCES[step + 'Note'] || '';
     var body = (note ? '<p>' + esc(srcText(note)) + (step === 'where' ? ' ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments; page built ' + D.builtOn + '.') : '') + '</p>' : '') +
@@ -226,7 +293,9 @@
   }
   function byField(id, v, by) {
     if (v !== 'pl') return '';
-    return '<div class="byfield"><label for="by-' + id + '">By when? (optional)</label><input type="date" id="by-' + id + '" data-by="' + id + '" value="' + esc(by || '') + '">' +
+    var past = by && by < L.localIso(); // a date saved earlier that has passed: shown and said, a new one cannot lie in the past (audit L5)
+    return '<div class="byfield"><label for="by-' + id + '">By when? (optional)</label><input type="date" id="by-' + id + '" data-by="' + id + '" min="' + L.localIso() + '" value="' + esc(by || '') + '">' +
+      (past ? '<span class="meta" id="overdue-' + id + '"><strong>This date has passed (overdue).</strong> Set a new one or clear it.</span>' : '') +
       '<span class="meta">Planned is not in place yet: it stays on your to-do list until it is done.</span></div>';
   }
   function vClass(key) { return key === 'stop' ? 'v-stop' : key === 'go' || key === 'assist' ? 'v-go' : key === 'find' || key === 'open' ? 'v-open' : 'v-hold'; }
@@ -245,7 +314,7 @@
     var name = u ? u.n : r.use === 'none' ? 'No use case (“None of these fits”)' : 'No use case chosen yet';
     var status;
     if (v.stop) status = 'Not suitable for AI';
-    else if (F.reachable('result', F.ctxOf(r, ENV))) { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e); }
+    else if (F.reachable('result', F.ctxOf(r, ENV))) { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
     else status = 'Not finished: ' + (STEP_LINE[r.step] ? STEP_LINE[r.step][1].toLowerCase() : 'not started');
     return { name: name, status: status };
   }
@@ -257,23 +326,31 @@
   function myChecks() {
     var ids = listedIds();
     var h = '<section class="panel" id="mychecks" data-count="' + ids.length + '"><h2>Your checks in this browser</h2>';
-    if (!ids.length) h += '<p class="meta">None yet. Each check you start is kept here until you remove it.</p>';
-    else h += '<div class="mylist">' + ids.map(function (k) {
+    if (storage !== 'ok') h += '<p class="meta" id="no-keep">' + esc(C.NO_KEEP) + '</p>'; // audit L6: never "kept here" while nothing is kept
+    else if (!ids.length) h += '<p class="meta">None yet. Each check you start is kept here until you remove it.</p>';
+    if (ids.length) h += '<div class="mylist">' + ids.map(function (k) {
       var r = store.checks[k], l = checkLine(r), isCur = k === store.cur, cRm = ui.confirm && ui.confirm.kind === 'remove' && ui.confirm.id === k;
-      return '<div class="mycheck" data-check="' + esc(k) + '"><div class="g1"><strong>' + esc(l.name) + '</strong><span class="meta">' + esc([r.hotel.name, l.status, r.updated ? 'last changed ' + L.fmtDate(r.updated) : ''].filter(Boolean).join(' · ')) + (isCur ? ' · open now' : '') + '</span></div>' +
+      var ph = sharePhaseOf(k), shared = !!r.sharedAt && !!S, ownControl = isCur && rec.step === 'result'; // the result's own panel has the button for the open check
+      var sharedTxt = r.sharedAt ? 'shared with the team ' + L.fmtDate(r.sharedAt) + (F.shareStale(r) ? ', out of date' : '') : '';
+      return '<div class="mycheck" data-check="' + esc(k) + '"' + (r.sharedAt ? ' data-shared="1"' : '') + '><div class="g1"><strong>' + esc(l.name) + '</strong><span class="meta">' + esc([r.hotel.name, l.status, r.updated ? 'last changed ' + L.fmtDate(r.updated) : '', sharedTxt].filter(Boolean).join(' · ')) + (isCur ? ' · open now' : '') + '</span></div>' +
         '<div class="btnrow">' + (isCur ? '' : '<button type="button" class="btn" data-act="open" data-id="' + esc(k) + '">Open</button>') +
-        (cRm ? '<button type="button" class="btn warn" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
-          : '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>') + '</div>' +
-        (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.' + (r.sharedAt ? ' It was shared with the project team: withdraw that copy first from its result page if you want it gone.' : '') + '</p>' : '') + '</div>';
+        (cRm ? (shared ? '<button type="button" class="btn warn" data-act="remove-withdraw" data-id="' + esc(k) + '" id="rm-withdraw">Withdraw the shared copy and remove</button>' : '') +
+            '<button type="button" class="btn' + (shared ? '' : ' warn') + '" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">' + (shared ? 'Remove from this browser only' : 'Remove for good') + '</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
+          : (ph === 'withdrawing' ? '<span class="meta" role="status">Withdrawing…</span>' : (shared && !ownControl ? '<button type="button" class="linkbtn" data-act="unshare" data-id="' + esc(k) + '" id="unshare-' + esc(k) + '">Withdraw shared copy</button>' : '') +
+            '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>')) + '</div>' +
+        (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.' + (shared ? ' The project team has a copy of it: “Remove from this browser only” leaves that copy with the team.' : '') + '</p>' : '') + '</div>';
     }).join('') + '</div>';
-    h += fileConfirm() + '<div class="btnrow"><label class="btn filebtn" for="file-open">Open a saved file<input type="file" id="file-open" accept="application/json,.json" class="sr"></label>' +
+    h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + ' <a href="../readiness-check/index.html" target="_blank" rel="noopener">Open the earlier Readiness check</a> and use “Open a saved file” there.</p>' : '') +
+      '<div class="btnrow"><label class="btn filebtn" for="file-open">Open a saved file<input type="file" id="file-open" accept="application/json,.json" class="sr"></label>' +
       (storage === 'ok' ? '<span class="meta">Checks stay in this browser only. Save a file to keep one elsewhere.</span>' : '') + '</div></section>';
     return h;
   }
 
   // ---------- screens ----------
   function vStart() {
-    var pre = USE[rec.use];
+    var pre = rec.from === 'link' ? USE[rec.use] : null, range = L.tailRange(TQ); // audit L3: only for a use case that came from a link
+    var NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'], num = function (n) { return NUM[n] || String(n); };
+    var rangeText = range[0] === range[1] ? num(range[0]) : num(range[0]) + ' to ' + num(range[1]);
     return (pre ? '<p class="pathline" id="preselected">You came here for: <b>' + esc(pre.n) + '</b>. It is already chosen in step 4.</p>' : '') +
       '<section class="panel intro" id="intro-why"><h2>Why this tool</h2>' +
       '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, are the basics in place, and what does this particular use need?</p>' +
@@ -282,13 +359,13 @@
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
       '<li><b>Is this an AI problem?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
-      '<li><b>Must-haves</b><span>' + esc(C.MUSTS.length === 10 ? 'Ten' : String(C.MUSTS.length)) + ' things every AI project needs, such as an owner with time and a budget for the full first year.</span></li>' +
+      '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
-      '<li><b>Questions for this use case</b><span>Six to ten questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
+      '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
       '<p class="sub">Answer honestly; “Don’t know yet” is a fine answer and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
       '<section class="panel intro" id="intro-get"><h2>What you get</h2><ul class="tight">' +
       '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
-      '<li><b>A readiness score and verdict:</b> a percentage from your own answers, and one of four verdicts, with how both were worked out.</li>' +
+      '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
       '<li><b>What is missing:</b> the three things to start with, and an action plan by person that you can copy and send.</li>' +
       '<li><b>Questions for the vendor</b> and the provisional EU AI Act label for the use case.</li>' +
       '<li><b>A PDF and a file</b> to share with your owner or team, and to come back to later.</li></ul>' +
@@ -341,7 +418,7 @@
   function vMust() {
     var sy = L.systemsFor(rec);
     var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2>Must-haves</h2>' +
-      '<p class="sub">' + esc(C.MUSTS.length) + ' things every AI project needs, whatever the tool. Each one needs an answer; “Don’t know yet” is fine and goes on your to-do list.</p>' +
+      '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Each one needs an answer; “Don’t know yet” is fine and goes on your to-do list.</p>' +
       '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' +
       '<p class="meta" id="cap-note">The top verdict is only possible when every must-have is Yes. You can go on either way.</p></div>';
     h += '<section class="panel">' + C.MUSTS.map(function (m, i) {
@@ -400,6 +477,8 @@
     var u = USE[rec.use], tu = TQ.uses[rec.use], qs = tu.qs;
     var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2>Questions for this use case</h2>' +
       '<p class="sub"><b id="tail-use">' + esc(u.n) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. They come from the team’s resource analysis of this use case; the must-haves are not asked again.</p>' +
+      '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
+      (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') +
       (tu.draft ? '<p class="savewarn" id="draft-note" role="note"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') + '</div>';
     h += '<section class="panel">' + qs.map(function (q, i) {
       var opts = C.ANSWERS.concat([['na', q.na || C.NA[1]]]), v = rec.T[q.id];
@@ -421,14 +500,16 @@
     try { window.parent.postMessage(hash ? { hub: 'open', tool: tool, hash: hash } : { hub: 'open', tool: tool }, location.origin); } catch (err) { location.href = href; }
   }
   function registerHash() { var u = USE[rec.use]; return u ? 'add=' + rec.use + '&name=' + encodeURIComponent(u.n.replace(/\s*\(.*$/, '')) : ''; }
-  function sharePhase() { return ui.share && ui.share.id === rec.id ? ui.share.phase : F.shareSettled(rec); }
+  function sharePhaseOf(id) { return ui.share && ui.share.id === id ? ui.share.phase : F.shareSettled(recOf(id)); }
+  function sharePhase() { return sharePhaseOf(rec.id); }
   function sharePanel() {
     if (!S) return '';
     var mode = S.state(), ph = sharePhase(), busy = ph === 'sending' || ph === 'withdrawing', stale = F.shareStale(rec), where = rec.sharedMode || mode;
+    if (rec.sharedAt && ui.open.share === undefined) ui.open.share = true; // a shared check shows its withdraw button without a click (audit H1)
     var status = ph === 'sending' ? (mode === 'probing' || mode === 'idle' ? 'Checking whether the project hub is reachable…' : 'Sending…')
       : ph === 'withdrawing' ? 'Withdrawing…'
       : rec.sharedAt ? 'Last shared ' + L.fmtDate(rec.sharedAt) + (where === 'local' ? ' (test copy in this browser)' : '') + '.' + (stale ? ' Your answers have changed since then: send an updated copy so the team sees the current ones.' : '')
-      : mode === 'local' ? 'Outside the project hub this keeps a test copy in this browser only.' : '';
+      : mode === 'local' && storage === 'ok' ? 'Outside the project hub this keeps a test copy in this browser only.' : ''; // audit L6: not while this browser keeps nothing
     var withdraw = rec.sharedAt && !busy ? '<button type="button" class="linkbtn" data-act="unshare" id="unshare">Withdraw shared copy</button>' : '';
     var body = !SHARING_ON
       ? '<p>Sharing with the project team is switched off.</p><div class="btnrow"><span class="meta" role="status">' + esc(rec.sharedAt || busy ? status : '') + '</span>' + withdraw + '</div>'
@@ -453,15 +534,17 @@
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
       (m.hotel ? '<p class="meta" id="res-hotel">' + esc(m.hotel) + (m.filledBy ? ' · filled in by: ' + esc(m.filledBy) : '') + '</p>' : '') +
       '<h1 id="level-name">' + esc(m.levelName) + '</h1>' +
-      '<div class="scorerow"><span class="score" id="score">' + esc(m.scoreHead) + '</span><span class="scoresub" id="score-sub">' + esc(m.scoreSub) + '</span></div>' +
+      '<p class="countline" id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
+      '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + esc(m.scoreHead) + '</span><span class="scoresub" id="score-sub">' + esc(m.scoreSub) + '</span></div>' +
       '<p id="level-line">' + esc(m.levelLine) + '</p><p class="countline" id="must-line">' + esc(m.mustLine) + '</p>' +
+      (m.law ? '<p id="law"><strong>' + esc(m.law) + '</strong></p>' : '') +
       (m.cap ? '<p id="cap">' + esc(m.cap) + '</p>' : '') + (m.mustOnly ? '<p id="must-only"><strong>' + esc(m.mustOnly) + '</strong></p>' : '') + (m.draft ? '<p id="draft"><strong>' + esc(m.draft) + '</strong></p>' : '') + '</section>';
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li><b>' + esc(f.who) + ':</b> ' + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes or does not apply.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3><div class="aiv ' + vClass(L.verdict(rec.Q).key) + '">' + verdictBody(m.ai).replace(' id="verdict-head"', ' id="ai-head"') + '</div></section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p>' + esc(m.useTask) + '</p><p class="meta">' + esc(m.useLevel) + '</p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
-    h += '<section class="panel" id="areas"><h2>Score per area</h2><div class="bars">' + m.areas.map(function (a) {
-      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.pct == null ? 0 : Math.max(3, a.pct)) + '%"></i></span><span class="pct">' + (a.pct == null ? '–' : a.pct + '%') + '</span><span class="word w-' + a.cls + '">' + esc(a.word) + '</span></div>';
-    }).join('') + '</div><p class="meta">From the questions you could answer. “Too little to say”: no question in the area has a known answer yet.</p></section>';
+    h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
+      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' to find out' : ''].filter(Boolean).join(' · ')) + '</span></div>';
+    }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
     h += '<section class="panel" id="plan"><h2>Action plan by person</h2>' + (m.people.length ? '<p class="meta">One list per person. Copy it into an email or a message.</p>' + m.people.map(function (p) {
       return '<div class="person" data-who="' + p.who + '"><div class="personhead"><h3>' + esc(p.name) + ' <span class="meta">(' + p.items.length + ')</span></h3><button type="button" class="btn small" data-act="copy-who" data-who="' + p.who + '" id="copy-' + p.who + '">Copy for ' + esc(p.name.toLowerCase().replace(/^the /, 'the ')) + '</button></div><ul class="todo">' +
         p.items.map(function (a) { return '<li><span>' + esc(a.text) + '</span><span class="meta">' + esc(a.tag) + '</span></li>'; }).join('') + '</ul></div>';
@@ -563,13 +646,16 @@
   }
   /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 2, rules, savedAt, check }. */
   var FILE_KIND = 'hftp-do-you-need-ai';
-  function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(rec)) }; }
+  var OLD_KIND = 'hftp-readiness-check'; // files of the earlier Readiness check (audit L8)
+  function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; }
   function saveRecord() {
     if (rec.step !== 'result') return false;
     ui.dlKind = 'file';
     if (!dlSend('start')) { toast('A download is still being prepared.'); return false; }
     var name = pdfName().replace(/\.pdf$/, '.json'), blob = new Blob([JSON.stringify(fileDoc(), null, 1)], { type: 'application/json' });
-    dlSend('made'); saveFile(name, blob); return true;
+    /* Audit L1: 'made' in a later tick, as the PDF does, so the button stays disabled across a double-click. */
+    setTimeout(function () { dlSend('made'); saveFile(name, blob); }, 30);
+    return true;
   }
   function loadRecord(file) {
     var fr = new FileReader();
@@ -578,11 +664,18 @@
     fr.readAsText(file);
   }
   function openFileText(text) {
-    var r = null;
-    try { var o = JSON.parse(text); if (o && o.kind === FILE_KIND && o.check && typeof o.v === 'number' && o.v <= F.V) r = F.cleanRec(o.check, ENV, {}); else if (o && o.kind === FILE_KIND && o.v > F.V) { toast('That file was saved by a newer version of this page.'); return false; } } catch (e) { r = null; }
+    var r = null, info = {}, old = false;
+    try {
+      var o = JSON.parse(text);
+      if (o && o.kind === FILE_KIND && o.check && typeof o.v === 'number' && o.v <= F.V) r = F.cleanRec(o.check, ENV, info, { file: true });
+      else if (o && o.kind === FILE_KIND && o.v > F.V) { toast('That file was saved by a newer version of this page.'); return false; }
+      else if (o && o.kind === OLD_KIND) old = true;
+    } catch (e) { r = null; }
+    if (old) { ui.fileNote = 'old'; render(); toast(C.OLD_FILE); return false; }
     if (!r) { toast('That file is not a check saved from this page.'); return false; }
+    ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); // what the file's check lost on the way in (audit M5): said after it opens
     if (store.checks[r.id] && F.listed(store.checks[r.id])) { ui.file = r; ui.confirm = F.confirmNext(ui.confirm, 'ask', 'file').c; render(); var y = $('import-yes'); if (y) { y.scrollIntoView({ block: 'center' }); y.focus(); } return true; }
-    return send('import', r);
+    return send('import', r, { notice: ui.fileInfo });
   }
 
   // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
@@ -591,26 +684,47 @@
     var d = { kind: 'dyn', v: 2, rules: L.RULES, useId: rec.use, useName: u ? u.n : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
       Q: Object.assign({}, rec.Q), answers: Object.assign({}, rec.A), tailored: Object.assign({}, rec.T), by: Object.assign({}, rec.By), tby: Object.assign({}, rec.TBy),
       level: ev.level, pct: ev.pct, known: ev.counts.known, total: ev.counts.total, met: ev.must.yes, gates: ev.must.n, open: L.open(ev).length,
-      snaps: rec.snaps.map(function (s) { return { at: s.at, level: s.level, pct: s.pct, met: s.mustYes }; }), sharedAt: new Date().toISOString(), named: named };
+      reason: ev.reason, held: ev.held.slice(),
+      /* Audit M1: only the history of this use case goes to the team, each entry with the rules it was worked out with. */
+      snaps: L.snapsOf(rec.snaps).map(function (s) { return { at: s.at, level: s.level, pct: s.pct, met: s.mustYes, rules: s.rules }; }), sharedAt: new Date().toISOString(), named: named };
     if (named) d.hotelName = rec.hotel.name;
     return d;
   }
-  function shareSend(ev) {
-    if (!S || (ev === 'share' && !SHARING_ON) || rec.step !== 'result') return;
-    var to = F.shareNext(sharePhase(), ev); if (!to) return;
-    if (ev === 'withdraw' && rec.sharedMode && S.mode() && rec.sharedMode !== S.mode()) {
-      toast(rec.sharedMode === 'shared' ? 'This copy was shared from the project hub: open the check there to withdraw it.' : 'This was only a test copy in another browser setting: nothing reached the team.');
-      return;
-    }
-    var id = rec.id, doc = ev === 'share' ? shareDoc() : null, sig = F.shareSig(rec);
-    ui.share = { phase: to, id: id }; ui.open.share = true; render();
+  /* The outcome of a share or a withdrawal is written to the check it belongs to, open or not (audit M2). */
+  function sharePatch(e2, arg) {
+    var r = F.reduce(store, e2, arg, ENV); if (!r.ok) return false;
+    apply(r); save(); return true;
+  }
+  /* Take a copy back from wherever it went. A test copy made outside the hub never reached the team: it is cleared from this
+     browser's test list. A copy sent from the hub can only be withdrawn there (rejects { code: 'mode' }). */
+  function withdrawCopy(id) {
+    var r = recOf(id);
+    return S.ready().then(function (mode) {
+      if (r && r.sharedMode === 'shared' && mode !== 'shared') throw { code: 'mode' };
+      if (r && r.sharedMode === 'local' && mode === 'shared') { try { var o = JSON.parse(localStorage.getItem('hftp-readiness-checks-v1') || '{}') || {}; delete o[id]; localStorage.setItem('hftp-readiness-checks-v1', JSON.stringify(o)); } catch (e) { /* blocked */ } return; }
+      return S.remove(id);
+    });
+  }
+  /* SHARE machine. id: the check (default: the open one). 'share' makes a copy of the open result; 'withdraw' works for any check, on any step (audit H1). */
+  function shareSend(ev, id) {
+    id = id || rec.id; var r0 = recOf(id);
+    if (!S || !r0 || ui.share) return;
+    if (ev === 'share' && (!SHARING_ON || id !== rec.id || rec.step !== 'result')) return;
+    var to = F.shareNext(sharePhaseOf(id), ev); if (!to) return;
+    var doc = ev === 'share' ? shareDoc() : null, sig = F.shareSig(r0);
+    ui.share = { phase: to, id: id }; if (id === rec.id) ui.open.share = true; render();
     var done = function () { if (ui.share && ui.share.id === id) ui.share = null; };
-    var patch = function (e2, arg) { if (rec.id !== id) return; var r = F.reduce(store, e2, arg, ENV); if (r.ok) { apply(r); save(); } ui.open.share = true; render(); };
+    var unsaved = function () { return storage === 'ok' ? '' : ' This browser is not keeping changes, so the page will not remember this after you close it.'; };
     if (ev === 'share') {
-      S.save(id, doc).then(function (mode) { done(); patch('shared', { at: new Date().toISOString(), mode: mode, sig: sig }); toast(mode === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).'); },
-        function () { done(); render(); toast('Sharing is not available here. Save the file and send it instead.'); });
+      S.save(id, doc).then(function (mode) {
+        done();
+        if (!recOf(id)) { S.remove(id).then(function () {}, function () {}); render(); toast('The check was removed while its copy was being sent, so the copy was withdrawn again.'); return; }
+        sharePatch('shared', { id: id, at: new Date().toISOString(), mode: mode, sig: sig }); if (id === rec.id) ui.open.share = true; render();
+        toast((mode === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).') + unsaved());
+      }, function () { done(); render(); toast('Sharing is not available here. Save the file and send it instead.'); });
     } else {
-      S.remove(id).then(function () { done(); patch('unshared'); toast('Shared copy withdrawn.'); }, function () { done(); render(); toast('Could not withdraw here. Ask the team to delete it.'); });
+      withdrawCopy(id).then(function () { done(); sharePatch('unshared', { id: id }); render(); toast('Shared copy withdrawn.'); },
+        function (e) { done(); render(); toast(e && e.code === 'mode' ? 'This copy was shared from the project hub: open the check there to withdraw it.' : 'Could not withdraw here. Ask the team to delete it.'); });
     }
   }
 
@@ -643,10 +757,10 @@
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
     else if (act === 'share') shareSend('share');
-    else if (act === 'unshare') shareSend('withdraw');
+    else if (act === 'unshare') shareSend('withdraw', t.getAttribute('data-id') || rec.id);
     else if (act === 'to-register') { if (rec.step !== 'result' || !USE[rec.use]) { e.preventDefault(); return; } hubOpen('register', registerHash(), t.getAttribute('href'), e); }
     else if (act === 'catalogue') { if (host.pong) { e.preventDefault(); try { window.parent.postMessage({ hub: 'open', tool: 'use-case-catalogue', hash: t.getAttribute('data-dept') }, location.origin); } catch (err) { window.open(t.getAttribute('href'), '_blank', 'noopener'); } } }
-    else if (act === 'open' || act === 'remove' || act === 'remove-yes') send(act, t.getAttribute('data-id'));
+    else if (act === 'open' || act === 'remove' || act === 'remove-yes' || act === 'remove-withdraw') send(act, t.getAttribute('data-id'));
     else send(act);
   });
   document.addEventListener('change', function (e) {
@@ -659,20 +773,33 @@
     else if (t.id === 'file-open') { if (t.files && t.files[0]) loadRecord(t.files[0]); t.value = ''; }
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches && t.matches('input[data-h="name"]')) send('hotel', { k: 'name', v: t.value }, { quiet: true }); });
-  document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold')) ui.open[d.getAttribute('data-fold')] = d.open; }, true);
+  document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold') && !d.hasAttribute('data-print-open')) ui.open[d.getAttribute('data-fold')] = d.open; }, true);
+  /* Print (audit, "unverified"): a closed fold prints nothing, so the result's folds (vendor questions, AI Act label, every answer,
+     the working-out) are opened for printing and closed again afterwards. */
+  window.addEventListener('beforeprint', function () { [].forEach.call(document.querySelectorAll('#view details.fold'), function (d) { if (!d.open) { d.setAttribute('data-print-open', ''); d.open = true; } }); });
+  window.addEventListener('afterprint', function () { [].forEach.call(document.querySelectorAll('#view details[data-print-open]'), function (d) { d.open = false; setTimeout(function () { d.removeAttribute('data-print-open'); }, 0); }); });
   /* Back/forward. Our own entry for this check → pop to its step. Anything else (a hash change, a hub entry, another check's entry) is
      not a step of this check: the step stays and the entry is marked as ours. */
+  var skipRun = 0; // HISTORY: entries passed over by the Back/forward press in progress (F.histSkip)
   window.addEventListener('popstate', function (e) {
-    var h = F.histRead(e.state);
-    if (!h.ours || (h.id && h.id !== rec.id)) {
+    var h = F.histRead(e.state), run = skipRun; skipRun = 0;
+    if (!h.ours) {
       if (fromHash()) return; // a hash link (#use=<id>) arrives as a popstate first: handle it before the entry is rewritten without its hash
       hist.d += 1; hist.prev = rec.step; histAssert(); return;
     }
-    hist.d = h.d; hist.prev = h.prev; hist.len = history.length;
+    /* v2.1 (audit M4, L10): an entry of another check, or one that would only show a substitute screen, is passed over, so Back never goes dead. */
+    var dir = F.histSkip(h, { id: rec.id, d: hist.d, step: rec.step, placed: F.placeStep(h.step, ctx()), run: run });
+    hist.d = h.d; hist.prev = dir ? null : h.prev; hist.len = history.length;
+    if (dir) { skipRun = run + 1; try { history.go(dir); } catch (err) { skipRun = 0; } return; }
     send('pop', h.step);
   });
-  /* Another tab of this browser changed the saved store: follow it, so two tabs never overwrite each other silently. */
-  function follow() { var s = load(); if (!s) return; store = s; rec = F.cur(store); ui.confirm = null; ui.missing = null; ui.file = null; ui.notice = loadInfo.useChanged ? 'useChanged' : null; hist.prev = null; histAssert(); render(); }
+  /* TABS (audit M3): another tab of this browser saved the store. The open check stays this tab's own; the other checks are
+     taken over; if the other tab changed or removed the open check itself, a line says so (F.mergeTabs). */
+  function follow() {
+    var x = readStore(store.cur); if (!x || !x.store) return;
+    var m = F.mergeTabs(store, x.store);
+    store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; render();
+  }
   window.addEventListener('storage', function (e) { if (e.key === F.KEY) follow(); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) follow(); });
 
@@ -683,6 +810,7 @@
   }
   if (S) S.ready().then(function () { $('app').setAttribute('data-store', S.state()); if (rec.step === 'result') render(); });
   adoptProfile();
+  setTabCur();
   if (!fromHash()) { histAssert(); takeSnap(); if (rec.step === 'result') save(); render(); }
   window.addEventListener('hashchange', function () { fromHash(); });
 
@@ -692,6 +820,8 @@
       var v = L.verdict(rec.Q), c = ctx(), ev = rec.step === 'result' ? L.evaluate(rec, TQ) : null;
       return { step: rec.step, id: rec.id, hotel: Object.assign({}, rec.hotel), Q: Object.assign({}, rec.Q), verdict: v.key, carried: v.carried.map(function (x) { return x.id; }), find: v.find.map(function (x) { return x.id; }),
         A: Object.assign({}, rec.A), By: Object.assign({}, rec.By), cat: rec.cat, dept: rec.dept, use: rec.use, T: Object.assign({}, rec.T), TBy: Object.assign({}, rec.TBy), tailored: tailQs().map(function (q) { return q.id; }),
+        from: rec.from || '', tqSig: rec.tqSig || '', elsewhere: ui.elsewhere, fileNote: ui.fileNote, corrupt: ui.corrupt, rules: L.RULES, judgement: Object.assign({}, L.JUDGEMENT),
+        reason: ev ? ev.reason : null, held: ev ? ev.held.slice() : null, score: ev ? L.scoreHead(ev) : null,
         ctx: c, events: F.events(rec.step, c), level: ev ? ev.level : null, pct: ev ? ev.pct : null, counts: ev ? ev.counts : null, must: ev ? ev.must : null,
         confirm: ui.confirm, missing: ui.missing, copyBox: ui.copy, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
         inHub: host.pong, inFrame: IN_FRAME, download: ui.dl, bridge: host.state, share: sharePhase(), sharedAt: rec.sharedAt, shareStore: S ? S.state() : null, sharingOn: SHARING_ON,

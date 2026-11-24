@@ -19,7 +19,9 @@
       Record events: 'hotel' {k, v} | 'answer' {id, value} | 'by' {id, date} | 'cat' | 'dept' | 'use' | a FLOW event | 'pop' step
       Store events: 'new' (a blank check; the hotel details carry over) | 'open' id | 'remove' id | 'import' rec (from a file)
                     | 'preselect' useId (from #use=<id>: a new check with that use case chosen) | 'snap' snapshot | 'seen' (notice read) | 'profile' {name, country, type} (shared hotel profile)
-                    | 'share' {named} | 'shared' {at, mode, sig} | 'unshared'
+                    | 'share' {named} | 'shared' {id, at, mode, sig} | 'unshared' {id}  (id: the check the copy belongs to, open or not; v2.1)
+      v2.1 (24 Nov 2026, clean-up audit): a check carries from ('link' when it was started by #use=<id>) and tqSig (the signature of
+      the tailored questions it was answered against); snapshots carry their use case; the store is capped when a check is added.
    4. CONFIRM (confirmNext), BRIDGE (bridgeNext), DOWNLOAD (dlNext), SHARE (shareNext): page-only machines, never saved.
    5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list. */
 (function (root) {
@@ -42,7 +44,7 @@
   var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1 }, T_OK = { y: 1, pl: 1, p: 1, n: 1, k: 1, na: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var TYPES = ['independent', 'group', 'managed'], ROLES = ['gm', 'owner', 'dept', 'it', 'fin', 'other'];
-  var MAX_SNAPS = 20, MAX_CHECKS = 50;
+  var MAX_SNAPS = 20, MAX_CHECKS = 50, HIST_SKIP_MAX = 60;
   var DATE = /^\d{4}-\d{2}-\d{2}$/;
   function validDate(s) {
     if (typeof s !== 'string' || !DATE.test(s)) return false;
@@ -56,11 +58,16 @@
   function newId() { return 'dyn' + Date.now().toString(36) + (++seq).toString(36) + Math.random().toString(36).slice(2, 6); }
   function okId(s) { return typeof s === 'string' && /^[\w-]{3,40}$/.test(s); }
 
-  function blank(id) { return { id: id || newId(), step: 'start', hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
+  /* from: 'link' while the use case was preselected by #use=<id> and the person has not chosen one themselves (audit L3, L9).
+     tqSig: the signature of the chosen use case's tailored questions when it was chosen ('' in records saved by v2.0) (audit M5). */
+  function blank(id) { return { id: id || newId(), step: 'start', hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
   function copy(r) {
-    return { id: r.id, step: r.step, hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '',
+    return { id: r.id, step: r.step, hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
       T: Object.assign({}, r.T), TBy: Object.assign({}, r.TBy), snaps: (r.snaps || []).slice(), share: { named: !!(r.share && r.share.named) }, sharedAt: r.sharedAt || null, sharedMode: r.sharedMode || null, sharedSig: r.sharedSig || null, updated: r.updated || '' };
   }
+  /* The check as it goes into a file: whether a copy was shared belongs to this browser, not to the file (audit L11). */
+  function forFile(r) { var o = copy(r); o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; return o; }
+  function localToday() { var dt = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); }
   function blankStore() { var r = blank(); var s = { v: V, cur: r.id, checks: {} }; s.checks[r.id] = r; return s; }
   function cur(store) { return store.checks[store.cur]; }
 
@@ -71,6 +78,8 @@
   function useName(env, deptId, useId) { var d = deptOf(env, deptId), u = d && d.uses.filter(function (x) { return x.id === useId; })[0]; return u ? u.n : ''; }
   function deptOfUse(env, useId) { return (env && env.cat && env.cat.depts || []).filter(function (d) { return d.uses.some(function (u) { return u.id === useId; }); })[0] || null; }
   function tailIds(env, useId) { return ((env && env.tq && env.tq[useId]) || []).map(function (q) { return q.id; }); }
+  /* env.sig: { <use id>: signature of its tailored questions } (build.mjs); '' when the page carries none. */
+  function tailSig(env, useId) { return (env && env.sig && useId && useId !== 'none' && env.sig[useId]) || ''; }
 
   function ctxOf(rec, env) {
     var Q = rec.Q || {}, A = rec.A || {}, Tt = rec.T || {}, ids = rec.use && rec.use !== 'none' ? tailIds(env, rec.use) : [];
@@ -121,10 +130,13 @@
   function cleanSnap(s) {
     s = obj(s); if (typeof s.at !== 'string' || ['ready', 'almost', 'notready', 'noinfo'].indexOf(s.level) < 0) return null;
     var n = function (v) { return typeof v === 'number' && isFinite(v) && v >= 0 ? v : 0; };
-    return { at: s.at.slice(0, 40), level: s.level, pct: typeof s.pct === 'number' ? n(s.pct) : null, pts: n(s.pts), max: n(s.max), known: n(s.known), total: n(s.total), mustYes: n(s.mustYes), mustN: n(s.mustN), rules: str(s.rules, 40) };
+    return { at: s.at.slice(0, 40), level: s.level, pct: typeof s.pct === 'number' ? n(s.pct) : null, pts: n(s.pts), max: n(s.max), known: n(s.known), total: n(s.total), mustYes: n(s.mustYes), mustN: n(s.mustN), rules: str(s.rules, 40), use: /^[\w-]{0,20}$/.test(str(s.use, 20)) ? str(s.use, 20) : '' };
   }
-  /* One saved check → a clean record, or null. info.useChanged: the saved use case's name differs from the catalogue's now. */
-  function cleanRec(r, env, info) {
+  /* One saved check → a clean record, or null.
+     info.useChanged: the saved use case was renamed in the catalogue or is no longer in it (the person picks again, step 4).
+     info.questionsChanged: its tailored questions changed since it was answered (the answers are dropped; step 5 is asked again).
+     opt.file: the record comes from a file, so its share fields are ignored (audit L11). */
+  function cleanRec(r, env, info, opt) {
     r = obj(r); if (!okId(r.id)) return null;
     var o = blank(r.id), H = obj(r.hotel), Q = obj(r.Q), A = obj(r.A), By = obj(r.By), Tt = obj(r.T), TBy = obj(r.TBy);
     o.hotel.name = str(H.name, 120); o.hotel.type = TYPES.indexOf(H.type) >= 0 ? H.type : ''; o.hotel.role = ROLES.indexOf(H.role) >= 0 ? H.role : '';
@@ -134,16 +146,22 @@
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(env, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
     o.use = r.use === 'none' ? 'none' : (typeof r.use === 'string' && o.dept && useIn(env, o.dept, r.use) ? r.use : '');
+    if (!o.use && typeof r.use === 'string' && r.use && info) info.useChanged = true; // the saved use case is no longer in the catalogue
     if (o.use && o.use !== 'none') {
       var now = useName(env, o.dept, o.use);
       if (typeof r.useName === 'string' && r.useName && r.useName !== now) { o.use = ''; if (info) info.useChanged = true; }
       else o.useName = now;
     }
-    if (o.use && o.use !== 'none') tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
+    if (o.use && o.use !== 'none') {
+      var sigNow = tailSig(env, o.use), sigThen = typeof r.tqSig === 'string' ? r.tqSig : '';
+      o.tqSig = sigNow; o.from = r.from === 'link' ? 'link' : '';
+      if (sigThen && sigNow && sigThen !== sigNow) { if (Object.keys(Tt).length && info) info.questionsChanged = true; } // answered against other questions: step 5 again
+      else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
+    }
     o.snaps = (Array.isArray(r.snaps) ? r.snaps : []).map(cleanSnap).filter(Boolean).slice(-MAX_SNAPS);
     o.share = { named: !!obj(r.share).named };
     o.sharedAt = typeof r.sharedAt === 'string' ? r.sharedAt.slice(0, 40) : null; o.sharedMode = r.sharedMode === 'shared' || r.sharedMode === 'local' ? r.sharedMode : null; o.sharedSig = typeof r.sharedSig === 'string' ? r.sharedSig.slice(0, 4000) : null;
-    if (!o.sharedAt) { o.sharedMode = null; o.sharedSig = null; }
+    if (!o.sharedAt || (opt && opt.file)) { o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; }
     o.updated = str(r.updated, 40);
     o.step = placeStep(typeof r.step === 'string' ? r.step : 'start', ctxOf(o, env));
     return o;
@@ -172,14 +190,24 @@
     }
     if (v > V) info.newer = true;
     var cs = obj(raw.checks);
-    Object.keys(cs).slice(0, MAX_CHECKS).forEach(function (k) { var one = {}, c = cleanRec(cs[k], env, k === raw.cur ? info : one); if (c && c.id === k) s.checks[k] = c; });
+    /* At most MAX_CHECKS: the open one (info.keep: this tab's; else the store's) always, then the newest by "last changed" (audit L4). */
+    var open = own(cs, info.keep) ? info.keep : raw.cur;
+    var keys = Object.keys(cs).sort(function (a, b) { return (b === open) - (a === open) || String(obj(cs[b]).updated || '').localeCompare(String(obj(cs[a]).updated || '')); }).slice(0, MAX_CHECKS);
+    Object.keys(cs).forEach(function (k) { if (keys.indexOf(k) < 0) return; var one = {}, c = cleanRec(cs[k], env, k === open ? info : one); if (c && c.id === k) s.checks[k] = c; });
     if (raw.notice === 'v1') s.notice = 'v1';
-    if (s.checks[raw.cur]) s.cur = raw.cur;
+    if (s.checks[open]) s.cur = open;
+    else if (s.checks[raw.cur]) s.cur = raw.cur;
     else { var b = blank(); s.checks[b.id] = b; s.cur = b.id; }
     return s;
   }
-  /* Is a check worth listing under "Your checks"? Anything answered or chosen. */
-  function listed(r) { return !!(r && (Object.keys(r.Q).length || Object.keys(r.A).length || r.use || (r.snaps && r.snaps.length))); }
+  /* Is a check worth listing under "Your checks"? Anything answered or chosen by the person. A use case that only came from a
+     link (#use=<id>) does not count until something is answered, so old links do not fill the list (audit L9). */
+  function listed(r) { return !!(r && (Object.keys(r.Q).length || Object.keys(r.A).length || (r.use && r.from !== 'link') || (r.snaps && r.snaps.length))); }
+  /* Would one more listed check go over the cap? (the open check is dropped first when it is not worth listing) */
+  function full(store, rec, replacesId) {
+    var n = Object.keys(store.checks).filter(function (k) { return k !== replacesId && listed(store.checks[k]); }).length;
+    return n >= MAX_CHECKS;
+  }
 
   /* ---------- the only writer ---------- */
   function withRec(store, r) { var s = { v: V, cur: store.cur, checks: Object.assign({}, store.checks) }; if (store.notice) s.notice = store.notice; s.checks[r.id] = r; return s; }
@@ -206,6 +234,7 @@
       }
       case 'by': {
         if (!arg || typeof arg.date !== 'string' || (arg.date && !validDate(arg.date))) return no;
+        if (arg.date && arg.date < ((env && env.today) || localToday())) return no; // "by when" cannot lie in the past (audit L5)
         r = copy(rec);
         if (rec.step === 'must' && rec.A[arg.id] === 'pl') { if (arg.date) r.By[arg.id] = arg.date; else delete r.By[arg.id]; }
         else if (rec.step === 'tailored' && rec.T[arg.id] === 'pl') { if (arg.date) r.TBy[arg.id] = arg.date; else delete r.TBy[arg.id]; }
@@ -215,12 +244,12 @@
       case 'cat': {
         if (CATS.indexOf(arg) < 0 || rec.step !== 'where') return no;
         r = copy(rec); r.cat = arg;
-        var d0 = deptOf(env, r.dept); if (!d0 || d0.cat !== arg) { r.dept = ''; if (r.use !== 'none') { r.use = ''; r.useName = ''; r.T = {}; r.TBy = {}; } }
+        var d0 = deptOf(env, r.dept); if (!d0 || d0.cat !== arg) { r.dept = ''; if (r.use !== 'none') { r.use = ''; r.useName = ''; r.from = ''; r.tqSig = ''; r.T = {}; r.TBy = {}; } }
         return done(r);
       }
       case 'dept': {
         var d = deptOf(env, arg); if (!d || d.cat !== rec.cat || rec.step !== 'where') return no;
-        r = copy(rec); r.dept = d.id; if (r.use !== 'none' && !useIn(env, d.id, r.use)) { r.use = ''; r.useName = ''; r.T = {}; r.TBy = {}; }
+        r = copy(rec); r.dept = d.id; if (r.use !== 'none' && !useIn(env, d.id, r.use)) { r.use = ''; r.useName = ''; r.from = ''; r.tqSig = ''; r.T = {}; r.TBy = {}; }
         return done(r);
       }
       case 'use': {
@@ -228,7 +257,7 @@
         if (arg !== 'none' && !(rec.dept && useIn(env, rec.dept, arg))) return no;
         r = copy(rec);
         if (r.use !== arg) { r.T = {}; r.TBy = {}; } // the tailored questions belong to one use case
-        r.use = arg; r.useName = arg === 'none' ? '' : useName(env, rec.dept, arg); return done(r);
+        r.use = arg; r.useName = arg === 'none' ? '' : useName(env, rec.dept, arg); r.from = ''; r.tqSig = tailSig(env, arg); return done(r); // chosen by the person: no longer "from a link"
       }
       case 'pop': {
         r = copy(rec); r.step = placeStep(arg, ctxOf(rec, env));
@@ -240,8 +269,9 @@
         r = copy(rec); r.snaps = r.snaps.concat([sn]).slice(-MAX_SNAPS); return done(r);
       }
       case 'share': { if (rec.step !== 'result') return no; r = copy(rec); r.share = { named: !!(arg && arg.named) }; return done(r); }
-      case 'shared': { if (!arg || typeof arg.at !== 'string') return no; r = copy(rec); r.sharedAt = arg.at; r.sharedMode = arg.mode === 'shared' ? 'shared' : 'local'; r.sharedSig = str(arg.sig, 4000); return done(r); }
-      case 'unshared': { r = copy(rec); r.sharedAt = null; r.sharedMode = null; r.sharedSig = null; return done(r); }
+      /* A copy belongs to its check, not to the screen: arg.id names the check, open or not, on any step (audit H1, M2). */
+      case 'shared': { if (!arg || typeof arg.at !== 'string') return no; var cs1 = arg.id == null ? rec : (own(store.checks, arg.id) ? store.checks[arg.id] : null); if (!cs1) return no; r = copy(cs1); r.sharedAt = arg.at; r.sharedMode = arg.mode === 'shared' ? 'shared' : 'local'; r.sharedSig = str(arg.sig, 4000); return done(r); }
+      case 'unshared': { var cs2 = !arg || arg.id == null ? rec : (own(store.checks, arg.id) ? store.checks[arg.id] : null); if (!cs2) return no; r = copy(cs2); r.sharedAt = null; r.sharedMode = null; r.sharedSig = null; return done(r); }
       case 'profile': {
         /* The shared hotel profile fills fields that are still empty (never overwrites), on any step. */
         var pf = obj(arg); r = copy(rec); var ch = false;
@@ -252,6 +282,7 @@
       }
       case 'seen': { if (!store.notice) return no; s = { v: V, cur: store.cur, checks: store.checks }; return { store: s, ok: true }; }
       case 'new': {
+        if (listed(rec) && full(store, rec)) return { store: store, ok: false, full: true }; // the cap (audit L4): said, never silently dropped
         r = blank(); r.hotel = Object.assign({}, rec.hotel); // the hotel details carry over to the next check
         s = withRec(store, r); s.cur = r.id;
         if (!listed(rec)) delete s.checks[rec.id]; // an untouched check is not kept
@@ -260,7 +291,8 @@
       case 'preselect': {
         var du = deptOfUse(env, arg); if (!du) return no;
         if (rec.use === arg) return { store: store, ok: true }; // already this use case: keep the check as it is
-        r = blank(); r.hotel = Object.assign({}, rec.hotel); r.cat = du.cat; r.dept = du.id; r.use = arg; r.useName = useName(env, du.id, arg);
+        if (listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
+        r = blank(); r.hotel = Object.assign({}, rec.hotel); r.cat = du.cat; r.dept = du.id; r.use = arg; r.useName = useName(env, du.id, arg); r.from = 'link'; r.tqSig = tailSig(env, arg);
         s = withRec(store, r); s.cur = r.id; if (!listed(rec)) delete s.checks[rec.id];
         return { store: s, ok: true };
       }
@@ -278,7 +310,8 @@
         return { store: s, ok: true };
       }
       case 'import': {
-        var ri = cleanRec(arg, env, {}); if (!ri) return no;
+        var ri = cleanRec(arg, env, {}, { file: true }); if (!ri) return no;
+        if (!own(store.checks, ri.id) && listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
         s = withRec(store, ri); s.cur = ri.id; if (rec.id !== ri.id && !listed(rec)) delete s.checks[rec.id];
         return { store: s, ok: true };
       }
@@ -336,6 +369,33 @@
     var d = h && typeof h.d === 'number' && h.d >= 0 ? h.d : 0;
     return act === 'push' ? { r2: to, d: d + 1, prev: from || null, id: id || '' } : { r2: to, d: d, prev: null, id: id || '' };
   }
+  /* Should Back/forward pass over this entry instead of stopping on it (audit M4, L10)? h: histRead(entry).
+     o: { id: the open check, d: the depth of the entry the page was on, step: the step on screen, placed: placeStep(h.step, ctx),
+          run: how many entries this Back/forward press has passed over already }.
+     Passed over: an entry of another check (after "Start a new check", "Open", a removal, a file or a #use= link); going back, an
+     entry whose step is no longer reachable (it would show a substitute screen, e.g. the stop screen again); and, while passing
+     over, an entry that would show the very screen the person is leaving. Returns -1 (go on back), 1 (go on forward) or 0 (stop here). */
+  function histSkip(h, o) {
+    if (!h || !h.ours || o.run >= HIST_SKIP_MAX) return 0;
+    var dir = h.d > o.d ? 1 : -1;
+    var bad = (!!h.id && h.id !== o.id) || (dir === -1 && o.placed !== h.step) || (o.run > 0 && h.step === o.step);
+    return bad ? dir : 0;
+  }
+  /* Two tabs of one browser (audit M3). mine: this tab's store; theirs: what another tab just saved (already through migrate).
+     The open check stays this tab's own; the other checks are taken from the other tab. elsewhere: 'changed' when the other
+     tab holds different answers for the open check (this tab keeps its own until the person loads the other version),
+     'removed' when the other tab removed it; null otherwise. */
+  function answersOf(r) { return JSON.stringify([r.hotel, r.Q, r.A, r.By, r.cat, r.dept, r.use, r.T, r.TBy, !!(r.share && r.share.named)]); }
+  function mergeTabs(mine, theirs) {
+    var rec = cur(mine), s = { v: V, cur: mine.cur, checks: {} }, elsewhere = null;
+    if (theirs.notice) s.notice = theirs.notice;
+    Object.keys(theirs.checks).forEach(function (k) { if (k !== mine.cur && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
+    var other = theirs.checks[mine.cur];
+    if (!other) { s.checks[rec.id] = rec; if (listed(rec)) elsewhere = 'removed'; }
+    else if (answersOf(other) === answersOf(rec)) { var keep = copy(other); keep.step = rec.step; s.checks[rec.id] = keep; } // same answers: take the other tab's share state and history
+    else { s.checks[rec.id] = rec; elsewhere = 'changed'; }
+    return { store: s, elsewhere: elsewhere };
+  }
   function histRead(st) {
     if (!st || typeof st !== 'object' || STEPS.indexOf(st.r2) < 0) return { ours: false };
     return { ours: true, step: st.r2, d: typeof st.d === 'number' && st.d >= 0 ? st.d : 0, prev: STEPS.indexOf(st.prev) >= 0 ? st.prev : null, id: typeof st.id === 'string' ? st.id : '' };
@@ -346,7 +406,8 @@
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
+  var api = { MAX_CHECKS: MAX_CHECKS, forFile: forFile, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
+    V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,
     SHARE: SHARE, shareSettled: shareSettled, shareNext: shareNext, shareSig: shareSig, shareStale: shareStale,

@@ -212,12 +212,23 @@
   /* ---------- the result: verdict names and the lines under them ---------- */
   var LEVELS = {
     ready: { name: 'Ready to start a pilot', line: 'Every must-have is in place and most of what this use case needs is there. Start small, with the KPI and its target in front of you.' },
-    almost: { name: 'Almost ready', line: 'Most of it is there. Close the open points below before you sign anything.' },
-    notready: { name: 'Not ready yet', line: 'Too much is still missing to start. The list below shows what to do first.' },
-    noinfo: { name: 'Not enough information yet', line: 'More than half the questions are still “Don’t know yet”. Find out first, then come back: the list below says whom to ask.' }
+    almost: { name: 'Almost ready', line: 'Nothing you answered blocks a start, but points are still open. Close the ones below before you sign anything.' }, // v2.1, council item 4
+    notready: { name: 'Not ready yet', line: 'The list below shows what to do first.' },
+    noinfo: { name: 'Not enough information yet', line: 'Find out first, then come back: the list below says whom to ask.' }
   };
+  /* v2.1: the line under the top verdict when no use case was chosen (audit M6), and under "Almost ready" when the top verdict was held back. */
+  var READY_NONE = 'Every must-have is in place. No use case was chosen, so nothing else was checked.';
+  var ALMOST_HELD = 'Your answers would otherwise allow a start. Settle what is named above before you sign anything.';
+  /* v2.1, council item 7 (final copy): under any verdict when the use is labelled high-risk or flagged for sensitive personal data. It points to the existing block; it states no law. */
+  var LAW_LINE = 'This score does not cover the law. This use has legal items to check first (see “EU AI Act” below). Do not start a pilot before a named person has checked them.';
+  var AREAS_HEAD = 'What is in place, by area'; // v2.1, council item 6: counts, not percentages
   var AREA_WORD = { strong: 'Strong', gaps: 'Gaps to close', weak: 'Weak', thin: 'Too little to say' };
-  var SCORE_NOTE = 'self-reported; cut-offs are the team’s judgement, not tested with hotels';
+  var SCORE_NOTE = 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.'; // v2.1, council item 1
+  /* v2.1, council items 5 and 9 (final copy). {N}: the number of use cases in the team's analysis, read from the workbook at build time. */
+  var MUST_INTRO = 'Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the {N} use cases in the team’s analysis need it.';
+  var MUST_COVER = 'Ten things to have in place before an AI project starts, such as an owner with time and a budget for the full first year.';
+  var TAIL_TODAY = 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.';
+  var GET_SCORE = ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']; // cover bullet, council item 1
   var MUST_ONLY = 'No use case was chosen (“None of these fits”), so this result rests on the must-haves only.';
   var DRAFT = 'Draft questions: team to review';
   var LEGAL_NOTE = 'Provisional label from the team’s AI Register, awaiting legal sign-off. Not a compliance verdict and not legal advice.';
@@ -244,7 +255,7 @@
       'EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.1 (adopted 7 Jul 2021).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
     ],
-    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of {N} use cases”), it is that analysis, not a survey. The wording follows the hub’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
+    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of {N} use cases”), it is that analysis, not a survey. The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later (their questions are drafts), and “AI use policies and governance” is a document, not a tool, so it is left out of the count. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
     where: [],
     whereNote: 'The departments and use cases come from the hub’s Use-Case Catalogue (the project team’s catalogue, read when this page was built). “How common” is the catalogue’s rating (High, Medium, Low, Very low), built from the sources listed there for each use case.',
     tailored: [
@@ -252,12 +263,18 @@
     ],
     tailoredNote: 'Each question is built by a fixed rule from one cell of the team’s resource analysis for this use case (people, skills, financial investment, technology infrastructure, data, organisation and governance). The analysis is qualitative: no source gives costs or staffing per use case for European hotels. Where it names no evidence, the cell is the team’s judgement from the catalogue description. Legal points in it are signposts only.',
     result: [],
-    resultNote: 'The percentage and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The cut-offs are the team’s judgement and have not been tested with hotels. The AI Act label comes from the hub’s AI Register and is provisional.'
+    resultNote: 'The score and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The score is the share of points from your answers; it does not measure readiness and is not meant for comparing hotels. The cut-offs are the team’s judgement and have not been tested with hotels. The AI Act label comes from the hub’s AI Register and is provisional.'
   };
 
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
   var AS_OF = '24 Nov 2026';
   var USE_CHANGED = 'The catalogue changed: please pick your use case again.';
+  var QUESTIONS_CHANGED = 'The questions for this use case changed since you answered. Please answer step 5 again.'; // v2.1 (audit M5)
+  var CORRUPT = 'The checks saved in this browser could not be read, so this page started fresh. The unreadable data was set aside, not deleted.'; // v2.1 (audit L12)
+  var NO_KEEP = 'This browser is not keeping checks. Save a file to keep one.'; // v2.1 (audit L6)
+  var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
+  var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
+  var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
   var NOT_SAVED = 'This browser is not keeping your answers. Use Copy summary, Print, Save as file or Download before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your five answers and your use case were kept. The other answers were not: the questions are new.';
@@ -265,6 +282,8 @@
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, NA: NA, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
+    READY_NONE: READY_NONE, ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
+    QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK, SYSTEMS_NOTE: SYSTEMS_NOTE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;

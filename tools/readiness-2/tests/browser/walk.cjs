@@ -43,7 +43,7 @@ async function walk(p, f, tag, plan, shots) {
   ok(s.step === 'start', tag + ': starts on the cover');
   ok((await f.textContent('#honest')).includes('Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.'), tag + ': honesty line on the cover');
   const cover = await f.textContent('#view');
-  ok(/Why this tool/.test(cover) && /How to use it/.test(cover) && /What you get/.test(cover) && /A readiness score and verdict/.test(cover) && /About your hotel/.test(cover) && /Must-haves/.test(cover) && /Questions for this use case/.test(cover), tag + ': cover has the three panels, the five steps and "a readiness score and verdict"');
+  ok(/Why this tool/.test(cover) && /How to use it/.test(cover) && /What you get/.test(cover) && /A verdict and a score: one of four verdicts, and the share of points from your own answers/.test(cover) && !/readiness score|every AI project|Six to ten/.test(cover) && /Six to nine questions on what this use needs/.test(cover) && /Ten things to have in place before an AI project starts/.test(cover) && /About your hotel/.test(cover) && /Must-haves/.test(cover) && /Questions for this use case/.test(cover), tag + ': cover has the three panels, the five steps and "a verdict and a score" (v2.1 copy)');
   ok(/99 use cases in 15 departments/.test(cover), tag + ': counts on the cover');
   await check(f, tag + ' cover'); await S('0-cover');
   await click(f, '#begin');
@@ -102,7 +102,7 @@ async function walk(p, f, tag, plan, shots) {
     const first = s.tailored[0];
     await click(f, `details[data-fold="why-${first}"] > summary`);
     const w = await f.textContent(`details[data-fold="why-${first}"]`);
-    ok(/Area: People\./.test(w) && /Resource intensity \(team judgement, not evidence-based\): (Light|Moderate|Heavy): /.test(w) && /Evidence( rows in the team’s D6 evidence pack)?: /.test(w), tag + ': tailored why: area, intensity with its definition, evidence line');
+    ok(/Area: People\./.test(w) && /Resource intensity \(team judgement, not evidence-based\): (Light|Moderate|Heavy): /.test(w) && /(Based on \d+ entr(y|ies) in the team’s research record \(not yet published\)\.|The team’s judgement from the catalogue description; no source entry\.|Evidence: team draft)/.test(w) && !/[A-Z]{3}-\d{3}-\d{2}|evidence pack/.test(w), tag + ': tailored why: area, intensity with its definition, a plain evidence line without ids (v2.1)');
     if (plan.draft) ok(await f.isVisible('#draft-note') && /Draft questions: team to review/.test(await f.textContent('#draft-note')) && /Evidence: team draft/.test(w), tag + ': draft use case is marked "Draft questions: team to review"');
     else ok(!(await f.$('#draft-note')), tag + ': no draft note');
     if (plan.addon) { ok(await f.isVisible('#f-' + plan.addon), tag + ': the add-on question ' + plan.addon); if (plan.addon === 'x-sens') { ok((await f.textContent('#t-x-sens')) === 'Has a data protection impact assessment (DPIA) been done for this tool?' && (await f.$$eval('#f-x-sens .opts label', e => e.map(x => x.textContent))).includes('Checked: not required (confirmed in writing)'), tag + ': DPIA question with the neutral wording and its "not required" answer'); } }
@@ -117,9 +117,10 @@ async function walk(p, f, tag, plan, shots) {
   ok(s.level === plan.level, tag + ': verdict ' + plan.level + ' (got ' + s.level + ', ' + s.pct + '%)');
   const m = await f.evaluate(() => window.Readiness2.resultModel());
   ok((await f.textContent('#level-name')) === m.levelName && (await f.textContent('#score')) === m.scoreHead && (await f.textContent('#score-sub')) === m.scoreSub, tag + ': verdict, "' + m.scoreHead + '" and its base on the screen');
-  ok(/^\d+% ready$/.test(m.scoreHead) && new RegExp('^from ' + s.counts.known + ' of ' + s.counts.total + ' questions you could answer; self-reported; cut-offs are the team’s judgement, not tested with hotels$').test(m.scoreSub), tag + ': score wording');
+  ok((s.level === 'noinfo' ? m.scoreHead === 'No score yet: you answered ' + s.counts.known + ' of ' + s.counts.total + ' questions.' : m.scoreHead === 'Score: ' + s.pct + '%' && /^\d+ of \d+ points on /.test(m.scoreSub)) && m.scoreSub.endsWith('Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.') && !/% ready/.test(await f.textContent('#view')), tag + ': score wording (v2.1: "Score: n%" or "No score yet", never "% ready")');
+  ok((await f.textContent('#reason')) === m.reason && /^Because /.test(m.reason), tag + ': the reason stands under the verdict: ' + m.reason);
   const sr = await f.evaluate(() => { const a = document.querySelector('#score').getBoundingClientRect(), b = document.querySelector('#score-sub').getBoundingClientRect(); return [a.bottom, b.top, a.right, b.left, b.bottom - a.top]; });
-  ok(sr[4] < 140, tag + ': the base and caveat sit right next to the percentage');
+  ok(sr[4] < ((await f.evaluate(() => innerWidth)) < 700 ? 230 : 140), tag + ': the points and the caveat sit right next to the score (' + Math.round(sr[4]) + ' px)');
   ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).includes('new-check') && (await f.$$eval('#actions > *', e => e.map(x => x.id))).slice(0, 4).join() === 'pdf,copy,print,save-file', tag + ': top action row with Start a new check');
   ok((await f.$$('#areas .brow')).length === m.areas.length && (await f.textContent('#areas .brow[data-area="must"]')).includes('Must-haves'), tag + ': score per area bars');
   ok((await f.$$('#first li')).length === m.first.length && (await f.textContent('#first h2')) === m.firstLabel, tag + ': ' + m.firstLabel);
@@ -149,7 +150,7 @@ const PLANS = {
   chat: { use: 'gx-2', addon: 'x-auto', hotel: { type: 'independent', name: 'Hotel Alpenblick', role: 'gm', country: 'Austria' }, Q: ['y', 'y', 'y', 'n', 'u'],
     must: ['y', 'y', 'pl', 'y', 'k', 'y', 'p', 'y', 'n', 'y'], by: { m3: '2027-01-15' }, tail: ['y', 'k', 'y', 'y', 'p', 'y', 'na', 'y'], level: 'notready' },
   hr: { use: 'hr-2', addon: 'x-sens', hotel: { type: 'group', name: 'Meridian Hotels', role: 'owner', country: 'France' }, Q: ['y', 'y', 'y', 'y', 'y'],
-    must: ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'], tail: ['y', 'y', 'y', 'y', 'y', 'y', 'pl'], level: 'ready' },
+    must: ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y'], tail: ['y', 'y', 'y', 'y', 'y', 'y', 'pl'], level: 'almost' }, // v2.1 (B5): a high-risk use never gets the top verdict here
   draft: { use: 'fo-8', draft: true, hotel: { type: 'managed', name: 'Seehotel Bellevue', role: 'dept', country: 'Switzerland' }, Q: ['u', 'y', 'y', 'y', 'y'],
     must: ['y', 'y', 'p', 'y', 'y', 'pl', 'y', 'y', 'y', 'y'], tail: ['y', 'p', 'y', 'y', 'n', 'y'], level: 'almost' },
   none: { use: 'none', hotel: { type: 'independent', name: 'Pension Aurora', role: 'other', country: 'Other' }, Q: ['y', 'y', 'y', 'y', 'y'],
@@ -177,12 +178,12 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         await p.reload(); s = await state(p); ok(s.step === 'tailored' && Object.keys(s.T).length === 8, wtag + ': reload mid-flow keeps the step and the answers');
         // change an answer, return: since last time
         await answer(p, 'sk1', 'y'); await p.click('#next'); s = await state(p);
-        ok(s.step === 'result' && s.snaps === 2 && await p.isVisible('#since') && /Since last time/.test(await p.textContent('#since')) && /Questions you could answer: 15 of 17 → 16 of 17\./.test(await p.textContent('#since')), wtag + ': return visit shows "since last time"');
+        ok(s.step === 'result' && s.snaps === 2 && await p.isVisible('#since') && /Since last time/.test(await p.textContent('#since')) && /Questions you answered: 15 of 17 → 16 of 17\./.test(await p.textContent('#since')), wtag + ': return visit shows "since last time"');
         await shot(p, wtag + '-chat-7-since');
         // copy summary and copy per person
         await p.click('#copy'); await p.waitForTimeout(150);
         let clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
-        ok(clip.startsWith('Do you need AI? Result for Hotel Alpenblick') && /% ready \(from 16 of 17 questions you could answer; self-reported/.test(clip) && /Action plan by person:/.test(clip), wtag + ': Copy summary');
+        ok(clip.startsWith('Do you need AI? Result for Hotel Alpenblick') && /Not ready yet · Score: \d+%\nBecause 1 must-have is missing: Rules for staff on AI tools\. A missing must-have outweighs the score\.\n\d+ of 34 points on 17 questions: 16 answered, 1 “Don’t know yet” \(0 points each\)\./.test(clip) && !/% ready/.test(clip) && /Action plan by person:/.test(clip), wtag + ': Copy summary');
         const who = await p.getAttribute('#plan [data-act="copy-who"]', 'data-who'); await p.click('#plan [data-act="copy-who"]'); await p.waitForTimeout(150);
         clip = await p.evaluate(() => navigator.clipboard.readText()).catch(() => '');
         ok(/^Do you need AI\? · AI chat and messaging assistant/.test(clip) && /\nFor: /.test(clip) && /Could you help with these\?/.test(clip) && !!who, wtag + ': copy per person');
@@ -212,7 +213,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         ok(o.p._errs.length === 0, wtag + ': file open: no console errors ' + o.p._errs.join('|')); await o.ctx.close();
         // saved-check list: start a new check, then open and remove
         await p.click('#new-check'); s = await state(p); ok(s.step === 'start' && s.checks.length === 1 && s.hotel.name === 'Hotel Alpenblick', wtag + ': Start a new check → cover; the finished check is listed; hotel details carried over');
-        ok(/AI chat and messaging assistant/.test(await p.textContent('#mychecks')) && /Not ready yet · \d+% ready/.test(await p.textContent('#mychecks')), wtag + ': Your checks shows the use case, verdict and score');
+        ok(/AI chat and messaging assistant/.test(await p.textContent('#mychecks')) && /Not ready yet · Score: \d+%/.test(await p.textContent('#mychecks')), wtag + ': Your checks shows the use case, verdict and score');
         await check(p, wtag + ' cover with checks'); await shot(p, wtag + '-8-your-checks');
         const id = s.checks[0];
         await p.click(`#mychecks [data-act="remove"][data-id="${id}"]`); ok((await state(p)).confirm.kind === 'remove' && await p.isVisible('#rm-yes'), wtag + ': Remove asks first');
@@ -272,7 +273,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
     {
       const { ctx, p } = await mk(b, w, touch); await p.goto(BASE + 'readiness-2/index.html#use=hr-2');
       let s = await state(p); ok(s.step === 'start' && s.use === 'hr-2' && s.dept === 'hr' && /You came here for: AI recruiting/.test(await p.textContent('#preselected')) && !/use=/.test(p.url()), wtag + ': #use=hr-2 preselects the use case and clears the hash');
-      await p.reload(); ok((await state(p)).use === 'hr-2' && (await state(p)).checks.length === 1, wtag + ': reload keeps it, no second check');
+      await p.reload(); ok((await state(p)).use === 'hr-2' && (await state(p)).from === 'link' && (await state(p)).checks.length === 0, wtag + ': reload keeps it; a check that only came from a link is not listed yet (v2.1, audit L9)');
       await p.goto(BASE + 'readiness-2/index.html#use=zz-99'); ok((await state(p)).use === 'hr-2', wtag + ': an unknown use id in the hash is ignored');
       await ctx.close();
     }
@@ -303,7 +304,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         await check(f, wtag + ' hub share'); if (w === 1280) await shot(p, wtag + '-hub-share', f);
         await p.click('#hubBar button[data-tool="team"]'); const tf = await hubFrame(p, 'team'); await tf.waitForFunction(() => window.ReadinessTeam && window.ReadinessTeam.state().phase !== 'loading');
         const ts = await tf.evaluate(() => window.ReadinessTeam.state()); ok(ts.phase === 'ready' && ts.count === 1 && ts.old === 0, wtag + ' hub: the Team tab lists the shared copy');
-        const tv = await tf.textContent('#view'); ok(/Do you need AI\?/.test(tv) && /AI chat and messaging assistant/.test(tv) && /Not ready yet/.test(tv) && new RegExp(s.pct + '% ready').test(await tf.textContent('#dyn-score')) && /Every answer and its points/.test(tv) && /Working out, step by step/.test(tv), wtag + ' hub: the Team tab recomputes it: same verdict and score');
+        const tv = await tf.textContent('#view'); ok(/Do you need AI\?/.test(tv) && /AI chat and messaging assistant/.test(tv) && /Not ready yet/.test(tv) && (await tf.textContent('#dyn-score')) === 'Score: ' + s.pct + '%' && /^Because /.test(await tf.textContent('#dyn-reason')) && /Every answer and its points/.test(tv) && /Working out, step by step/.test(tv), wtag + ' hub: the Team tab recomputes it: same verdict and score');
         ok(!/Hotel Alpenblick/.test(tv), wtag + ' hub: the hotel name is not shared unless ticked');
         ok(await noH(tf), wtag + ' hub team: no horizontal scroll'); if (w === 1280) await shot(p, wtag + '-hub-team', tf);
         ok((tf._errs || []).length === 0 && p._errs.length === 0, wtag + ' hub team: no console errors ' + p._errs.join('|'));
@@ -323,7 +324,7 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
       await p.evaluate(() => { const fr = [...document.querySelectorAll('#hubFrame iframe')].find(x => x.title === 'register'); fr.contentWindow.eval("window.parent.postMessage({ hub: 'open', tool: 'readiness-check', hash: 'use=hr-2' }, location.origin)"); });
       await p.waitForFunction(() => window.HFTPHub.state().tool === 'readiness-2'); f = await hubFrame(p, 'readiness-2');
       await f.waitForFunction(() => window.Readiness2.state().use === 'hr-2', null, { timeout: 15000 });
-      let s = await state(f); ok(s.use === 'hr-2' && s.step === 'start' && s.checks.length === 2 && !(await p.$('#hubFrame iframe[title="readiness-check"]')), wtag + ' hub: an old readiness-check link with #use=hr-2 lands in Do you need AI? with hr-2 preselected (the finished check is kept)');
+      let s = await state(f); ok(s.use === 'hr-2' && s.step === 'start' && s.from === 'link' && s.checks.length === 1 && !(await p.$('#hubFrame iframe[title="readiness-check"]')), wtag + ' hub: an old readiness-check link with #use=hr-2 lands in Do you need AI? with hr-2 preselected (the finished check is kept)');
       ok(/You came here for: AI recruiting/.test(await f.textContent('#preselected')), wtag + ' hub: the cover says what was preselected');
       if (w === 1280) await shot(p, wtag + '-hub-old-link', f);
       ok(p._errs.length === 0, wtag + ' hub: no console errors ' + p._errs.slice(0, 3).join(' | '));

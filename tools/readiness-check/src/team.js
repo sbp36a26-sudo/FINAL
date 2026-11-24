@@ -11,13 +11,17 @@
   /* TEAM machine (src/flow.js teamNext): t.phase 'loading' | 'ready' | 'empty' | 'error'; t.del null | 'confirm' | 'deleting'.
      send(event) is the only writer of t. A list answer that arrives after a newer Refresh is ignored (seq). */
   var F = window.RCFlow;
-  var subs = [], old = 0, sel = null, err = '', t = { phase: 'loading', del: null }, seq = 0;
+  var subs = [], old = 0, gone = 0, sel = null, err = '', t = { phase: 'loading', del: null }, seq = 0;
   /* 24 Nov 2026: copies shared from "Do you need AI?" v2 (kind 'dyn', v 2), the tool that replaced this check in the hub.
      They are recomputed with that tool's own rules (R2Logic, inlined by build.mjs with its tailored questions). */
   var DL = window.R2Logic || null, DC = window.R2Content || null, DTQ = null;
   try { DTQ = JSON.parse($('dyn-data').textContent).tq; } catch (e) { DTQ = null; }
   var DYN_CHIP = { ready: 'scale', almost: 'pilot', notready: 'found', noinfo: 'open' };
-  function isDyn(d) { return !!(d && d.kind === 'dyn' && d.v === 2 && DL && DTQ && (d.useId === 'none' || d.useId === '' || DTQ.uses[d.useId])); }
+  /* v2.1 (24 Nov 2026, audit M7b): a copy whose use case has left the catalogue is still a "Do you need AI?" copy. It is listed
+     with the level the hotel saw and cannot be recomputed (dynGone); it is no longer counted as "old v2 format". */
+  function isDyn(d) { return !!(d && d.kind === 'dyn' && d.v === 2 && DL && DTQ); }
+  function dynGone(d) { return isDyn(d) && !!d.useId && d.useId !== 'none' && !DTQ.uses[d.useId]; }
+  function dynScore(p) { return p == null ? 'no score' : 'Score: ' + p + '%'; }
   function dynRec(s) { return { Q: s.Q || {}, A: s.answers || {}, By: s.by || {}, use: s.useId || 'none', dept: s.dept || '', cat: s.cat || '', T: s.tailored || {}, TBy: s.tby || {}, hotel: { type: s.type, country: s.country, role: s.role, name: s.named ? s.hotelName || '' : '' }, snaps: [] }; }
   function send(ev, n) { var to = F.teamNext(t, ev, n); if (!to) return false; t = to; return true; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -33,6 +37,7 @@
       if (my !== seq) return;
       docs = Array.isArray(docs) ? docs : [];
       old = docs.filter(function (d) { return d && d.v !== 3 && !isDyn(d); }).length;
+      gone = docs.filter(dynGone).length;
       subs = docs.filter(function (d) { return d && ((d.v === 3 && d.kind !== 'dyn' && M.UI[d.useId]) || isDyn(d)); }).sort(function (a, b) { return String(b.sharedAt).localeCompare(String(a.sharedAt)); });
       if (!sel || !subs.some(function (s) { return s._id === sel; })) sel = subs.length ? subs[0]._id : null;
       send('loaded', subs.length); render();
@@ -43,8 +48,23 @@
     });
   }
 
+  /* v2.1 (audit M7a, council item 11): the card describes both kinds of copy on this page, each with its own rules. */
+  function dynCard() {
+    if (!DL || !DC) return '';
+    var T = DL.T, J = DL.JUDGEMENT, LV = DC.LEVELS;
+    return '<h4 id="card-dyn">Do you need AI? (rules ' + esc(DL.RULES) + ')</h4><div class="flow">' +
+      '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, use case. Hotel name only if they tick it.</span></div>' +
+      '<div><b>2 · Questions</b><span>Five questions on whether the job needs AI (a No on the first stops the check), ten must-haves, then six to nine questions for the chosen use case (none after “None of these fits”).</span></div>' +
+      '<div><b>3 · Points and score</b><span>Yes 2 · Planned, not done yet 1 · Partly 1 · No 0' + (J.UNKNOWN_SCORES_ZERO ? ' · Don\'t know yet 0 (team judgement)' : '. “Don\'t know yet” is left out') + '. “Doesn\'t apply” is left out. The score is points ÷ points possible, rounded down, shown as “Score: n%” with the points and the number of questions answered next to it, never as “% ready”. It is the hotel\'s own answers; nobody checked them. No score is shown under “' + esc(LV.noinfo.name) + '”.</span></div>' +
+      '<div><b>4 · Verdict</b><span>In this order. More than half “Don\'t know yet”: ' + esc(LV.noinfo.name) + '. A must-have at No, or below ' + T.ALMOST + '%: ' + esc(LV.notready.name) + '. Every must-have Yes, ' + T.READY + '% or more and fewer than a quarter “Don\'t know yet”: ' + esc(LV.ready.name) +
+        (J.LEGAL_HOLDS_TOP || J.CARRIED_NO_HOLDS_TOP ? ', unless ' + [J.LEGAL_HOLDS_TOP ? 'the AI Register labels the use high-risk or the team\'s sheet flags sensitive personal data' : '', J.CARRIED_NO_HOLDS_TOP ? 'a No is carried from questions 2 to 5' : ''].filter(Boolean).join(', or ') + ' (team judgement): then ' + esc(LV.almost.name) : '') +
+        '. Everything else: ' + esc(LV.almost.name) + '. The reason is printed under the verdict.</span></div>' +
+      '<div><b>5 · Kept</b><span>In the hotel\'s browser and file. A copy reaches this page only if they press “Share a copy”; they can withdraw it from any step.</span></div>' +
+      '</div><p class="meta">The cut-offs are the team\'s judgement and have not been tested with hotels. A copy made with earlier rules is recomputed here; the list shows what the hotel saw and marks it “earlier rules”. Sources: reports/Council - Do you need AI v2.md and reports/audit-readiness-2/cleanup_inventory_v2.md (24 Nov 2026).</p>';
+  }
   function flowCard() {
-    return '<section class="panel"><h3>Where the data goes</h3><div class="flow">' +
+    return '<section class="panel" id="flowcard"><h3>Where the data goes</h3><p class="meta">This page lists two kinds of shared copy. Each is worked out with its own rules.</p>' + dynCard() +
+      '<h4 id="card-rc">Earlier Readiness check (rules ' + esc(L.RULES) + '): replaced in the hub on 24 Nov 2026, its copies stay</h4><div class="flow">' +
       '<div><b>1 · Hotel</b><span>Role, how the hotel is run, country, tool, stage. Hotel name only if they tick it.</span></div>' +
       '<div><b>2 · Questions</b><span>Must-haves, check-first, building-block and add-on questions, tick lists of what the tool needs, plus X1, X2a/b, XG, XL.</span></div>' +
       '<div><b>3 · Points</b><span>Yes 2 · Planned, not done yet 1 · Partly 1 · No 0. “Don\'t know yet”, “Doesn\'t apply” and the ways out are left out. Lists: 2 × in place ÷ (in place + not yet). A must-have Yes needs a note (any text; nobody checks it); without one it is “Yes, note missing”.</span></div>' +
@@ -55,12 +75,12 @@
 
   function listPanel() {
     var h = '<section class="panel" style="padding:0;gap:0;overflow:hidden"><div style="padding:14px 14px 10px"><h3>Shared checks</h3><p class="meta">' +
-      (t.phase === 'loading' ? 'Loading…' : subs.length + ' shared' + (S.mode() === 'local' ? ' (this browser only: open the hub on claude.ai for the real list)' : '') + (old ? ' · ' + old + ' in the old v2 format not shown' : '')) + '</p></div>';
+      (t.phase === 'loading' ? 'Loading…' : subs.length + ' shared' + (S.mode() === 'local' ? ' (this browser only: open the hub on claude.ai for the real list)' : '') + (gone ? ' · ' + gone + ' whose use case is no longer in the catalogue' : '') + (old ? ' · ' + old + ' in the old v2 format not shown' : '')) + '</p></div>';
     if (err) h += '<p class="warnline" style="padding:0 14px 12px">' + esc(err) + '</p>';
     if (t.phase === 'empty') h += '<p class="meta" style="padding:0 14px 14px">Nothing shared yet. A hotel shares from the bottom of its result page.</p>';
     subs.forEach(function (s) {
       if (isDyn(s)) {
-        h += '<button type="button" class="sub-row" data-act="sel" data-kind="dyn" data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">Do you need AI? · ' + esc(s.useName || 'no use case (“None of these fits”)') + '</span><span class="btnrow"><span class="chip c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span><span class="meta">' + esc(s.pct == null ? 'no score' : s.pct + '%') + ' · ' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + '</span></span></button>';
+        h += '<button type="button" class="sub-row" data-act="sel" data-kind="dyn"' + (dynGone(s) ? ' data-gone="1"' : '') + ' data-id="' + esc(s._id) + '" aria-current="' + (s._id === sel) + '"><strong>' + esc(title(s)) + '</strong><span class="meta">Do you need AI? · ' + esc(s.useName || (dynGone(s) ? s.useId : 'no use case (“None of these fits”)')) + (dynGone(s) ? ' (no longer in the catalogue)' : '') + '</span><span class="btnrow"><span class="chip c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span><span class="meta">' + esc(dynScore(s.pct)) + ' · ' + esc(s.met) + '/' + esc(s.gates) + ' must-haves · ' + esc(fmt(s.sharedAt)) + (s.rules && s.rules !== DL.RULES ? ' · earlier rules' : '') + '</span></span></button>';
         return;
       }
       var lv = L.LEVELS[s.level] || L.LEVELS.open;
@@ -77,17 +97,30 @@
   function byOf(s) { var b = s.by && typeof s.by === 'object' ? s.by : {}, r = {}; Object.keys(b).forEach(function (k) { if (typeof b[k] === 'string') r[k] = b[k]; }); return r; }
 
   /* A copy from "Do you need AI?" v2: recomputed with its rules; every answer with its points. */
+  /* A copy whose use case is no longer in the catalogue: what the hotel saw, and its must-have answers; nothing is recomputed. */
+  function detailGone(s) {
+    var A = s.answers || {};
+    return '<section class="panel" data-kind="dyn" data-gone="1"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
+      '<span class="chip big c-' + (DYN_CHIP[s.level] || 'open') + '">' + esc((DC.LEVELS[s.level] || {}).name || s.level) + '</span></div>' +
+      '<p><strong>' + esc(s.useName || s.useId) + '</strong></p>' +
+      '<p class="warnline" id="gone">This use case (' + esc(s.useId) + ') is no longer in the catalogue, so the copy cannot be recomputed. What the hotel saw when it shared: ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(dynScore(s.pct)) + ', ' + esc(s.met) + ' of ' + esc(s.gates) + ' must-haves at Yes.</p>' +
+      '<p class="meta" id="made-with">Shared ' + esc(fmt(s.sharedAt)) + ' · made with rules ' + esc(s.rules || 'not recorded') + (s.named ? ' · hotel name shared' : ' · no hotel name') + '</p></section>' +
+      '<section class="panel"><h3>Must-have answers</h3><ul class="tight">' + DC.MUSTS.map(function (m) { return '<li>' + esc(m.name) + ': <strong>' + esc(DC.ANSWER_WORD[A[m.id]] || 'Not answered') + '</strong></li>'; }).join('') + '</ul></section>' + delPanel();
+  }
   function detailDyn(s) {
-    var rec = dynRec(s), e = DL.evaluate(rec, DTQ), v = DL.verdict(rec.Q), P = DL.POINTS;
-    var pts = function (it) { return it.state === 'na' ? 'left out (doesn’t apply)' : it.state === 'unknown' ? 'left out (unknown)' : P[it.v] + ' / 2'; };
+    if (dynGone(s)) return detailGone(s);
+    var rec = dynRec(s), e = DL.evaluate(rec, DTQ), v = DL.verdict(rec.Q), P = DL.POINTS, tu = DTQ.uses[s.useId];
+    var pts = function (it) { return it.state === 'na' ? 'left out (doesn’t apply)' : it.state === 'unknown' ? (DL.JUDGEMENT.UNKNOWN_SCORES_ZERO ? '0 / 2 (don’t know yet)' : 'left out (unknown)') : P[it.v] + ' / 2'; };
     var rowOf = function (it) { return '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.q) + '</td><td>' + esc(DL.STATE_WORD[it.state]) + (it.by ? '<br><span class="meta">by ' + esc(DL.fmtDate(it.by)) + '</span>' : '') + '</td><td class="num">' + esc(pts(it)) + '</td></tr>'; };
     var h = '<section class="panel" data-kind="dyn"><div class="btnrow" style="justify-content:space-between"><div><h2>' + esc(title(s)) + '</h2><p class="meta">' + esc(['Do you need AI?', ROLES[s.role], TYPES[s.type], s.country].filter(Boolean).join(' · ')) + '</p></div>' +
       '<span class="chip big c-' + DYN_CHIP[e.level] + '">' + esc(DC.LEVELS[e.level].name) + '</span></div>' +
       '<p><strong>' + esc(s.useName || 'No use case chosen (“None of these fits”)') + '</strong></p>' +
+      '<p><strong id="dyn-reason">' + esc(e.reason) + '</strong></p>' +
       '<p><strong id="dyn-score">' + esc(DL.scoreHead(e)) + '</strong> <span class="meta">' + esc(DL.scoreSub(e)) + '</span></p><p>' + esc(DL.mustLine(e)) + '</p>' +
+      (tu ? '<p class="meta" id="dyn-evidence">Research record entries behind this use case’s questions (team only, not shown to hotels): ' + esc(tu.draft ? 'none (draft row)' : tu.ev || 'none (team judgement from the catalogue description)') + '</p>' : '') +
       '<p class="meta" id="made-with">Shared ' + esc(fmt(s.sharedAt)) + ' · made with rules ' + esc(s.rules || 'not recorded') + (s.rules && s.rules !== DL.RULES ? ' (earlier rules); recomputed here with rules ' + esc(DL.RULES) : '') + (s.named ? ' · hotel name shared' : ' · no hotel name') + '</p>' +
-      (s.level !== e.level || s.pct !== e.pct ? '<p class="warnline" id="differs">The hotel saw: ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(s.pct == null ? 'no score' : s.pct + '%') + '. With the current rules and questions: ' + esc(DC.LEVELS[e.level].name) + ', ' + esc(e.pct == null ? 'no score' : e.pct + '%') + '.</p>' : '') +
-      ((s.snaps || []).length > 1 ? '<p class="meta">Their history: ' + s.snaps.map(function (h2) { return esc(fmt(h2.at).split(',')[0]) + ' ' + esc((DC.LEVELS[h2.level] || {}).name || '') + ' (' + esc(h2.pct == null ? 'no score' : h2.pct + '%') + ')'; }).join(' → ') + '</p>' : '') + '</section>';
+      (s.level !== e.level || s.pct !== e.pct ? '<p class="warnline" id="differs">The hotel saw' + (s.rules && s.rules !== DL.RULES ? ' (rules ' + esc(s.rules) + ')' : '') + ': ' + esc((DC.LEVELS[s.level] || {}).name || s.level) + ', ' + esc(dynScore(s.pct)) + '. With the current rules and questions: ' + esc(DC.LEVELS[e.level].name) + ', ' + esc(dynScore(e.pct)) + '. The hotel has not seen the new one unless it reopened its check.</p>' : '') +
+      ((s.snaps || []).length > 1 ? '<p class="meta">Their history: ' + s.snaps.map(function (h2) { return esc(fmt(h2.at).split(',')[0]) + ' ' + esc((DC.LEVELS[h2.level] || {}).name || '') + ' (' + esc(dynScore(h2.pct)) + ((h2.rules || s.rules) !== DL.RULES ? ', earlier rules' : '') + ')'; }).join(' → ') + '</p>' : '') + '</section>';
     h += '<section class="panel"><h3>Is this an AI problem?</h3><p><strong>' + esc(DL.verdictText(v, true).head) + '</strong></p><ul class="tight">' + DC.QUESTIONS.map(function (q) { return '<li>' + esc(q.title) + ': ' + esc(q.q) + ' <strong>' + esc(({ y: 'Yes', n: 'No', u: 'Not sure' })[rec.Q[q.id]] || 'Not answered') + '</strong></li>'; }).join('') + '</ul></section>';
     h += '<section class="panel"><h3>Working out, step by step</h3><ol class="steps">' + DL.method(e).map(function (x2) { return '<li>' + esc(x2) + '</li>'; }).join('') + '</ol></section>';
     h += '<section class="panel"><h3>Every answer and its points</h3><div class="tblw"><table><thead><tr><th>Item</th><th>Question</th><th>Answer</th><th style="text-align:right">Points</th></tr></thead><tbody>' +

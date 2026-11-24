@@ -247,11 +247,12 @@ input[type=text],select{font:inherit;color:var(--ink);background:var(--panel);bo
 .scorerow{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
 .score{font-family:var(--display);font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .scoresub{font-size:0.9375rem;color:var(--ink2);max-width:52ch}
+.score.noscore{font-size:1.25rem;white-space:normal} /* v2.1: "No score yet: you answered 4 of 10 questions." is a sentence, not a number */
 .aiv{display:flex;flex-direction:column;gap:8px}
 .aiv .vsent{font-size:1.25rem}
 .aiv ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .bars{display:flex;flex-direction:column;gap:9px}
-.brow{display:grid;grid-template-columns:minmax(120px,210px) minmax(60px,1fr) 46px 120px;gap:10px;align-items:center;font-size:0.9375rem}
+.brow{display:grid;grid-template-columns:minmax(120px,210px) minmax(60px,1fr) 70px 150px;gap:10px;align-items:center;font-size:0.9375rem} /* v2.1: counts ("10 of 10"), not percentages */
 .brow .track{height:12px;background:var(--panel);border:1px solid var(--ctl);border-radius:6px;position:relative;overflow:hidden}
 .brow .track i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--na)}
 .brow .track i.w-strong{background:var(--hi)} .brow .track i.w-gaps{background:var(--md)} .brow .track i.w-weak{background:var(--lo)}
@@ -292,7 +293,7 @@ ol.tight,ul.tight{padding-left:22px;display:flex;flex-direction:column;gap:6px;m
 .since{border-left:3px solid var(--accent)}
 .whyarea{font-weight:600}
 @media (max-width:760px){
-  .brow{grid-template-columns:minmax(0,1fr) 46px;gap:4px 10px}
+  .brow{grid-template-columns:minmax(0,1fr) 70px;gap:4px 10px}
   .brow .lbl{grid-column:1 / -1}
   .brow .word{grid-column:1 / -1}
   .arow{grid-template-columns:1fr}

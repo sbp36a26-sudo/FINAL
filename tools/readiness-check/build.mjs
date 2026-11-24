@@ -46,7 +46,7 @@ const style = read('src/style.css');
 /* 24 Nov 2026: the team page also lists copies shared from "Do you need AI?" v2 (kind 'dyn'), which replaced this check in the hub.
    To recompute them it carries that tool's words, rules and tailored questions (read from its files at build time). */
 const { tqModel } = await import('../readiness-2/build.mjs');
-const dynBlock = `<script type="application/json" id="dyn-data">${JSON.stringify({ tq: tqModel(JSON.parse(read('../readiness-2/data/usecase-questions.json'))) }).replace(/</g, '\\u003c')}</script>`;
+const dynBlock = `<script type="application/json" id="dyn-data">${JSON.stringify({ tq: tqModel(JSON.parse(read('../readiness-2/data/usecase-questions.json')), labels) }).replace(/</g, '\\u003c')}</script>`;
 const dynCode = safe(read('../readiness-2/src/content.js')) + '\n' + safe(read('../readiness-2/src/logic.js')) + '\n';
 
 for (const [page, script, out] of [['src/check.html', 'src/check.js', 'index.html'], ['src/team.html', 'src/team.js', 'team.html']]) {
