@@ -125,8 +125,9 @@ async function clickLink(ctx, p, f, sel) {
       await p.click('[data-act="detail"][data-detail="gx-1"]'); await p.waitForSelector('#detail[open] #detail-srcs');
       const types = await p.$$eval('#detail-srcs li', l => l.map(x => x.getAttribute('data-src')));
       ok(types.includes('l') && types.includes('r') && types.includes('c'), tag + ': gx-1 shows company, link and study sources');
-      const texts = await p.$$eval('#detail-srcs li', l => l.map(x => x.textContent));
-      ok(texts.every(t => !/https?:\/\//.test(t)) && texts.every(t => !/^\s*[SP]\d+\b/.test(t)), tag + ': no URL as text, no bare study key');
+      const texts = await p.$$eval('#detail-srcs li', l => l.map(x => { const c = x.cloneNode(true); const a = c.querySelector('.srcaddr'); if (a) a.remove(); return c.textContent; }));
+      ok(await p.$$eval('#detail-srcs li', l => l.every(x => !x.querySelector('a') || (x.querySelector('.srcurl') && x.querySelector('.srcurl').textContent === x.querySelector('a').href))), tag + ': each linked source also shows its address, selectable, with Copy address');
+      ok(texts.every(t => !/https?:\/\//.test(t)) && texts.every(t => !/^\s*[SP]\d+\b/.test(t)), tag + ': no URL as text outside the address line, no bare study key');
       if (!touch) await p.screenshot({ path: path.join(OUT, 'v251-detail-gx1-desktop.png') });
       else await p.screenshot({ path: path.join(OUT, 'v251-detail-gx1-phone.png') });
       const sel = '#detail-srcs li[data-src="l"] a', href = await p.$eval(sel, a => a.href);

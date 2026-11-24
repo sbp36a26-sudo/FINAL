@@ -139,7 +139,9 @@
     var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
     /* a plain link ('l') is a sentence, not a name: not set in bold */
     return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
-      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' : '') + '</li>';
+      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' +
+        /* 24 Nov 2026: the claude.ai viewer may refuse to open a link from inside the hub, so the address is also shown, selectable, with a copy button */
+        '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */

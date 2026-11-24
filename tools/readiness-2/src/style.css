@@ -366,3 +366,9 @@ dialog.detail .dsrcs a{display:inline-block;min-height:44px;line-height:44px;mar
 dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px;vertical-align:1px}
 @media (max-width:640px){ dialog.detail{width:100vw;margin:0;box-shadow:none} dialog.detail .dhead{padding:12px 16px 10px} dialog.detail .dbody{padding:10px 16px 24px} }
 @media print{ dialog.detail{display:none!important} }
+
+/* 24 Nov 2026: source address shown under each source in the detail layer, selectable, with Copy address */
+.srcaddr{display:block;margin-top:2px;font-size:0.8125rem;color:var(--ink3);overflow-wrap:anywhere}
+.srcaddr .srcurl{user-select:all;-webkit-user-select:all}
+.srcaddr .copysrc{font-size:0.8125rem;min-height:44px;padding:0 4px}
+@media print{ .srcaddr .copysrc{display:none} }

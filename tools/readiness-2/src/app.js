@@ -859,6 +859,9 @@
     if (act === 'detail-close') { e.preventDefault(); closeDetail(); return; }
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
+    else if (act === 'copy-src') { e.preventDefault(); var su = t.getAttribute('data-url'), sp = t.parentNode && t.parentNode.querySelector('.srcurl');
+      var selectIt = function () { if (!sp) return; var r = document.createRange(); r.selectNodeContents(sp); var w = window.getSelection(); w.removeAllRanges(); w.addRange(r); t.textContent = 'Selected: press Ctrl+C or Cmd+C'; };
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(su).then(function () { t.textContent = 'Copied'; }, selectIt); else selectIt(); } catch (x) { selectIt(); } }
     else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.replace(/^The /, 'the '), 'who:' + p.who); }
     else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions', 'vendor'); }
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }

@@ -29,7 +29,10 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
       const url = urlOf(raw);
       for (const [tag, s] of [['bundled', bundled[j]], ['raw catalogue shape', raw]]) {
         const h = L.sourceRow(s, X.src), hrefs = [...h.matchAll(/href="([^"]*)"/g)].map(m => unesc(m[1]));
-        const text = unesc(strip(h));
+        // 24 Nov 2026: the address line (selectable, with Copy address) is the one place a URL may stand as text
+        const addr = (h.match(/<span class="srcurl">([^<]*)<\/span>/) || [])[1];
+        if (url && unesc(addr || '') !== url) fail('the address line does not show the link');
+        const text = unesc(strip(h.replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
         const fail = why => bad.push(id + ' #' + (j + 1) + ' (' + raw[0] + ', ' + tag + '): ' + why);
         if (url) { if (hrefs.length !== 1 || hrefs[0] !== url) fail('expected one link to ' + url + ', got ' + JSON.stringify(hrefs)); }
         else if (hrefs.length) fail('a link where the catalogue has no URL');
@@ -48,7 +51,7 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
   ok(['c', 'h', 'r', 'l'].every(t => types[t] > 0), 'all four source types are covered');
   ok(Object.values(D.detail).every(x => x.srcs.every(s => s.length === 4)), 'the bundle carries one shape for every type: [type, name, note, url]');
   // Edge cases the renderer must survive (nothing in today's catalogue, but a later edit must not print a URL or a key).
-  ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/href="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
+  ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '').replace(/href="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
   ok(L.sourceItem(['r', 'S99', 'note'], {}).name === 'S99' && L.sourceItem(['r', 'S99', 'note'], {}).url === '', 'an unknown study key does not throw and gives no link');
   ok(!/href/.test(L.sourceRow(['c', 'Vendor', 'note', 'javascript:alert(1)'])), 'a non-http(s) URL is never a link');
   ok(/data-ext="source"/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links are marked data-ext="source"');

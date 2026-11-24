@@ -378,6 +378,12 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 @media (max-width:640px){ dialog.detail{width:100vw;margin:0;box-shadow:none} dialog.detail .dhead{padding:12px 16px 10px} dialog.detail .dbody{padding:10px 16px 24px} }
 @media print{ dialog.detail{display:none!important} }
 
+/* 24 Nov 2026: source address shown under each source in the detail layer, selectable, with Copy address */
+.srcaddr{display:block;margin-top:2px;font-size:0.8125rem;color:var(--ink3);overflow-wrap:anywhere}
+.srcaddr .srcurl{user-select:all;-webkit-user-select:all}
+.srcaddr .copysrc{font-size:0.8125rem;min-height:44px;padding:0 4px}
+@media print{ .srcaddr .copysrc{display:none} }
+
 </style>
 </head>
 <body>
@@ -1906,7 +1912,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var nm = (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + escH(x.name);
     /* a plain link ('l') is a sentence, not a name: not set in bold */
     return '<li data-src="' + escH(x.type) + '">' + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
-      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' : '') + '</li>';
+      (x.url ? ' <a href="' + escH(x.url) + '" target="_blank" rel="noopener" data-ext="source">Open the source</a>' +
+        /* 24 Nov 2026: the claude.ai viewer may refuse to open a link from inside the hub, so the address is also shown, selectable, with a copy button */
+        '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -3755,6 +3763,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (act === 'detail-close') { e.preventDefault(); closeDetail(); return; }
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
+    else if (act === 'copy-src') { e.preventDefault(); var su = t.getAttribute('data-url'), sp = t.parentNode && t.parentNode.querySelector('.srcurl');
+      var selectIt = function () { if (!sp) return; var r = document.createRange(); r.selectNodeContents(sp); var w = window.getSelection(); w.removeAllRanges(); w.addRange(r); t.textContent = 'Selected: press Ctrl+C or Cmd+C'; };
+      try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(su).then(function () { t.textContent = 'Copied'; }, selectIt); else selectIt(); } catch (x) { selectIt(); } }
     else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.replace(/^The /, 'the '), 'who:' + p.who); }
     else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions', 'vendor'); }
     else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
