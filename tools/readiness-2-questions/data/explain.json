@@ -383,10 +383,6 @@
   "does": "Collects energy, water, waste and emissions data across hotels, compares results and produces sustainability and legally required reports.",
   "how": "A large language model (AI trained on huge amounts of text) runs the assistants; AI for collecting data and calculating emissions is claimed but unclear."
  },
- "lg-2": {
-  "does": "Maps the guest data the hotel holds, records what guests have agreed to, runs privacy risk assessments and oversees AI tools bought from other companies.",
-  "how": "The main privacy steps follow fixed rules, which is not AI; AI is claimed but unclear for overseeing AI tools."
- },
  "lg-3": {
   "does": "Reviews supplier contracts, flags unusual clauses and watches for changes in the rules.",
   "how": "A large language model (AI trained on huge amounts of text) reads and writes text the way a person would."

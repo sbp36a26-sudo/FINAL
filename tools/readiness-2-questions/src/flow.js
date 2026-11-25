@@ -97,6 +97,8 @@
   function tailIds(env, useId) { return ((env && env.tq && env.tq[useId]) || []).map(function (q) { return q.id; }); }
   /* env.tq: { <use id>: [{ id, carry }] } (carry: the v2.6.1 question id whose answer this question takes over, v2.7.0) */
   /* env.sig: { <use id>: signature of its tailored questions } (build.mjs); '' when the page carries none. */
+  /* env.prev: { <use id>: the signature of its v2.7 question list } (v2.8.0, data/v27-sigs.json). env.removed: use ids taken off the list. */
+  function prevSig(env, useId) { return (env && env.prev && useId && env.prev[useId]) || ''; }
   function tailSig(env, useId) { return (env && env.sig && useId && useId !== 'none' && env.sig[useId]) || ''; }
 
   function ctxOf(rec, env) {
@@ -167,7 +169,9 @@
     o.cat = CATS.indexOf(r.cat) >= 0 ? r.cat : '';
     var d = deptOf(env, r.dept); o.dept = d && d.cat === o.cat ? d.id : '';
     o.use = r.use === 'none' ? 'none' : (typeof r.use === 'string' && o.dept && useIn(env, o.dept, r.use) ? r.use : '');
-    if (!o.use && typeof r.use === 'string' && r.use && info) info.useChanged = true; // the saved use case is no longer in the catalogue
+    /* v2.8.0: a use case taken off the list (lg-2) opens as "None of these fits", and the page says so (info.removedUse). */
+    if (!o.use && typeof r.use === 'string' && env && env.removed && env.removed.indexOf(r.use) >= 0) { o.use = 'none'; if (!o.dept) { o.cat = ''; } if (info) info.removedUse = r.use; }
+    else if (!o.use && typeof r.use === 'string' && r.use && info) info.useChanged = true; // the saved use case is no longer in the catalogue
     if (o.use && o.use !== 'none') {
       var now = useName(env, o.dept, o.use);
       if (typeof r.useName === 'string' && r.useName && !nameOk(env, o.dept, o.use, r.useName)) { o.use = ''; if (info) info.useChanged = true; }
@@ -185,6 +189,14 @@
         var kept = 0, qs = (env && env.tq && env.tq[o.use]) || [];
         qs.forEach(function (q) { var a = q.carry ? Tt[q.carry] : null; if (T_OK[a] || OLD_T[a]) { o.T[q.id] = a; if (a === 'pl' && validDate(TBy[q.carry])) o.TBy[q.id] = TBy[q.carry]; if (T_OK[a]) kept++; } });
         if (info) info.olderList = { kept: kept, fresh: qs.length - kept };
+      }
+      /* v2.8.0: answered against the v2.7 list (its signature is the use case's prev): each answer carries by question id, except for
+         questions the review rewrote (k27 not set: they start unanswered); answers to ids the v2.8 list no longer has are dropped.
+         info.olderList = { kept: answers carried, fresh: questions that are new or rewritten }. */
+      else if (sigThen && sigNow && sigThen !== sigNow && prevSig(env, o.use) === sigThen) {
+        var kept7 = 0, qs7 = (env && env.tq && env.tq[o.use]) || [];
+        qs7.forEach(function (q) { var a = q.k27 ? Tt[q.id] : null; if (T_OK[a] || OLD_T[a]) { o.T[q.id] = a; if (a === 'pl' && validDate(TBy[q.id])) o.TBy[q.id] = TBy[q.id]; if (T_OK[a]) kept7++; } });
+        if (info && Object.keys(Tt).length) info.olderList = { kept: kept7, fresh: qs7.filter(function (q) { return !q.k27; }).length };
       }
       else if (sigThen && sigNow && sigThen !== sigNow) { if (Object.keys(Tt).length && info) info.questionsChanged = true; } // answered against other questions: step 5 again
       else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]] || OLD_T[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });

@@ -32,12 +32,14 @@
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
   var USE = {}, DEPT = {};
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
-  var ENV = { cat: CAT, tq: {}, sig: {}, countries: C.COUNTRIES };
-  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id, carry: q.carry || null }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
+  var ENV = { cat: CAT, tq: {}, sig: {}, prev: {}, removed: CAT.removed || [], countries: C.COUNTRIES };
+  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id, carry: q.carry || null, k27: !!q.k27 }; }); ENV.sig[k] = TQ.uses[k].sig || ''; ENV.prev[k] = TQ.uses[k].prev || ''; });
   var PROFILE = 'hftp-hotel-profile-v1';
   var NAME = 'Can AI solve your problems?';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* v2.8.0 (B12): a short name, and the rest of a long name (after its colon) as a subtitle on its own line. */
+  function nameHtml(name) { var p = L.nameParts(name); return esc(p.main) + (p.sub ? '<span class="namesub">' + esc(p.sub) + '</span>' : ''); }
   function plural(n, a, b) { return n + ' ' + (n === 1 ? a : (b || a + 's')); }
   function opt(v, l, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; }
 
@@ -112,7 +114,7 @@
   function olderOf(info) { return info && info.olderList ? { kept: info.olderList.kept, fresh: info.olderList.fresh } : null; }
   function olderText(o) { return C.OLDER_LIST.replace('{n}', o.kept === 1 ? '1 answer was' : o.kept + ' answers were').replace('{m}', o.fresh === 1 ? '1 question is' : o.fresh + ' questions are'); }
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { older: olderOf(loadInfo), olderShown: false, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { older: olderOf(loadInfo), olderShown: false, gone: !!loadInfo.removedUse, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
@@ -168,15 +170,16 @@
     if (ev === 'adopt') {
       /* TABS: take the other tab's version of the open check. */
       var x = readStore(rec.id);
-      if (x && x.store && x.store.checks[rec.id]) { store.checks[rec.id] = x.store.checks[rec.id]; rec = F.cur(store); ui.notice = noticeOf(x.info); ui.older = olderOf(x.info); ui.olderShown = false; }
+      if (x && x.store && x.store.checks[rec.id]) { store.checks[rec.id] = x.store.checks[rec.id]; rec = F.cur(store); ui.notice = noticeOf(x.info); ui.older = olderOf(x.info); ui.olderShown = false; ui.gone = !!x.info.removedUse; }
       ui.elsewhere = null; ui.missing = null; histAssert(); render(); return true;
     }
     if (ev === 'older-ok') { ui.older = null; render(); return true; }
+    if (ev === 'gone-ok') { ui.gone = false; render(); return true; }
     if (ev === 'seen' && ui.corrupt) { ui.corrupt = false; if (!store.notice) { render(); return true; } }
     if (ev === 'import-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'file'); ui.confirm = c.c; var f = ui.file; ui.file = null;
       if (!c.fire || !f) { render(); return false; }
-      return send('import', f, { notice: ui.fileInfo, older: ui.fileOlder });
+      return send('import', f, { notice: ui.fileInfo, older: ui.fileOlder, gone: ui.fileGone });
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
       /* Refused "Next": point at the first open question (Q1 Yes always goes on to the stop screen, so never here). */
@@ -193,7 +196,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.elsewhere = null; ui.fileNote = null;
+      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.gone = ev === 'import' && !!(opt && opt.gone); ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -248,6 +251,7 @@
     if (storage === 'blocked') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
     if (storage === 'newer') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
     if (store.notice === 'v1') h += '<p class="savewarn" id="from-v1" role="status">' + esc(C.FROM_V1) + ' <button type="button" class="linkbtn" data-act="seen" id="seen">OK</button></p>';
+    if (ui.gone) h += '<p class="savewarn" id="use-removed" role="status">' + esc(C.USE_REMOVED) + ' <button type="button" class="linkbtn" data-act="gone-ok" id="gone-ok">OK</button></p>';
     if (ui.older) h += '<p class="savewarn" id="older-list" role="status" data-kept="' + ui.older.kept + '" data-fresh="' + ui.older.fresh + '">' + esc(olderText(ui.older)) + ' <button type="button" class="linkbtn" data-act="older-ok" id="older-ok">OK</button></p>';
     if (ui.corrupt) h += '<p class="savewarn" id="corrupt" role="status">' + esc(C.CORRUPT) + ' <button type="button" class="linkbtn" data-act="seen" id="corrupt-ok">OK</button></p>';
     if (ui.elsewhere) h += '<p class="savewarn" id="elsewhere" data-elsewhere="' + ui.elsewhere + '" role="status">' + esc(C.ELSEWHERE[ui.elsewhere]) + (ui.elsewhere === 'changed' ? ' Going on here keeps this tab’s answers. <button type="button" class="linkbtn" data-act="adopt" id="adopt">Load the other tab’s version</button>' : '') + '</p>';
@@ -478,7 +482,7 @@
       h += '<h3>3. Use case</h3><p class="meta">Choose the one that matches your problem. “How common” is the catalogue’s rating of how widely hotels use it.</p><div class="ucs" role="radiogroup" aria-label="Use case">' + d.uses.map(function (u) {
         var on = rec.use === u.id; // owner 24 Nov 2026: one button per row, "Details and sources" (opens the detail layer)
         return '<label class="uc' + (on ? ' on' : '') + '" for="u-' + u.id + '"><input type="radio" name="use" id="u-' + u.id + '" value="' + u.id + '" data-use="' + u.id + '"' + (on ? ' checked' : '') + '>' +
-          '<span class="ucbody"><span class="ucn">' + esc(uName(u)) + '</span>' +
+          '<span class="ucbody"><span class="ucn">' + nameHtml(uName(u)) + '</span>' +
           '<span class="ucm"><span>How common in hotels: <span class="lvl">' + esc(useLevel(u)) + '</span></span>' + detailButton(u) + '</span></span></label>';
       }).join('') + '</div>';
     }
@@ -496,7 +500,7 @@
   function vTailored() {
     var u = USE[rec.use], tu = TQ.uses[rec.use], qs = tu.qs;
     var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2>Questions for this use case</h2>' +
-      '<p class="sub"><b id="tail-use">' + esc(uName(u)) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. The must-haves are not asked again.</p>' +
+      '<p class="sub"><b id="tail-use">' + nameHtml(uName(u)) + '</b>' + esc(plural(qs.length, 'question')) + ' on what this use needs. The must-haves are not asked again.</p>' +
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
     /* v2.7.0: each question exactly as in data/usecase_questions_only.json: text, "why it matters", area, who answers. */
@@ -690,9 +694,9 @@
     } catch (e) { r = null; }
     if (old) { ui.fileNote = 'old'; render(); toast(C.OLD_FILE); return false; }
     if (!r) { toast('That file is not a check saved from this page.'); return false; }
-    ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); ui.fileOlder = olderOf(info); // what the file's check lost on the way in (audit M5): said after it opens
+    ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); ui.fileOlder = olderOf(info); ui.fileGone = !!info.removedUse; // what the file's check lost on the way in (audit M5): said after it opens
     if (store.checks[r.id] && F.listed(store.checks[r.id])) { ui.file = r; ui.confirm = F.confirmNext(ui.confirm, 'ask', 'file').c; render(); var y = $('import-yes'); if (y) { y.scrollIntoView({ block: 'center' }); y.focus(); } return true; }
-    return send('import', r, { notice: ui.fileInfo, older: ui.fileOlder });
+    return send('import', r, { notice: ui.fileInfo, older: ui.fileOlder, gone: ui.fileGone });
   }
 
   // ---------- render ----------
@@ -727,7 +731,7 @@
   function detailData(id) { return L.detailData(D, USE[id], DEPT[(F.deptOfUse(ENV, id) || {}).id], TQ); }
   function detailHtml(id) {
     var x = detailData(id);
-    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + esc(x.title) + '</h2>' + (x.catName ? '<p class="meta" id="detail-catname">' + esc(x.catName) + '</p>' : '') + '</div>' +
+    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + nameHtml(x.title) + '</h2>' + (x.catName ? '<p class="meta" id="detail-catname">' + esc(x.catName) + '</p>' : '') + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
       (x.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(x.draft) + '</strong> ' + esc(x.draftText) + '</p>' : '') +
       (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +

@@ -56,7 +56,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const { hubDetail } = new Function(block + '; return { hubDetail };')();
   const bad = [];
   for (const d of D.cat.depts) for (const u of d.uses) { const x = L.detailData(D, Object.assign({ dept: d }, u), d, TQ); if (!hubDetail(u.id, clone(x))) bad.push(u.id); }
-  ok(D.cat.depts.reduce((n, d) => n + d.uses.length, 0) === 99 && bad.length >= 0, 'G1 (v2.7.0): retired with the hub (no hub layer); 99 use cases');
+  ok(D.cat.depts.reduce((n, d) => n + d.uses.length, 0) === 98 && bad.length >= 0, 'G1 (v2.7.0): retired with the hub (no hub layer); 98 use cases (v2.8.0)');
 }
 // ---------- D: docs, comments and dead code ----------
 {

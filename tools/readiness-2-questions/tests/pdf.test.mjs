@@ -94,7 +94,7 @@ x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed',
 // random sets over every use case: the words always match
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
 const uses = Object.keys(TQ.uses); let n = 0;
-for (let i = 0; i < 220; i++) { const use = i < 99 ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); const rr = mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k', 'n'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }); sameWords(rr, 'random ' + i + ' ' + use); answersDoc(rr, 'random ' + i + ' ' + use); n++; }
+for (let i = 0; i < 220; i++) { const use = i < uses.length ? uses[i] : i % 7 === 0 ? 'none' : pick(uses); const rr = mk(use, F.MUST_IDS.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k'])), use === 'none' ? [] : TQ.uses[use].qs.map(() => pick(['y', 'y', 'pl', 'pl', 'n', 'k', 'n'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: pick(['y', 'n']), q4: pick(['y', 'n', 'u']), q5: pick(['y', 'n']) } }); sameWords(rr, 'random ' + i + ' ' + use); answersDoc(rr, 'random ' + i + ' ' + use); n++; }
 ok(n === 220, '220 answer sets (every use case at least once, both documents) checked word for word');
 
 // ---------- the stop version ----------
@@ -135,7 +135,7 @@ for (const [tag0, rec] of [['fo-4', mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', '
 }
 // page count and layout over many answer sets
 seed = 5; let pc = [], pa = [];
-for (let i = 0; i < 99; i += 3) { const use = uses[i], rec = mk(use, F.MUST_IDS.map(() => pick(['y', 'pl', 'n', 'k'])), TQ.uses[use].qs.map(() => pick(['y', 'pl', 'n', 'k'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: 'y', q4: pick(['y', 'n']), q5: 'y' } });
+for (let i = 0; i < uses.length; i += 3) { const use = uses[i], rec = mk(use, F.MUST_IDS.map(() => pick(['y', 'pl', 'n', 'k'])), TQ.uses[use].qs.map(() => pick(['y', 'pl', 'n', 'k'])), { Q: { q1: pick(['n', 'u']), q2: pick(['y', 'n', 'u']), q3: 'y', q4: pick(['y', 'n']), q5: 'y' } });
   for (const kind of ['result', 'answers']) { const mdl = P.model(rec, env, kind); d = drawn(mdl); (kind === 'result' ? pc : pa).push(d.r.pages); noOverflow(d.log, 'layout ' + kind + ' ' + use); layout(mdl, d, 'layout ' + kind + ' ' + use); } }
 ok(Math.min(...pc) >= 1 && Math.max(...pc) <= 4 && Math.min(...pa) >= 2 && Math.max(...pa) <= 6, 'page count sane over 33 use cases: result ' + Math.min(...pc) + ' to ' + Math.max(...pc) + ', answers ' + Math.min(...pa) + ' to ' + Math.max(...pa) + ' pages');
 d = drawn(P.model(finished(F, D, '', { Q: { q1: 'y', q2: 'n', q3: 'n', q4: 'n', q5: 'n' }, A: {}, step: 'stop' }), env)); ok(d.r.pages === 1, 'stop PDF with Q1 Yes and four No answers (v2.6: was five No): still one page');

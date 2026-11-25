@@ -1,0 +1,72 @@
+{
+ "note": "Written by the v2.7.1 code (commit 96468ce): \"Save as file\" of the me-4 check (fileDoc shape).",
+ "file": {
+  "kind": "hftp-do-you-need-ai",
+  "v": 4,
+  "rules": "v2.6 (24 Nov 2026)",
+  "savedAt": "2026-11-25T12:00:00.000Z",
+  "check": {
+   "id": "dynmwwc9czh2y2gc",
+   "step": "result",
+   "qv": 2,
+   "Qnew": [],
+   "hotel": {
+    "name": "Hotel Fixture 27",
+    "role": "gm",
+    "type": "independent",
+    "country": ""
+   },
+   "Q": {
+    "q1": "n",
+    "q2": "y",
+    "q3": "y",
+    "q4": "y",
+    "q5": "y"
+   },
+   "A": {
+    "m1": "y",
+    "m2": "pl",
+    "m3": "n",
+    "m4": "y",
+    "m5": "pl",
+    "m6": "n",
+    "m7": "y",
+    "m8": "pl",
+    "m9": "n",
+    "m10": "y"
+   },
+   "By": {
+    "m2": "2027-02-01"
+   },
+   "cat": "Operational",
+   "dept": "me",
+   "use": "me-4",
+   "useName": "Guest-room energy management (heating, cooling and lighting adjusted to whether the room is occupied)",
+   "from": "",
+   "tqSig": "fde791dea2",
+   "T": {
+    "me-4.sk1": "y",
+    "me-4.te1": "pl",
+    "me-4.da1": "n",
+    "me-4.or1a": "y",
+    "me-4.or1b": "pl",
+    "me-4.x-hw": "n",
+    "me-4.ACT_LIMITS": "y",
+    "me-4.ACT_OFF": "pl"
+   },
+   "TBy": {
+    "me-4.te1": "2027-03-02",
+    "me-4.or1b": "2027-03-05",
+    "me-4.ACT_OFF": "2027-03-08"
+   },
+   "snaps": [],
+   "share": {
+    "named": false
+   },
+   "sharedAt": null,
+   "sharedMode": null,
+   "sharedSig": null,
+   "updated": "2026-11-25T11:00:00.000Z"
+  }
+ }
+}

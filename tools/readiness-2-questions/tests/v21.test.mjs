@@ -105,7 +105,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   // item 8 / M8: no bare evidence ids on a hotel-facing screen
   let n = 0;
   Object.keys(TQ.uses).forEach(id => TQ.uses[id].qs.forEach(q => { const w = L.tailWhy(TQ, id, q).join(' '); n++; ok(!/[A-Z]{3}-\d{3}-\d{2}/.test(w) && !/D6 evidence pack|Evidence rows/.test(w), id + '.' + q.id + ': no evidence id or pack name in the "Why this matters" fold'); }));
-  ok(n === 723, 'M8: all 723 folds checked (v2.7.0: was 661)');
+  ok(n === 743, 'M8: all 743 folds checked (v2.8.0; v2.7.0: 723)');
   ok(!L.evidenceLine, 'item 8 (v2.7.0): the evidence line is gone with the generator; the fold shows the data\'s own why line');
   // v2.7.0: M8's evidence ids lived in the generator's file, which is gone; the page still carries none (next line)
   const html = rd('index.html'), noData = html.replace(/<script type="application\/json" id="r2-data">[\s\S]*?<\/script>/, '');
@@ -156,7 +156,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   // the switches are named in the source where the owner flips them
   ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage
-  ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 99, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 99 use cases');
+  ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 98, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 98 use cases (v2.8.0)');
 }
 
 // ====================================================================================================================
@@ -220,7 +220,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 // M5: the questions a check was answered against
 // ====================================================================================================================
 {
-  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(QBY[k].questions)) && eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')))), 'M5: every use case carries the signature of its questions, built by build.mjs');
+  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(QBY[k].questions)) && eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs)), 'M5: every use case carries the signature of its questions, built by build.mjs');
   const qs = JSON.parse(JSON.stringify(QBY['rm-1'].questions)); const before = tqSig(qs); qs[0].text = qs[0].text.replace('?', ' today?');
   ok(tqSig(qs) !== before && tqSig(qs.slice(0, -1)) !== before && tqSig(JSON.parse(JSON.stringify(QBY['rm-1'].questions))) === before, 'M5: the signature changes when a text changes or a question is dropped, and only then');
   let s = storeWith(mk('rm-1', [], [], { step: 'where' }));
@@ -240,7 +240,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   c = F.cleanRec(gone, ENV, info); ok(c.use === '' && c.step === 'where' && info.useChanged === true, 'M5: an unknown use id opens on step 4 and is said (it was silent)');
   const renamed = JSON.parse(JSON.stringify(mk('rm-1', [], []))); renamed.useName = 'An older name'; info = {};
   c = F.cleanRec(renamed, ENV, info, { file: true }); ok(c.use === '' && c.step === 'where' && info.useChanged === true, 'M5: a renamed use case from a file is said too');
-  ok(/r = F\.cleanRec\(o\.check, ENV, info, \{ file: true \}\)/.test(rd('src/app.js')) && /send\('import', r, \{ notice: ui\.fileInfo, older: ui\.fileOlder \}\)/.test(rd('src/app.js')), 'M5: openFileText passes what was lost on to the notice');
+  ok(/r = F\.cleanRec\(o\.check, ENV, info, \{ file: true \}\)/.test(rd('src/app.js')) && /send\('import', r, \{ notice: ui\.fileInfo, older: ui\.fileOlder, gone: ui\.fileGone \}\)/.test(rd('src/app.js')), 'M5: openFileText passes what was lost on to the notice');
   // v2.0 records carry no signature: their answers are kept
   info = {}; const v20 = JSON.parse(JSON.stringify(mk('rm-1', [], []))); delete v20.tqSig; delete v20.from;
   c = F.cleanRec(v20, ENV, info); ok(c.step === 'result' && !info.questionsChanged && c.tqSig === ENV.sig['rm-1'], 'M5: a record without a signature (v2.0) keeps its answers and takes today\'s signature');
@@ -374,7 +374,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(F.migrate(5, ENV, {}) === null && F.migrate({ v: 0 }, ENV, {}) === null, 'L12: junk that parses is unreadable too');
   // L13
   ok(eq(L.tailRange(TQ), [6, 12]) && /id="cover-range" data-min="' \+ range\[0\] \+ '" data-max="' \+ range\[1\]/.test(app) && !/Six to ten questions/.test(app) && !/6 to 10 questions/.test(rd('README.md')), 'L13: the cover reads the range from the data (six to twelve since v2.7.0); README agrees');
-  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 99 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
+  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 98 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
   ok(!/90 of the catalogue’s 99 use cases: 8 were added/.test(pdfText(mk('fo-4', [], []))) && !/\{[NUD]\}/.test(pdfText(mk('fo-4', [], []))), 'L13: v2.7: the PDF has no sources, so no source text with the three numbers; no placeholder left');
   // print
   ok(/addEventListener\('beforeprint'/.test(app) && /details\.fold/.test(app) && /addEventListener\('afterprint'/.test(app), 'print: the result\'s folds are opened for printing and closed again');

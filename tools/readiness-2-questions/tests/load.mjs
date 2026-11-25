@@ -15,9 +15,9 @@ export function data() {
   return JSON.parse(html.match(/<script type="application\/json" id="r2-data">([\s\S]*?)<\/script>/)[1]);
 }
 export function envOf(D, F) {
-  const env = { cat: D.cat, tq: {} };
-  env.sig = {};
-  Object.keys(D.tq.uses).forEach(k => { env.tq[k] = D.tq.uses[k].qs.map(q => ({ id: q.id, carry: q.carry || null })); env.sig[k] = D.tq.uses[k].sig; });
+  const env = { cat: D.cat, tq: {}, removed: D.cat.removed || [] };
+  env.sig = {}; env.prev = {};
+  Object.keys(D.tq.uses).forEach(k => { env.tq[k] = D.tq.uses[k].qs.map(q => ({ id: q.id, carry: q.carry || null, k27: !!q.k27 })); env.sig[k] = D.tq.uses[k].sig; env.prev[k] = D.tq.uses[k].prev || ''; });
   return env;
 }
 export function tester(name) {

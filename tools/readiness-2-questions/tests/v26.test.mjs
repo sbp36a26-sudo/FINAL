@@ -164,7 +164,7 @@ ok(!/hub: 'link'|id="hublink"/.test(readFileSync(join(root, '../use-case-catalog
     const x = clone(L.detailData(D, u, d, TQ)); n++; // clone: what postMessage delivers
     const h = hubDetail(u.id, x); if (!h) bad.push(u.id); else { urls += h.srcs.filter(s => s.url).length; if (!eq(h.srcs.map(s => s.name), x.srcs.map(s => s.name))) bad.push(u.id + ' names'); }
   }));
-  ok(n === 99, 'C (v2.7.0): the layer data of all 99 use cases is built (the hub\'s own check is retired with the hub)');
+  ok(n === 98, 'C (v2.7.0; v2.8.0: 98): the layer data of all listed use cases is built (the hub\'s own check is retired with the hub)');
   ok(/function detailData\(id\) \{ return L\.detailData\(/.test(app) && /x\.srcs\.map\(L\.sourceRowItem\)/.test(app), 'C: the page\'s own dialog is drawn from the same data');
   ok(!/hubPost|host\.pong/.test(app) && /dlg\.showModal\(\)/.test(app), 'C (v2.7.0): no hub: the layer is always this page\'s own dialog');
   ok(/target="_blank" rel="noopener"/.test(rd('src/logic.js')), 'C (v2.7.0): source names are plain links that open in a new tab');

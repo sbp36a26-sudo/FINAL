@@ -35,8 +35,8 @@ export function catalogueModel(catHtml, Q) {
     return { id: d.id, name: first ? first.department : d.name, cat: d.cat, uses: d.uses.map((u, i) => {
       const id = d.id + '-' + (i + 1), q = QU[id];
       if (!q) throw new Error('data/usecase_questions_only.json has no use case ' + id);
-      return { id, n: q.name, alias: nameHash(u.n), use: u.use || '' };
-    }) };
+      return { id, n: q.name, alias: nameHash(u.n), use: u.use || '', removed: !!q.removed };
+    }).filter(u => !u.removed).map(u => { delete u.removed; return u; }) }; // v2.8.0: a use case marked removed (lg-2) is not listed; its id stays for old saves
   });
   /* The four category one-liners, from the catalogue page's own CATS constant (kept in step with it). */
   let catLines = {};
@@ -45,7 +45,8 @@ export function catalogueModel(catHtml, Q) {
   const cats = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'].map(name => ({ name, line: catLines[name] || '' }));
   const known = new Set(cats.map(c => c.name));
   depts.forEach(d => { if (!known.has(d.cat)) throw new Error('catalogue department ' + d.id + ' has an unknown category: ' + d.cat); });
-  return { cats, depts, nDepts: depts.length, nUses: depts.reduce((a, d) => a + d.uses.length, 0) };
+  const removed = Q.use_cases.filter(u => u.removed).map(u => u.id);
+  return { cats, depts, nDepts: depts.length, nUses: depts.reduce((a, d) => a + d.uses.length, 0), removed };
 }
 
 /* v2.7.0 (questions-only, owner 25 Nov 2026): step 5 reads data/usecase_questions_only.json, used verbatim (text, why, area,
@@ -56,15 +57,20 @@ export function tqSig(qs) { return createHash('sha1').update(JSON.stringify(qs.m
 /* The step-5 questions as the page needs them. Only runtime fields are shipped: original_questions, old_name and counts are review
    records (some quote old wording) and stay out of the page; carry_answer_from is kept for opening older saves.
    meta: data/must-meta.json (the team's resource analysis: blocks and counts for the must-have share lines). */
-export function tqModel(Q, meta) {
+/* v2.8.0: prev, the v2.7 signature of each use case (data/v27-sigs.json). A check saved against v2.7 carries its answers by question
+   id, except for questions the review rewrote (review "Rewrite": k27 false, they start unanswered); an id the v2.8 data no longer has
+   (removed_question_ids) is dropped. Removed use cases (lg-2) ship no questions. */
+export function tqModel(Q, meta, prev) {
   const uses = {};
   Q.use_cases.forEach(u => {
-    uses[u.id] = { name: u.name, sensitive: !!u.sensitive, sig: tqSig(u.questions),
+    if (u.removed) return;
+    uses[u.id] = { name: u.name, sensitive: !!u.sensitive, sig: tqSig(u.questions), prev: (prev && prev[u.id]) || '',
       qs: u.questions.map(q => {
         const a = AREA_KEY[q.area], who = WHO_KEY[q.who_answers];
         if (!a || !who) throw new Error('usecase_questions_only.json: unknown area or who answers at ' + q.id);
         const o = { id: q.id, a, q: q.text, why: q.why, who, whoLabel: q.who_answers };
         if (q.carry_answer_from) o.carry = q.carry_answer_from;
+        if (q.review !== 'Rewrite' && q.review !== 'Add') o.k27 = 1; // the v2.7 answer under the same id carries (the review field itself is not shipped)
         return o;
       }) };
   });
@@ -75,10 +81,11 @@ export function tqModel(Q, meta) {
    note, url]] } }. Types: 'c' company, 'h' hotel, 'r' a study in the catalogue's source list (resolved), 'l' a plain link.
    v2.7.0 (owner): legal sources are not shown, and any source whose name, note or address would hit the banned-term scan is left
    out; out.dropped lists them (the build prints them, the report names them). */
-export function detailModel(catHtml) {
+export function detailModel(catHtml, removed) {
   const X = catData(catHtml), SRC = X.src || {}, out = {}, dropped = [];
   X.depts.forEach(d => d.uses.forEach((u, i) => {
     const id = d.id + '-' + (i + 1);
+    if ((removed || []).includes(id)) return; // v2.8.0: a use case taken off the list ships no sources
     const srcs = (u.srcs || []).map(s => {
       if (s[0] === 'r') { const r = SRC[s[1]]; if (!r) throw new Error('catalogue source ' + s[1] + ' is not in its source list (' + id + ')'); return ['r', r[0], s[2] || '', r[1] || '']; }
       if (s[0] === 'c' || s[0] === 'h') return [s[0], s[1], s[2] || '', s[3] || ''];
@@ -100,11 +107,11 @@ export function explainModel(E, ids) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const catHtml = read('../use-case-catalogue/index.html');
   const Q = JSON.parse(read('data/usecase_questions_only.json')), meta = JSON.parse(read('data/must-meta.json'));
-  const cat = catalogueModel(catHtml, Q), detail = detailModel(catHtml);
-  const ids = cat.depts.flatMap(d => d.uses.map(u => u.id)), qIds = Q.use_cases.map(u => u.id);
+  const cat = catalogueModel(catHtml, Q), detail = detailModel(catHtml, cat.removed);
+  const ids = cat.depts.flatMap(d => d.uses.map(u => u.id)), qIds = Q.use_cases.filter(u => !u.removed).map(u => u.id);
   const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
-  const TQ = tqModel(Q, meta), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
+  const TQ = tqModel(Q, meta, JSON.parse(read('data/v27-sigs.json')).sigs), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
   const data = { cat, tq: TQ, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };

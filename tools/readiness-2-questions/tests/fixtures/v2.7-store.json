@@ -1,0 +1,254 @@
+{
+ "note": "Written by the v2.7.1 code (commit 96468ce, tools/readiness-2-questions/src at HEAD before v2.8.0) through its own reduce: the browser store under its key hftp-readiness2q-v1. Three checks: fb-2 (all Yes), me-4 (mixed), lg-2 (removed in v2.8.0).",
+ "key": "hftp-readiness2q-v1",
+ "store": {
+  "v": 4,
+  "cur": "dynmwwc9czi3b4tk",
+  "checks": {
+   "dynmwwc9czf1oix9": {
+    "id": "dynmwwc9czf1oix9",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Fixture 27",
+     "role": "gm",
+     "type": "independent",
+     "country": ""
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "pl",
+     "m3": "n",
+     "m4": "y",
+     "m5": "pl",
+     "m6": "n",
+     "m7": "y",
+     "m8": "pl",
+     "m9": "n",
+     "m10": "y"
+    },
+    "By": {
+     "m2": "2027-02-01"
+    },
+    "cat": "Guest-facing",
+    "dept": "fb",
+    "use": "fb-2",
+    "useName": "Room-service and restaurant or bar ordering through chat or voice assistants",
+    "from": "",
+    "tqSig": "8e7fabe2d5",
+    "T": {
+     "fb-2.pe2": "y",
+     "fb-2.sk1": "y",
+     "fb-2.fi1": "y",
+     "fb-2.te1": "y",
+     "fb-2.da1": "y",
+     "fb-2.or1": "y",
+     "fb-2.n1": "y",
+     "fb-2.GUEST_FACTS": "y",
+     "fb-2.GUEST_STAFF": "y"
+    },
+    "TBy": {},
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-25T10:00:00.000Z"
+   },
+   "dynmwwc9czh2y2gc": {
+    "id": "dynmwwc9czh2y2gc",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Fixture 27",
+     "role": "gm",
+     "type": "independent",
+     "country": ""
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "pl",
+     "m3": "n",
+     "m4": "y",
+     "m5": "pl",
+     "m6": "n",
+     "m7": "y",
+     "m8": "pl",
+     "m9": "n",
+     "m10": "y"
+    },
+    "By": {
+     "m2": "2027-02-01"
+    },
+    "cat": "Operational",
+    "dept": "me",
+    "use": "me-4",
+    "useName": "Guest-room energy management (heating, cooling and lighting adjusted to whether the room is occupied)",
+    "from": "",
+    "tqSig": "fde791dea2",
+    "T": {
+     "me-4.sk1": "y",
+     "me-4.te1": "pl",
+     "me-4.da1": "n",
+     "me-4.or1a": "y",
+     "me-4.or1b": "pl",
+     "me-4.x-hw": "n",
+     "me-4.ACT_LIMITS": "y",
+     "me-4.ACT_OFF": "pl"
+    },
+    "TBy": {
+     "me-4.te1": "2027-03-02",
+     "me-4.or1b": "2027-03-05",
+     "me-4.ACT_OFF": "2027-03-08"
+    },
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-25T11:00:00.000Z"
+   },
+   "dynmwwc9czi3b4tk": {
+    "id": "dynmwwc9czi3b4tk",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Lg Two",
+     "role": "gm",
+     "type": "independent",
+     "country": ""
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "pl",
+     "m3": "n",
+     "m4": "y",
+     "m5": "pl",
+     "m6": "n",
+     "m7": "y",
+     "m8": "pl",
+     "m9": "n",
+     "m10": "y"
+    },
+    "By": {
+     "m2": "2027-02-01"
+    },
+    "cat": "Administrative",
+    "dept": "lg",
+    "use": "lg-2",
+    "useName": "Tools for handling guests' requests about their personal data",
+    "from": "",
+    "tqSig": "2c93be191c",
+    "T": {
+     "lg-2.pe1": "pl",
+     "lg-2.sk1": "pl",
+     "lg-2.fi1": "pl",
+     "lg-2.te1": "pl",
+     "lg-2.da1": "pl",
+     "lg-2.x1": "pl"
+    },
+    "TBy": {
+     "lg-2.pe1": "2027-03-01",
+     "lg-2.sk1": "2027-03-02",
+     "lg-2.fi1": "2027-03-03",
+     "lg-2.te1": "2027-03-04",
+     "lg-2.da1": "2027-03-05",
+     "lg-2.x1": "2027-03-06"
+    },
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-25T12:00:00.000Z"
+   }
+  }
+ },
+ "seen": {
+  "fb-2": {
+   "id": "dynmwwc9czf1oix9",
+   "T": {
+    "fb-2.pe2": "y",
+    "fb-2.sk1": "y",
+    "fb-2.fi1": "y",
+    "fb-2.te1": "y",
+    "fb-2.da1": "y",
+    "fb-2.or1": "y",
+    "fb-2.n1": "y",
+    "fb-2.GUEST_FACTS": "y",
+    "fb-2.GUEST_STAFF": "y"
+   },
+   "TBy": {},
+   "tqSig": "8e7fabe2d5"
+  },
+  "me-4": {
+   "id": "dynmwwc9czh2y2gc",
+   "T": {
+    "me-4.sk1": "y",
+    "me-4.te1": "pl",
+    "me-4.da1": "n",
+    "me-4.or1a": "y",
+    "me-4.or1b": "pl",
+    "me-4.x-hw": "n",
+    "me-4.ACT_LIMITS": "y",
+    "me-4.ACT_OFF": "pl"
+   },
+   "TBy": {
+    "me-4.te1": "2027-03-02",
+    "me-4.or1b": "2027-03-05",
+    "me-4.ACT_OFF": "2027-03-08"
+   },
+   "tqSig": "fde791dea2"
+  },
+  "lg-2": {
+   "id": "dynmwwc9czi3b4tk",
+   "T": {
+    "lg-2.pe1": "pl",
+    "lg-2.sk1": "pl",
+    "lg-2.fi1": "pl",
+    "lg-2.te1": "pl",
+    "lg-2.da1": "pl",
+    "lg-2.x1": "pl"
+   },
+   "TBy": {
+    "lg-2.pe1": "2027-03-01",
+    "lg-2.sk1": "2027-03-02",
+    "lg-2.fi1": "2027-03-03",
+    "lg-2.te1": "2027-03-04",
+    "lg-2.da1": "2027-03-05",
+    "lg-2.x1": "2027-03-06"
+   },
+   "tqSig": "2c93be191c"
+  }
+ }
+}

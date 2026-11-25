@@ -24,7 +24,7 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
   const unesc = h => h.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   let n = 0, nUrl = 0, bad = [], types = {};
   X.depts.forEach(d => d.uses.forEach((u, i) => {
-    const id = d.id + '-' + (i + 1), bundled = D.detail[id].srcs;
+    const id = d.id + '-' + (i + 1); if (id === 'lg-2') return; const bundled = D.detail[id].srcs; // v2.8.0: lg-2 removed
     const res = s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || ''];
     (u.srcs || []).filter(raw => !BANNED.test(res(raw).join(' '))).forEach((raw, j) => { // v2.7.0: sources with a banned word are left out
       n++; types[raw[0]] = (types[raw[0]] || 0) + 1;

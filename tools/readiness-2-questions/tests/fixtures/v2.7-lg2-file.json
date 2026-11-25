@@ -1,0 +1,73 @@
+{
+ "note": "Written by the v2.7.1 code (commit 96468ce): \"Save as file\" of a check on lg-2, the use case removed in v2.8.0.",
+ "file": {
+  "kind": "hftp-do-you-need-ai",
+  "v": 4,
+  "rules": "v2.6 (24 Nov 2026)",
+  "savedAt": "2026-11-25T12:00:00.000Z",
+  "check": {
+   "id": "dynmwwc9czi3b4tk",
+   "step": "result",
+   "qv": 2,
+   "Qnew": [],
+   "hotel": {
+    "name": "Hotel Lg Two",
+    "role": "gm",
+    "type": "independent",
+    "country": ""
+   },
+   "Q": {
+    "q1": "n",
+    "q2": "y",
+    "q3": "y",
+    "q4": "y",
+    "q5": "y"
+   },
+   "A": {
+    "m1": "y",
+    "m2": "pl",
+    "m3": "n",
+    "m4": "y",
+    "m5": "pl",
+    "m6": "n",
+    "m7": "y",
+    "m8": "pl",
+    "m9": "n",
+    "m10": "y"
+   },
+   "By": {
+    "m2": "2027-02-01"
+   },
+   "cat": "Administrative",
+   "dept": "lg",
+   "use": "lg-2",
+   "useName": "Tools for handling guests' requests about their personal data",
+   "from": "",
+   "tqSig": "2c93be191c",
+   "T": {
+    "lg-2.pe1": "pl",
+    "lg-2.sk1": "pl",
+    "lg-2.fi1": "pl",
+    "lg-2.te1": "pl",
+    "lg-2.da1": "pl",
+    "lg-2.x1": "pl"
+   },
+   "TBy": {
+    "lg-2.pe1": "2027-03-01",
+    "lg-2.sk1": "2027-03-02",
+    "lg-2.fi1": "2027-03-03",
+    "lg-2.te1": "2027-03-04",
+    "lg-2.da1": "2027-03-05",
+    "lg-2.x1": "2027-03-06"
+   },
+   "snaps": [],
+   "share": {
+    "named": false
+   },
+   "sharedAt": null,
+   "sharedMode": null,
+   "sharedSig": null,
+   "updated": "2026-11-25T12:00:00.000Z"
+  }
+ }
+}

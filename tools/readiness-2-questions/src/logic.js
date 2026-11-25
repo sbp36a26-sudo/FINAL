@@ -346,6 +346,9 @@
   /* ---------- where it sits ---------- */
   /* v2.2: the name this tool shows for a use case: the team's plain name (TQ.uses[id].plain, data/wording.json) or the catalogue's.
      Records, links and the hub keep the id and the catalogue name (u.n); only what a person reads changes. */
+  /* v2.8.0 (B12): a long name with a colon ("Restaurant table bookings: AI that answers calls ...") is shown as a short name with
+     the rest as a subtitle; the full name stays in the data and in the record. */
+  function nameParts(name) { name = String(name || ''); var i = name.indexOf(': '); return i > 0 ? { main: name.slice(0, i), sub: name.charAt(i + 2).toUpperCase() + name.slice(i + 3) } : { main: name, sub: '' }; }
   function useLabel(TQ, u) { var t = u && TQ && TQ.uses && TQ.uses[u.id]; return (t && t.name) || (u ? u.n : ''); }
   /* "Catalogue name: …" in small text where the plain name differs (result, PDF, the explainer), so the catalogue entry is easy to find. */
   function catalogueName(TQ, u) { return u && useLabel(TQ, u) !== u.n ? 'Catalogue name: ' + u.n : ''; }
@@ -540,7 +543,7 @@
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
-    pathParts: pathParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
+    pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
     resultModel: resultModel, personText: personText, answerState: answerState, consistLines: consistLines, levelLine: levelLine, holdItems: holdItems, OTHER_QS: OTHER_QS };
   root.R2Logic = api;

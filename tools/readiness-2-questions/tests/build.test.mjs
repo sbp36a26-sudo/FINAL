@@ -14,14 +14,15 @@ const catHtml = rd('../use-case-catalogue/index.html'), Q = JSON.parse(rd('data/
 const X = JSON.parse(catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
 
 ok(eq(D.cat, catalogueModel(catHtml, Q)), 'the inlined catalogue equals the catalogue now, with the data file\'s names (rebuild after it changes)');
-ok(D.cat.nUses === 99 && D.cat.nDepts === 15 && D.cat.cats.length === 4 && D.cat.depts.reduce((a, d) => a + d.uses.length, 0) === D.cat.nUses, '4 areas, 15 departments, 99 use cases, counted');
-D.cat.depts.forEach(d => d.uses.forEach((u, i) => ok(u.id === d.id + '-' + (i + 1), 'use-case id is <dept>-<n>: ' + u.id)));
+ok(D.cat.nUses === 98 && D.cat.nDepts === 15 && D.cat.cats.length === 4 && D.cat.depts.reduce((a, d) => a + d.uses.length, 0) === D.cat.nUses, '4 areas, 15 departments, 98 use cases listed (v2.8.0: lg-2 removed), counted');
+ok(eq(D.cat.removed, ['lg-2']) && !D.cat.depts.some(d => d.uses.some(u => u.id === 'lg-2')), 'v2.8.0: lg-2 is not listed; its id is named as removed');
+D.cat.depts.forEach(d => d.uses.forEach(u => ok(new RegExp('^' + d.id + '-\\d+$').test(u.id) && X.depts.find(x => x.id === d.id).uses[+u.id.split('-')[1] - 1], 'use-case id is <dept>-<catalogue position>: ' + u.id)));
 ok(D.cat.depts.every(d => d.uses.every(u => !('task' in u) && !('kw' in u) && !('notTool' in u))), 'no catalogue description, search words or register flags are shipped');
 ok(D.cat.depts.find(d => d.id === 'lg').name === 'Sustainability & Governance', 'the lg department carries the data file\'s name');
-ok(X.depts.every(d => d.uses.every((u, i) => D.cat.depts.find(x => x.id === d.id).uses[i].alias === nameHash(u.n))), 'every use case keeps the hash of its catalogue name (alias), so older saves still match');
-ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')))), 'the inlined step-5 questions equal tqModel(data file)');
-ok(eq(Object.keys(D.tq.uses).sort(), D.cat.depts.flatMap(d => d.uses.map(u => u.id)).sort()), 'every catalogue use case has its questions (all 99 selectable)');
-const det = detailModel(catHtml);
+ok(X.depts.every(d => d.uses.every((u, i) => { const id = d.id + '-' + (i + 1), mine = D.cat.depts.find(x => x.id === d.id).uses.find(y => y.id === id); return id === 'lg-2' ? !mine : mine.alias === nameHash(u.n); })), 'every listed use case keeps the hash of its catalogue name (alias), so older saves still match');
+ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs)), 'the inlined step-5 questions equal tqModel(data file, v2.7 signatures)');
+ok(eq(Object.keys(D.tq.uses).sort(), D.cat.depts.flatMap(d => d.uses.map(u => u.id)).sort()), 'every listed use case has its questions (all 98 selectable)');
+const det = detailModel(catHtml, D.cat.removed);
 ok(eq(D.detail, JSON.parse(JSON.stringify(det))), 'the inlined detail sources equal the catalogue\'s, minus the left-out ones');
 ok(det.dropped.length === 21 && det.dropped.every(x => BANNED.test(x.name) || true), 'sources left out because a banned word is in their name, note or address: ' + det.dropped.length);
 ok(Object.values(D.detail).every(d => d.srcs.every(s => !BANNED.test(s.join(' ')))), 'no source shown carries a banned word');

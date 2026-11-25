@@ -37,7 +37,7 @@ ok(F.OLD_KEY === 'hftp-readiness2-v1' && F.KEY === 'hftp-readiness2q-v1' && F.V 
   ok(eq(r.T, x.T), 'answers carry over by id (carry_answer_from): ' + JSON.stringify(r.T));
   ok(eq(r.TBy, x.TBy) && r.TBy['gx-2.sk1'] === '2027-03-01' && r.TBy['gx-2.ACT_LIMITS'] === '2027-04-15' && r.TBy['gx-2.ACT_OFF'] === '2027-04-15', 'the "By when?" dates carry with their answers (x-auto to both limits questions)');
   ok(r.T['gx-2.pe1a'] === 'y' && r.T['gx-2.pe1b'] === 'y', 'a split question takes the old answer twice (pe1 to pe1a and pe1b)');
-  ok(!Object.keys(r.T).some(k => !k.startsWith('gx-2.')) && !('gx-2.fi1' in r.T), 'answers to old ids that no longer exist are dropped (gx-2 fi1: ' + QU['gx-2'].original_questions.find(o => o.old_id === 'fi1').status + ')');
+  ok(!Object.keys(r.T).some(k => !k.startsWith('gx-2.')) && !('gx-2.fi1' in r.T), 'answers to old ids that no longer exist are dropped (gx-2 fi1 has no carry_answer_from in the v2.8.0 data)');
   ok(QU['gx-2'].questions.filter(q => !q.carry_answer_from).every(q => !(q.id in r.T)), 'a question without carry_answer_from starts unanswered');
   ok(eq(info.olderList, { kept: x.kept, fresh: x.fresh }) && x.kept === 7 && x.fresh === 5, 'the page is told: 7 answers kept, 5 questions new (v2.7.1: a stored "k" is not an answer and is not kept)');
   ok(r.step === 'tailored', 'it opens on step 5 (its result needs the new questions first): ' + r.step);
@@ -79,5 +79,40 @@ ok(F.OLD_KEY === 'hftp-readiness2-v1' && F.KEY === 'hftp-readiness2q-v1' && F.V 
   const e = L.evaluate(r, TQ), pts = { y: 2, pl: 1, n: 0, k: 0 };
   const all = F.MUST_IDS.map(id => r.A[id]).concat(TQ.uses['gx-2'].qs.map(q => r.T[q.id]));
   ok(e.pts === all.reduce((a, v) => a + (pts[v] || 0), 0) && e.max === 2 * all.length && e.pct === Math.floor(100 * e.pts / e.max), 'after answering the new questions the score is the v2.6.1 formula over 22 questions: ' + e.pts + ' of ' + e.max);
+}
+// ---------- v2.8.0: saves made by v2.7 (fixtures written by the v2.7.1 code, commit 96468ce) ----------
+{
+  const S7 = JSON.parse(rd('tests/fixtures/v2.7-store.json')), F7 = JSON.parse(rd('tests/fixtures/v2.7-file.json')), G7 = JSON.parse(rd('tests/fixtures/v2.7-lg2-file.json'));
+  const SIG7 = JSON.parse(rd('data/v27-sigs.json')).sigs, REMOVED = Q.removed_question_ids;
+  /* expected, from the data file alone: a v2.7 answer carries by id unless the review rewrote the question (or it is new) */
+  const expect7 = (use, T, TBy) => { const o = { T: {}, TBy: {}, kept: 0 }; QU[use].questions.forEach(q => { const a = T[q.id]; if (OK[a] && q.review !== 'Rewrite' && q.review !== 'Add') { o.T[q.id] = a; o.kept++; if (a === 'pl' && TBy[q.id]) o.TBy[q.id] = TBy[q.id]; } }); o.fresh = QU[use].questions.filter(q => q.review === 'Rewrite' || q.review === 'Add').length; return o; };
+  ok(S7.key === 'hftp-readiness2q-v1' && S7.store.v === 4 && Object.keys(S7.store.checks).length === 3, 'v2.7 store fixture: key hftp-readiness2q-v1, version 4, three checks');
+  ok(['fb-2', 'me-4', 'lg-2'].every(u => S7.seen[u].tqSig === SIG7[u]) && SIG7['me-4'] !== TQ.uses['me-4'].sig && TQ.uses['me-4'].prev === SIG7['me-4'], 'the fixtures carry the v2.7 signatures; the page knows them as prev');
+  const info = {}, s = F.migrate(clone(S7.store), ENV, info);
+  ok(s && Object.keys(s.checks).length === 3 && s.v === 4, 'the v2.7 store opens: all three checks');
+  for (const use of ['fb-2', 'me-4']) {
+    const w = S7.seen[use], c = s.checks[w.id], x = expect7(use, w.T, w.TBy);
+    ok(c && c.use === use && eq(c.T, x.T) && eq(c.TBy, x.TBy), use + ': v2.7 answers carried by id, with dates (' + x.kept + ' kept)');
+    ok((REMOVED[use] || []).every(id => !(id in c.T)) && (REMOVED[use] || []).some(id => id in w.T), use + ': answers to removed_question_ids are dropped');
+    ok(QU[use].questions.filter(q => q.review === 'Rewrite').every(q => (q.id in w.T) && !(q.id in c.T)), use + ': a rewritten question starts unanswered even though v2.7 had an answer under its id');
+    ok(c.step === 'tailored' && c.tqSig === TQ.uses[use].sig, use + ': opens on step 5 (new questions) with the v2.8 signature');
+  }
+  ok(S7.store.checks[S7.store.cur].use === 'lg-2' && info.removedUse === 'lg-2' && s.checks[S7.store.cur].use === 'none', 'the open check (lg-2) reports what the page must say: ' + JSON.stringify(info));
+  // the me-4 file
+  const fi = {}, r = F.cleanRec(clone(F7.file.check), ENV, fi, { file: true }), x = expect7('me-4', F7.file.check.T, F7.file.check.TBy);
+  ok(r && eq(r.T, x.T) && eq(fi.olderList, { kept: x.kept, fresh: x.fresh }) && x.fresh === 3, 'v2.7 file (me-4): ' + x.kept + ' kept, 3 new (1 rewritten, 2 added); the notice says "' + C.OLDER_LIST.replace('{n}', x.kept).replace('{m}', x.fresh) + '"');
+  const fi2 = {}, r2 = F.cleanRec(clone(r), ENV, fi2, { file: true });
+  ok(eq(r2.T, r.T) && !fi2.olderList && !fi2.questionsChanged, 'opened again in the new shape: unchanged, no notice');
+  // lg-2: opens as "None of these fits"
+  for (const [what, rec] of [['store', s.checks[S7.seen['lg-2'].id]], ['file', F.cleanRec(clone(G7.file.check), ENV, null, { file: true })]]) {
+    ok(rec && rec.use === 'none' && eq(rec.T, {}) && rec.dept === 'lg' && F.ctxOf(rec, ENV).whereDone && rec.step === 'result', 'lg-2 ' + what + ': opens as "None of these fits" on its result, its step-5 answers dropped');
+  }
+  const gi = {}; F.cleanRec(clone(G7.file.check), ENV, gi, { file: true });
+  ok(gi.removedUse === 'lg-2' && !gi.useChanged && C.USE_REMOVED === 'This use case is no longer in the list. The check carries on as “None of these fits”.', 'lg-2: the page is told (removedUse), with its line; not "pick again"');
+  const app = rd('src/app.js');
+  ok(/id="use-removed"/.test(app) && /ui\.gone = /.test(app), 'app.js shows the line in the header until OK');
+  // a v2.6.1-era check of lg-2 (catalogue name hash) opens the same way
+  const old = clone(FILE.file.check); old.use = 'lg-2'; old.dept = 'lg'; old.cat = 'Administrative'; old.useName = 'x'; old.T = { pe1: 'y' }; const oi = {}, ro = F.cleanRec(old, ENV, oi, { file: true });
+  ok(ro.use === 'none' && oi.removedUse === 'lg-2', 'a v2.6.1 check of lg-2 opens as "None of these fits" too');
 }
 done();

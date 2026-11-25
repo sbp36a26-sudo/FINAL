@@ -99,7 +99,7 @@ ok(L.consistLines && !L.consistLines({ Q: { q5: 'y', q3: 'y' }, A: { m3: 'y', m7
 ok(/id="consist-' \+/.test(app) || /consist-/.test(app), 'BUILD NOW 7: drawn under must-haves 3 and 7');
 
 // ---------- BUILD NOW 8: the detail layer ----------
-ok(Object.values(D.detail).every(x => !('ai' in x)) && Object.keys(D.detail).length === 99, 'BUILD NOW 8: no "AI technique" notes bundled (99 entries)');
+ok(Object.values(D.detail).every(x => !('ai' in x)) && Object.keys(D.detail).length === 98, 'BUILD NOW 8: no "AI technique" notes bundled (98 entries; v2.8.0: lg-2 removed)');
 ok(!/AI technique/.test(app) && !/research wording/.test(app), 'BUILD NOW 8 (v2.7.0): the technique line and the catalogue\'s research-wording description are both gone from the layer');
 
 // ---------- BUILD NOW 9: sources ----------
