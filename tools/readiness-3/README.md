@@ -7,6 +7,15 @@ self-contained `index.html` (no external URLs, no hub bridge, no Google Fonts). 
 Browser smoke: serve `tools/` on 8861, then from `tools/`: `node readiness-3/tests/browser/smoke.cjs`.
 The v2 browser tests were not copied: they test the hub (frames, bridge, Team tab), which v3 does not have.
 
+**v3 data and rules (P1, P2).** `build.mjs` validates `spec/usecase_questions_v3.json` (schema as given) and its runtime copy
+(`original_questions` not required; must equal the full file minus change-log fields) with `lib/schema.mjs` (a small draft 2020-12
+validator, no npm dependency) via `lib/data3.mjs`, and inlines the runtime copy as `<script type="application/json" id="r3-data">`.
+`src/data3.js` (`R3Data`: index, glossary acronyms, labels) and `src/rules3.js` (`R3Rules`: askedGates, visible, effects,
+contradictions, notFit, softStop, evaluate, answerOptions) are pure and inlined; the page UI does not use them yet (P4).
+Tests: `tests/data3.test.mjs`, `tests/rules3.test.mjs` (33 golden cases, visibility vs `sim_v3`, full sweep exported to
+`tests/out/sweep_v3_js.csv` and compared with `spec/sweep_v3_runs.csv`, 1,200 random checks, §9 invariants). Fixtures from the
+reference: `python3 -I tools/readiness-3/tests/gen_sim_fixture.py` and `gen_sim_random.py`.
+
 The rest of this file describes the v2 base it was copied from and is replaced as v3 lands.
 
 ---

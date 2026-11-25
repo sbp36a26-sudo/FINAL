@@ -116,7 +116,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const safe = s => s.replace(/<\/script/gi, '<\\/script');
   let html = read('src/page.html');
   for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + block3 + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))],
-    ['/*__RCLOGIC__*/', safe(read('../readiness-check/src/logic.js'))], ['/*__RCSTORE__*/', safe(read('../readiness-check/src/store.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__DATA3__*/', safe(read('src/data3.js'))],
+    ['/*__RCLOGIC__*/', safe(read('../readiness-check/src/logic.js'))], ['/*__RCSTORE__*/', safe(read('../readiness-check/src/store.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__DATA3__*/', safe(read('src/data3.js'))], ['/*__RULES3__*/', safe(read('src/rules3.js'))],
     ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
     if (!html.includes(mark)) throw new Error('src/page.html: missing ' + mark);
     html = html.replace(mark, () => text);

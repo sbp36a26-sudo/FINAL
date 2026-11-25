@@ -7,8 +7,8 @@ export const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export function load() {
   const ctx = { self: {} }; ctx.globalThis = ctx.self;
   vm.runInNewContext(readFileSync(join(root, '../readiness-check/src/logic.js'), 'utf8'), ctx, { filename: 'rc-logic.js' });
-  for (const f of ['content.js', 'data3.js', 'logic.js', 'flow.js', 'pdf.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
-  return { R3D: ctx.self.R3Data, C: ctx.self.R2Content, L: ctx.self.R2Logic, F: ctx.self.R2Flow, P: ctx.self.R2Pdf, RC: ctx.self.RCLogic };
+  for (const f of ['content.js', 'data3.js', 'rules3.js', 'logic.js', 'flow.js', 'pdf.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
+  return { R3D: ctx.self.R3Data, R3: ctx.self.R3Rules, C: ctx.self.R2Content, L: ctx.self.R2Logic, F: ctx.self.R2Flow, P: ctx.self.R2Pdf, RC: ctx.self.RCLogic };
 }
 /* The data block the built page carries: { cat, tq, rc, builtOn }. */
 export function data() {

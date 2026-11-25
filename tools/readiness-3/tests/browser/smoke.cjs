@@ -20,6 +20,10 @@ let pass = 0, fail = 0; const ok = (c, n) => { if (c) pass++; else { fail++; con
     await p.waitForFunction(() => window.Readiness3 && window.Readiness3.state);
     ok(await p.title() === 'Do you need AI? v3.0', tag + ': title');
     ok(await p.evaluate(() => window.R3Data.index(JSON.parse(document.getElementById('r3-data').textContent)).D.use_cases.length === 99), tag + ': the v3 data is inlined and readable');
+    ok(await p.evaluate(() => { const D = JSON.parse(document.getElementById('r3-data').textContent), R = window.R3Rules;
+      const qa = Object.fromEntries(R.visible(D, 'rm-1', { G_ACT: 'suggests' }).map(q => [q.id, 'yes']));
+      const r = R.evaluate(D, { use: 'rm-1', step2: { s1: 'yes', s2: 'yes', s3: 'yes', s4: 'yes', s5: 'yes' }, gates: { G_ACT: 'suggests' }, mh: Object.fromEntries(D.must_haves.map(m => [m.id, 'yes'])), qa });
+      return r.verdict === 'Ready' && r.score === 100; }), tag + ': the v3 rules run in the page (golden case 1)');
     const st = await p.evaluate(() => {
       const R = window.Readiness3;
       R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('hotel', { k: 'name', v: 'Hotel Smoke' }); R.send('next');
