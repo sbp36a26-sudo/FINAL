@@ -1,6 +1,6 @@
 # Do you need AI? v3 (tools/readiness-3)
 
-**v3.0 in progress (25 Nov 2026).** A new, separate, standalone artifact. It started as a copy of `tools/readiness-2/` v2.7, which is
+**Version 3.0.0 (25 Nov 2026).** A new, separate, standalone artifact. It started as a copy of `tools/readiness-2/` v2.7, which is
 only read from here, never edited. Tool id `readiness-3`, storage key `hftp-readiness3-v1`, page title "Do you need AI? v3.0".
 The owner's spec and data are in `spec/` (source of truth: `spec/MASTER_PROMPT.md`, `spec/usecase_questions_v3.json`).
 
@@ -40,7 +40,7 @@ count as Don't know yet; a second Next goes on.
 - `window.storage` (personal, `shared: false`) when the viewer offers it, else `localStorage`, else memory with the banner "Your
   answers can't be saved in this browser. Use Save as file." Index `hftp-readiness3-v1` = `{ v, cur, ids }`; one record per check
   under `hftp-readiness3-v1_c_<id>`.
-- Save as file / Open a saved file: `{ kind: "hftp-do-you-need-ai", v: 4, rules: "3.0", savedAt, check }`. Files of version 2 and 3
+- Save as file / Open a saved file: `{ kind: "hftp-do-you-need-ai", v: 4, rules: "3.0", app: "3.0.0", savedAt, check }`. Files of version 2 and 3
   (readiness-2) are migrated. A paste box takes the text of "Copy saved check".
 - Migration (§6.6, table built at build time from `original_questions[].new_ids`): hotel kept; "Not sure" → Don't know yet; q1
   turned round for v2.6+ checks; must-haves 1–10 → m1–m10; m11 and How it works start empty; kept, fixed, rewritten and split
@@ -56,7 +56,8 @@ count as Don't know yet; a second Next goes on.
 node tools/readiness-3/build.mjs
 for t in tools/readiness-3/tests/*.test.mjs; do node $t; done
 #   data3 (schema, counts), rules3 (golden 33/33, visibility, sweep 26,935 runs, invariants), store3 (flow, files, migration),
-#   result3 (33 golden results, Copy and PDF), banned (page, sources, exports, PDF text), build (the page, migration table)
+#   result3 (33 golden results, Copy and PDF), banned (page, sources, exports, PDF text), build (the page, migration table),
+#   review (one check per review finding T1–T11, L1–L6, the 7 Wrong use cases, the action counts 661/661; see REVIEW_RESPONSE.md)
 # browser (serve tools/ first: python3 -m http.server 8861 --bind 127.0.0.1), from tools/:
 node readiness-3/tests/browser/ui.cjs          # the journey, files, migration, downloads, Copy (clipboard)
 node readiness-3/tests/browser/questions.cjs   # every use case × How it works combination (1,636): shown = R3Rules.visible = sim_v3, verbatim cards; 99 use cases in the picker

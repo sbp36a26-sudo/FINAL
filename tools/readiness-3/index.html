@@ -231,7 +231,7 @@ dialog.confirm .btnrow{margin-top:14px}
   <div id="banner"></div>
   <main id="view" tabindex="-1"></main>
   <footer class="foot">
-    <p class="meta">Student prototype by EHL SBP Group 36 for HFTP. Questions and rules v3.0 as of 25 Nov 2026. Your answers are your own and nobody checks them.<span id="foot-keep"></span></p>
+    <p class="meta">Student prototype by EHL SBP Group 36 for HFTP. Version 3.0.0. Questions and rules v3.0 as of 25 Nov 2026. Your answers are your own and nobody checks them.<span id="foot-keep"></span></p>
   </footer>
 </div>
 <dialog id="confirm" class="confirm" aria-labelledby="confirm-title"><h2 id="confirm-title">Start a new check?</h2></dialog>
@@ -921,6 +921,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   'use strict';
   var R = root.R3Rules;
   var V = 1, FILE_KIND = 'hftp-do-you-need-ai', FILE_V = 4, RULES = '3.0';
+  var APP = '3.0.0'; /* the tool version, written into saved files (app) */
   var STEPS = ['start', 'hotel', 's2', 'stop', 'must', 'where', 'use', 'result'];
   var NUM = { hotel: 1, s2: 2, stop: 2, must: 3, where: 4, use: 5 };
   var S2_OK = { yes: 1, no: 1, dk: 1 }, CHK_OK = { yes: 1, planned: 1, no: 1, dk: 1 };
@@ -1022,7 +1023,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function hasAnswers(rec) { return !!(rec && (Object.keys(rec.step2).length || Object.keys(rec.mh).length || rec.use || Object.keys(rec.qa).length || rec.hotel.name)); }
 
   /* ---------- saved files ---------- */
-  function fileDoc(rec, savedAt) { return { kind: FILE_KIND, v: FILE_V, rules: RULES, savedAt: savedAt || now(), check: JSON.parse(JSON.stringify(rec)) }; }
+  function fileDoc(rec, savedAt) { return { kind: FILE_KIND, v: FILE_V, rules: RULES, app: APP, savedAt: savedAt || now(), check: JSON.parse(JSON.stringify(rec)) }; }
   /* Any parsed file → { rec, info } or null ("This file isn't a saved check from this tool."). A v4 file is a v3 check; files of
      version 3 and earlier come from readiness-2 (v2.x) and are migrated. MIG: the build-time migration table. */
   function readFile(D, MIG, doc) {
@@ -1077,7 +1078,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return keys.map(function (k) { var c = obj(cs[k]); if (!Object.keys(obj(c.Q)).length && !Object.keys(obj(c.A)).length && !c.use) return null; return fromV2(D, MIG, c); }).filter(Boolean);
   }
 
-  var api = { V: V, FILE_KIND: FILE_KIND, FILE_V: FILE_V, RULES: RULES, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
+  var api = { V: V, APP: APP, FILE_KIND: FILE_KIND, FILE_V: FILE_V, RULES: RULES, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
     blank: blank, newId: newId, clean: clean, place: place, next: next, back: back, open: open, openCount: openCount, firstOpen: firstOpen,
     answers: answers, gatesOf: gatesOf, gateKey: gateKey, stopKey: stopKey, continued: continued, stopped: stopped, hasAnswers: hasAnswers, useOf: useOf,
     fileDoc: fileDoc, readFile: readFile, fromV2: fromV2, fromV2Store: fromV2Store };
@@ -1337,7 +1338,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       doc.setPage(p); var ft = footer(p, n); footers.push(ft);
       stroke('line', 0.2); doc.line(M, H - 19, W - M, H - 19);
       f('normal', SZ.small, 'ink2'); doc.text(safe(m.disclaimer), M, H - 14.5);
-      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? v3.0', M, H - 10.5);
+      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? 3.0.0', M, H - 10.5);
       var s = ft; doc.text(s, W - M - doc.getTextWidth(s), H - 10.5);
       if (p > 1) { var hl = doc.splitTextToSize(hd, TW - 4); doc.text(hl[0] + (hl.length > 1 ? '…' : ''), M, 12.5); stroke('line', 0.2); doc.line(M, 15, W - M, 15); }
     }

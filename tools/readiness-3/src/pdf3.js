@@ -129,7 +129,7 @@
       doc.setPage(p); var ft = footer(p, n); footers.push(ft);
       stroke('line', 0.2); doc.line(M, H - 19, W - M, H - 19);
       f('normal', SZ.small, 'ink2'); doc.text(safe(m.disclaimer), M, H - 14.5);
-      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? v3.0', M, H - 10.5);
+      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? 3.0.0', M, H - 10.5);
       var s = ft; doc.text(s, W - M - doc.getTextWidth(s), H - 10.5);
       if (p > 1) { var hl = doc.splitTextToSize(hd, TW - 4); doc.text(hl[0] + (hl.length > 1 ? '…' : ''), M, 12.5); stroke('line', 0.2); doc.line(M, 15, W - M, 15); }
     }

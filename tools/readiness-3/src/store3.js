@@ -17,6 +17,7 @@
   'use strict';
   var R = root.R3Rules;
   var V = 1, FILE_KIND = 'hftp-do-you-need-ai', FILE_V = 4, RULES = '3.0';
+  var APP = '3.0.0'; /* the tool version, written into saved files (app) */
   var STEPS = ['start', 'hotel', 's2', 'stop', 'must', 'where', 'use', 'result'];
   var NUM = { hotel: 1, s2: 2, stop: 2, must: 3, where: 4, use: 5 };
   var S2_OK = { yes: 1, no: 1, dk: 1 }, CHK_OK = { yes: 1, planned: 1, no: 1, dk: 1 };
@@ -118,7 +119,7 @@
   function hasAnswers(rec) { return !!(rec && (Object.keys(rec.step2).length || Object.keys(rec.mh).length || rec.use || Object.keys(rec.qa).length || rec.hotel.name)); }
 
   /* ---------- saved files ---------- */
-  function fileDoc(rec, savedAt) { return { kind: FILE_KIND, v: FILE_V, rules: RULES, savedAt: savedAt || now(), check: JSON.parse(JSON.stringify(rec)) }; }
+  function fileDoc(rec, savedAt) { return { kind: FILE_KIND, v: FILE_V, rules: RULES, app: APP, savedAt: savedAt || now(), check: JSON.parse(JSON.stringify(rec)) }; }
   /* Any parsed file → { rec, info } or null ("This file isn't a saved check from this tool."). A v4 file is a v3 check; files of
      version 3 and earlier come from readiness-2 (v2.x) and are migrated. MIG: the build-time migration table. */
   function readFile(D, MIG, doc) {
@@ -173,7 +174,7 @@
     return keys.map(function (k) { var c = obj(cs[k]); if (!Object.keys(obj(c.Q)).length && !Object.keys(obj(c.A)).length && !c.use) return null; return fromV2(D, MIG, c); }).filter(Boolean);
   }
 
-  var api = { V: V, FILE_KIND: FILE_KIND, FILE_V: FILE_V, RULES: RULES, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
+  var api = { V: V, APP: APP, FILE_KIND: FILE_KIND, FILE_V: FILE_V, RULES: RULES, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
     blank: blank, newId: newId, clean: clean, place: place, next: next, back: back, open: open, openCount: openCount, firstOpen: firstOpen,
     answers: answers, gatesOf: gatesOf, gateKey: gateKey, stopKey: stopKey, continued: continued, stopped: stopped, hasAnswers: hasAnswers, useOf: useOf,
     fileDoc: fileDoc, readFile: readFile, fromV2: fromV2, fromV2Store: fromV2Store };

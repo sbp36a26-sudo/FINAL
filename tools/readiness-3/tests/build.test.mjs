@@ -11,6 +11,7 @@ const rd = p => readFileSync(join(root, p), 'utf8');
 const html = rd('index.html'), { full, runtime } = loadV3();
 
 ok(html === build().html, 'index.html is the output of build.mjs from the sources as they are now (rebuild after a change)');
+ok(html.includes('Version 3.0.0.') && /var APP = '3\.0\.0'/.test(html) && /Do you need AI\? 3\.0\.0', M, H - 10\.5/.test(html), 'version 3.0.0 on the page footer, in the saved file and in the PDF footer');
 ok(Buffer.byteLength(html) < 3 * 1024 * 1024, 'under 3 MB: ' + Math.round(Buffer.byteLength(html) / 1024) + ' KB');
 ok(/<title>Do you need AI\? v3\.0<\/title>/.test(html) && html.includes('id="app" data-state="start"') && html.includes('Do you need AI? 3.0.0'), 'title, version and the data-state root');
 const own = html.replace(/<script[^>]*id="r3-(jspdf|font)"[^>]*>[\s\S]*?<\/script>/g, '');

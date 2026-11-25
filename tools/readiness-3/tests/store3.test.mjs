@@ -44,6 +44,7 @@ goldenCases().forEach(g => {
   if (doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.rules === '3.0' && back && back.info.v3 && eq(R3.evaluate(D, S.answers(D, back.rec)).score, R3.evaluate(D, S.answers(D, rec)).score) && eq(back.rec.qa, rec.qa)) rt++;
 });
 ok(rt === 33, 'save as file → open restores all 33 golden checks (' + rt + ')');
+ok(S.APP === '3.0.0' && S.fileDoc(S.blank()).app === '3.0.0', 'the saved file names the tool version 3.0.0');
 ok(S.readFile(D, MIG, { kind: 'other', v: 4, check: {} }) === null && S.readFile(D, MIG, { kind: 'hftp-do-you-need-ai', v: 9, check: { id: 'abcd' } }) === null && S.readFile(D, MIG, {}) === null, 'wrong kind, newer version, empty → not a saved check');
 
 /* migration: the real v2.7 file */

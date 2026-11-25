@@ -71,7 +71,7 @@ async function walk(p, g, n, tag) {
 (async () => {
   const b = await chromium.launch();
   for (const size of [[1280, 800], [360, 740]]) {
-    const tag = size[0] + 'px';
+    const tag = size[0] + 'px', p0 = pass, f0 = fail;
     /* 1 + 2 + 3: golden cases through the page */
     for (const n of [1, 2, 9, 10, 14, 15, 19, 28]) {
       const g = G[n - 1], { ctx, p } = await mk(b, size);
@@ -267,6 +267,7 @@ async function walk(p, g, n, tag) {
       ok(await p.evaluate(() => Object.keys(window.__m).some(k => /^hftp-readiness3-v1_c_/.test(k)) && JSON.parse(window.__m['hftp-readiness3-v1']).ids.length === 1), tag + ' one record per check under hftp-readiness3-v1');
       await ctx.close();
     }
+    console.log('ui ' + tag + ': ' + (pass - p0) + ' passed, ' + (fail - f0) + ' failed');
   }
   await b.close();
   console.log('ui: ' + pass + ' passed, ' + fail + ' failed');

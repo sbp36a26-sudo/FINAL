@@ -38,7 +38,7 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
 (async () => {
   const b = await chromium.launch();
   for (const size of [[1280, 800], [360, 740]]) {
-    const tag = size[0] + 'px';
+    const tag = size[0] + 'px', p0 = pass, f0 = fail;
     const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] } });
     const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(String(e)));
@@ -119,6 +119,7 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
     ok(reached === 99, tag + ': all 99 use cases reachable in the picker (' + reached + ')');
     ok(errs.length === 0, tag + ': no page errors ' + errs.join(' | '));
     await ctx.close();
+    console.log('questions ' + tag + ': ' + (pass - p0) + ' passed, ' + (fail - f0) + ' failed');
   }
   await b.close();
   console.log('questions: ' + pass + ' passed, ' + fail + ' failed');
