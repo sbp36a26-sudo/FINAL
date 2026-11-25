@@ -83,7 +83,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   m.ev.areas.forEach(g => ok((g.known >= 2) === !!g.word, 'item 6: ' + g.name + ' has a word only with two or more known answers (' + g.known + ')'));
   const one = L.resultModel(mk('rm-1', [], ['y', 'y', 'y', 'y', 'n', 'y']), env).areas.find(a => a.k === 'da');
   ok(one.line === 'Data: 0 of 1 in place' && one.word === '', 'item 6: "Data: 0 of 1 in place", no "Weak" from one answer');
-  ok(pdfText(r).includes('What is in place, by area') && !/Score per area/.test(pdfText(r)) && pdfText(r).includes('Must-haves: 6 of 10 in place'), 'item 6: the same heading and rows in the PDF');
+  ok(!pdfText(r).includes('What is in place, by area') && !/Score per area/.test(pdfText(r)) && !pdfText(r).includes('Must-haves: 6 of 10 in place'), 'item 6: v2.7: the result PDF has no areas section any more (the area rows are gone with it)');
   ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): \d+ of \d+ in place/.test(t)).length === 7 && !m.method.some(t => /^(Must-haves|People|Skills|Data)[^.]*= \d+%/.test(t)), 'item 6: the working-out lists the areas as counts with their points, no area percentage');
 }
 {
@@ -375,7 +375,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   // L13
   ok(eq(L.tailRange(TQ), [6, 9]) && /id="cover-range" data-min="' \+ range\[0\] \+ '" data-max="' \+ range\[1\]/.test(app) && !/Six to ten questions/.test(app) && !/6 to 10 questions/.test(rd('README.md')), 'L13: the cover reads the range from the data (six to nine); README agrees');
   ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 99 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later (their questions are drafts), and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
-  ok(/90 of the catalogue’s 99 use cases: 8 were added/.test(pdfText(mk('gx-2', [], []))) && !/\{[NUD]\}/.test(pdfText(mk('gx-2', [], []))), 'L13: the PDF fills the three numbers in');
+  ok(!/90 of the catalogue’s 99 use cases: 8 were added/.test(pdfText(mk('gx-2', [], []))) && !/\{[NUD]\}/.test(pdfText(mk('gx-2', [], []))), 'L13: v2.7: the PDF has no sources, so no source text with the three numbers; no placeholder left');
   // print
   ok(/addEventListener\('beforeprint'/.test(app) && /details\.fold/.test(app) && /addEventListener\('afterprint'/.test(app), 'print: the result\'s folds are opened for printing and closed again');
 }

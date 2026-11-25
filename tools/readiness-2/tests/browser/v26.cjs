@@ -95,13 +95,13 @@ async function hubOpen(p) {
       ok((await txt(p, '#ai-head')) === 'Too few examples to learn from.', wt + ': card: the verdict word');
       const card = await p.$('#sum-ai'); await card.scrollIntoViewIfNeeded(); await card.screenshot({ path: path.join(OUT, wt + '-result-five-answers.png') });
       if (!touch) {
-        const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#pdf')]);
+        const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#pdf-answers')]); // v2.7: the five answers are in the Answers PDF
         const pdf = path.join(OUT, 'result.pdf'); await dl.saveAs(pdf);
         try {
-          execFileSync('pdftoppm', ['-f', '2', '-l', '2', '-r', '150', '-png', '-singlefile', pdf, path.join(OUT, 'pdf-page-2')]);
+          execFileSync('pdftoppm', ['-f', '1', '-l', '1', '-r', '150', '-png', '-singlefile', pdf, path.join(OUT, 'pdf-page-2')]);
           ok(fs.existsSync(path.join(OUT, 'pdf-page-2.png')), 'PDF page 2 rendered');
-          const t = execFileSync('pdftotext', ['-f', '2', '-l', '2', '-layout', pdf, '-']).toString().replace(/\s+/g, ' ');
-          ok(/Information to learn from/.test(t) && /Some mistakes are acceptable/.test(t) && /Too few examples to learn from/.test(t) && /Can each case be fixed/.test(t), 'PDF page 2: the five answers with the new questions');
+          const t = execFileSync('pdftotext', ['-f', '1', '-l', '1', '-layout', pdf, '-']).toString().replace(/\s+/g, ' ');
+          ok(/Information to learn from/.test(t) && /Some mistakes are acceptable/.test(t) && /Can each case be fixed/.test(t) && /Are there past examples of this task/.test(t) && /Is it acceptable if the result is right most of the time/.test(t) && !/Too few examples to learn from/.test(t), 'Answers PDF page 1: the five answers with the new questions (v2.7)');
         } catch (e) { ok(false, 'PDF page 2: ' + e.message); }
         fs.unlinkSync(pdf);
       }

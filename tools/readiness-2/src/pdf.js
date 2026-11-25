@@ -1,10 +1,14 @@
-/* Do you need AI? v2: the PDF of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* Do you need AI? v2: the two PDFs of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+   v2.7 (owner, 25 Nov 2026): TWO documents, neither with sources. kind 'result': Result, Start with these three, Action plan by
+   person, Questions for the vendor, EU AI Act. kind 'answers': a short summary, then every question with the answer given
+   (step 2, step 3, step 5). The stop screen keeps its one-page PDF (kind 'result').
    jsPDF and the "Register Sans" font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs: nothing is loaded.
    1. model(rec, env) → { stop, run: { hotel, date }, blocks }, built from R2Logic.resultModel(rec, env), the same object the
       result page draws, so the PDF and the screen use the same words. env = { cat, TQ, RC, M, today }.
-        blocks: { k: 'title' | 'meta' | 'h' | 'verdict' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'todo' | 'area' | 'item' | 'num' | 'src' | 'page', ... }
+        blocks: { k: 'title' | 'meta' | 'h' | 'verdict' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'todo' | 'area' | 'item' | 'num', ... }
       Q1 Yes (v2.6; No before) → the one-page stop version (why, the instead line, the five answers).
-   2. fileName(hotel, today) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>.pdf" in safe ASCII.
+   2. fileName(hotel, today, kind) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>_result.pdf" / "_answers.pdf" in safe ASCII
+      (kind 'file': no suffix, for the JSON file's base name).
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4 for print. PDF redesign (24 Nov 2026): page 1 is the summary
       (hotel, use case, the verdict box in the verdict's colour, "Start with"); then the five questions, where it sits, the
       areas as a table, the action plan as a checklist by person, vendor questions, the AI Act label, every answer as a
@@ -14,42 +18,41 @@
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'Do you need AI? Result', TITLE_STOP = 'Do you need AI? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
+  var TITLE = 'Do you need AI? Result', TITLE_ANSWERS = 'Do you need AI? Your answers', TITLE_STOP = 'Do you need AI? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
   var FOOT_L = 'Do you need AI? · student prototype, not legal advice', FOOT = FOOT_L + ' · page ';
 
-  function head(m, stop, use) {
-    var b = [{ k: 'title', t: stop ? TITLE_STOP : TITLE }];
+  function head(m, stop, use, title, extra) {
+    var b = [{ k: 'title', t: title || (stop ? TITLE_STOP : TITLE) }];
     if (m.hotel) b.push({ k: 'meta', t: 'Hotel: ' + m.hotel });
     if (use) b.push({ k: 'meta', t: 'Use case: ' + use });
     if (m.filledBy) b.push({ k: 'meta', t: 'Filled in by: ' + m.filledBy });
-    b.push({ k: 'meta', t: 'Date: ' + m.date }, { k: 'meta', t: LINE, note: true });
+    b.push({ k: 'meta', t: 'Date: ' + m.date });
+    (extra || []).forEach(function (t) { b.push({ k: 'meta', t: t }); });
+    b.push({ k: 'meta', t: LINE, note: true });
     return b;
   }
   /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card.
      v2.6: the tone follows the meaning (a.good), so question 1 No is drawn in the good tone. */
   function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: L.aiMeaningText(a) }; }); }
-  function sources(TQ, stop) {
-    var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
-    (stop ? [['q', 'Can this problem be solved with AI?']] : [['q', 'Can this problem be solved with AI?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
-      b.push({ k: 'label', t: s[1] });
-      if (S[s[0] + 'Note']) b.push({ k: 'p', t: N(S[s[0] + 'Note']), small: true });
-      (S[s[0]] || []).forEach(function (t) { b.push({ k: 'src', t: N(t) }); });
-    });
-    return b;
-  }
   var STATE_TONE = { yes: 'hi', planned: 'md', no: 'lo' };
   var LEVEL_TONE = { ready: 'hi', almost: 'md', notready: 'lo', noinfo: 'accent' };
 
-  /* m: R2Logic.resultModel(rec, env). The words are the result page's own. */
-  function model(rec, env) {
-    var v = L.verdict(rec.Q), m = L.resultModel(rec, env), run = { hotel: m.hotel, date: m.date };
-    var b = head(m, v.stop, v.stop ? '' : m.useName || (m.none ? m.path : ''));
+  /* m: R2Logic.resultModel(rec, env). The words are the result page's own. kind: 'result' (default) | 'answers'. A stop is always the
+     one-page stop version, whatever the kind (the stop screen has one PDF). No document carries sources (v2.7). */
+  function model(rec, env, kind) {
+    var v = L.verdict(rec.Q), m = L.resultModel(rec, env), run = { hotel: m.hotel, date: m.date }, use = v.stop ? '' : m.useName || (m.none ? m.path : '');
     if (v.stop) {
-      return { stop: true, run: run, blocks: b.concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
-        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), sources(env.TQ, true)) };
+      return { stop: true, kind: 'result', run: run, blocks: head(m, true, '').concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
+        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m)) };
     }
-    /* Page 1, as the screen: the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with". */
+    return kind === 'answers' ? answersModel(m, run, use) : resultModel(m, run, use);
+  }
+
+  /* Document 1: Result, Start with these three, Action plan by person, Questions for the vendor, EU AI Act. */
+  function resultModel(m, run, use) {
+    var b = head(m, false, use);
+    /* the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with" */
     b.push({ k: 'h', t: 'Result' }, { k: 'verdict', id: 'level', t: m.levelName + ' · ' + m.scoreHead, name: m.levelName, score: m.scoreHead, box: m.boxLine, sub: m.mustLine, tone: LEVEL_TONE[m.level] || 'accent' });
     /* the reason, the points and the caveat under the box (tests/logic.test.mjs reads this order) */
     b.push({ k: 'lead', t: m.reason, id: 'reason', under: true }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' });
@@ -64,19 +67,6 @@
     if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
     if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes.' });
     m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: (f.who ? f.who + ': ' : '') + f.text, who: f.who || '', body: f.text, sub: f.sub }); }); // v2.5: a hold (BUILD NOW 3) has no person
-    b.push({ k: 'page' });
-
-    b.push({ k: 'h', t: 'Can this problem be solved with AI?' }, { k: 'lead', t: m.ai.head });
-    if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });
-    /* v2.5.1: the conditions, the "to find out" list and the Q1 note now stand under each answer (answers(m)), as on the card. */
-    b.push({ k: 'label', t: 'Your five answers and what each means' }); b = b.concat(answers(m));
-
-    b.push({ k: 'h', t: 'Where it sits' }, { k: 'lead', t: m.path });
-    if (m.useTask) { b.push({ k: 'p', t: m.useTask }); if (m.useHow) b.push({ k: 'p', t: m.useHow }); b.push({ k: 'p', t: m.useLevel, small: true }); if (m.catName) b.push({ k: 'p', t: m.catName, small: true }); }
-    if (m.none) b.push({ k: 'p', t: m.none });
-
-    b.push({ k: 'h', t: m.areasHead });
-    m.areas.forEach(function (a) { b.push({ k: 'area', t: a.line, id: 'area-' + a.k, name: a.name, rest: a.line.slice(a.name.length + 2), share: a.yes ? Math.max(3, a.share) : 0, tone: ({ strong: 'hi', gaps: 'md', weak: 'lo' })[a.cls] || 'accent' }); });
 
     b.push({ k: 'h', t: 'Action plan by person' });
     if (!m.people.length) b.push({ k: 'p', t: 'Nothing open.' });
@@ -85,7 +75,7 @@
     if (m.vendor.length) { b.push({ k: 'h', t: 'Questions for the vendor' }); m.vendor.forEach(function (q, i) { b.push({ k: 'num', n: i + 1, t: q, body: q, sub: '' }); }); }
 
     if (m.legal) {
-      b.push({ k: 'h', t: 'EU AI Act: provisional label' }, { k: 'p', t: m.legalNote, small: true }, { k: 'lead', t: m.legal.name + (m.legal.applies ? ' (' + m.legal.applies + ')' : ''), tone: 'accent' }, { k: 'p', t: m.legal.why });
+      b.push({ k: 'h', t: 'EU AI Act: provisional label' }, { k: 'p', t: m.legalNote, small: true, keep: true }, { k: 'lead', t: m.legal.name + (m.legal.applies ? ' (' + m.legal.applies + ')' : ''), tone: 'accent' }, { k: 'p', t: m.legal.why });
       m.legal.could.forEach(function (c) { b.push({ k: 'p', t: c, small: true }); });
       if (m.legal.itemsHead) b.push({ k: 'label', t: m.legal.itemsHead });
       else if (m.legal.items.length) b.push({ k: 'label', t: 'Items to check' });
@@ -93,13 +83,26 @@
       if (m.legal.labour) b.push({ k: 'p', t: m.legal.labour, small: true });
       b.push({ k: 'p', t: m.legal.country, small: true });
     }
+    return { stop: false, kind: 'result', run: run, blocks: b };
+  }
 
+  /* Document 2: a short summary, then every question with the answer given, grouped by step and area. An answer saved before v2.3 that
+     is no longer offered reads "Not answered". The scoring method (the first three lines of "How this was worked out") stands under
+     the summary: plain lines, they fit on page 1 (tests/pdf.test.mjs checks that). */
+  function answersModel(m, run, use) {
+    var b = head(m, false, use, TITLE_ANSWERS, ['Result: ' + m.levelName + ' · ' + m.scoreHead]);
+    b.push({ k: 'label', t: 'How the score was worked out' }); m.method.slice(0, 3).forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
     b.push({ k: 'h', t: 'Every question and your answer' });
+    b.push({ k: 'label', t: 'Step 2: Can this problem be solved with AI?', group: true });
+    m.answers.forEach(function (a) { b.push({ k: 'item', id: a.id, name: a.title, check: a.q, ex: '', answer: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', action: '' }); });
     var grp = '';
-    m.itemList.forEach(function (it) { var g = it.grp === 'must' ? 'Must-haves' : 'Questions for this use case'; if (g !== grp) { grp = g; b.push({ k: 'label', t: g, group: true }); } b.push({ k: 'item', id: it.key, name: it.name, check: it.q, ex: '', answer: 'Your answer: ' + it.answer, val: it.answer, tone: STATE_TONE[it.state] || 'na', action: '' }); });
-
-    b.push({ k: 'h', t: 'How this was worked out' }); m.method.forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
-    return { stop: false, run: run, blocks: b.concat(sources(env.TQ, false)) };
+    m.itemList.forEach(function (it, i) {
+      var raw = m.ev.items[i], g = it.grp === 'must' ? 'Step 3: Must-haves' : 'Step 5: ' + it.name;
+      if (g !== grp) { grp = g; b.push({ k: 'label', t: g, group: true }); }
+      var val = raw && raw.old ? 'Not answered' : it.answer;
+      b.push({ k: 'item', id: it.key, name: it.grp === 'must' ? it.name : it.q, check: it.grp === 'must' ? it.q : '', ex: '', answer: 'Your answer: ' + val, val: val, tone: raw && raw.old ? 'na' : STATE_TONE[it.state] || 'na', action: '' });
+    });
+    return { stop: false, kind: 'answers', run: run, blocks: b };
   }
 
   /* Safe ASCII file name: accents dropped (é → e), anything else becomes one hyphen, at most 60 characters. */
@@ -109,9 +112,9 @@
     s = s.replace(/[ßæøœłđþ]/gi, function (c) { return { ß: 'ss', æ: 'ae', ø: 'o', œ: 'oe', ł: 'l', đ: 'd', þ: 'th', Æ: 'AE', Ø: 'O', Œ: 'OE', Ł: 'L', Đ: 'D', Þ: 'Th' }[c] || ''; });
     return s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
   }
-  function fileName(hotel, today) {
+  function fileName(hotel, today, kind) {
     var d = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : L.localIso(); // v1.2: local day
-    return 'Do-you-need-AI_' + (slug(hotel) || 'assessment') + '_' + d + '.pdf';
+    return 'Do-you-need-AI_' + (slug(hotel) || 'assessment') + '_' + d + (kind === 'file' ? '' : kind === 'answers' ? '_answers' : '_result') + '.pdf';
   }
   function footer(i, n) { return FOOT + i + ' of ' + n; }
   /* Characters the embedded font can print (Latin, Latin-1, Extended-A/-B, general punctuation, euro, arrows); others → '?'. */
@@ -124,7 +127,7 @@
   var SZ = { title: 20, verdict: 17, h: 12.5, body: 9.5, small: 8 };
   var PAGE = { W: 210, H: 297, M: 20, TOP: 25, BOT: 297 - 22 };
   /* Blocks that must stand with what follows them (no heading as the last line of a page). */
-  function sticky(b) { return b && (b.k === 'h' || b.k === 'label' || b.k === 'lead' && !b.tone && !b.under); }
+  function sticky(b) { return b && (b.k === 'h' || b.k === 'label' || b.k === 'lead' && !b.under || b.k === 'p' && b.keep); }
 
   /* jsPDF: the constructor's namespace (window.jspdf); font: { regular, bold } base64 TTF, or null for Helvetica. */
   function draw(m, jspdf, font) {
@@ -158,7 +161,7 @@
     }
     function thead() { /* the column heads of the answers table, again on each page it runs on */
       if (!DRY) { fill('bg'); doc.rect(M, y, TW, 6.5, 'F'); }
-      f('bold', SZ.small, 'ink3'); if (!DRY) { doc.text('Question', M + 2, y + 4.4); doc.text('Your answer', W - M - 44, y + 4.4); } y += 6.5;
+      f('bold', SZ.small, 'ink3'); if (!DRY) { doc.text('Question', M + 2, y + 4.4); doc.text('Your answer', W - M - 52, y + 4.4); } y += 6.5;
     }
     function newPage() { doc.addPage(); y = TOP; if (table) thead(); }
     function atTop() { return y <= TOP + 0.5 + (table ? 6.5 : 0); }
@@ -197,9 +200,9 @@
           if (b.group) { if (!table) { y += g(1); thead(); if (!DRY) table = true; } y += g(1.5); top = y; if (!DRY) { fill('line2'); doc.rect(M, top, TW, 6, 'F'); } y += g(1); para(b.t, M + 2, TW - 4, SZ.small, 'bold', 'ink2'); y = top + 6 + 1; break; }
           y += g(3); para(b.t, M, TW, SZ.small, 'bold', 'ink3'); y += g(1.4); break;
         case 'p': para(b.t, M, TW, b.small ? SZ.small : SZ.body, 'normal', b.small ? 'ink3' : 'ink2'); y += b.small ? 1.6 : 2; break;
-        case 'li': case 'src': {
-          var sz = b.small || b.k === 'src' ? SZ.small : SZ.body; f('normal', sz, 'ink3'); if (!DRY) doc.text('–', M + 0.5, y + lh(sz) * 0.74);
-          para(b.t, M + 5, TW - 5, sz, 'normal', b.k === 'src' ? 'ink2' : 'ink'); y += b.k === 'src' ? 0.9 : 1.4; break;
+        case 'li': {
+          var sz = b.small ? SZ.small : SZ.body; f('normal', sz, 'ink3'); if (!DRY) doc.text('–', M + 0.5, y + lh(sz) * 0.74);
+          para(b.t, M + 5, TW - 5, sz, 'normal', 'ink'); y += 1.4; break;
         }
         case 'todo': tick(M + 0.3); para(b.t, M + 7, TW - 7, SZ.body, 'normal', 'ink'); if (b.sub) { y += g(0.3); para(b.sub, M + 7, TW - 7, SZ.small, 'normal', 'ink3'); } y += g(2.6); break;
         case 'num': {
@@ -225,9 +228,9 @@
         }
         case 'item': {
           top = y + 1.8; y = top;
-          para(b.name, M + 2, TW - 52, SZ.body, 'bold', 'ink'); y += g(0.2); para(b.check, M + 2, TW - 52, SZ.small, 'normal', 'ink2'); var y2 = y;
-          y = top; f('bold', SZ.small, b.tone); var vl = doc.splitTextToSize(safe(b.val), 42);
-          vl.forEach(function (l) { if (!DRY) doc.text(l, W - M - 44, y + lh(SZ.small) * 0.74 + 0.4); y += lh(SZ.small); });
+          para(b.name, M + 2, TW - 60, SZ.body, b.check ? 'bold' : 'normal', 'ink'); if (b.check) { y += g(0.2); para(b.check, M + 2, TW - 60, SZ.small, 'normal', 'ink2'); } var y2 = y;
+          y = top; f('bold', SZ.small, b.tone); var vl = doc.splitTextToSize(safe(b.val), 50);
+          vl.forEach(function (l) { if (!DRY) doc.text(l, W - M - 52, y + lh(SZ.small) * 0.74 + 0.4); y += lh(SZ.small); });
           y = Math.max(y, y2) + 1.8; rule(M, W - M, 'line2', 0.25); break;
         }
       }
@@ -256,7 +259,7 @@
     return { doc: doc, pages: n, footers: footers };
   }
 
-  var api = { TITLE: TITLE, TITLE_STOP: TITLE_STOP, LINE: LINE, FOOT_L: FOOT_L, PAGE: PAGE, sticky: sticky, model: model, fileName: fileName, slug: slug, footer: footer, safe: safe, draw: draw };
+  var api = { TITLE: TITLE, TITLE_ANSWERS: TITLE_ANSWERS, TITLE_STOP: TITLE_STOP, LINE: LINE, FOOT_L: FOOT_L, PAGE: PAGE, sticky: sticky, model: model, fileName: fileName, slug: slug, footer: footer, safe: safe, draw: draw };
   root.R2Pdf = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);

@@ -408,7 +408,7 @@ const allText = f => f.evaluate(() => { document.querySelectorAll('#view details
       let n = 0; const onDl = () => { n++; }; p.on('download', onDl);
       await p.dblclick('#save-file'); await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); await p.waitForTimeout(400);
       ok(n === 1, wtag + ' L1: double-click on "Save as file" saves one file (it saved two): ' + n);
-      n = 0; await p.dblclick('#pdf'); await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); await p.waitForTimeout(400); ok(n === 1, wtag + ' L1: and the PDF still one: ' + n); p.off('download', onDl);
+      n = 0; await p.dblclick('#pdf'); await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); await p.waitForTimeout(400); ok(n === 1, wtag + ' L1: and the Result PDF still one: ' + n); n = 0; await p.dblclick('#pdf-answers'); await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); await p.waitForTimeout(400); ok(n === 1, wtag + ' L1 (v2.7): and the Answers PDF one: ' + n); p.off('download', onDl);
       // L7: one title
       ok(await p.evaluate(() => window.Readiness2.pdfModel().blocks[0].t) === 'Do you need AI? Result', wtag + ' L7: the result PDF is titled like the screen');
       await p.click('#edit'); await p.click('label[for="a-q1-y"]'); await p.click('#next');

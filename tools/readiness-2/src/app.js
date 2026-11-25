@@ -12,7 +12,7 @@
               Closed by Close, Esc, a click outside the drawer, and by any step or check change (afterMove), so it never
               stays open over a screen it does not belong to. #app[data-layer] holds the open use id.
      open     which folded explanations are open (kept across re-renders)
-     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; dlKind: 'pdf' | 'file' | null (which one)
+     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; dlKind: 'pdf' | 'answers' | 'file' | null (which one)
      share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
               v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
               so a copy can be withdrawn from any step, from the stop screen and from "Your checks".
@@ -412,7 +412,7 @@
       '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
       '<li><b>What is missing:</b> the three things to start with, and an action plan by person that you can copy and send.</li>' +
       '<li><b>Questions for the vendor</b> and the provisional EU AI Act label for the use case.</li>' +
-      '<li><b>A PDF and a file</b> to share with your owner or team, and to come back to later.</li></ul>' +
+      '<li><b>Two PDFs and a file:</b> the result, and your answers to every question, to share with your owner or team, and a file to come back to later.</li></ul>' +
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>' + myChecks();
   }
   function vHotel() {
@@ -460,7 +460,7 @@
       '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p><p id="stop-unsure">' + esc(C.STOP.unsure) + '</p>' +
       '<p class="meta">Because you answered Yes to: “' + esc(L.QBY.q1.q) + '”</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="new" id="restart">Start again</button>' +
-      pdfButton('Download (PDF)') + '</div></section>' + sources('q');
+      pdfButton('Download (PDF)', 'result') + '</div></section>' + sources('q');
   }
   function vMust() {
     var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
@@ -571,10 +571,10 @@
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
     var regHref = '../register/index.html#' + registerHash();
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
-    /* Owner, 24 Nov 2026: the top row holds "Download (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
+    /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser", "Add to the AI Register" in the EU AI Act fold; Copy summary and Print are gone. */
     var toReg = u && !u.notTool && !STANDALONE ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
-    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 24 Nov 2026: next to Download (PDF)
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 25 Nov 2026: two PDFs, then Start a new check
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
@@ -638,15 +638,20 @@
 
   // ---------- downloads (PDF and file): the readiness check's way, hub bridge with a plain link outside the hub ----------
   var DL_LABEL = { making: 'Preparing the PDF…', waiting: 'Preparing the PDF…', saving: 'Saving the PDF…' };
-  function pdfButton(label) {
-    var busy = ui.dl !== 'idle';
-    return '<button type="button" class="btn' + (rec.step === 'result' ? ' primary' : '') + '" data-act="pdf" id="pdf"' + (busy ? ' disabled aria-busy="true"' : '') + '>' + esc(busy ? DL_LABEL[ui.dl] : label) + '</button>';
+  /* v2.7 (owner, 25 Nov 2026): two PDFs on the result page, "Download result (PDF)" (#pdf, primary) and "Download answers (PDF)"
+     (#pdf-answers); the stop screen keeps one "Download (PDF)" (#pdf). One download at a time: while one runs both are disabled and
+     only the one that was pressed says it is working. */
+  function pdfButton(label, kind) {
+    var busy = ui.dl !== 'idle', ans = kind === 'answers', mine = ui.dlKind === (ans ? 'answers' : 'pdf');
+    return '<button type="button" class="btn' + (!ans && rec.step === 'result' ? ' primary' : '') + '" data-act="' + (ans ? 'pdf-answers' : 'pdf') + '" id="' + (ans ? 'pdf-answers' : 'pdf') + '"' + (busy ? ' disabled' + (mine ? ' aria-busy="true"' : '') : '') + '>' + esc(busy && mine ? DL_LABEL[ui.dl] : label) + '</button>';
   }
   function dlSend(ev) {
     var to = F.dlNext(ui.dl, ev, host.state); if (to === null) return false;
     ui.dl = to; $('app').setAttribute('data-dl', to);
-    var b = $('pdf'), sf = $('save-file'); if (sf) sf.disabled = to !== 'idle';
-    if (b) { b.disabled = to !== 'idle'; if (to !== 'idle') { b.setAttribute('aria-busy', 'true'); if (ui.dlKind === 'pdf') b.textContent = DL_LABEL[to]; } else render(); }
+    var sf = $('save-file'); if (sf) sf.disabled = to !== 'idle';
+    var bs = [['pdf', 'pdf'], ['pdf-answers', 'answers']].map(function (x) { return [$(x[0]), x[1]]; }).filter(function (x) { return x[0]; });
+    bs.forEach(function (x) { x[0].disabled = to !== 'idle'; if (to !== 'idle' && ui.dlKind === x[1]) { x[0].setAttribute('aria-busy', 'true'); x[0].textContent = DL_LABEL[to]; } });
+    if (to === 'idle' && bs.length) render();
     return true;
   }
   var host = { state: IN_FRAME && !FOREIGN_PARENT ? 'pending' : 'none', pong: false, waiters: [], seq: 0, calls: {} };
@@ -690,12 +695,14 @@
   }
   var PDF_FONT = null;
   function pdfFont() { return PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('r2-font').textContent); } catch (e) { return null; } })()); }
-  function pdfName() { return P.fileName(rec.hotel.name, L.localIso()); }
-  function downloadPdf() {
+  function pdfName(kind) { return P.fileName(rec.hotel.name, L.localIso(), kind); } // kind: 'result' (default) | 'answers' | 'file' (no suffix)
+  function downloadPdf(kind) {
     if (rec.step !== 'result' && rec.step !== 'stop') return false;
-    ui.dlKind = 'pdf';
+    if (kind === 'answers' && rec.step !== 'result') return false;
+    if (ui.dl !== 'idle') { toast('A download is still being prepared.'); return false; } // one at a time: the kind of the running one is not overwritten
+    ui.dlKind = kind === 'answers' ? 'answers' : 'pdf';
     if (!dlSend('start')) { toast('A download is still being prepared.'); return false; }
-    var mdl = P.model(rec, env()), name = pdfName();
+    var mdl = P.model(rec, env(), kind === 'answers' ? 'answers' : 'result'), name = pdfName(kind === 'answers' ? 'answers' : 'result');
     setTimeout(function () {
       var blob;
       try {
@@ -712,9 +719,10 @@
   function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; }
   function saveRecord() {
     if (rec.step !== 'result') return false;
+    if (ui.dl !== 'idle') { toast('A download is still being prepared.'); return false; }
     ui.dlKind = 'file';
     if (!dlSend('start')) { toast('A download is still being prepared.'); return false; }
-    var name = pdfName().replace(/\.pdf$/, '.json'), blob = new Blob([JSON.stringify(fileDoc(), null, 1)], { type: 'application/json' });
+    var name = pdfName('file').replace(/\.pdf$/, '.json'), blob = new Blob([JSON.stringify(fileDoc(), null, 1)], { type: 'application/json' });
     /* Audit L1: 'made' in a later tick, as the PDF does, so the button stays disabled across a double-click. */
     setTimeout(function () { dlSend('made'); saveFile(name, blob); }, 30);
     return true;
@@ -881,7 +889,8 @@
       try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(su).then(function () { t.textContent = 'Copied'; }, selectIt); else selectIt(); } catch (x) { selectIt(); } }
     else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.replace(/^The /, 'the '), 'who:' + p.who); }
     else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions', 'vendor'); }
-    else if (act === 'pdf') { if (!t.disabled) downloadPdf(); }
+    else if (act === 'pdf') { if (!t.disabled) downloadPdf('result'); }
+    else if (act === 'pdf-answers') { if (!t.disabled) downloadPdf('answers'); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
     else if (act === 'share') shareSend('share');
     else if (act === 'unshare') shareSend('withdraw', t.getAttribute('data-id') || rec.id);
@@ -963,7 +972,7 @@
     send: send,
     events: function () { return F.events(rec.step, ctx()); },
     resultModel: function () { var m = model(); delete m.ev; return m; },
-    pdfModel: function () { return P.model(rec, env()); },
+    pdfModel: function (kind) { return P.model(rec, env(), kind || 'result'); },
     pdfName: pdfName,
     fileDoc: fileDoc,
     openFileText: openFileText,

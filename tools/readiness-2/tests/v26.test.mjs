@@ -51,7 +51,7 @@ ok(/Because you answered Yes to: “' \+ L\.QBY\.q1\.q/.test(pdfSrc) && !/Becaus
 {
   const r = finished(F, D, 'gx-2', { Q: { q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' } }); r.step = 'stop';
   const pm = P.model(r, env); ok(pm.stop && pm.blocks.some(b => b.t === 'Because you answered Yes to: “' + q1.q + '”'), 'A: the stop PDF');
-  const g = finished(F, D, 'gx-2'); const pg = P.model(g, env).blocks.filter(b => b.k === 'q');
+  const g = finished(F, D, 'gx-2'); const pg = P.model(g, env, 'answers').blocks.filter(b => b.k === 'item'); // v2.7: the five answers are the first rows of the Answers PDF
   ok(pg[0].tone === 'hi' && pg[0].val === 'No', 'A: PDF: Q1 No is drawn in the good tone');
 }
 ok(/Question 1 is Yes\./.test(app) && !/Question 1 is No\./.test(app), 'A: step 2 says "Question 1 is Yes."');

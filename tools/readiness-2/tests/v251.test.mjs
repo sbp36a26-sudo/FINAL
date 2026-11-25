@@ -82,8 +82,9 @@ for (const [tag, Q] of Object.entries(cases)) {
     if (ans === 'u') ok(a.line.startsWith('To find out: yes if ') && a.line.includes('; no if ') && a.ask === 'Ask ' + q.who + '.' && a.ifNo, tag + ' ' + a.id + ': Not sure says what to find out, whom to ask and what a No would mean');
     ok(!/—/.test([a.line, a.ask, a.ifNo].join(' ')), tag + ' ' + a.id + ': no em dash');
   });
-  const pt = P.model(r, env).blocks.map(b => [b.t, b.a, b.m].filter(Boolean).join(' ')).join('\n');
-  ok(m.answers.every(a => pt.includes(L.aiMeaningText(a))) && pt.includes(m.ai.head), tag + ': the PDF carries the verdict word and every answer\'s meaning');
+  /* v2.7: the Result PDF has no five-answers card; the Answers PDF lists each answer with its word (the meaning stays on the screen). */
+  const pt = P.model(r, env).blocks.map(b => [b.t, b.a, b.m].filter(Boolean).join(' ')).join('\n'), at = P.model(r, env, 'answers').blocks.filter(b => b.k === 'item').slice(0, 5);
+  ok(!P.model(r, env).blocks.some(b => b.t === m.ai.head) && m.answers.every((a, i) => at[i].name === a.title && at[i].check === a.q && at[i].val === a.a), tag + ': the Answers PDF carries each of the five answers as given; the Result PDF has no five-answers card');
 }
 {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: cases.withNo }), env);

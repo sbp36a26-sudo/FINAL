@@ -121,9 +121,9 @@ async function toMust(f) {
       s = await st(f); ok(s.step === 'result' && s.level === 'almost', tag + ': result, Almost ready (' + s.level + ')');
       const boxIds = await f.evaluate(() => [...document.querySelectorAll('#result > *')].map(e => e.id || (e.querySelector('[id]') || {}).id));
       ok(boxIds.join() === 'level-name,score,must-line' && (await f.textContent('#level-name')) === 'Almost ready' && /^Score: \d+%$/.test(await f.textContent('#score')) && /^9 of 10 must-haves in place · 1 planned$/.test(await f.textContent('#must-line')), tag + ': the box: verdict, score, must-haves line only (' + await f.textContent('#must-line') + ')');
-      ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf,new-check' && !(await f.$('#copy, #print')), tag + ': the top row holds Download (PDF) and Start a new check');
+      ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf,pdf-answers,new-check' && !(await f.$('#copy, #print')), tag + ': the top row holds Download result (PDF), Download answers (PDF) and Start a new check (v2.7)');
       ok(/^Because /.test(await f.textContent('#first #reason')) && !!(await f.$('#mychecks #save-file')) && !!(await f.$('#legal #to-register')), tag + ': reason in "Start with", Save as file in "Your checks", AI Register in the AI Act fold');
-      ok(await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1) && !(await f.$('#new-top')), tag + ': Start a new check next to Download (PDF), and only there (owner 24 Nov 2026)');
+      ok(await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1) && !(await f.$('#new-top')), tag + ': Start a new check next to the two PDF buttons, and only there (owner 24 Nov 2026)');
       ok(!(await f.$('[data-act="catalogue"]')), tag + ': no link to the catalogue on the result');
       await shot(p, f, wt + '-result-almost-ready');
       if (where === 'standalone') {

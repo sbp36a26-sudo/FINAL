@@ -313,7 +313,7 @@
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
+  var NOT_SAVED = 'This browser is not keeping your answers. Use Download result (PDF), Download answers (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 

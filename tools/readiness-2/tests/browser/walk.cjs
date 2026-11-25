@@ -127,8 +127,8 @@ async function walk(p, f, tag, plan, shots) {
   ok(/the answers are your own and nobody checks them/.test(await f.textContent('.foot')), tag + ': one honesty line in the footer');
   ok((s.level === 'noinfo' ? m.scoreHead === 'No score yet: you answered ' + s.counts.known + ' of ' + s.counts.total + ' questions.' : m.scoreHead === 'Score: ' + s.pct + '%' && /^\d+ of \d+ points on /.test(m.scoreSub)) && m.scoreSub.endsWith('Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.') && !/% ready/.test(await f.textContent('#view')), tag + ': score wording (v2.1: "Score: n%" or "No score yet", never "% ready")');
   ok((await f.textContent('#first #reason')) === m.reason && /^Because /.test(m.reason), tag + ': the reason heads "' + m.firstLabel + '": ' + m.reason);
-  ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf,new-check' && !(await f.$('#copy')) && !(await f.$('#print')), tag + ': owner: the top row holds Download (PDF) and Start a new check; no Copy summary, no Print');
-  ok(!!(await f.$('#mychecks #save-file')) && (await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1)) && !(await f.$('#new-top')), tag + ': Save as file in "Your checks"; Start a new check next to Download (PDF), and only there');
+  ok((await f.$$eval('#actions > *', e => e.map(x => x.id))).join() === 'pdf,pdf-answers,new-check' && (await f.$$eval('#actions > *', e => e.map(x => x.textContent))).join('|') === 'Download result (PDF)|Download answers (PDF)|Start a new check' && !(await f.$('#copy')) && !(await f.$('#print')), tag + ': v2.7: the top row holds Download result (PDF), Download answers (PDF) and Start a new check; no Copy summary, no Print');
+  ok(!!(await f.$('#mychecks #save-file')) && (await f.evaluate(() => !!document.querySelector('#actions #new-check') && document.querySelectorAll('[data-act="new"]').length === 1)) && !(await f.$('#new-top')), tag + ': Save as file in "Your checks"; Start a new check next to the two PDF buttons, and only there');
   ok((await f.$$('#areas .brow')).length === m.areas.length && (await f.textContent('#areas .brow[data-area="must"]')).includes('Must-haves'), tag + ': score per area bars');
   ok((await f.$$('#first li')).length === m.first.length && (await f.textContent('#first h2')) === m.firstLabel, tag + ': ' + m.firstLabel);
   ok((await f.$$('#plan .person')).length === m.people.length && (await f.$$('#plan [data-act="copy-who"]')).length === m.people.length, tag + ': action plan by person with a copy button each');
@@ -146,7 +146,7 @@ async function walk(p, f, tag, plan, shots) {
   const pm = await f.evaluate(() => window.Readiness2.pdfModel().blocks.map(b => [b.t, b.sub, b.check, b.answer].filter(Boolean).join(' | ')).join('\n'));
   const scr = await f.evaluate(() => ({ level: document.querySelector('#level-name').textContent, score: document.querySelector('#score').textContent, sub: document.querySelector('#score-sub').textContent, line: document.querySelector('#level-line').textContent, must: document.querySelector('#must-line').textContent,
     first: [...document.querySelectorAll('#first li')].map(li => li.hasAttribute('data-hold') ? li.childNodes[0].textContent : li.childNodes[0].textContent + li.childNodes[1].textContent), /* v2.5: a hold (BUILD NOW 3) names no person */ todo: [...document.querySelectorAll('#plan ul.todo li span:first-child')].map(x => x.textContent), areas: [...document.querySelectorAll('#areas .brow')].map(x => x.querySelector('.lbl').textContent + ': ' + x.querySelector('.pct').textContent), method: [...document.querySelectorAll('#method li')].map(x => x.textContent) }));
-  ok(pm.includes(scr.level + ' · ' + scr.score) && pm.includes(scr.sub) && pm.includes(scr.line) && pm.includes(scr.must) && scr.first.every(t => pm.includes(t)) && scr.todo.every(t => pm.includes(t)) && scr.method.every(t => pm.includes(t)) && scr.areas.every(t => t.endsWith('–') || pm.includes(t.replace(/%$/, '% ·'))), tag + ': the PDF carries the screen\'s words (verdict, score, base, first three, plan, areas, method)');
+  ok(pm.includes(scr.level + ' · ' + scr.score) && pm.includes(scr.sub) && pm.includes(scr.line) && pm.includes(scr.must) && scr.first.every(t => pm.includes(t)) && scr.todo.every(t => pm.includes(t)) && !scr.method.some(t => t.length > 40 && t !== m.mustOnly && pm.includes(t)) && !pm.includes(m.areasHead), tag + ': v2.7: the Result PDF carries the screen\'s words (verdict, score, base, first three, plan) and no areas or method');
   for (const k of ['vendor', 'legal', 'answers', 'method']) { const d = await f.$(`details[data-fold="${k}"] > summary`); if (d) await d.click(); }
   await check(f, tag + ' result'); await S('6-result');
   ok(p._errs.length === 0, tag + ': no console errors ' + p._errs.slice(0, 2).join(' | '));
@@ -198,7 +198,11 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
         // PDF download
         const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#pdf')]);
         const pdfPath = path.join(OUT, wtag + '-' + dl.suggestedFilename()); await dl.saveAs(pdfPath);
-        ok(/^Do-you-need-AI_Hotel-Alpenblick_\d{4}-\d{2}-\d{2}\.pdf$/.test(dl.suggestedFilename()) && fs.statSync(pdfPath).size > 30000 && fs.readFileSync(pdfPath).slice(0, 5).toString() === '%PDF-', wtag + ': PDF download ' + dl.suggestedFilename());
+        ok(/^Do-you-need-AI_Hotel-Alpenblick_\d{4}-\d{2}-\d{2}_result\.pdf$/.test(dl.suggestedFilename()) && fs.statSync(pdfPath).size > 8000 && fs.readFileSync(pdfPath).slice(0, 5).toString() === '%PDF-', wtag + ': Result PDF download ' + dl.suggestedFilename());
+        await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
+        const [dlA] = await Promise.all([p.waitForEvent('download'), p.click('#pdf-answers')]);
+        const ansPath = path.join(OUT, wtag + '-' + dlA.suggestedFilename()); await dlA.saveAs(ansPath);
+        ok(/^Do-you-need-AI_Hotel-Alpenblick_\d{4}-\d{2}-\d{2}_answers\.pdf$/.test(dlA.suggestedFilename()) && fs.statSync(ansPath).size > 8000 && fs.readFileSync(ansPath).slice(0, 5).toString() === '%PDF-', wtag + ': Answers PDF download ' + dlA.suggestedFilename());
         await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
         // file save, then open in a fresh browser
         const [dl2] = await Promise.all([p.waitForEvent('download'), p.click('#save-file')]);
@@ -299,7 +303,9 @@ async function openHubTool(p) { await p.goto(BASE + 'index.html'); await p.click
       ok((await state(f)).inHub === true && (await p.evaluate(() => window.HFTPHub.state().tool)) === 'readiness-2', wtag + ' hub: the tool runs in the hub frame');
       ok(await noH(p), wtag + ' hub: no horizontal scroll on the hub page');
       // PDF through the hub: no downloads capability locally → plain link fallback
-      const [dl] = await Promise.all([p.waitForEvent('download'), f.click('#pdf')]); ok(/^Do-you-need-AI_Hotel-Alpenblick_/.test(dl.suggestedFilename()), wtag + ' hub: PDF download');
+      const [dl] = await Promise.all([p.waitForEvent('download'), f.click('#pdf')]); ok(/^Do-you-need-AI_Hotel-Alpenblick_.*_result\.pdf$/.test(dl.suggestedFilename()), wtag + ' hub: Result PDF download');
+      await f.waitForFunction(() => window.Readiness2.state().download === 'idle');
+      const [dlA] = await Promise.all([p.waitForEvent('download'), f.click('#pdf-answers')]); ok(/^Do-you-need-AI_Hotel-Alpenblick_.*_answers\.pdf$/.test(dlA.suggestedFilename()), wtag + ' hub: Answers PDF download');
       await f.waitForFunction(() => window.Readiness2.state().download === 'idle');
       // team sharing (local test copy outside claude.ai)
       if ((await state(f)).sharingOn) {

@@ -47,8 +47,8 @@ Rebuilt on 24 Nov 2026 to `.claude/skills/clean-up/SKILL.md`: one transition tab
 - `#app[data-state]` (the step), `data-level` (on the result), `data-verdict` (five questions), `data-storage`, `data-check`, `data-dl`, `data-bridge`, `data-store`.
 - `window.Readiness2.state()`: step, id, hotel, Q, verdict, A, By, cat, dept, use, T, TBy, tailored ids, ctx, events, level, pct, counts, must, confirm, missing, storage, notice, storeNotice, checks, snaps, inHub, download, bridge, share, sharedAt, shareStore, sharingOn, history.
 - `window.Readiness2.send(event, arg)`: the same events the controls send; returns false when refused. `.events()` lists the navigation events accepted now.
-- `.record()`, `.store()`, `.resultModel()`, `.pdfModel()`, `.pdfName()`, `.fileDoc()`, `.openFileText(text)`, `.shareDoc()` (`.summaryText()` was removed in v2.5 with Copy summary).
-- Stable ids: `#begin`, `#next`, `#back`, `#change`, `#edit`, `#new-top`, `#new-check`, `#pdf`, `#save-file`, `#to-register`, `#share-btn`, `#unshare`, `#file-open`, `a-<question id>-<answer>` on every answer, `u-<use id>`, `cat-<area>`, `dept-<id>`, `h-type`, `h-name`, `h-role`, `h-country`.
+- `.record()`, `.store()`, `.resultModel()`, `.pdfModel(kind)` ('result' | 'answers'), `.pdfName(kind)`, `.fileDoc()`, `.openFileText(text)`, `.shareDoc()` (`.summaryText()` was removed in v2.5 with Copy summary).
+- Stable ids: `#begin`, `#next`, `#back`, `#change`, `#edit`, `#new-top`, `#new-check`, `#pdf` (Download result (PDF); on the stop screen Download (PDF)), `#pdf-answers`, `#save-file`, `#to-register`, `#share-btn`, `#unshare`, `#file-open`, `a-<question id>-<answer>` on every answer, `u-<use id>`, `cat-<area>`, `dept-<id>`, `h-type`, `h-name`, `h-role`, `h-country`.
 
 ## Proof
 
