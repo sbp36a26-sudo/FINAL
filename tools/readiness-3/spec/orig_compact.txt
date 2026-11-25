@@ -1,0 +1,859 @@
+## rm-1 [G] Demand forecasting for rooms (by day, guest type and room type)
+   finding: Well tailored: forecast accuracy, override, 1 yr history. pe1 is double (RM owns + GM signs off strategy).
+  pe1 GM: Is it agreed that the revenue manager owns the tool and reviews forecasts, and the general manager (GM) signs off strategy?
+  sk1 Depa: Can the people involved read how accurate forecasts are, spot wrong input data and change a forecast by hand, giving a reason?
+  fi1 Fina: Do you know what the revenue management system (RMS) subscription (often charged per room) and set-up fee will cost your hotel?
+  te1 IT: Do you have a revenue management system (RMS) and a two-way link to your property management system (PMS) or central reservation system (CRS), or has your provider confirmed this is possible?
+  da1 Depa: Is at least one year of clean booking, pickup (new bookings over time) and cancellation history, by guest type, digital, up to date and ready to use?
+  or1 GM: Are there written rules for when staff may change the tool's forecasts by hand?
+## rm-2 [F] Dynamic room pricing, including automatic rate publishing
+   finding: Good tailoring (floors/ceilings, autopilot). q7 and q8 overlap (both about written limits of automatic mode); q2 and q7 also overlap.
+  pe1 GM: Will the revenue manager be in charge of this tool?
+  pe2 GM: Is it agreed that the owner or general manager (GM) sets the lowest and highest prices the tool may use in automatic mode?
+  sk1 Depa: Do the people involved know enough about pricing strategy, and can they judge when to switch off automatic pricing?
+  fi1 Fina: Do you know what the revenue management system (RMS) subscription and channel manager (tool that sends rates to booking sites) fees will cost your hotel?
+  te1 IT: Does the revenue management system (RMS) send rates in real time to your property management system (PMS) or central reservation system (CRS) and channel manager, or is this confirmed possible?
+  da1 Depa: Are forecasts and competitor rates, plus cleanly set-up rate plans and booking restrictions, digital, up to date and ready to use?
+  or1 GM: Are the lowest and highest allowed prices and the limits of automatic mode written down, and, in managed hotels, is the owner's approval recorded?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## rm-3 [G] Competitor rate tracking and market insight with machine learning
+   finding: Tailored (comp set, room mapping, scraping terms).
+  pe1 GM: Will the revenue or sales manager be in charge of this tool?
+  sk1 Depa: Can the people involved choose a sensible group of competitor hotels to compare with (competitive set)?
+  fi1 Fina: Do you know what the rate-shopping subscription (a tool that collects competitors' prices) will cost your hotel?
+  te1 IT: Do competitor rates feed into your revenue management system (RMS) or a dashboard, or has your provider confirmed this is possible?
+  da1 Depa: Are your chosen competitor hotels (competitive set) and the matching of their room types to yours digital, up to date and ready to use?
+  or1 GM: Have you checked the terms on data scraping (automatic copying of data from websites) in the vendor contract?
+## rm-4 [G] AI assistants for revenue questions, reports and price explanations
+   finding: Fits a GenAI copilot (check answers against reports, already paying?).
+  pe1 GM: Will the revenue team use this tool, and have they been shown how?
+  sk1 Depa: Do the people involved know how to ask the tool good questions (prompting), and can they check its answers against reports?
+  fi1 Fina: Have you checked whether you already pay for this, since the team notes it is usually an add-on to the revenue management system (RMS) or reporting (BI) licence?
+  te1 IT: Is the assistant (copilot) connected to your revenue management system (RMS) and property management system (PMS) data, or is this confirmed possible?
+  da1 Depa: Is the same data as in the revenue management system (RMS) available, with clear definitions of key figures (KPIs), digital and up to date?
+  or1 GM: Is it in place and written down that staff must check the numbers before acting on them?
+## rm-5 [F] AI agents that watch revenue, recommend and act
+   finding: q2 escalation owner and q8 switch-off person overlap; q6 is a four-barrelled data question ("digital, reliable, real time, ready").
+  pe1 GM: Is it agreed that the senior revenue lead supervises the AI agents (tools that act by themselves) every day?
+  pe2 GM: Is it clear which named person problems are passed up to (escalation owner)?
+  sk1 Depa: Can the people involved set what the agents are allowed to do and check what they have done?
+  fi1 Fina: Do you know what the usage-based fees or premium plan, and the project to connect it to your systems, will cost your hotel?
+  te1 IT: Does the tool have live access to read and change data in your revenue management system (RMS), property management system (PMS) and channel manager, or is this confirmed possible?
+  da1 Depa: Is the data across your systems digital, reliable, available in real time and ready to use?
+  or1 GM: Is it written down that a person must approve before agents change rates, and is every agent action logged?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## rm-6 [G] Total revenue and budget forecasting, including function space
+   finding: Tailored (one revenue definition, all outlets).
+  pe1 GM: Will the finance and revenue leads be in charge of this tool together?
+  sk1 Depa: Do the people involved know enough about building budgets from forecasts and thinking through scenarios ('what if' cases)?
+  fi1 Fina: Do you know what the business intelligence (BI, reporting) and forecasting subscription will cost your hotel?
+  te1 IT: Has it been confirmed that you can link your revenue management system (RMS), property management system (PMS), sales and catering system and point-of-sale system (POS)?
+  da1 Depa: Is revenue history for all outlets and function space (meeting and event rooms) digital, up to date and ready to use?
+  or1 GM: Have all departments agreed on one shared definition of revenue?
+## rm-7 [F] Price optimisation for upsells and extras
+   finding: da1 "rate gaps" unclear (team note asks to confirm). Missing personalisation question.
+  pe1 GM: Is it agreed that the revenue or front-office manager owns the offers?
+  sk1 Depa: Do the people involved know enough about designing offers, and can they read how many guests accept them (conversion data)?
+  fi1 Fina: Do you know what an upsell platform (a tool that sells upgrades and extras), paid by commission or subscription, will cost your hotel?
+  te1 IT: Is the tool linked to room stock in your property management system (PMS), the revenue management system (RMS) forecast and guest messaging, or is this confirmed possible?
+  da1 Depa: Are room-type stock, rate gaps (price differences between room types) and prices for extras digital, up to date and ready to use?
+  or1 GM: Are there written rules on which offers the tool may price by itself?
+## rm-8 [F] Spa and wellness yield management and demand-based treatment prices
+   finding: or1 double: pricing rules + staff rota impact.
+  pe1 GM: Will the spa manager, together with the revenue manager, be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about planning spa schedules to earn the most from demand (yield thinking)?
+  fi1 Fina: Do you know what the add-on to your spa system will cost your hotel?
+  te1 IT: Is your spa booking system linked to your property management system (PMS), or has your provider confirmed this is possible?
+  da1 Depa: Are treatment bookings, therapist schedules and no-show records digital, up to date and ready to use?
+  or1 GM: Are the pricing rules and their effect on staff rotas agreed and written down?
+## rm-9 [F] Rate parity checks (same price on all channels) and automatic matching
+   finding: Draft row. Good content (floor price, who follows up) but or1 triple-barrelled; overlaps with x-auto.
+  pe1 GM: Is it agreed that the revenue or e-commerce (online sales) manager owns the alerts and the rules for matching prices?
+  sk1 Depa: Can the people involved read rate parity reports (whether prices match across channels), and do they know each channel's contract terms?
+  fi1 Fina: Do you know what the subscription, often charged per hotel, will cost your hotel?
+  te1 IT: Is the tool linked to your booking engine, channel manager and a rate-shopping feed (collected online prices), or is this confirmed possible?
+  da1 Depa: Are your own rates by channel, room type and booking conditions digital, up to date and ready to use?
+  or1 GM: Are there written rules for when a lower rate is matched, with a lowest allowed price, and for who follows up with the channel?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## res-1 [G] AI voice agents for reservation and front-desk calls (hotel and central lines)
+   finding: Strong: AI disclosure to callers (Art. 50(1)), call-recording consent, limits. te1 jargon (SIP).
+  pe1 GM: Is it agreed that the reservations manager supervises the tool, and staff take transferred and complex calls?
+  sk1 Depa: Do the people involved know how to keep the call scripts and knowledge base up to date, and how to review calls?
+  fi1 Fina: Do you know what the usage fees (per minute or per call) plus set-up will cost your hotel?
+  te1 IT: Is the tool linked to your phone system (SIP) and able to read and write bookings in your property management system (PMS) or central reservation system (CRS), or confirmed possible?
+  da1 Depa: Are up-to-date FAQs (common guest questions) and policies, plus live rates and availability, digital and ready to use?
+  or1 GM: Is it agreed how you will tell callers they are speaking to AI?
+  or2 GM: Is consent to record calls in place and written down?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## res-2 [G] AI handling of reservation emails and offers
+   finding: Fits drafts-with-review. or1 = human review before prices go out: the right control.
+  pe1 GM: Is it agreed that the reservations agents review the drafts the tool writes?
+  sk1 Depa: Can the people involved check offers drafted by AI before they are sent?
+  fi1 Fina: Do you know what the subscription, charged per user or by email volume, will cost your hotel?
+  te1 IT: Is the tool connected to your mailbox and to live availability and rates in your property management system (PMS) or central reservation system (CRS), or is this confirmed possible?
+  da1 Depa: Are rate rules, room descriptions and offer templates digital, up to date and ready to use?
+  or1 GM: Is it in place and written down that a person checks prices before they are sent?
+## res-3 [F] AI channel management (sending rates and availability to booking channels)
+   finding: Generic "AI channel management": is it AI at all? or1 "written contract terms with OTAs (parity)" not about this tool.
+  pe1 GM: Will the revenue or distribution manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about channel strategy and checking that prices match across channels (parity)?
+  fi1 Fina: Do you know what the channel manager subscription (tool that sends rates and availability to booking sites) will cost your hotel?
+  te1 IT: Is your channel manager connected two-way to your property management system (PMS) and revenue management system (RMS), or is this confirmed possible?
+  da1 Depa: Is the matching of your rooms and rates to each channel's codes (mapping) clean, digital and up to date?
+  or1 GM: Are your contract terms with online travel agencies (OTAs) on rate parity (same price everywhere) written down?
+## res-4 [G] AI assistant and personalisation in the website booking engine
+   finding: Cookie/personalisation consent asked; fits.
+  pe1 GM: Will the e-commerce or marketing manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about analysing how many website visitors book (conversion) and keeping content up to date?
+  fi1 Fina: Do you know what the add-on to your booking engine (website booking tool) will cost your hotel?
+  te1 IT: Is your booking engine linked to your property management system (PMS) and customer relationship management system (CRM), or is this confirmed possible?
+  da1 Depa: Are hotel content, the list of extras for sale and guest behaviour data (collected with cookie consent) digital, up to date and ready to use?
+  or1 Data: Has a named person checked what the law requires on consent for cookies and personalisation?
+## res-5 [G] Predicting cancellations and no-shows to set overbooking
+   finding: Tailored (walk policy, history by channel).
+  pe1 GM: Is it agreed that the revenue manager sets the limits for overbooking?
+  sk1 Depa: Can the people involved weigh the risk of having to send a guest to another hotel (walk) against the extra revenue?
+  fi1 Fina: Have you checked whether you already pay for this, since the team notes it is usually part of the revenue management system (RMS)?
+  te1 IT: Is your revenue management system (RMS) linked to your property management system (PMS), or is this confirmed possible?
+  da1 Depa: Is cancellation and no-show history by channel and room type digital, up to date and ready to use?
+  or1 GM: Is there a written policy, agreed with front office, for moving guests to another hotel when overbooked (walk policy)?
+## res-6 [G] AI for group rooming lists, rate loading and reservation tasks
+   finding: Human check before bulk changes: right control.
+  pe1 GM: Is it agreed that the groups or reservations coordinator checks the tool's output?
+  sk1 Depa: Do the people involved know enough about group contracts and how rate codes are structured?
+  fi1 Fina: Do you know what an add-on to your property management system (PMS), or a separate AI tool, will cost your hotel?
+  te1 IT: Can the tool make changes to group room blocks and rate plans in your property management system (PMS), or is this confirmed possible?
+  da1 Depa: Are a clean rate-code structure and rooming-list (group guest list) formats digital, up to date and ready to use?
+  or1 GM: Is it in place and written down that a person checks before many bookings are changed at once?
+## res-7 [F] Bookable hotel apps inside AI assistants (such as ChatGPT apps)
+   finding: Jargon (MCP, API) in sk1/te1; x-auto applies. Missing who is the provider of the conversational layer.
+  pe1 GM: Will the e-commerce or distribution lead be in charge of this tool?
+  sk1 Depa: Do the people involved understand booking channels inside AI assistants and MCP (a standard way to connect systems to AI assistants)?
+  fi1 Fina: Do you know what building it or paying a provider, plus any commission, will cost your hotel?
+  te1 IT: Do you have an API (a link that lets two systems exchange data) or MCP server (the same for AI assistants) sharing live rates and availability, or confirmed possible?
+  da1 Depa: Are your hotel content and rates structured, current, digital and ready to use?
+  or1 GM: Are there written brand or contract rules for new sales channels?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## res-8 [W] AI scoring and analysis of reservation calls
+   finding: Legally sensitive and under-asked. Scoring/evaluating staff calls = monitoring and evaluating performance (Annex III 4(b), high-risk from 2 Dec 2027). or1 is triple-barrelled (monitoring rules + works council + no emotion analysis). Emotion inference at work i
+  pe1 GM: Is it agreed that the reservations manager uses the call scores to coach staff?
+  sk1 Depa: Do the people involved know enough about coaching staff using call data?
+  fi1 Fina: Do you know what the usage fees, charged per call, will cost your hotel?
+  te1 IT: Is the tool linked to your phone and call-recording systems, or is this confirmed possible?
+  da1 Depa: Are call recordings digital and ready to use, and are your service standards defined?
+  or1 GM: Are rules on monitoring staff written down, has the works council (staff representatives) been consulted, and is it written that staff emotions will not be analysed?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal privacy risk check) been done for this tool?
+## sm-1 [G] AI-written marketing text and translation
+   finding: Light GenAI: fits. or1 duplicates must-have 9 (staff AI rules).
+  pe1 GM: Will the marketing staff be in charge of this tool?
+  pe2 GM: Is it agreed that one person checks that texts match the brand's tone?
+  sk1 Depa: Do the people involved know enough about writing instructions for AI (prompting) and editing its drafts?
+  fi1 Fina: Have you checked whether you already pay for this, since the team notes the cost is low (an AI tool licence per user)?
+  te1 IT: Have you decided whether you need the optional plug-in for your website content management system (CMS)?
+  da1 Depa: Are your brand guidelines and approved facts about the hotel digital, up to date and ready to use?
+  or1 GM: Is there a written staff policy on using AI that forbids putting guest data into public tools?
+## sm-2 [G] Handling group and event enquiries and requests for proposals
+   finding: Human approval of prices: right.
+  pe1 GM: Is it agreed that the sales manager reviews proposals?
+  sk1 Depa: Do the people involved know enough about pricing proposals, and can they check what the AI produces?
+  fi1 Fina: Do you know what the add-on to your sales platform will cost your hotel?
+  te1 IT: Is the tool linked to your sales and catering system, inbox and Cvent, or is this confirmed possible?
+  da1 Depa: Are your list of meeting and event rooms (function space), menus and pricing rules digital, up to date and ready to use?
+  or1 GM: Is it in place and written down that a person approves prices?
+## sm-3 [G] Guest grouping, predictive targeting, loyalty and personalised email campaigns
+   finding: Consent and dedup asked: fits.
+  pe1 GM: Will the customer relationship management (CRM) or loyalty manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about grouping guests (segmentation) and analysing campaign results?
+  fi1 Fina: Do you know what the customer relationship management system (CRM) or customer data platform (CDP) subscription will cost your hotel?
+  te1 IT: Is your customer relationship management system (CRM) fed from your property management system (PMS), booking engine and point-of-sale system (POS), or is this confirmed possible?
+  da1 Depa: Are your guest profiles combined into one per guest, free of duplicates, with marketing consent, digital and up to date?
+  or1 Data: Has a named person checked what data protection law (GDPR) requires for managing guest consent?
+## sm-4 [F] AI-made images and video for marketing
+   finding: Asks "no images that misrepresent the hotel" (consumer-law angle) but not AI labelling. Per C/2026/6005, an AI image of a product that may mislead about its real look is a deep fake: deployer must disclose (Art. 50(4), from 2 Aug 2026).
+  pe1 GM: Will the marketing team be in charge of this tool?
+  pe2 GM: Is it agreed that the brand owner signs off?
+  sk1 Depa: Do the people involved know how to instruct AI to make images (prompting), and can they spot misleading images?
+  fi1 Fina: Do you know what the AI tool licence will cost your hotel?
+  te1 IT: Is it confirmed that this works without a link to your hotel systems?
+  da1 Depa: Are your brand assets digital and up to date, and do you hold the rights to the source images?
+  or1 GM: Is it in place and written down that no images may misrepresent the hotel?
+## sm-5 [G] Optimising paid ads, metasearch and automated ad buying
+   finding: Fits (ROAS, consent, agency contract). Jargon ROAS.
+  pe1 GM: Will the digital marketing manager or agency be in charge of this tool?
+  sk1 Depa: Can the people involved read return on ad spend (ROAS), and also set budgets and targets?
+  fi1 Fina: Do you know what the media spend (money spent on ads) plus the agency or tool fee will cost your hotel?
+  te1 IT: Is conversion tracking (which ads lead to bookings) set up on your booking engine, or is this confirmed possible?
+  da1 Depa: Is conversion data (which ads lead to bookings), collected with consent, digital, up to date and ready to use?
+  or1 Data: Has a named person checked what the law requires on cookie consent?
+  or2 GM: Is there a written contract with the agency?
+## sm-6 [F] Visibility in search engines and AI assistants (SEO, GEO)
+   finding: or1 "Is a named person responsible for acting on each alert or report?" is generic copy (A8 template); SEO/GEO is not alerts.
+  pe1 GM: Will the marketing or e-commerce lead be in charge of this tool?
+  sk1 Depa: Do the people involved understand what makes a hotel visible in AI search tools?
+  fi1 Fina: Do you know what the monitoring tool subscription and the content work will cost your hotel?
+  te1 IT: Does your website have structured data (labels machines can read), and a bookable API (a link that lets systems exchange data) where used, or is this confirmed possible?
+  da1 Depa: Are your hotel content and reviews complete, consistent, digital and up to date?
+  or1 GM: Is a named person responsible for acting on each alert or report?
+## sm-7 [G] Finding, qualifying and scoring sales leads (groups, events, companies)
+   finding: GDPR source of prospect data: right.
+  pe1 GM: Will the sales team be in charge of this tool?
+  sk1 Depa: Can the people involved judge how promising a lead is, and question the tool's scores?
+  fi1 Fina: Do you know what the add-on to your sales platform will cost your hotel?
+  te1 IT: Do you have a customer relationship management system (CRM) or sales system, or has your provider confirmed it is possible?
+  da1 Depa: Are past leads and records of won and lost deals digital, up to date and ready to use?
+  or1 GM: Have you checked where your data on potential clients comes from, under data protection law (GDPR)?
+## fo-1 [G] Digital check-in with ID document scan (online, mobile or kiosk)
+   finding: ID registration rules, retention, DPIA: well tailored. or1 double (retention + GDPR basis).
+  pe1 GM: Will the front-office manager be in charge of this tool?
+  pe2 GM: Is it agreed that desk staff handle the cases the system cannot deal with?
+  sk1 Depa: Can the people involved deal with failed scans and with ID checks?
+  fi1 Fina: Do you know what the fees (per check-in or subscription), plus kiosk hardware if used, will cost your hotel?
+  te1 IT: Is the tool linked to your property management system (PMS) and the police guest-reporting system, or is this confirmed possible?
+  da1 Data: Has a named person checked that ID data is handled as national guest registration rules require?
+  or1 Data: Has a named person checked what the law requires on how long ID images are kept, and on the legal basis under data protection law (GDPR)?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal privacy risk check) been done for this tool?
+## fo-2 [G] AI room assignment
+   finding: Override and checking: fits.
+  pe1 GM: Will the front-office manager be in charge of this tool?
+  sk1 Depa: Can the people involved judge when to trust the tool's room choices and when to change them?
+  fi1 Fina: Have you checked whether you already pay for this, since the team notes it is usually part of the property management system (PMS) or an upsell tool?
+  te1 IT: Can the tool see room stock in your property management system (PMS) and the housekeeping status of rooms, or is this confirmed possible?
+  da1 Depa: Are guest preferences and stay history digital, up to date and ready to use?
+  or1 GM: Is it written down that staff may change the room the tool chooses?
+  or2 GM: Is it agreed who checks the tool's room choices, and how often?
+## fo-3 [F] Biometric face check at check-in (selfie matched to ID photo)
+   finding: Data protection well covered (special-category data, explicit consent, alternative, DPIA). But q6 and q7 overlap. Legally, 1:1 selfie-to-ID verification is excluded from Annex III 1(a), so it is not high-risk under the AI Act; the main law is GDPR Art. 9.
+  pe1 GM: Will the front-office manager be in charge of this tool?
+  pe2 GM: Is there a way in place for staff to check in guests who refuse the face check?
+  sk1 Depa: Can the people involved handle guests who refuse and faces that fail to match?
+  fi1 Fina: Do you know what the fee per verification, plus kiosk hardware if used, will cost your hotel?
+  te1 IT: Is an identity-checking service linked to your check-in process, or is this confirmed possible?
+  da1 Data: Has a named person checked what the law requires for biometric data (face data, a specially protected category)?
+  or1 Data: Has a named person checked the law on explicit consent and on offering a check-in option without biometrics?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal privacy risk check) been done for this tool?
+## fo-4 [F] AI assistants and agents for the front desk and property management system
+   finding: q7 "Have you limited what the AI agents can change?" duplicates q8 x-auto. q1 double.
+  pe1 GM: Will the front-office staff use this tool, and have they been shown how?
+  pe2 GM: Is it agreed that a supervisor checks what the AI agents do?
+  sk1 Depa: Do the people involved know how to instruct the AI (prompting), and can they check changes it makes in the property management system (PMS)?
+  fi1 Fina: Do you know what the property management system (PMS) add-on or usage fee will cost your hotel?
+  te1 IT: Is the AI built into or connected to your property management system (PMS) with rights to make changes, or is this confirmed possible?
+  da1 Depa: Are your standard operating procedures (SOPs) in digital form, up to date and ready to use?
+  or1 GM: Have you limited what the AI agents can change?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## fo-5 [G] Upselling at check-in (desk, kiosk, before arrival)
+   finding: Staff incentives, price rules: fits.
+  pe1 GM: Will the front-office manager be in charge of this tool?
+  pe2 GM: Are incentives for staff in place?
+  sk1 Depa: Do the people involved know enough about sales technique, and can they read data on offers?
+  fi1 Fina: Do you know what the commission or subscription will cost your hotel?
+  te1 IT: Is the tool linked to room stock in your property management system (PMS) and to a guest messaging channel, or is this confirmed possible?
+  da1 Depa: Are available upgrades and prices for extras digital, up to date and ready to use?
+  or1 GM: Are there written price rules?
+## fo-6 [F] Guest risk scoring before arrival (ID, behaviour, past stays)
+   finding: Draft row. Good intent (no automatic refusals, staff decide). Missing the decisive legal checks: GDPR Art. 22 (solely automated decisions) and the Art. 5(1)(c) social-scoring ban if data from unrelated contexts (e.g. social media, other businesses) feeds the s
+  pe1 GM: Is it agreed that the front-office manager reviews every flagged booking, and that staff decide, not the score?
+  sk1 Depa: Can the people involved read a risk score, and do they know what it must not be used for?
+  fi1 Fina: Do you know what the subscription or fee per check will cost your hotel?
+  te1 IT: Is the tool linked to your property management system (PMS) or booking engine, and to ID scanning, or is this confirmed possible?
+  da1 Depa: Is booking and stay history digital, up to date and ready to use?
+  da2 Data: Has a named person checked what the law requires for ID data?
+  or1 GM: Are there written rules on when a flag may lead to refusing a guest, with no automatic refusals?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal privacy risk check) been done for this tool?
+## fo-7 [W] AI avatar or hologram receptionist (check-in kiosk)
+   finding: Draft row. A talking avatar is the textbook Art. 50(1) case (C/2026/6005 lists AI avatars), yet there is no question on telling guests it is AI, while gx-2/gx-5/res-1/fb-6 have one.
+  pe1 GM: Is it agreed that the front-office lead monitors the kiosk, and staff take over when a guest asks?
+  sk1 Depa: Can the people involved keep the avatar's knowledge base up to date and review its conversations?
+  fi1 Fina: Do you know what the kiosk hardware plus software subscription will cost your hotel?
+  te1 IT: Do you have the kiosk, a key-card encoder and a two-way link to your property management system (PMS), or is this confirmed possible?
+  da1 Depa: Are your hotel FAQs (common guest questions) and check-in rules complete, current, digital and ready to use?
+  or1 GM: Are rules for handing a guest over to a person written down, and can guests always reach staff?
+  x-hw Owne: Is a capital budget approved for the equipment, covering buying or leasing, installing and maintaining it?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## fo-8 [F] Lost-and-found logging and matching guest claims
+   finding: Draft row. sk1, da1 and or1 each pack 2-3 things (or1: retention + who releases + DPA).
+  pe1 GM: Is it agreed that the front-office or housekeeping supervisor owns the log of found items?
+  sk1 Depa: Can the people involved photograph and log items in the app, and check the suggested description and any match before an item is released?
+  fi1 Fina: Do you know what it will cost your hotel: a subscription per hotel or a fee on return shipping, depending on the provider?
+  te1 IT: Do staff have phones or tablets for this, with an optional link to your property management system (PMS), or is this confirmed possible?
+  da1 Depa: Are photos of found items with place and time, and guest claims with name, address and stay details, digital and up to date?
+  or1 GM: Are these written down: how long photos and claims are kept, who confirms a match and releases items, and a data-processing agreement with the provider?
+## gx-1 [G] Review and guest-feedback analysis (including positive or negative tone)
+   finding: Fits. Note: text sentiment from reviews is not "emotion recognition" under the AI Act (needs biometric data, Art. 3(39)).
+  pe1 GM: Is it agreed that the guest-experience or quality manager acts on results?
+  sk1 Depa: Can the people involved turn the findings into actions?
+  fi1 Fina: Do you know what the online reputation tool subscription will cost your hotel?
+  te1 IT: Has it been confirmed that you can connect review sites and guest surveys?
+  da1 Depa: Are reviews and survey responses digital, up to date and ready to use?
+  or1 GM: Is there a written rule for handling urgent complaints?
+## gx-2 [G] AI chat assistant for guests in several languages, before booking and during the stay (website, WhatsApp, booking-site inbox)
+   finding: Best-tailored set: disclosure, hand-off, limits. Disclosure question (q6) is a legal duty but scored like any other.
+  pe1 GM: Is it agreed that the guest-service lead monitors conversations, and staff take over when the assistant passes a guest to them?
+  sk1 Depa: Can the people involved keep the knowledge base (the answers the tool uses) up to date and review written records of conversations?
+  fi1 Fina: Do you know what the subscription will cost your hotel, per property or per conversation?
+  te1 IT: Do you have messaging channels and a link to your property management system (PMS) for bookings and requests, or has your provider confirmed this is possible?
+  da1 Depa: Are a complete, current hotel FAQ (frequently asked questions) and policies, and also conversation records, digital, up to date and ready to use?
+  or1 GM: Is it agreed how you will tell guests they are dealing with AI?
+  or2 GM: Are there written rules for when the tool passes a guest to a staff member?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## gx-3 [G] Guest review replies drafted by AI
+   finding: Drafts + human approval: right control.
+  pe1 GM: Is it agreed that the manager approves replies?
+  sk1 Depa: Can the people involved adjust the tone of replies and make sure they do not sound standard and impersonal?
+  fi1 Fina: Have you checked whether you already pay for this (team's note: often included in your online-reputation tool)?
+  te1 IT: Do you have access to the review platforms, or has your provider confirmed this is possible?
+  da1 Depa: Are your reviews and your brand's tone of voice digital, up to date and ready to use?
+  or1 GM: Is a rule that a person approves each reply before it is posted in place and written down?
+## gx-4 [G] Guest personalisation using one combined guest profile
+   finding: GDPR basis for profiling: right.
+  pe1 GM: Will the customer relationship management (CRM) lead or the guest-experience lead be in charge of this tool?
+  sk1 Depa: Can the people involved use guest profiles without going too far with personalisation?
+  fi1 Fina: Do you know what a customer relationship management (CRM) or customer data platform (CDP) subscription, and the project to connect it, will cost your hotel?
+  te1 IT: Do you have, or has your provider confirmed as possible, one combined guest profile across property management (PMS), point-of-sale (POS), spa, customer relationship (CRM) and messaging systems?
+  da1 Depa: Is a single profile for each guest, with preferences and consent recorded, digital, up to date and ready to use?
+  or1 Data: Has a named person checked the GDPR (EU data protection law) legal basis and consent needed for building guest profiles?
+## gx-5 [G] Digital concierge and recommendations during the stay
+   finding: Disclosure + partner terms: fits.
+  pe1 GM: Will the concierge or guest-service lead be in charge of this tool?
+  sk1 Depa: Can the people involved choose and maintain the recommendations the tool gives?
+  fi1 Fina: Do you know what the subscription, and any commission on bookings, will cost your hotel?
+  te1 IT: Do you have messaging or an app that can book hotel services, or has your provider confirmed this is possible?
+  da1 Depa: Are your menus, opening hours and local partner details digital and ready to use, and are they kept up to date?
+  or1 GM: Is it agreed how you will tell guests they are dealing with AI?
+  or2 GM: Are there written partner terms?
+## gx-6 [F] In-room voice assistant
+   finding: Privacy/microphone and DPIA well covered, but no AI-disclosure question for a voice assistant (Art. 50(1); C/2026/6005 gives the voice-assistant example).
+  pe1 GM: Will the rooms division lead or the IT lead be in charge of this tool?
+  pe2 GM: Is it agreed that housekeeping carries out the guests' requests?
+  sk1 Depa: Do the people involved know enough about setting up and managing the devices?
+  fi1 Fina: Do you know what the devices for each room plus a subscription will cost your hotel?
+  te1 IT: Do you have in-room Wi-Fi and links to your property management system (PMS), task tool and room controls, or has your provider confirmed this is possible?
+  da1 Depa: Are your list of guest services and the room-control setup (which controls in each room the assistant operates) digital, up to date and ready to use?
+  or1 GM: Are a privacy notice and an opt-out (a way for guests to say no) for in-room microphones in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## fb-1 [G] AI for event and banqueting sales (enquiries, proposals, contracts)
+   finding: Human approval of contracts: right.
+  pe1 GM: Will the events or banqueting sales manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about pricing proposals and checking contracts?
+  fi1 Fina: Do you know what the add-on to your sales platform will cost your hotel?
+  te1 IT: Do you have a sales and catering system and an inbox, or has your provider confirmed this is possible?
+  da1 Depa: Are your list of event spaces, menus and costings digital, up to date and ready to use?
+  or1 GM: Is a rule that a person approves contracts in place and written down?
+## fb-2 [F] Room-service and restaurant or bar ordering through chat or voice assistants
+   finding: Allergen checks: good. Missing AI disclosure for chat/voice ordering (Art. 50(1)), present in fb-6 and gx-2.
+  pe1 GM: Will the food and beverage (F&B) manager be in charge of this tool?
+  pe2 GM: Is it agreed that the staff in the restaurants and bars receive the orders?
+  sk1 Depa: Can the people involved handle orders that do not fit the usual process?
+  fi1 Fina: Do you know what the add-on to your messaging or voice platform will cost your hotel?
+  te1 IT: Do you have a link to your point-of-sale system (POS) and kitchen display screens, or has your provider confirmed this is possible?
+  da1 Depa: Are your current menus, prices and allergen information digital, up to date and ready to use?
+  or1 GM: Are checks that allergen information is correct in place and written down?
+## fb-3 [F] Improving menus and food and drink prices (menu engineering)
+   finding: or1 "written limits for what the tool may set by itself" is A3 copy; menu engineering usually recommends, it does not set.
+  pe1 GM: Will the food and beverage (F&B) manager and the chef be in charge of this tool?
+  sk1 Depa: Do the people involved know the basics of menu engineering (judging dishes by popularity and profit)?
+  fi1 Fina: Do you know what an analytics add-on to your point-of-sale system (POS) will cost your hotel?
+  te1 IT: Do you have a point-of-sale system (POS) that records sales for each menu item, or has your provider confirmed this is possible?
+  da1 Depa: Are sales for each menu item and recipe costs digital, up to date and ready to use?
+  or1 GM: Are there written limits on what the tool may set by itself, and on who can overrule it?
+## fb-4 [F] QR code or mobile ordering, with AI suggestions of extra items and automatic menu price changes
+   finding: or1 "written price-change rules" vague; automatic menu price changes need consumer price-display checks.
+  pe1 GM: Will the restaurant or bar (outlet) manager be in charge of this tool?
+  sk1 Depa: Can the people involved read the data on suggested extra items (upselling)?
+  fi1 Fina: Do you know what the subscription or fee per order will cost your hotel?
+  te1 IT: Do you have a link to your point-of-sale system (POS), or has your provider confirmed this is possible?
+  da1 Depa: Are your menus, prices and item details digital, up to date and ready to use?
+  or1 GM: Are there written rules for changing prices?
+## fb-5 [G] Robots that deliver and serve (amenities, room service, restaurants and bars)
+   finding: Safety rules, lifts, staff: fits. pe2/or1 double.
+  pe1 GM: Will the operations lead be in charge of this tool?
+  pe2 GM: Is it agreed that staff load the robots and watch over them?
+  sk1 Depa: Do the people involved know enough about running the robots and fixing simple problems?
+  fi1 Fina: Do you know what buying or leasing the robots plus maintenance will cost your hotel?
+  te1 IT: Do you have Wi-Fi coverage and connections that let robots use lifts and doors, or has your provider confirmed this is possible?
+  da1 Depa: Are floor maps digital, up to date and ready to use?
+  or1 GM: Are guest-safety rules and communication to staff in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## fb-6 [G] Restaurant table bookings: AI that answers calls and AI table planning
+   finding: Disclosure + limits: right.
+  pe1 GM: Will the restaurant manager be in charge of this tool?
+  sk1 Depa: Can the people involved set the rules for allocating tables?
+  fi1 Fina: Do you know what this will cost your hotel, whether paid per use or by subscription?
+  te1 IT: Do you have a phone system and a table-management system, or has your provider confirmed this is possible?
+  da1 Depa: Are your table plan, opening hours and policies digital, up to date and ready to use?
+  or1 GM: Is it agreed how you will tell callers they are dealing with AI?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## hk-1 [F] Staff tasks and messages in several languages (voice or chat turned into tasks, translation)
+   finding: or1 "staff data and messaging rules" vague.
+  pe1 GM: Is it agreed that the housekeeping supervisors act on tasks?
+  sk1 Depa: Can the people involved use the app and explain it to staff who speak different languages?
+  fi1 Fina: Do you know what the operations-platform subscription per property will cost your hotel?
+  te1 IT: Do you have a task or operations platform linked to your property management system (PMS), or has your provider confirmed this is possible?
+  da1 Depa: Are your lists of rooms and locations digital, up to date and ready to use?
+  or1 GM: Are there written rules on staff data and staff messaging?
+## hk-2 [G] Self-driving floor-cleaning robots
+   finding: Freed time, lifts, maintenance: fits.
+  pe1 GM: Will the housekeeping manager be in charge of this tool?
+  pe2 GM: Is it agreed that staff move to other tasks?
+  sk1 Depa: Do the people involved know enough about handling the robots and simple maintenance?
+  fi1 Fina: Do you know what buying or leasing the robots plus servicing will cost your hotel?
+  te1 IT: Do you have Wi-Fi, a lift connection (for hotels with several floors) and a central management system, or has your provider confirmed this is possible?
+  da1 Depa: Are floor maps and cleaning schedules digital, up to date and ready to use?
+  or1 GM: Is there a written plan for how staff will use the time saved?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## hk-3 [F] Linen and amenity forecasting, or linen tracking with RFID (radio) tags
+   finding: Title mixes two uses (forecasting vs RFID tracking); questions assume RFID (capex, readers) even if the hotel picks forecasting.
+  pe1 GM: Will the housekeeping or laundry manager be in charge of this tool?
+  sk1 Depa: Can the people involved read forecasts of par levels (the stock you should keep on hand)?
+  fi1 Fina: Do you know what RFID (radio-frequency identification) tags and readers, a one-off equipment cost, plus a subscription will cost your hotel?
+  te1 IT: Do you have RFID (radio-frequency identification) readers and a link to the laundry and your property management system (PMS), or has your provider confirmed this is possible?
+  da1 Depa: Are your occupancy forecast and linen counts digital, up to date and ready to use?
+  or1 GM: Are changes to supplier or laundry contracts in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## hk-4 [G] Cleaning and room status based on sensors that detect if a room is occupied
+   finding: Guest privacy notice for occupancy sensing: right.
+  pe1 GM: Will the housekeeping manager be in charge of this tool?
+  sk1 Depa: Can the people involved adjust cleaning plans based on sensor data?
+  fi1 Fina: Do you know what the sensors or guest room management system (GRMS) equipment, a one-off equipment cost, will cost your hotel?
+  te1 IT: Do you have guest room management system (GRMS) or door-lock data linked to the housekeeping app, or has your provider confirmed this is possible?
+  da1 Depa: Is room status from sensors digital, up to date and ready to use?
+  or1 GM: Is there a written privacy notice for guests about sensors that detect whether a room is occupied?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## hk-5 [F] Room inspection with image recognition (computer vision)
+   finding: Team note: unclear which equipment needs capital budget (it is an app). x-hw likely wrong here.
+  pe1 GM: Is it agreed that supervisors take photos and the manager reviews the problems the tool flags?
+  sk1 Depa: Do the people involved know enough about taking photos the same way every time?
+  fi1 Fina: Do you know what the app subscription will cost your hotel?
+  te1 IT: Do you have mobile devices and Wi-Fi, or has your provider confirmed this is possible?
+  da1 Depa: Are your room standards set out as images (photos of how a room should look), digital, up to date and ready to use?
+  or1 GM: Is a rule against taking photos of guests or their belongings in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## hk-6 [W] Planning room-cleaning order, staff assignments and workloads
+   finding: Assigning rooms and workloads to individual attendants can be "allocating tasks based on individual behaviour or personal traits" or "monitoring and evaluating performance" (Annex III 4(b), high-risk from 2 Dec 2027). Not asked; no sens flag, so nothing holds 
+  pe1 GM: Will the executive housekeeper be in charge of this tool?
+  pe2 GM: Is it agreed that the room attendants use the app?
+  sk1 Depa: Can the people involved judge when to trust the AI's plans and when to adjust them?
+  fi1 Fina: Do you know what the operations-platform subscription will cost your hotel?
+  te1 IT: Do you have a two-way link to your property management system (PMS) for room status and departures, or has your provider confirmed this is possible?
+  da1 Depa: Are accurate real-time room status and a history of cleaning times digital, up to date and ready to use?
+  or1 GM: Have staff been consulted on workload rules, and is this written down?
+## hk-7 [F] Bed-bug monitoring sensors with image recognition
+   finding: Draft row; every question double-barrelled (6 of 7 flagged). te1 circular (team note).
+  pe1 GM: Is it agreed that the maintenance or housekeeping manager receives the alerts, and the pest-control contractor treats the room?
+  sk1 Depa: Can the people involved read an alert and its photo, and follow the procedure for closing and treating a room?
+  fi1 Fina: Do you know what sensor units for each bed plus a monitoring subscription will cost your hotel?
+  te1 IT: Do you have sensor units in every room chosen for them and alerts sent to the hotel by e-mail, or has your provider confirmed this is possible?
+  da1 Depa: Are the room number for each sensor unit and the alert log with photos digital, up to date and ready to use?
+  or1 GM: Are a procedure from alert to inspection and treatment, and a rule to keep alert logs as operational data for a set time, in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## me-1 [G] AI tuning of central heating, cooling and ventilation (building management system), with energy analysis
+   finding: Comfort limits + x-auto: fits.
+  pe1 GM: Is it agreed that the chief engineer is responsible for the tool, with support from the vendor or energy manager?
+  sk1 Depa: Can the people involved read building management system (BMS) data and judge changes to target settings (setpoints)?
+  fi1 Fina: Do you know what the subscription, connecting it to your systems and sometimes a share of the savings will cost your hotel?
+  te1 IT: Do you have a building management system (BMS) that uses open communication standards (e.g. BACnet), and energy metering, or has your provider confirmed this is possible?
+  da1 Depa: Is the history of meter and sensor readings digital, up to date and ready to use?
+  or1 GM: Are there written comfort limits agreed with operations?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## me-2 [G] Sorting and creating repair requests, and the equipment register
+   finding: Fits.
+  pe1 GM: Will the engineering team use this tool, and have they been shown how?
+  sk1 Depa: Can the people involved use the app and keep the equipment list (asset register) up to date?
+  fi1 Fina: Do you know what the maintenance-platform subscription will cost your hotel?
+  te1 IT: Do you have a mobile app and a link to your property management system (PMS) to take rooms out of sale, or has your provider confirmed this is possible?
+  da1 Depa: Are your equipment list and photos digital, up to date and ready to use?
+  or1 GM: Is it agreed who handles the cases the tool cannot process?
+## me-3 [F] Digital twins (a live virtual model of the building)
+   finding: sk1 "(partner)" in the question is a leftover; fi1 "the team rates it as high" is commentary, not a question.
+  pe1 GM: Will the engineering team and a specialist partner be in charge of this tool?
+  sk1 Depa: Do the people involved, or the partner, have modelling and data skills?
+  fi1 Fina: Do you know what the whole project will cost your hotel (the team rates the cost as high)?
+  te1 IT: Do you have sensors, a building management system (BMS) and a data platform, or has your provider confirmed this is possible?
+  da1 Depa: Are detailed building, sensor and usage (consumption) data digital, up to date and ready to use?
+  or1 GM: Is a long-term commitment from the owner in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## me-4 [G] Guest-room energy management (heating, cooling and lighting adjusted to whether the room is occupied)
+   finding: Comfort/complaint rules: fits.
+  pe1 GM: Will the engineering manager be in charge of this tool?
+  sk1 Depa: Can the people involved set the energy-saving settings for empty rooms (setbacks)?
+  fi1 Fina: Do you know what the room-control equipment, a one-off equipment cost, will cost your hotel?
+  te1 IT: Do you have a guest room management system (GRMS) linked to check-in data from your property management system (PMS), or has your provider confirmed this is possible?
+  da1 Depa: Are occupancy and check-in data digital, up to date and ready to use?
+  or1 GM: Are there written rules on guest comfort and on handling guest complaints?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## me-5 [G] Predictive maintenance by the equipment maker (lifts, escalators, doors)
+   finding: Already-paid check, data-access terms: smart tailoring.
+  pe1 GM: Is it agreed that the engineering manager monitors alerts from the vendor?
+  sk1 Depa: Do the people involved know enough about managing service contracts?
+  fi1 Fina: Have you checked whether you already pay for this (team's note: included in the manufacturer's service contract)?
+  te1 IT: Is your equipment connected to its manufacturer, or has the manufacturer confirmed this is possible?
+  da1 Depa: Is the equipment data from the manufacturer digital, up to date and ready to use?
+  or1 GM: Does your contract with the manufacturer include written terms on access to the data?
+## me-6 [G] Predictive maintenance run by the hotel (heating, ventilation and air conditioning, kitchen, technical devices)
+   finding: Fits.
+  pe1 GM: Will the chief engineer and a data partner be in charge of this tool?
+  sk1 Depa: Can the people involved read predictions of when equipment will fail?
+  fi1 Fina: Do you know what the sensors, a one-off equipment cost, plus a subscription will cost your hotel?
+  te1 IT: Do you have internet-connected (IoT) sensors, a maintenance system and a data platform, or has your provider confirmed this is possible?
+  da1 Depa: Is a history of sensor readings and repair tickets over time digital, up to date and ready to use?
+  or1 GM: Is it written down who is responsible for acting on alerts?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## me-7 [G] Water leak and fault detection
+   finding: Fits.
+  pe1 GM: Will the engineering team be in charge of this tool?
+  sk1 Depa: Can the people involved respond to alerts?
+  fi1 Fina: Do you know what smart meters or sensors plus a subscription will cost your hotel?
+  te1 IT: Do you have metering and a network connection, or has your provider confirmed this is possible?
+  da1 Depa: Is water-meter data digital, up to date and ready to use?
+  or1 GM: Is it agreed who looks after the equipment and what happens when it fails?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## kc-1 [G] Measuring food waste with cameras (computer vision)
+   finding: Fits. or1 "staff buy-in through training and targets" double.
+  pe1 GM: Is it agreed that the head chef is responsible for the targets and the kitchen staff record waste?
+  sk1 Depa: Do the people involved have the discipline to record waste every time?
+  fi1 Fina: Do you know what the equipment (camera and scale) plus a subscription will cost your hotel?
+  te1 IT: Do you have Wi-Fi in the kitchen and a device, or has your provider confirmed this is possible?
+  da1 Depa: Are waste records and food cost data digital, up to date and ready to use?
+  or1 GM: Is staff support for the tool, built through training and targets, in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## kc-2 [G] Allergen handling and menu labelling
+   finding: Human check before publishing allergens (food law, Reg. (EU) 1169/2011): the right blocker.
+  pe1 GM: Is it agreed that the chef checks labels?
+  sk1 Depa: Do the people involved know enough about allergens to check what the tool produces?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have a menu system, or has your provider confirmed this is possible?
+  da1 Depa: Are accurate recipes and ingredient lists digital, up to date and ready to use?
+  or1 GM: Is a rule that a person checks allergen information before it is published (food-law liability) in place and written down?
+## kc-3 [G] Smart cooking equipment (ovens that recognise the food)
+   finding: Fits.
+  pe1 GM: Will the chef team be in charge of this tool?
+  sk1 Depa: Can the people involved use new equipment?
+  fi1 Fina: Do you know what buying the equipment, a one-off equipment cost, will cost your hotel?
+  te1 IT: Can your kitchen equipment connect to the network, or has your provider confirmed this is possible?
+  da1 Depa: Are cooking programmes for each dish digital, up to date and ready to use?
+  or1 GM: Is it agreed who looks after the equipment and what happens when it fails?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## kc-4 [F] Forecasting kitchen production, guest numbers (covers) and breakfast buffet, including purchase quantities
+   finding: or1 "written limits for what the tool may set by itself" is copy; team note says it does not fit.
+  pe1 GM: Will the chef and the food and beverage (F&B) manager be in charge of this tool?
+  sk1 Depa: Can the people involved use forecasts to plan food preparation and orders?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Has it been confirmed that you can link your point-of-sale system (POS) and the occupancy forecast in your property management system (PMS)?
+  da1 Depa: Are histories of covers (guests served), item sales and occupancy digital, up to date and ready to use?
+  or1 GM: Are there written limits on what the tool may set by itself, and on who can overrule it?
+## kc-5 [G] Recipe and menu creation with generative AI
+   finding: Allergen check on new recipes: right.
+  pe1 GM: Will the chef be in charge of this tool?
+  sk1 Depa: Can the people involved judge recipe quality and costing?
+  fi1 Fina: Do you know what the AI tool licence will cost your hotel?
+  te1 IT: Is it confirmed that this works without a link to your hotel systems?
+  da1 Depa: Are recipe and cost data digital, up to date and ready to use?
+  or1 GM: Is an allergen check on new recipes in place and written down?
+## kc-6 [G] Robotic cooking stations
+   finding: Draft row; food safety + fallback: fits.
+  pe1 GM: Is it agreed that the head chef is responsible for the station?
+  sk1 Depa: Can the people involved load, clean and set up the robot?
+  fi1 Fina: Do you know what buying or leasing the equipment will cost your hotel?
+  te1 IT: Do you have power, water and space at the station and a maintenance contract, or has your provider confirmed this is possible?
+  da1 Depa: Are recipes and portion data digital, up to date and ready to use?
+  or1 GM: Are food-safety checks and a backup plan for when the robot is not working in place and written down?
+  x-hw Owne: Is a capital budget (money for long-term equipment) approved for buying or leasing, installing and maintaining the equipment?
+## pr-1 [G] Automatic purchase suggestions and reordering
+   finding: Approval rules: fits.
+  pe1 GM: Is it agreed that the purchasing manager approves orders?
+  sk1 Depa: Can the people involved check the suggested quantities?
+  fi1 Fina: Do you know what the purchasing-platform subscription will cost your hotel?
+  te1 IT: Do you have a purchasing system linked to your stock records and point-of-sale system (POS), or has your provider confirmed this is possible?
+  da1 Depa: Are stock levels, par levels (the standard stock to keep) and approved suppliers digital, up to date and ready to use?
+  or1 GM: Are there written rules for approving orders?
+## pr-2 [F] Forecasting demand and stock for purchasing
+   finding: or1 copy ("may set by itself"), team note says may not fit.
+  pe1 GM: Will the purchasing manager and the chef be in charge of this tool?
+  sk1 Depa: Can the people involved read forecasts?
+  fi1 Fina: Do you know what the platform add-on will cost your hotel?
+  te1 IT: Do you have a link to your point-of-sale system (POS), recipes, stock records and occupancy forecast, or has your provider confirmed this is possible?
+  da1 Depa: Is the consumption history for each outlet (restaurant, bar or other selling point) digital, up to date and ready to use?
+  or1 GM: Are there written limits on what the tool may set by itself, and on who can overrule it?
+## pr-3 [G] Checking invoices against purchase orders (two- or three-way) and spotting invoice errors
+   finding: Fits.
+  pe1 GM: Is it agreed that the accounts payable clerk (who pays supplier invoices) handles exceptions (invoices that do not match)?
+  sk1 Depa: Do the people involved know enough about handling exceptions (invoices that do not match)?
+  fi1 Fina: Do you know what the subscription for accounts payable (AP, supplier invoices) or purchasing software will cost your hotel?
+  te1 IT: Are your purchasing and accounting systems linked, or has your provider confirmed it is possible?
+  da1 Depa: Are purchase orders and goods receipts (delivery records) recorded digitally, up to date and ready to use?
+  or1 GM: Is there a written approval process (who approves what, in which order)?
+## pr-4 [F] Spend analysis and detection of stock differences and losses (shrinkage)
+   finding: or1 generic A8 copy (alerts) but acceptable; missing staff-surveillance angle if shrinkage is traced to named staff.
+  pe1 GM: Will the purchasing or finance manager be in charge of this tool?
+  sk1 Depa: Can the people involved investigate variances (differences between expected and actual figures)?
+  fi1 Fina: Do you know what the platform add-on (extra module) will cost your hotel?
+  te1 IT: Are your inventory, point-of-sale system (POS) and accounting linked, or has your provider confirmed it is possible?
+  da1 Depa: Are stock counts and stock movements digital, up to date and ready to use?
+  or1 GM: Is a named person responsible for acting on each alert or report?
+## pr-5 [G] Supplier price comparison, market benchmarks and checks on agreed contract prices
+   finding: Fits.
+  pe1 GM: Will the purchasing manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about contract management?
+  fi1 Fina: Do you know what the platform add-on (extra module) will cost your hotel?
+  te1 IT: Do you have a feed of invoice data (invoices sent automatically into the tool), or has your provider confirmed it is possible?
+  da1 Depa: Are your contract price lists digital, up to date and ready to use?
+  or1 GM: Is a named person responsible for acting on each alert or report?
+## pr-6 [F] Forecasting supplier prices to prepare negotiations
+   finding: or1 copy; a price forecast "sets" nothing (team note).
+  pe1 GM: Will the purchasing manager be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about planning negotiations?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Is your purchasing (procurement) data available to the tool, or has your provider confirmed it is possible?
+  da1 Depa: Is the price history for key items digital, up to date and ready to use?
+  or1 GM: Are there written limits on what the tool may set by itself, and on who can overrule it?
+## fa-1 [G] Scanning supplier invoices and coding them to the general ledger
+   finding: Approval limits: fits. pe1/sk1 double.
+  pe1 GM: Is it agreed that the accounts payable (AP) team reviews exceptions (invoices the tool cannot process) and the financial controller owns the coding rules?
+  sk1 Depa: Do the people involved know enough about handling exceptions and about the general ledger (GL, the hotel's main accounts)?
+  fi1 Fina: Do you know what the per-invoice fee or subscription will cost your hotel?
+  te1 IT: Is there a link to your accounting or ERP system (main business software) and approval process, or has your provider confirmed it is possible?
+  da1 Depa: Are your chart of accounts (list of account codes) and supplier master data (core supplier details) digital, up to date and ready to use?
+  or1 GM: Are there written approval limits (the amounts each person may approve)?
+## fa-2 [F] Spotting fraud and unusual patterns in payments
+   finding: or1 PCI DSS duplicates x-pay; PCI DSS is an industry standard, not law (team note).
+  pe1 GM: Will the finance lead or revenue-integrity lead (who checks revenue is correctly collected) be in charge of this tool?
+  sk1 Depa: Can the people involved review payments the tool flags as suspicious?
+  fi1 Fina: Have you checked whether you already pay for this, as it is usually included in your payment provider's fees?
+  te1 IT: Is your payment gateway (online payment system) linked to your property management system (PMS) or booking engine, or has your provider confirmed it is possible?
+  da1 Depa: Are payment and booking data digital, up to date and ready to use?
+  or1 Data: Has a named person checked which of your systems fall under PCI DSS (card payment security rules)?
+  or2 GM: Are there written rules on when to block a payment?
+  x-pay IT: Has your IT or security contact checked that the tool and its vendor meet the card-data security rules your payment provider requires?
+## fa-3 [G] Automatic reconciliation of bank, card, booking-site commission, PMS and supplier statements
+   finding: Fits.
+  pe1 GM: Is it agreed that the accountant handles exceptions (items the tool cannot match)?
+  sk1 Depa: Do the people involved know enough about reconciliation rules (how records are matched)?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have data feeds from your bank, card payments, online travel agencies (OTAs), property management system (PMS) and accounting, or has your provider confirmed them?
+  da1 Depa: Is your booking and payout data clean, digital, up to date and ready to use?
+  or1 GM: Is it agreed who handles the cases the tool cannot process?
+## fa-4 [G] Forecasting cash flow and profit and loss (P&L), and budgeting
+   finding: Fits.
+  pe1 GM: Will the financial controller be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about building budgets from forecasts?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Can the tool get data from your accounting, property management system (PMS) and payroll, or has your provider confirmed it is possible?
+  da1 Depa: Do you have several years of profit and loss (P&L) history that is digital, up to date and ready to use?
+  or1 GM: Have you agreed who owns the forecast?
+## fa-5 [F] Generative AI assistants for finance and agents for supplier invoices
+   finding: or1 (approval + audit log) overlaps x-auto.
+  pe1 GM: Is it agreed that the finance team approves the actions of the AI agents (AI that carries out tasks by itself)?
+  sk1 Depa: Can the people involved supervise the AI agents and read their audit trail (record of every action taken)?
+  fi1 Fina: Do you know what the usage-based price or premium tier (higher-priced plan) will cost your hotel?
+  te1 IT: Can the tool write data into your accounting system (write access), or has your provider confirmed it is possible?
+  da1 Depa: Is your master data (core reference records) clean, digital, up to date and ready to use?
+  or1 GM: Is it written down that entries are approved before they are posted to the accounts, and is there an audit log (record of every action)?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## fa-6 [G] Automating the night audit (end-of-day closing)
+   finding: Fits.
+  pe1 GM: Will the night auditor or accountant be in charge of this tool?
+  sk1 Depa: Can the people involved review exceptions (items the tool cannot process)?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Is your property management system (PMS) linked to your accounting, or has your provider confirmed it is possible?
+  da1 Depa: Is your daily revenue data digital, up to date and ready to use?
+  or1 GM: Are there written rules for the audit trail (record of what was changed, when and by whom)?
+## fa-7 [F] Automatic handling of chargeback disputes (guests reversing card payments)
+   finding: or1 PCI DSS duplicates x-pay.
+  pe1 GM: Will the finance or revenue-integrity staff (who check revenue is correctly collected) be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about the rules for disputing chargebacks?
+  fi1 Fina: Do you know what the per-dispute fee or subscription will cost your hotel?
+  te1 IT: Can the tool access your payment provider and the guest folios (bills) in your property management system (PMS), or has your provider confirmed it is possible?
+  da1 Depa: Are guest folios (bills) and booking evidence digital, up to date and ready to use?
+  or1 Data: Has a named person checked what PCI DSS (card payment security rules) requires here?
+  x-pay IT: Has your IT or security contact checked that the tool and its vendor meet the card-data security rules your payment provider requires?
+## hr-1 [W] Forecasting staff needs and scheduling shifts (all departments, including room attendants)
+   finding: Missing the decisive question: if the tool allocates shifts or tasks per person based on individual behaviour, performance or traits, it is Annex III 4(b) high-risk (from 2 Dec 2027); with profiling it stays high-risk (Art. 6(3) last subpara.). No sens flag an
+  pe1 GM: Is it agreed that department heads approve rotas (staff schedules) and HR owns the tool?
+  sk1 Depa: Can the people involved read forecasts of staff needs, and do they know enough about fair scheduling?
+  fi1 Fina: Do you know what the workforce-management (staff scheduling software) subscription per employee will cost your hotel?
+  te1 IT: Is the tool linked to your property management system (PMS), point-of-sale system (POS), time and attendance, and payroll, or confirmed as possible?
+  da1 Depa: Are occupancy, covers (meals served), events, staff availability and contracts data digital, up to date and ready to use?
+  or1 Data: Has a named person checked what working-time law requires here?
+  or2 GM: Has the works council (elected staff representatives) been consulted, and is this written down?
+## hr-2 [F] Recruiting with AI: chatting with applicants, screening and matching
+   finding: Correctly tied to the AI Act (Annex III 4(a)) and DPIA; legal hold works. But q6 lumps the whole AI Act into one Yes/No, and answering No does not change the verdict (scenario 3b).
+  pe1 GM: Is it agreed that the HR manager reviews every hiring decision?
+  sk1 Depa: Do the people involved know enough about fair hiring, and can they check the AI's screening of candidates?
+  fi1 Fina: Do you know what the subscription, per hire or per user, will cost your hotel?
+  te1 IT: Do you have a careers website and an applicant tracking system (software that manages job applications), or has your provider confirmed it is possible?
+  da1 Depa: Are job descriptions and candidate data digital, up to date and ready to use?
+  or1 Data: Has a named person checked what the EU AI Act requires of hotels that use AI in hiring, including human oversight (a person checking decisions)?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## hr-3 [G] Staff induction and training (AI-made courses, AI coaching, short lessons)
+   finding: Fits (low risk).
+  pe1 GM: Will the HR or training manager be in charge of this tool?
+  sk1 Depa: Do the people involved know the basics of designing training courses (instructional design)?
+  fi1 Fina: Do you know what the learning-platform (online training software) subscription will cost your hotel?
+  te1 IT: Do you have a staff app or a learning management system (LMS, software for online training), or has your provider confirmed it is possible?
+  da1 Depa: Are your current standard operating procedures (SOPs, written work instructions) and handbooks digital, up to date and ready to use?
+  or1 GM: Is it agreed who keeps the training content accurate?
+## hr-4 [F] Predicting which staff may leave, and analysing staff engagement
+   finding: Profiling + works council + DPIA covered. Missing the use decision: predictions used for promotion/termination/retention decisions = Annex III 4(b).
+  pe1 GM: Will the HR manager be in charge of this tool?
+  sk1 Depa: Can the people involved interpret predictions with care?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have an HR information system (HRIS, staff records software) and staff engagement data, or has your provider confirmed it is possible?
+  da1 Depa: Is your employee data over time (its history) digital, up to date and ready to use?
+  or1 Data: Has a named person checked what the law requires on monitoring and profiling employees?
+  or2 GM: Have the works council or staff representatives been consulted, and is this written down?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## hr-5 [W] Matching seasonal staff to hotels
+   finding: Matching seasonal staff to hotels is selection of persons for jobs: Annex III 4(a) (recruitment or selection), high-risk from 2 Dec 2027. The tool asks about "employee data and consent"; consent is a weak legal basis in employment (our reading of GDPR/EDPB). S
+  pe1 GM: Is it agreed that the HR manager or cluster manager (who oversees several hotels) checks and confirms matches?
+  sk1 Depa: Do the people involved know enough about staff planning?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have an HR information system (HRIS, staff records software), or has your provider confirmed it is possible?
+  da1 Depa: Are data on staff skills, languages and availability digital, up to date and ready to use?
+  or1 Data: Has a named person checked what the law requires on employee data and consent?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## hr-6 [W] Face or fingerprint time clocks for staff attendance
+   finding: Draft row. q5 "Are staff biometric templates ... digital, up to date and ready to use?" is a generator artefact and nonsensical before the system exists. Legally: 1:1 biometric verification is excluded from Annex III 1(a) (not AI-Act high-risk); GDPR Art. 9 an
+  pe1 GM: Is it agreed that the HR manager owns the system and that staff are offered a card or PIN instead?
+  sk1 Depa: Can the people involved handle biometric data (face or fingerprint data) correctly?
+  fi1 Fina: Do you know what the terminals (clock-in devices) and subscription will cost your hotel?
+  te1 IT: Are the terminals linked to payroll and scheduling, or has your provider confirmed it is possible?
+  da1 Depa: Are staff biometric templates (stored face or fingerprint data) and attendance records digital, up to date and ready to use?
+  or1 GM: Have you checked in writing that a card or PIN would not be enough, and informed staff representatives?
+  x-hw Owne: Is the money for buying or leasing, installing and maintaining the equipment approved as a capital budget (long-term investment)?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## gm-1 [G] Business performance dashboards (KPIs) with AI analysis
+   finding: KPI-definition owner: good tailoring.
+  pe1 GM: Is it agreed that the general manager (GM) and department heads will use it?
+  pe2 GM: Is there one named owner for how key performance indicators (KPIs) are defined?
+  sk1 Depa: Can the people involved read dashboards and question what they show?
+  fi1 Fina: Do you know what the business intelligence (BI, reporting software) subscription will cost your hotel?
+  te1 IT: Do you have data feeds from your property management system (PMS), finance and point-of-sale system (POS), or has your provider confirmed it is possible?
+  da1 Depa: Do you have agreed key performance indicator (KPI) definitions and clean data that is digital, up to date and ready to use?
+  or1 GM: Is a named person responsible for acting on each alert or report?
+## gm-2 [G] Generative AI assistants for managers and head-office staff
+   finding: Enterprise tenant, AI-use policy: right.
+  pe1 GM: Will managers and head-office staff be in charge of this tool?
+  sk1 Depa: Do the people involved know how to write prompts (instructions to the AI), and can they check its answers?
+  fi1 Fina: Do you know what the licence per user will cost your hotel?
+  te1 IT: Do you have the enterprise version set up in your company's own account (tenant), or has your provider confirmed it is possible?
+  da1 Depa: Are company documents digital, up to date and ready to use, with access rights (who may see what) set?
+  or1 GM: Is there a written AI-use policy, and a written rule that no confidential data goes into public AI tools?
+## gm-3 [G] Meeting, briefing and report automation
+   finding: Fits.
+  pe1 GM: Will the general manager (GM) and department heads be in charge of this tool?
+  sk1 Depa: Can the people involved check that the summaries are correct?
+  fi1 Fina: Do you know what the add-on to your property management system (PMS) or business intelligence (BI) reporting will cost your hotel?
+  te1 IT: Can the tool access data in your property management system (PMS) or business intelligence (BI) reporting, or has your provider confirmed it is possible?
+  da1 Depa: Is your daily operating data digital, up to date and ready to use?
+  or1 GM: Do staff know that a person must read and correct the AI’s text before it is used?
+## gm-4 [F] Company-wide AI and data platforms in hotel groups
+   finding: For hotel groups only, but asked of any hotel; pe1 lists three owners; fi1 "large programme budget" is not a question about cost.
+  pe1 GM: Will the group AI lead, central AI team and steering committee be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about data engineering, AI architecture (how AI systems are built and connected) and governance (rules and oversight)?
+  fi1 Fina: Do you know what this will cost your hotel, given it needs a large programme budget?
+  te1 IT: Do you have a cloud data platform and an integration layer (software connecting your systems), or has your provider confirmed it is possible?
+  da1 Depa: Is there a group-wide data model and data catalogue (shared definitions and list of data) that is digital, up to date and ready to use?
+  or1 GM: Do you have a written AI strategy, a centre of excellence (central expert team) and a risk review for each use case?
+## gm-5 [G] Reporting to owners and asset managers
+   finding: Fits.
+  pe1 GM: Will the asset manager or finance lead be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about the standards for reporting to owners?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have data feeds from several operators (hotel management companies), or has your provider confirmed it is possible?
+  da1 Depa: Is one consistent chart of accounts (list of account codes) used across operators, and is it digital, up to date and ready to use?
+  or1 GM: Is there a written agreement between owner and operator on sharing data?
+## gm-6 [G] Assistant answering frontline staff questions on handbooks and procedures
+   finding: Content owner: right. pe1 and or1 overlap (who keeps content current).
+  pe1 GM: Is it agreed that department heads keep the content up to date?
+  sk1 Depa: Do the people involved know enough about keeping content up to date?
+  fi1 Fina: Do you know what the staff-app add-on will cost your hotel?
+  te1 IT: Do you have a staff app, or has your provider confirmed it is possible?
+  da1 Depa: Are your handbooks and standard operating procedures (SOPs, written work instructions) up to date, digital and ready to use?
+  or1 GM: Is it written down who updates the content?
+## gm-7 [G] Internal tools built with AI coding assistants
+   finding: Draft row but the best-written set (owner, IT review, data minimisation).
+  pe1 GM: Does each tool built this way have one named owner who maintains it?
+  pe2 GM: Is it agreed that IT reviews each tool before it is used?
+  sk1 Depa: Do the people involved have enough technical skill to read, test and maintain what the assistant writes?
+  fi1 Fina: Do you know what the coding-assistant subscription and staff time will cost your hotel?
+  te1 IT: Can the tools access your systems' APIs (links that let systems exchange data), and is there a safe place to run and store them, or is this confirmed as possible?
+  da1 Depa: Is it written down that each tool gets only the data it needs, and no guest or staff data without an agreement?
+  or1 GM: Are there written rules on what staff may build, who checks security and data protection, and who maintains a tool when its builder leaves?
+## it-1 [G] AI threat detection and automatic response (network, email, computers and phones)
+   finding: Incident response + breach notification + x-auto: fits.
+  pe1 GM: Will the IT or security lead, or an outside managed security provider, be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about security operations (watching for and responding to attacks)?
+  fi1 Fina: Do you know what the subscription per device or per user will cost your hotel?
+  te1 IT: Does the tool cover the network, email and endpoints (computers and phones) at all your properties, or has your provider confirmed it can?
+  da1 Depa: Are logs and telemetry (records of system activity) digital, up to date and ready to use?
+  or1 GM: Do you have a written incident-response plan and written duties for reporting data breaches?
+  x-auto Depa: Are there written limits on what the tool may do by itself, and a named person who can switch it off?
+## it-2 [F] AI help desk for IT problems
+   finding: or1 "a person must read and correct the AI's text before it is used" is A1 copy; for an IT help desk the risk is wrong fixes or access resets.
+  pe1 GM: Will the IT team be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about how an IT service desk (help desk) works?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Do you have a ticketing system (software that logs IT requests), or has your provider confirmed it is possible?
+  da1 Depa: Is there a knowledge base of IT fixes that is digital, up to date and ready to use?
+  or1 GM: Do staff know that a person must read and correct the AI’s text before it is used?
+## it-3 [F] Detecting booking fraud: fake reservations, criminals posing as booking sites, online card fraud
+   finding: or1 PCI DSS duplicates x-pay.
+  pe1 GM: Will the revenue-integrity lead (who checks revenue is correctly collected) or IT security lead be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about reviewing possible fraud?
+  fi1 Fina: Do you know what this will cost your hotel, as a subscription or as part of your payment tools?
+  te1 IT: Can the tool link to your booking engine, online travel agency (OTA) extranet (booking sites' hotel portal) and payment systems, or is this confirmed as possible?
+  da1 Depa: Are booking and payment data digital, up to date and ready to use?
+  or1 Data: Has a named person checked what PCI DSS (card payment security rules) requires here?
+  or2 GM: Is staff training against phishing (fake emails and messages) in place and written down?
+  x-pay IT: Has your IT or security contact checked that the tool and its vendor meet the card-data security rules your payment provider requires?
+## it-4 [W] AI analysis of security camera video
+   finding: The decisive AI Act questions are folded into "whether any biometric use is allowed". Needed: face identification (remote biometric identification, Annex III 1(a)), emotion/behaviour analysis of staff (Art. 5(1)(f) ban at work), building a face database from f
+  pe1 GM: Will the security manager be in charge of this tool?
+  sk1 Depa: Can the people involved monitor alerts?
+  fi1 Fina: Do you know what the camera upgrades (a capital investment) plus software will cost your hotel?
+  te1 IT: Do you have a CCTV (security camera) network and video storage, or has your provider confirmed it is possible?
+  da1 Depa: Is your video data digital, up to date and ready to use?
+  or1 Data: Has a named person checked what data protection law asks for video surveillance, and whether any biometric use is allowed?
+  x-hw Owne: Is the money for buying or leasing, installing and maintaining the equipment approved as a capital budget (long-term investment)?
+  x-sens Data: Has a data protection impact assessment (DPIA, a formal check of privacy risks) been done for this tool?
+## it-5 [G] AI network management for guest and staff Wi-Fi
+   finding: Fits.
+  pe1 GM: Will the IT team or network provider be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about network management?
+  fi1 Fina: Do you know what the subscription per access point (each Wi-Fi transmitter) will cost your hotel?
+  te1 IT: Do you have managed network hardware (equipment that can be controlled centrally), or has your provider confirmed it is possible?
+  da1 Depa: Is network telemetry (data on how the network is performing) digital, up to date and ready to use?
+  or1 GM: Is a named person responsible for acting on each alert or report?
+## lg-1 [G] Collecting and reporting sustainability (ESG) and carbon data
+   finding: Country reporting duties: fits.
+  pe1 GM: Will the sustainability or engineering lead be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about ESG (environmental, social and governance) reporting standards?
+  fi1 Fina: Do you know what a subscription will cost your hotel, or whether a free public platform exists in your country?
+  te1 IT: Do you have data feeds from meters and suppliers, or has your provider confirmed it is possible?
+  da1 Depa: Are energy, water and waste data for each property digital, up to date and ready to use?
+  or1 Data: Has a named person checked which reporting duties the law sets in each country?
+## lg-2 [G] Tools for handling personal-data requests (GDPR) and AI Act compliance
+   finding: Fits.
+  pe1 GM: Will the data protection officer or legal lead be in charge of this tool?
+  sk1 Depa: Do the people involved know enough about privacy law?
+  fi1 Fina: Do you know what the subscription will cost your hotel?
+  te1 IT: Can the tool link to the systems that hold guest data, or has your provider confirmed it is possible?
+  da1 Depa: Is there a data map (list of where guest data is kept) covering all guest data, digital, up to date and ready to use?
+  or1 Data: Has a named person checked what data protection law (GDPR, Swiss FADP or UK GDPR) asks of your hotel here?
+## lg-3 [G] Generative AI for contract review and legal support
+   finding: Confidentiality: right.
+  pe1 GM: Is it agreed that the legal or purchasing lead checks what the tool produces?
+  sk1 Depa: Do the people involved know enough contract law to check the AI's review?
+  fi1 Fina: Do you know what the licence per user will cost your hotel?
+  te1 IT: Is it confirmed that this works without a link to your hotel systems?
+  da1 Depa: Are your contract templates and playbook (your standard negotiating positions) digital, up to date and ready to use?
+  or1 GM: Is there a written rule on keeping contracts confidential when they are used in AI tools?
+## lg-4 [F] Rules and oversight for using AI
+   finding: Not a tool, so "in charge of this tool" reads oddly (team note); "tech/link" question absent (good). sk1 AI literacy is the Art. 4 topic, which (as rewritten by 2026/1744) requires measures to support staff AI literacy: this should be a must-have for every use
+  pe1 GM: Will the general manager (GM) or group AI lead be in charge of this tool?
+  pe2 GM: If you have a works council or staff representatives, have they been involved in writing the AI rules?
+  sk1 Depa: Do the people involved have basic AI knowledge (AI literacy), and do they know enough about writing policies?
+  fi1 Fina: Is staff time set aside for writing the AI rules and keeping them up to date?
+  da1 Depa: Is there a list of the AI tools in use that is digital, up to date and ready to use?
+  or1 GM: Is it agreed who approves the AI rules and how all staff are told about them?

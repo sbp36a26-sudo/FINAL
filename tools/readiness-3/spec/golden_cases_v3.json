@@ -1,0 +1,870 @@
+[
+ {
+  "name": "All Yes, suggests only",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Clean Ready path."
+ },
+ {
+  "name": "One tailored blocker No",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "rm-1.te1": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 93,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Any blocker No gives Not ready (fixes L1: tailored questions could not block)."
+ },
+ {
+  "name": "Acts by itself, switch-off No",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "acts"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "rm-1.ACT_OFF": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 94,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Gate-added blocker shows and blocks."
+ },
+ {
+  "name": "Acts by itself, all Yes",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "acts"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Gate-added blockers answered Yes keep Ready."
+ },
+ {
+  "name": "Nice-to-have No only",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "rm-1.fi1": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 97,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "A single nice-to-have No does not block."
+ },
+ {
+  "name": "One blocker Planned",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "rm-1.da1": "planned"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 96,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Planned blocker caps at Almost ready."
+ },
+ {
+  "name": "All tailored questions No",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "rm-1.pe1": "no",
+   "rm-1.sk1": "no",
+   "rm-1.fi1": "no",
+   "rm-1.te1": "no",
+   "rm-1.da1": "no",
+   "rm-1.or1": "no",
+   "rm-1.n1": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 68,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Fixes v2.6 bug where all tailored No still gave Almost ready."
+ },
+ {
+  "name": "Everything Don't know yet",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {
+   "m1": "dk",
+   "m2": "dk",
+   "m3": "dk",
+   "m4": "dk",
+   "m5": "dk",
+   "m6": "dk",
+   "m7": "dk",
+   "m8": "dk",
+   "m9": "dk",
+   "m10": "dk",
+   "m11": "dk"
+  },
+  "questions_changed": {
+   "rm-1.pe1": "dk",
+   "rm-1.sk1": "dk",
+   "rm-1.fi1": "dk",
+   "rm-1.te1": "dk",
+   "rm-1.da1": "dk",
+   "rm-1.or1": "dk",
+   "rm-1.n1": "dk"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not enough info",
+  "expected_score": 0,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "More than 50% Don't know yet."
+ },
+ {
+  "name": "Step 2 Q1 No",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "no",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Soft stop",
+  "expected_score": null,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Q1 No (rules would do) is a soft stop, not a hard stop."
+ },
+ {
+  "name": "Step 2 Q1 No, continue anyway",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "no",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": true,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "soft stop continued"
+  ],
+  "expected_notes": [],
+  "checks": "Continuing after a soft stop caps at Almost ready."
+ },
+ {
+  "name": "Step 2 Q1 Yes means towards AI",
+  "use_case": "gx-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Polarity flip: Yes no longer ends the check."
+ },
+ {
+  "name": "Step 2 Q2 No",
+  "use_case": "gx-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "no",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Soft stop",
+  "expected_score": null,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "\"Probably not worth it\" soft stop, no full plan."
+ },
+ {
+  "name": "Step 2 Q3 Don't know yet",
+  "use_case": "gx-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "dk",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "step2 s3"
+  ],
+  "expected_notes": [],
+  "checks": "Step 2 uncertainty holds Ready back."
+ },
+ {
+  "name": "Free ChatGPT-style writing tool",
+  "use_case": "sm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "yes",
+   "G_LINK": "no"
+  },
+  "must_haves_changed": {
+   "m2": "na",
+   "m4": "na"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Must-haves 2 and 4 at Doesn't apply are excluded, not failed; fi and te questions hidden."
+ },
+ {
+  "name": "Doesn't apply contradicted by a gate",
+  "use_case": "sm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "no",
+   "G_LINK": "yes"
+  },
+  "must_haves_changed": {
+   "m2": "na"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 93,
+  "expected_caps": [],
+  "expected_notes": [
+   "You said no new budget is needed, but you also said this tool needs new money. Must-have 2 now counts as Don't know yet."
+  ],
+  "checks": "Must-have 2 Doesn't apply, then the gate says new money is needed: m2 counts as Don't know yet and the contradiction note shows."
+ },
+ {
+  "name": "Connections Doesn't apply contradicted",
+  "use_case": "sm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "yes",
+   "G_LINK": "yes"
+  },
+  "must_haves_changed": {
+   "m2": "na",
+   "m4": "na"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 92,
+  "expected_caps": [],
+  "expected_notes": [
+   "You said no connections are needed, but you also said this tool must connect to your hotel systems. Must-have 4 now counts as Don't know yet."
+  ],
+  "checks": "m4 Doesn't apply but the gate says it must connect: m4 becomes Don't know yet with a note; m2 stays excluded."
+ },
+ {
+  "name": "Doesn't apply with no matching gate",
+  "use_case": "gx-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "yes"
+  },
+  "must_haves_changed": {
+   "m4": "na"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "m4 Doesn't apply is accepted when no gate contradicts it."
+ },
+ {
+  "name": "Must-have 11 (staff shown) No",
+  "use_case": "sm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_PAID": "no",
+   "G_LINK": "yes"
+  },
+  "must_haves_changed": {
+   "m11": "no"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 93,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "New staff-training must-have is a blocker."
+ },
+ {
+  "name": "Shift planning per person",
+  "use_case": "hr-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_LINK": "yes",
+   "hr1-person": "yes"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Per-person allocation raises the sensitive flag and holds at Almost ready."
+ },
+ {
+  "name": "Shift planning by demand only",
+  "use_case": "hr-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_LINK": "yes",
+   "hr1-person": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Plain demand-based rota is not sensitive and can be Ready."
+ },
+ {
+  "name": "Shift planning, final decision No",
+  "use_case": "hr-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_LINK": "yes",
+   "hr1-person": "yes"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "hr-1.n1": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 95,
+  "expected_caps": [
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Use-case-specific human-decision blocker blocks."
+ },
+ {
+  "name": "Recruiting, all Yes",
+  "use_case": "hr-2",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "hr2-mode": "screen"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Hiring is always sensitive: Almost ready with adviser action."
+ },
+ {
+  "name": "Guest chat, staff hand-over No",
+  "use_case": "gx-2",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "gx-2.GUEST_STAFF": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 95,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Guest-facing blocker from the automatic guest rule blocks (replaces the old disclosure blocker test)."
+ },
+ {
+  "name": "Gate answered Don't know yet",
+  "use_case": "gx-2",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "dk"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "gate cap",
+   "gate unanswered or dk"
+  ],
+  "expected_notes": [],
+  "checks": "Unknown gate caps at Almost ready with a vendor action."
+ },
+ {
+  "name": "Face check searches stored faces",
+  "use_case": "fo-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "fo3-match": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "gate cap",
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Gate option with cap."
+ },
+ {
+  "name": "Card payments on voice line, check No",
+  "use_case": "res-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests",
+   "res1-pay": "yes"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {
+   "res-1.n1": "no"
+  },
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 94,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Conditional blocker shown only when payments are taken."
+ },
+ {
+  "name": "Linen forecasting only",
+  "use_case": "hk-3",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "hk3-type": "forecast"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Tag-tracking questions hidden; Ready possible without them."
+ },
+ {
+  "name": "Group platform for a single hotel",
+  "use_case": "gm-4",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "gm4-group": "one"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "not a fit (continued)"
+  ],
+  "expected_notes": [],
+  "checks": "Not-a-fit redirect; continuing caps at Almost ready."
+ },
+ {
+  "name": "Personalised prices per guest",
+  "use_case": "rm-2",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "acts",
+   "rm2-personal": "yes"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Conditional sensitive flag."
+ },
+ {
+  "name": "Many Planned, no No",
+  "use_case": "rm-1",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests"
+  },
+  "must_haves_changed": {
+   "m1": "planned",
+   "m2": "planned",
+   "m3": "planned",
+   "m4": "planned",
+   "m5": "planned",
+   "m6": "planned",
+   "m7": "planned",
+   "m8": "planned",
+   "m9": "planned",
+   "m10": "planned",
+   "m11": "planned"
+  },
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Not ready",
+  "expected_score": 65,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Fewer than half of blockers Yes gives Not ready even with no No."
+ },
+ {
+  "name": "Camera video, face recognition",
+  "use_case": "it-4",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "it4-face": "yes",
+   "it4-staff": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "gate cap",
+   "sensitive"
+  ],
+  "expected_notes": [],
+  "checks": "Sensitive always; face recognition adds adviser action."
+ },
+ {
+  "name": "None fits, all Yes",
+  "use_case": "none",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "G_ACT": "suggests",
+   "G_GUEST": "staff",
+   "G_PEOPLE": "no",
+   "G_LINK": "yes",
+   "G_PAID": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Almost ready",
+  "expected_score": 100,
+  "expected_caps": [
+   "None fits chosen"
+  ],
+  "expected_notes": [],
+  "checks": "None fits is capped at Almost ready."
+ },
+ {
+  "name": "Kiosk avatar, all Yes",
+  "use_case": "fo-7",
+  "step2": {
+   "s1": "yes",
+   "s2": "yes",
+   "s3": "yes",
+   "s4": "yes",
+   "s5": "yes"
+  },
+  "gates": {
+   "fo7-camera": "no"
+  },
+  "must_haves_changed": {},
+  "questions_changed": {},
+  "other_answers": "Yes",
+  "continued_after_soft_stop": false,
+  "expected_verdict": "Ready",
+  "expected_score": 100,
+  "expected_caps": [],
+  "expected_notes": [],
+  "checks": "Automatic guest and acts-by-itself blockers always shown."
+ }
+]
