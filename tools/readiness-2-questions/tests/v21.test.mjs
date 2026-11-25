@@ -239,7 +239,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   c = F.cleanRec(gone, ENV, info); ok(c.use === '' && c.step === 'where' && info.useChanged === true, 'M5: an unknown use id opens on step 4 and is said (it was silent)');
   const renamed = JSON.parse(JSON.stringify(mk('rm-1', [], []))); renamed.useName = 'An older name'; info = {};
   c = F.cleanRec(renamed, ENV, info, { file: true }); ok(c.use === '' && c.step === 'where' && info.useChanged === true, 'M5: a renamed use case from a file is said too');
-  ok(/r = F\.cleanRec\(o\.check, ENV, info, \{ file: true \}\)/.test(rd('src/app.js')) && /send\('import', r, \{ notice: ui\.fileInfo \}\)/.test(rd('src/app.js')), 'M5: openFileText passes what was lost on to the notice');
+  ok(/r = F\.cleanRec\(o\.check, ENV, info, \{ file: true \}\)/.test(rd('src/app.js')) && /send\('import', r, \{ notice: ui\.fileInfo, older: ui\.fileOlder \}\)/.test(rd('src/app.js')), 'M5: openFileText passes what was lost on to the notice');
   // v2.0 records carry no signature: their answers are kept
   info = {}; const v20 = JSON.parse(JSON.stringify(mk('rm-1', [], []))); delete v20.tqSig; delete v20.from;
   c = F.cleanRec(v20, ENV, info); ok(c.step === 'result' && !info.questionsChanged && c.tqSig === ENV.sig['rm-1'], 'M5: a record without a signature (v2.0) keeps its answers and takes today\'s signature');
@@ -420,6 +420,6 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(/kind: 'dyn', v: 2, qv: F\.QV, rules: L\.RULES, useId: rec\.use/.test(rd('src/app.js')), 'the share document keeps its shape (kind, v, rules, useId …; v2.6 adds qv); reason, held and rules per snapshot are added');
 }
 // storage keys and hub messages unchanged
-ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 3 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: 'open'/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'v2.7.0: own storage key; no message opens another hub tab; store version 3');
+ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 4 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: 'open'/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'v2.7.0: own storage key; no message opens another hub tab; store version 4');
 ok(!/AIHA|AI Hospitality Alliance/i.test(rd('index.html').replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
 done();

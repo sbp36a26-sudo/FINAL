@@ -12,7 +12,7 @@ function drive(store, evs) { let ok2 = true; for (const [ev, arg] of evs) { cons
 const sendAll = (s, ev, ids, v) => ids.reduce((st, id) => F.reduce(st, ev, { id, value: v }, env).store, s);
 
 // ---------- table ----------
-ok(eq(F.STEPS, ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result']) && F.V === 3 && F.KEY === 'hftp-readiness2q-v1', 'states, version 3; v2.7.0: own storage key hftp-readiness2q-v1');
+ok(eq(F.STEPS, ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result']) && F.V === 4 && F.KEY === 'hftp-readiness2q-v1', 'states; v2.7.0: version 4 (new question ids), own storage key hftp-readiness2q-v1');
 ok(eq(Object.keys(F.FLOW), F.STEPS) && eq(F.FLOW.start, { begin: 'hotel' }) && eq(F.FLOW.stop, { change: 'q' }), 'one row per state; the stop screen only goes back to the questions');
 const full = { hotelDone: true, q1Stop: false, qDone: true, mustDone: true, whereDone: true, none: false, hasTail: true, tailDone: true };
 const EXPECT = { 'start.begin': 'hotel', 'hotel.back': 'start', 'hotel.next': 'q', 'q.back': 'hotel', 'q.next': 'must', 'must.back': 'q', 'must.next': 'where', 'where.back': 'must', 'where.next': 'tailored', 'tailored.back': 'where', 'tailored.next': 'result', 'result.back': 'tailored', 'result.edit': 'q', 'stop.change': 'q' };
@@ -152,7 +152,7 @@ for (const file of ['v1.3-saved.json', 'v1.1-saved.json']) {
     const old = JSON.parse(x.raw), inf = {}; let m2 = null, threw = false;
     try { m2 = F.migrate(old, env, inf); } catch (e) { threw = true; }
     const tag = file + ' ' + x.name;
-    ok(!threw && m2 && m2.v === 3 && Object.keys(m2.checks).length === 1, tag + ': opens without an error, as one check');
+    ok(!threw && m2 && m2.v === F.V && Object.keys(m2.checks).length === 1, tag + ': opens without an error, as one check');
     if (!m2) return;
     const c = F.cur(m2), ctx = F.ctxOf(c, env);
     ok(eq(c.Q, L.legacyQ(old.Q).Q) && c.qv === L.QV, tag + ': v2.6: Q1 turned round, Q2 and Q5 kept, the old Q3 and Q4 dropped (were: the five answers are kept)');
@@ -168,7 +168,7 @@ for (const file of ['v1.3-saved.json', 'v1.1-saved.json']) {
     const seen = F.reduce(m2, 'seen', null, env); ok(seen.ok && !seen.store.notice && !F.reduce(seen.store, 'seen', null, env).ok, tag + ': the notice is shown once');
   });
 }
-ok(F.migrate({ step: 'q', Q: { q1: 'y' } }, env, {}).v === 3, 'a record without a version is read as v1');
+ok(F.migrate({ step: 'q', Q: { q1: 'y' } }, env, {}).v === F.V, 'a record without a version is read as v1');
 info = {}; ok(F.migrate({ v: 1, step: 'start', Q: {}, A: {}, cat: '', dept: '', use: '' }, env, info) && !info.fromV1, 'an empty v1 record: no notice (nothing was kept or lost)');
 
 // ---------- files ----------

@@ -20,8 +20,8 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const FX = JSON.parse(rd('tests/fixtures/v2.5-saved.json'));
   const info0 = {}; F.migrate(clone(FX.store), ENV, info0);
   ok(info0.older === true && !info0.newer, 'B4: migrate marks a version 2 store as written by an older page');
-  const i3 = {}; F.migrate({ v: 3, cur: '', checks: {} }, ENV, i3); ok(!i3.older && !i3.newer, 'B4: a version 3 store is neither older nor newer');
-  const i4 = {}; F.migrate({ v: 4, cur: '', checks: {} }, ENV, i4); ok(i4.newer === true && !i4.older, 'B3: a version 4 store is newer');
+  const i3 = {}; F.migrate({ v: 4, cur: '', checks: {} }, ENV, i3); ok(!i3.older && !i3.newer, 'B4: a version 4 store (v2.7.0) is neither older nor newer');
+  const i4 = {}; F.migrate({ v: 5, cur: '', checks: {} }, ENV, i4); ok(i4.newer === true && !i4.older, 'B3: a version 5 store is newer');
   // this tab: two checks in the v2.6 meaning (fixgo0001 answered again, open: fixstop01)
   const mine = F.migrate(clone(FX.store), ENV, {}); mine.cur = 'fixstop01';
   mine.checks.fixgo0001.Q = { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }; mine.checks.fixgo0001.Qnew = [];

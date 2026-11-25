@@ -1,0 +1,183 @@
+{
+ "_about": "Written by the BASE code (tools/readiness-2 at commit 74385fe: v2.7 with rules v2.6, the code the prompt calls v2.6.1) through its own reduce, forFile and store shape (scratchpad mkfix261.mjs), 25 Nov 2026, before any v2.7.0 questions-only change. seen: what that code worked out.",
+ "key": "hftp-readiness2-v1",
+ "store": {
+  "v": 3,
+  "cur": "dynmww6l1ph2417t",
+  "checks": {
+   "dynmww6l1pd1l0o2": {
+    "id": "dynmww6l1pd1l0o2",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Fixture",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "k",
+     "m3": "y",
+     "m4": "y",
+     "m5": "pl",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {
+     "m5": "2027-02-01"
+    },
+    "cat": "Guest-facing",
+    "dept": "gx",
+    "use": "gx-2",
+    "useName": "AI chat and messaging assistant, pre-booking and in-stay (web, WhatsApp, OTA inbox; multilingual)",
+    "from": "",
+    "tqSig": "1823a2a472",
+    "T": {
+     "pe1": "y",
+     "sk1": "pl",
+     "fi1": "n",
+     "te1": "y",
+     "da1": "k",
+     "or1": "y",
+     "or2": "n",
+     "x-auto": "pl"
+    },
+    "TBy": {
+     "sk1": "2027-03-01",
+     "x-auto": "2027-04-15"
+    },
+    "snaps": [
+     {
+      "at": "2026-11-25T09:00:00.000Z",
+      "level": "almost",
+      "pct": 69,
+      "pts": 25,
+      "max": 36,
+      "known": 16,
+      "total": 18,
+      "mustYes": 8,
+      "mustN": 10,
+      "rules": "v2.6 (24 Nov 2026)",
+      "use": "gx-2",
+      "sig": "1823a2a472"
+     }
+    ],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": ""
+   },
+   "dynmww6l1ph2417t": {
+    "id": "dynmww6l1ph2417t",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Fixture",
+     "role": "gm",
+     "type": "independent",
+     "country": "France"
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "y",
+     "q4": "y",
+     "q5": "y"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "k",
+     "m3": "y",
+     "m4": "y",
+     "m5": "pl",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "y",
+     "m10": "y"
+    },
+    "By": {
+     "m5": "2027-02-01"
+    },
+    "cat": "Commercial",
+    "dept": "rm",
+    "use": "rm-1",
+    "useName": "Demand forecasting (rooms, by day/segment/room class)",
+    "from": "",
+    "tqSig": "ad446d4029",
+    "T": {
+     "pe1": "y",
+     "sk1": "y",
+     "fi1": "pl",
+     "te1": "n",
+     "da1": "y",
+     "or1": "k"
+    },
+    "TBy": {
+     "fi1": "2027-01-20"
+    },
+    "snaps": [],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": ""
+   }
+  }
+ },
+ "seen": {
+  "gx2": {
+   "id": "dynmww6l1pd1l0o2",
+   "level": "almost",
+   "pct": 69,
+   "T": {
+    "pe1": "y",
+    "sk1": "pl",
+    "fi1": "n",
+    "te1": "y",
+    "da1": "k",
+    "or1": "y",
+    "or2": "n",
+    "x-auto": "pl"
+   },
+   "TBy": {
+    "sk1": "2027-03-01",
+    "x-auto": "2027-04-15"
+   }
+  },
+  "rm1": {
+   "id": "dynmww6l1ph2417t",
+   "level": "almost",
+   "pct": 75,
+   "T": {
+    "pe1": "y",
+    "sk1": "y",
+    "fi1": "pl",
+    "te1": "n",
+    "da1": "y",
+    "or1": "k"
+   },
+   "TBy": {
+    "fi1": "2027-01-20"
+   }
+  }
+ }
+}

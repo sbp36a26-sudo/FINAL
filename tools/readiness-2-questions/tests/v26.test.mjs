@@ -57,7 +57,7 @@ ok(/Question 1 is Yes\./.test(app) && !/Question 1 is No\./.test(app), 'A: step 
 // v2.7.0: data/wording.json is gone (its core texts live in src/content.js)
 
 // ---------- A. migration of records saved before v2.6 (fixture) ----------
-ok(F.V === 3 && F.QV === 2 && L.QV === 2, 'A: store and file version 3; step 2 question set 2 (qv)');
+ok(F.V === 4 && F.QV === 2 && L.QV === 2, 'A: store and file version 4 (v2.7.0; 3 since v2.6); step 2 question set 2 (qv)');
 ok(FX.store.v === 2 && Object.values(FX.store.checks).every(c => c.qv === undefined), 'fixture: a v2 store whose checks carry no qv');
 let info = {};
 const s1 = F.migrate(clone(FX.store), ENV, info), c1 = s1.checks;

@@ -64,8 +64,8 @@
   function tabCur() { try { return sessionStorage.getItem(F.CUR_KEY) || ''; } catch (e) { return ''; } }
   function setTabCur() { try { sessionStorage.setItem(F.CUR_KEY, store.cur); } catch (e) { /* blocked */ } }
   /* What is saved now → { store, info } | { blocked } | { corrupt: text } | null (nothing saved). Changes nothing. */
-  function readStore(keep) {
-    var s; try { s = localStorage.getItem(F.KEY); } catch (e) { return { blocked: true }; }
+  function readStore(keep, key) {
+    var s; try { s = localStorage.getItem(key || F.KEY); } catch (e) { return { blocked: true }; }
     if (!s) return null;
     var raw; try { raw = JSON.parse(s); } catch (e) { return { corrupt: s }; }
     var info = { keep: keep }, r = F.migrate(raw, ENV, info);
@@ -73,8 +73,12 @@
   }
   function load() {
     var x = readStore(tabCur());
+    /* v2.7.0: the first visit reads a store kept by v2.6.1 / v2.7 under its own key (same browser, same address), once; it is never
+       written back there or deleted. Its open check's step-5 answers are carried by carry_answer_from (R2Flow.cleanRec). */
+    if (!x) { x = readStore(tabCur(), F.OLD_KEY); if (x && x.store) x.info.fromOldKey = true; }
     if (!x) return null;
     if (x.blocked) { storage = 'blocked'; return null; }
+    if (x.corrupt != null && x.info && x.info.fromOldKey) return null; // an unreadable old store is left alone
     if (x.corrupt != null) { // audit L12: say so and set the unreadable text aside before the first save replaces it
       corrupt = true; try { localStorage.setItem(F.CORRUPT_KEY, x.corrupt); } catch (e) { /* blocked */ }
       return null;
@@ -121,8 +125,11 @@
 
   var store = load() || F.blankStore();
   var rec = F.cur(store);
+  /* v2.7.0: { kept, fresh } when the open check was answered against the older (v2.6.1) question list, else null. */
+  function olderOf(info) { return info && info.olderList ? { kept: info.olderList.kept, fresh: info.olderList.fresh } : null; }
+  function olderText(o) { return C.OLDER_LIST.replace('{n}', o.kept === 1 ? '1 answer was' : o.kept + ' answers were').replace('{m}', o.fresh === 1 ? '1 question is' : o.fresh + ' questions are'); }
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, share: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { older: olderOf(loadInfo), olderShown: false, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, share: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
@@ -169,7 +176,7 @@
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
     if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-withdraw') || $('rm-yes'); if (y) y.focus(); return true; }
-    if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; render(); return true; }
+    if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; render(); return true; }
     if (ev === 'remove-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
@@ -187,14 +194,15 @@
     if (ev === 'adopt') {
       /* TABS: take the other tab's version of the open check. */
       var x = readStore(rec.id);
-      if (x && x.store && x.store.checks[rec.id]) { store.checks[rec.id] = x.store.checks[rec.id]; rec = F.cur(store); ui.notice = noticeOf(x.info); }
+      if (x && x.store && x.store.checks[rec.id]) { store.checks[rec.id] = x.store.checks[rec.id]; rec = F.cur(store); ui.notice = noticeOf(x.info); ui.older = olderOf(x.info); ui.olderShown = false; }
       ui.elsewhere = null; ui.missing = null; histAssert(); render(); return true;
     }
+    if (ev === 'older-ok') { ui.older = null; render(); return true; }
     if (ev === 'seen' && ui.corrupt) { ui.corrupt = false; if (!store.notice) { render(); return true; } }
     if (ev === 'import-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'file'); ui.confirm = c.c; var f = ui.file; ui.file = null;
       if (!c.fire || !f) { render(); return false; }
-      return send('import', f, { notice: ui.fileInfo });
+      return send('import', f, { notice: ui.fileInfo, older: ui.fileOlder });
     }
     if (ev === 'next' && F.flowNext(rec.step, 'next', ctx()) === null) {
       /* Refused "Next": point at the first open question (Q1 Yes always goes on to the stop screen, so never here). */
@@ -211,7 +219,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.elsewhere = null; ui.fileNote = null;
+      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -228,8 +236,9 @@
   }
   /* ev: the event that moved the step (written into history by the HISTORY machine), or null for a pop (already in history). */
   function afterMove(prev, ev, force) {
-    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = null; ui.file = null; ui.fileInfo = null; skipRun = 0;
+    ui.confirm = F.confirmNext(ui.confirm, 'nav').c; ui.missing = null; ui.copy = null; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; skipRun = 0;
     if (ui.layer && (rec.step !== prev || force)) closeDetail(true); // audit v3 M1, M2: the layer belongs to one step of one check
+    if (ui.older && prev === 'tailored' && rec.step !== prev) ui.older = null; // said once: gone after step 5 was left
     if (rec.step !== prev || force) { ui.notice = (ui.notice === 'useChanged' && rec.step === 'where') || (ui.notice === 'questionsChanged' && rec.step === 'tailored') ? ui.notice : null; ui.elsewhere = null; ui.fileNote = null; }
     if (ev && (rec.step !== prev || force)) histMove(ev, prev);
     takeSnap();
@@ -265,6 +274,7 @@
     if (storage === 'blocked') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
     if (storage === 'newer') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
     if (store.notice === 'v1') h += '<p class="savewarn" id="from-v1" role="status">' + esc(C.FROM_V1) + ' <button type="button" class="linkbtn" data-act="seen" id="seen">OK</button></p>';
+    if (ui.older) h += '<p class="savewarn" id="older-list" role="status" data-kept="' + ui.older.kept + '" data-fresh="' + ui.older.fresh + '">' + esc(olderText(ui.older)) + ' <button type="button" class="linkbtn" data-act="older-ok" id="older-ok">OK</button></p>';
     if (ui.corrupt) h += '<p class="savewarn" id="corrupt" role="status">' + esc(C.CORRUPT) + ' <button type="button" class="linkbtn" data-act="seen" id="corrupt-ok">OK</button></p>';
     if (ui.elsewhere) h += '<p class="savewarn" id="elsewhere" data-elsewhere="' + ui.elsewhere + '" role="status">' + esc(C.ELSEWHERE[ui.elsewhere]) + (ui.elsewhere === 'changed' ? ' Going on here keeps this tab’s answers. <button type="button" class="linkbtn" data-act="adopt" id="adopt">Load the other tab’s version</button>' : '') + '</p>';
     return h + sharedLine();
@@ -725,14 +735,16 @@
     try {
       var o = JSON.parse(text);
       if (o && o.kind === FILE_KIND && o.check && typeof o.v === 'number' && o.v <= F.V) r = F.cleanRec(o.check, ENV, info, { file: true });
+      /* v2.7.0: a browser store record of v2.6.1 (or of this page), e.g. copied out of the browser: its open check is opened */
+      else if (o && !o.kind && o.checks && typeof o.checks === 'object' && typeof o.v === 'number' && o.v <= F.V && o.checks[o.cur]) r = F.cleanRec(o.checks[o.cur], ENV, info, { file: true });
       else if (o && o.kind === FILE_KIND && o.v > F.V) { toast('That file was saved by a newer version of this page.'); return false; }
       else if (o && o.kind === OLD_KIND) old = true;
     } catch (e) { r = null; }
     if (old) { ui.fileNote = 'old'; render(); toast(C.OLD_FILE); return false; }
     if (!r) { toast('That file is not a check saved from this page.'); return false; }
-    ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); // what the file's check lost on the way in (audit M5): said after it opens
+    ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); ui.fileOlder = olderOf(info); // what the file's check lost on the way in (audit M5): said after it opens
     if (store.checks[r.id] && F.listed(store.checks[r.id])) { ui.file = r; ui.confirm = F.confirmNext(ui.confirm, 'ask', 'file').c; render(); var y = $('import-yes'); if (y) { y.scrollIntoView({ block: 'center' }); y.focus(); } return true; }
-    return send('import', r, { notice: ui.fileInfo });
+    return send('import', r, { notice: ui.fileInfo, older: ui.fileOlder });
   }
 
   // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
@@ -799,6 +811,12 @@
     $('hdr').innerHTML = header();
     $('view').innerHTML = VIEWS[rec.step]();
     syncDetail();
+    /* v2.7.0: after opening a check made with the older question list, step 5 opens on its first unanswered question */
+    if (ui.older && !ui.olderShown && rec.step === 'tailored') {
+      ui.olderShown = true;
+      var fq = (tailQs().filter(function (q) { return !L.A_OK[rec.T[q.id]]; })[0] || {}).id, fe = fq && $('f-' + fq);
+      if (fe) { setTimeout(function () { fe.scrollIntoView({ block: 'center' }); var fi = fe.querySelector('input'); if (fi) fi.focus({ preventScroll: true }); }, 0); return; }
+    }
     if (keep && $(keep) && keep !== 'view' && !(ui.layer && !$('detail').contains($(keep)))) $(keep).focus({ preventScroll: true });
   }
 
@@ -949,7 +967,7 @@
         reason: ev ? ev.reason : null, held: ev ? ev.held.slice() : null, score: ev ? L.scoreHead(ev) : null,
         ctx: c, events: F.events(rec.step, c), level: ev ? ev.level : null, pct: ev ? ev.pct : null, counts: ev ? ev.counts : null, must: ev ? ev.must : null,
         confirm: ui.confirm, missing: ui.missing, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
-        dlKind: ui.dlKind, fileInfo: ui.fileInfo, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
+        dlKind: ui.dlKind, fileInfo: ui.fileInfo, older: ui.older ? Object.assign({}, ui.older) : null, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
         inHub: host.pong, inFrame: IN_FRAME, download: ui.dl, bridge: host.state, share: sharePhase(), sharedAt: rec.sharedAt, shareStore: S ? S.state() : null, sharingOn: SHARING_ON,
         history: { d: hist.d, prev: hist.prev } };
     },
