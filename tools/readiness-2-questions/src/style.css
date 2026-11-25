@@ -256,9 +256,7 @@ details.more[open] > summary::before{transform:rotate(45deg) translate(-.1em,-.1
 .yn-unsure .yn-head{color:var(--na)}
 .yn-unsure p{margin:4px 0}
 .yn-more{margin-top:6px}
-.crisp{font-family:var(--display);font-size:1.25rem;font-weight:700;letter-spacing:.06em;color:var(--ink);margin:4px 0 0;line-height:1.1}
-.crisp-key{font-size:.875rem;color:var(--ink3);margin:2px 0 8px}
-.crisp-key b{color:var(--accent)}
+.qnames{font-size:.875rem;color:var(--ink3);margin:2px 0 8px}
 
 /* ---------- v2 (24 Nov 2026): hotel form, five-step bar, result with score, bars, action plan, saved checks ---------- */
 .steps3.steps5{grid-template-columns:repeat(5,minmax(0,1fr))}
@@ -381,3 +379,7 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 /* v2.8.0 (B12): the rest of a long use-case name, under its short name */
 .namesub { display: block; font-weight: 400; font-size: .92em; color: var(--ink2); margin-top: 2px; }
 #tail-use { display: block; margin-bottom: 4px; }
+/* v2.8.0: the must-haves line first in the verdict box (B3), the step-2 "Also" line (B2), "Your answer" under the condition (B5) */
+.verdict.result .mustfirst{margin:6px 0 2px;font-size:1rem}
+.verdict.result .boxline.also{font-weight:600}
+.aiq .youranswer{margin:2px 0 0}

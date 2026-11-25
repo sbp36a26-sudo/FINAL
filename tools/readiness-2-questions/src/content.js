@@ -14,7 +14,8 @@
      Questions 3 and 4 are new (Brynjolfsson & Mitchell 2017: large digital sets of examples; a task that tolerates errors).
      Records saved before v2.6 are turned round on load (R2Logic.legacyQ; record field qv). ---------- */
   var QUESTIONS = [
-    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Complex judgement', stopOn: 'y',
+    { id: 'q1', short: 'Needs judgement, not fixed rules', title: 'Needs judgement', stopOn: 'y', whoKey: 'it', // v2.8.0 (B10): the plain name
+      find: 'Find out: whether fixed “if this, then that” rules could do this job. Ask the vendor or IT.',
       yesIf: 'You could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”.',
       noIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.',
       q: 'Can each case be fixed with an “if this, then that” rule?',
@@ -26,7 +27,7 @@
       no: 'Reading guest emails in five languages and drafting replies.',
       outcome: 'Not suitable for AI: rules or ordinary automation will do it.', // v1.2 (owner B2): was "Not an AI problem: …"
       who: 'the vendor or IT' },
-    { id: 'q2', short: 'Worth real money or hours', title: 'Return', yesIf: 'It happens often or costs a lot, for example many cases a week, or many staff hours or much revenue involved.', noIf: 'It is rare or small, so doing it better would save little.',
+    { id: 'q2', short: 'Worth real money or hours', title: 'Return', whoKey: 'gm', find: 'Find out: how often this task happens and what it costs today. Ask the GM or finance.', yesIf: 'It happens often or costs a lot, for example many cases a week, or many staff hours or much revenue involved.', noIf: 'It is rare or small, so doing it better would save little.',
       q: 'Is this task frequent or costly enough to be worth improving?',
       hint: '',
       whyShort: 'AI costs money to set up, run and check, so a rare or small job will not pay that back.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
@@ -36,7 +37,7 @@
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
     /* v2.6 (owner): new question 3. Brynjolfsson & Mitchell 2017, criterion 2 ("large (digital) data sets ... containing input-output pairs"). */
-    { id: 'q3', short: 'Past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
+    { id: 'q3', short: 'Past examples to learn from', title: 'Information to learn from', whoKey: 'it', find: 'Find out: whether past examples of this task are stored digitally. Ask IT or the department head.', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
       q: 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
       hint: '',
       whyShort: 'AI learns from examples; without many past cases it has nothing to learn from.',
@@ -46,7 +47,7 @@
       outcome: 'Too few examples to learn from.', add: 'Start keeping these cases digitally, or ask the vendor what examples its tool learned from. Then ask again.',
       who: 'IT or the department head' },
     /* v2.6 (owner): new question 4. Brynjolfsson & Mitchell 2017, criterion 6 ("a tolerance for error"). Checking results is must-have 6. */
-    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a safety decision.', // v2.7.0: two words removed (owner: nothing on rules from authorities in this tool)
+    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', whoKey: 'dept', find: 'Find out: whether an occasional mistake can be caught before it causes harm. Ask the department head.', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a safety decision.', // v2.7.0: two words removed (owner: nothing on rules from authorities in this tool)
       q: 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?',
       hint: '',
       whyShort: 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.',
@@ -55,7 +56,7 @@
       no: 'Answering guests’ allergen questions on its own.',
       outcome: 'A rule-based tool or a person is the better choice.', // v2.7.0: the line pointing to another hub tab is removed
       who: 'the department head' },
-    { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
+    { id: 'q5', short: 'Success has a number', title: 'Proof', whoKey: 'gm', find: 'Find out: which number should improve and where it stands today. Ask the GM.', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
       q: 'Have you chosen what result should improve, and do you know where it stands today?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
@@ -251,6 +252,16 @@
   };
   /* O5: one short line in the verdict box, only for "Not ready yet" and a held verdict. */
   var BOX = { held: 'Held back: {why}.', sensitive: 'this area involves people\'s personal data or jobs', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
+  /* v2.8.0 (live review, 25 Nov 2026). B2: a No in step 2 is said in the verdict box and is the first action. {list}: "Return: No; Proof: No". */
+  var ALSO_STEP2 = 'Also: the first questions suggest this may not be worth doing with AI ({list}).';
+  /* B4: the sensitive hold, said once in the verdict box; action 1 is the adviser (owner GM); nothing else open → NOTHING_ELSE. */
+  var SENS_BOX = 'Almost ready: everything is in place, but this area needs an adviser’s view first.';
+  var SENS_BOX_MORE = 'Almost ready: this area needs an adviser’s view first. Also held back: {why}.';
+  var ADVISER = 'Ask an adviser before a pilot';
+  var NOTHING_ELSE = 'Nothing else to fix.';
+  /* B3: the score's label. B10: the five plain names (no letters). Version: one string on the page, the PDF and the files. */
+  var SCORE_OF = 'of points from all questions';
+  var VERSION = '2.8.0', VERSION_LINE = 'v2.8 (rules unchanged since v2.6)';
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
@@ -305,7 +316,7 @@
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
     ],
-    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of {N} use cases”), it is that analysis, not a survey. The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
+    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of the {N} use cases analysed (of {U})”), it is that analysis, not a survey. The analysis covered {N} use cases; this tool lists {U}: {D} were added to the catalogue later, “AI use policies and governance” is a document, not a tool, so it was left out of the count, and one use case analysed is no longer listed. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
     where: [],
     whereNote: 'The departments and use cases come from the project team’s Use-Case Catalogue (read when this page was built). “How common” is the catalogue’s rating (High, Medium, Low, Very low), built from the sources listed there for each use case.',
     tailored: [
@@ -341,6 +352,7 @@
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
+    ALSO_STEP2: ALSO_STEP2, SENS_BOX: SENS_BOX, SENS_BOX_MORE: SENS_BOX_MORE, ADVISER: ADVISER, NOTHING_ELSE: NOTHING_ELSE, SCORE_OF: SCORE_OF, VERSION: VERSION, VERSION_LINE: VERSION_LINE,
     ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

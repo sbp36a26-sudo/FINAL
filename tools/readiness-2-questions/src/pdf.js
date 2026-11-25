@@ -19,7 +19,7 @@
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
   var TITLE = 'Can AI solve your problems? Result', TITLE_ANSWERS = 'Can AI solve your problems? Your answers', TITLE_STOP = 'Can AI solve your problems? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
-  var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Questions, rules and content as of ' + C.AS_OF + '.';
+  var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Questions, rules and content as of ' + C.AS_OF + '. Version ' + C.VERSION_LINE + '.';
   /* v2.7.0 (owner): the footer of every page is the disclaimer (the data file's fixed text), then the page number */
   var FOOT_L = C.DISCLAIMER, FOOT = FOOT_L + ' · page ';
 
@@ -35,7 +35,8 @@
   }
   /* v2.5.1: each of the five answers with what it means for this decision (R2Logic.aiMeaning), as on the result card.
      v2.6: the tone follows the meaning (a.good), so question 1 No is drawn in the good tone. */
-  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: L.aiMeaningText(a) }; }); }
+  /* v2.8.0 (B5): the pill is the condition (Met / Not met / To find out); the answer is said under it */
+  function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.cond, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: 'Your answer: ' + a.a + '. ' + L.aiMeaningText(a) }; }); }
   var STATE_TONE = { yes: 'hi', planned: 'md', no: 'lo' };
   var LEVEL_TONE = { ready: 'hi', almost: 'md', notready: 'lo', noinfo: 'accent' };
 
@@ -54,9 +55,11 @@
   function resultModel(m, run, use) {
     var b = head(m, false, use);
     /* the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with" */
-    b.push({ k: 'h', t: 'Result' }, { k: 'verdict', id: 'level', t: m.levelName + ' · ' + m.scoreHead, name: m.levelName, score: m.scoreHead, box: m.boxLine, sub: m.mustLine, tone: LEVEL_TONE[m.level] || 'accent' });
+    /* v2.8.0: the must-haves line first (B3), the box line once (B4), the step-2 "Also" line (B2) */
+    b.push({ k: 'h', t: 'Result' }, { k: 'verdict', id: 'level', t: m.levelName + ' · ' + m.scoreHead, name: m.levelName, score: m.scoreHead, box: m.boxLine, also: m.alsoLine, sub: m.mustLine, tone: LEVEL_TONE[m.level] || 'accent' });
     /* the reason, the points and the caveat under the box (tests/logic.test.mjs reads this order) */
-    b.push({ k: 'lead', t: m.reason, id: 'reason', under: true }, { k: 'p', t: m.scoreSub, small: true, id: 'score-sub' });
+    if (m.reasonShown) b.push({ k: 'lead', t: m.reasonShown, id: 'reason', under: true });
+    b.push({ k: 'p', t: m.scoreSub, small: true, id: 'score-sub' });
     if (m.pilot) b.push({ k: 'p', t: m.pilot, small: true, id: 'pilot' }); // v2.5, council BUILD NOW 11
     b.push({ k: 'p', t: m.levelLine });
     if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
@@ -68,6 +71,7 @@
     if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
     if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes.' });
     m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: (f.who ? f.who + ': ' : '') + f.text, who: f.who || '', body: f.text, sub: f.sub }); }); // v2.5: a hold (BUILD NOW 3) has no person
+    if (m.nothingElse) b.push({ k: 'p', t: m.nothingElse, id: 'nothing-else' }); // v2.8.0 (B4)
 
     b.push({ k: 'h', t: 'Action plan by person' });
     if (!m.people.length) b.push({ k: 'p', t: 'Nothing open.' });
@@ -87,7 +91,7 @@
     b.push({ k: 'label', t: 'How the score was worked out' }); m.method.slice(0, 3).forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
     b.push({ k: 'h', t: 'Every question and your answer' });
     b.push({ k: 'label', t: 'Step 2: ' + C.STEP2_HEAD, group: true });
-    m.answers.forEach(function (a) { b.push({ k: 'item', id: a.id, name: a.title, check: a.q, ex: '', answer: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', action: '' }); });
+    m.answers.forEach(function (a) { b.push({ k: 'item', id: a.id, name: a.title, check: a.q, ex: '', answer: 'Your answer: ' + a.a, val: a.a + (a.state ? ' (' + a.cond + ')' : ''), tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', action: '' }); });
     var grp = '';
     m.itemList.forEach(function (it, i) {
       var raw = m.ev.items[i], g = it.grp === 'must' ? 'Step 3: Must-haves' : 'Step 5: ' + it.name;
@@ -177,11 +181,13 @@
           para(b.t, M, TW, SZ.h, 'bold', 'ink'); y += g(1.6); rule(M, W - M, 'line', 0.3); y += g(3.4); break;
         case 'verdict': {
           var inner = function () {
-            y += g(6); para(b.name, M + 7, TW - 14, SZ.verdict, 'bold', b.tone); y += g(0.8);
-            para(b.score, M + 7, TW - 14, SZ.h, 'bold', 'ink');
-            if (b.box) { y += g(1.6); para(b.box, M + 7, TW - 14, SZ.body, 'bold', b.tone); }
-            y += g(2.4); rule(M + 7, W - M - 7, b.tone, 0.15); y += g(2.4);
-            para(b.sub, M + 7, TW - 14, SZ.body, 'normal', 'ink2'); y += g(5.5);
+            y += g(6); para(b.name, M + 7, TW - 14, SZ.verdict, 'bold', b.tone); y += g(1.2);
+            para(b.sub, M + 7, TW - 14, SZ.body, 'bold', 'ink'); y += g(1.2); // v2.8.0 (B3): the must-haves line first, in bold
+            para(b.score, M + 7, TW - 14, SZ.body, 'normal', 'ink2');
+            if (b.box || b.also) { y += g(2.4); rule(M + 7, W - M - 7, b.tone, 0.15); y += g(2.4); }
+            if (b.box) para(b.box, M + 7, TW - 14, SZ.body, 'bold', b.tone);
+            if (b.also) { if (b.box) y += g(1.2); para(b.also, M + 7, TW - 14, SZ.body, 'bold', 'ink'); }
+            y += g(5.5);
           };
           top = y; var vh = measure(inner);
           if (!DRY) { fill(b.tone + 'S'); doc.rect(M, top, TW, vh, 'F'); fill(b.tone); doc.rect(M, top, 1.6, vh, 'F'); }

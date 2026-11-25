@@ -34,13 +34,13 @@ const PAT = {
   A: [mk('fo-4', { A: 'pl' }), 'notready', 72, [], /^Because none of the 10 must-haves is Yes\.$/],
   B: [mk('fo-4', { T: 'pl' }), 'almost', 77, ['tail'], /^Held back: fewer than half the questions for this use case are Yes\.$/],
   C: [mk('fo-4', {}), 'ready', 100, [], /^$/],
-  D: [mk('fo-4', { Q: { q5: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/],
+  D: [mk('fo-4', { Q: { q5: 'n' } }), 'almost', 100, ['carried'], /^$/], // v2.8.0 (B2): a carried No is said by the "Also" line, not the box line
   E: [mk('fo-4', { Q: { q1: 'u' } }), 'almost', 100, ['notsure'], /^Held back: Not sure in step 2\.$/],
   F: [mk('fo-4', { T: 'k' }), 'almost', 55, [], /^$/],
   G: [mk('none', {}), 'almost', 100, ['none'], /^Held back: no use case chosen\.$/],
   H: [mk('fo-4', { A1: { m4: 'n' } }), 'notready', 94, [], /^Because 1 must-have is No\.$/],
-  I: [mk('fo-4', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/], // v2.6: was ready with the assistant-only condition
-  sensitive: [mk('hr-2', {}), 'almost', 100, ['sensitive'], /^Held back: this area involves people's personal data or jobs\.$/] // v2.7.0: was the legal hold
+  I: [mk('fo-4', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^$/], // v2.6: was ready with the assistant-only condition; v2.8.0: said by the "Also" line
+  sensitive: [mk('hr-2', {}), 'almost', 100, ['sensitive'], /^Almost ready: everything is in place, but this area needs an adviser’s view first\.$/] // v2.7.0: was the legal hold; v2.8.0 (B4): said once, in these words
 };
 const heads = {};
 for (const [k, [r, level, pct, held, box]] of Object.entries(PAT)) {
@@ -62,9 +62,9 @@ ok(L.resultModel(PAT.B[0], env).levelLine === 'Every must-have is in place. For 
 const mD = L.resultModel(PAT.D[0], env);
 ok(mD.first[0]?.text === 'Settle this first: in step 2 you answered No to “Proof”. Define success first. Write down the number and today’s figure, then come back.' && mD.firstLabel === 'Start with this one', 'BUILD NOW 3: D starts with the carried No: ' + mD.first[0]?.text);
 const mL = L.resultModel(PAT.sensitive[0], env);
-ok(mL.first[0]?.text === C.SENSITIVE_HOLD && mL.first[0].hold === 'sensitive', 'BUILD NOW 3 (v2.7.0): the sensitive hold is item 1, in the data file\'s words');
+ok(mL.first[0]?.text === C.ADVISER && mL.first[0].who === C.WHO.gm && mL.first[0].hold === 'sensitive' && mL.nothingElse === C.NOTHING_ELSE, 'v2.8.0 (B4): the sensitive hold\'s item 1 is "Ask an adviser before a pilot" (General manager); nothing else open says so');
 const mE = L.resultModel(PAT.E[0], env);
-ok(/^Settle this first: you answered Not sure to “Complex judgement” in step 2\./.test(mE.first[0]?.text) && /[Yy]ou answered Not sure to “Complex judgement” in step 2\./.test(mE.reason), 'O2: E reason and first item name the Not sure: ' + mE.reason);
+ok(mE.first[0]?.text === C.QUESTIONS[0].find && mE.first[0].hold === 'notsure' && /[Yy]ou answered Not sure to “Needs judgement” in step 2\./.test(mE.reason), 'O2 (v2.8.0, owner): a Not sure becomes "Find out: …" as item 1; the reason names it: ' + mE.reason);
 const mG = L.resultModel(PAT.G[0], env);
 ok(mG.levelLine === 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.' && /^Settle this first:/.test(mG.first[0]?.text), 'O4: G line and first item');
 // O3: Q4 No is a condition, not a hold
@@ -76,7 +76,7 @@ ok(C.LEVELS.ready.name === 'Ready to start a pilot', 'O5: the top verdict keeps 
 // method lists the team judgement (O1 to O4)
 const meth = L.method(L.evaluate(PAT.C[0], TQ)).join('\n');
 ok(/at least half the must-haves at Yes/.test(meth) && /at least half the questions for this use case that you answered at Yes/.test(meth) && /“Not sure” in step 2 holds the top verdict back/.test(meth) && /“None of these fits”/.test(meth) && /question 2, 3, 4 or 5/.test(meth), 'method names the v2.5 (and v2.6) team judgement');
-ok(/v2\.5/.test(meth), 'method names rules v2.5');
+ok(!/v2\.5/.test(meth) && meth.includes('Version v2.8 (rules unchanged since v2.6).'), 'v2.8.0: the method shows one version string and no "rules v2.5"');
 
 // ---------- BUILD NOW 5 / O6: tailored tasks read as the team-worded question ----------
 const r5 = finished(F, D, 'fo-4'); r5.T[GX[0].id] = 'n'; r5.T[GX[1].id] = 'pl'; r5.TBy[GX[1].id] = '2027-02-01'; r5.T[GX[2].id] = 'k'; r5.T[GX[7].id] = 'pl';

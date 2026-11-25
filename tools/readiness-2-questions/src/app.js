@@ -324,7 +324,9 @@
   function aiCard(m) {
     return '<div class="aiv ' + vClass(L.verdict(rec.Q).key) + '"><p class="vsent" id="ai-head">' + esc(m.ai.head) + '</p>' + (m.ai.second ? '<p><strong>' + esc(m.ai.second) + '</strong></p>' : '') +
       '<ol class="aiq" id="ai-rows">' + m.answers.map(function (a) {
-        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + aiChip(a) + '">' + esc(a.a) + '</span></div>' +
+        /* v2.8.0 (B5): the badge is the condition (Met / Not met / To find out), the answer stands under it */
+        return '<li data-q="' + a.id + '" data-a="' + (a.state || 'none') + '" data-cond="' + esc(a.cond) + '"><div class="aiqhead"><b>' + esc(a.title) + '</b><span class="chip ' + aiChip(a) + '">' + esc(a.cond) + '</span></div>' +
+          '<p class="meta youranswer">Your answer: ' + esc(a.a) + '</p>' +
           '<p>' + esc(a.line) + (a.ask ? ' <strong>' + esc(a.ask) + '</strong>' : '') + '</p>' + (a.ifNo ? '<p class="meta">' + esc(a.ifNo) + '</p>' : '') + '</li>';
       }).join('') + '</ol></div>';
   }
@@ -405,9 +407,8 @@
   }
   function vQ() {
     var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 2 of 5</p>' +
-      '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
-      '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
       '<h2 id="q-head">' + esc(C.STEP2_HEAD) + '</h2>' +
+      '<p class="qnames" id="q-names">' + C.QUESTIONS.map(function (q) { return '<span>' + esc(q.title) + '</span>'; }).join(' · ') + '</p>' + // v2.8.0 (B10): the five plain names, no letters
       '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
@@ -529,17 +530,21 @@
       /* Owner, 24 Nov 2026: the box shows only the verdict, the score and the must-haves line. The reason and the notes move to
          "Start with …"; the points, the honesty text and the verdict's line to "How this was worked out".
          v2.5 (owner O5): one short line in the box, only for "Not ready yet" and a held verdict (#box-reason). */
+      /* v2.8.0: the must-haves line first, in bold (B3); the score "of points from all questions"; the hold or reason once (B4);
+         the step-2 "Also" line (B2) */
       '<h1 id="level-name">' + esc(m.levelName) + '</h1>' +
+      '<p class="countline mustfirst" id="must-line"><strong>' + esc(m.mustLine) + '</strong></p>' +
       '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + esc(m.scoreHead) + '</span></div>' +
       (m.boxLine ? '<p class="boxline" id="box-reason">' + esc(m.boxLine) + '</p>' : '') +
-      '<p class="countline" id="must-line">' + esc(m.mustLine) + '</p></section>';
+      (m.alsoLine ? '<p class="boxline also" id="also-step2">' + esc(m.alsoLine) + '</p>' : '') + '</section>';
     if (m.pilot) h += '<p class="meta pilotgloss" id="pilot-gloss">' + esc(m.pilot) + '</p>'; // v2.5, council BUILD NOW 11
     h += '<p class="disclaimer" id="result-disclaimer"><strong>' + esc(C.DISCLAIMER) + '</strong></p>'; // v2.7.0 (owner)
     h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
-      '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
+      (m.reasonShown ? '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reasonShown) + '</strong></p>' : '') +
       (m.flag ? '<p class="flagline" id="sensitive-flag" role="note"><strong>' + esc(m.flag) + '</strong></p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
-      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
+      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') +
+      (m.nothingElse ? '<p id="nothing-else">' + esc(m.nothingElse) + '</p>' : '') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>' + esc(C.STEP2_HEAD) + '</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';

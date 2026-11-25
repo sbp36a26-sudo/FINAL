@@ -45,14 +45,14 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
     const m = L.resultModel(r, env), pdf = pdfText(r); // v2.5: Copy summary (summaryText) is gone; the PDF is the text that leaves the page
     ok(m.level === level, tag + ': ' + level + ' (got ' + m.level + ')');
     ok(![everyWord(m), pdf].some(t => /\d+% ready/.test(t)), tag + ': "% ready" appears nowhere (screen words, PDF)');
-    ok(/^(Score: \d+%|No score yet: you answered \d+ of \d+ questions\.)$/.test(m.scoreHead), tag + ': the score reads "Score: n%" or "No score yet: …": ' + m.scoreHead);
+    ok(/^(Score: \d+% of points from all questions|No score yet: you answered \d+ of \d+ questions\.)$/.test(m.scoreHead), tag + ': the score reads "Score: n% of points from all questions" (v2.8.0 B3) or "No score yet: …": ' + m.scoreHead);
     ok(m.reason.startsWith('Because ') && pdf.includes(m.reason), tag + ': the reason is a visible line, on screen and in the PDF: ' + m.reason);
     ok(pdf.includes(m.levelName + ' · ' + m.scoreHead), tag + ': the PDF carries the verdict and score string');
   });
   // item 1: the wording of the score
   // v2.3: Partly → Planned, Doesn't apply → No
   let m = L.resultModel(mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']), env);
-  ok(m.scoreHead === 'Score: 69%' && m.ev.pts === 25 && m.ev.max === 36 && m.ev.counts.known === 16 && m.ev.counts.total === 18, 'item 1: "Score: 69%" = 25 of 36 points (16 of 18 answered, 2 unknown at 0)');
+  ok(m.scoreHead === 'Score: 69% of points from all questions' && m.ev.pts === 25 && m.ev.max === 36 && m.ev.counts.known === 16 && m.ev.counts.total === 18, 'item 1: "Score: 69%" = 25 of 36 points (16 of 18 answered, 2 unknown at 0)');
   ok(m.scoreSub === '25 of 36 points on 18 questions: 16 answered, 2 not answered yet (0 points each). ' + C.SCORE_NOTE && C.SCORE_NOTE === 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.', 'item 1: the points and the answered-question counts stand next to the score, then the caveat (final copy)');
   ok(L.scoreSub(L.evaluate(mk('fo-4', [], []), TQ)) === '36 of 36 points on the 18 questions you answered. ' + C.SCORE_NOTE, 'item 1: with nothing unknown, "36 of 36 points on the 18 questions you answered."');
   ok(eq(C.GET_SCORE, ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']), 'item 1: the cover bullet (final copy)');
@@ -132,7 +132,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   SENS.forEach(id => { // v2.7.0: the data's 12 sensitive use cases (was: the register's high-risk list and the sens add-on)
     const e5 = L.evaluate(mk(id, [], []), TQ), m5 = L.resultModel(mk(id, [], []), env);
     ok(e5.level === 'almost' && e5.pct === 100 && eq(e5.held, ['sensitive']) && e5.must.allYes, id + ': all Yes, 100%, but no top verdict (held: sensitive, v2.7.0)');
-    ok(m5.reason === C.SENSITIVE_HOLD && m5.levelLine === C.ALMOST_HELD && m5.flag === C.SENSITIVE_FLAG && m5.boxLine === "Held back: this area involves people's personal data or jobs.", id + ': the result says why in plain words (the data file\'s hold reason)');
+    ok(m5.reason === C.SENSITIVE_HOLD && m5.reasonShown === '' && m5.levelLine === C.ALMOST_HELD && m5.flag === C.SENSITIVE_FLAG && m5.boxLine === C.SENS_BOX && m5.first[0].text === C.ADVISER, id + ': the result says why once (v2.8.0 B4: box line, flag, "Ask an adviser before a pilot"; the hold reason stays in the method)');
     ok(!/\b(must|requires?|applies|obliged|illegal|unlawful)\b/i.test(m5.reason + C.ALMOST_HELD), id + ': the reason makes no legal claim');
   });
   flip('SENSITIVE_HOLDS_TOP', () => { const e5 = L.evaluate(mk('hr-2', [], []), TQ); ok(e5.level === 'ready' && e5.held.length === 0 && L.resultModel(mk('hr-2', [], []), env).flag === C.SENSITIVE_FLAG && !L.method(e5).some(t => /does not get the top verdict/.test(t)), 'B5 off: the top verdict is possible again; the flag (item 7) stays'); });
@@ -156,7 +156,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   // the switches are named in the source where the owner flips them
   ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage
-  ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 98, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 98 use cases (v2.8.0)');
+  ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.length === 5 && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 98, 'kept: must-haves cap, verdict name, Q1 stop wording, five questions (v2.8.0 B10: no letters), ten must-haves, 98 use cases (v2.8.0)');
 }
 
 // ====================================================================================================================
@@ -374,7 +374,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(F.migrate(5, ENV, {}) === null && F.migrate({ v: 0 }, ENV, {}) === null, 'L12: junk that parses is unreadable too');
   // L13
   ok(eq(L.tailRange(TQ), [6, 12]) && /id="cover-range" data-min="' \+ range\[0\] \+ '" data-max="' \+ range\[1\]/.test(app) && !/Six to ten questions/.test(app) && !/6 to 10 questions/.test(rd('README.md')), 'L13: the cover reads the range from the data (six to twelve since v2.7.0); README agrees');
-  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 98 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
+  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 98 && C.SOURCES.mustNote.includes('The analysis covered {N} use cases; this tool lists {U}: {D} were added to the catalogue later, “AI use policies and governance” is a document, not a tool, so it was left out of the count, and one use case analysed is no longer listed.'), 'L13 (v2.8.0 B9): the must-haves note says why 90 is not 98 (90 + 8 later + 1 document − 1 no longer listed), with numbers read from the data');
   ok(!/90 of the catalogue’s 99 use cases: 8 were added/.test(pdfText(mk('fo-4', [], []))) && !/\{[NUD]\}/.test(pdfText(mk('fo-4', [], []))), 'L13: v2.7: the PDF has no sources, so no source text with the three numbers; no placeholder left');
   // print
   ok(/addEventListener\('beforeprint'/.test(app) && /details\.fold/.test(app) && /addEventListener\('afterprint'/.test(app), 'print: the result\'s folds are opened for printing and closed again');

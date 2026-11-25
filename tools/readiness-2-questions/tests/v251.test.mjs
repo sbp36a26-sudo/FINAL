@@ -73,7 +73,7 @@ const cases = {
 };
 for (const [tag, Q] of Object.entries(cases)) {
   const r = finished(F, D, 'gx-2', { Q }), m = L.resultModel(r, env);
-  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Complex judgement|Return|Information to learn from|Safety net|Proof', tag + ': five rows with the five titles');
+  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Needs judgement|Return|Information to learn from|Safety net|Proof', tag + ': five rows with the five titles (v2.8.0 B10: Needs judgement)');
   m.answers.forEach(a => {
     const q = C.QUESTIONS.find(x => x.id === a.id), ans = Q[a.id];
     ok(a.a === { y: 'Yes', n: 'No', u: 'Not sure' }[ans] && a.state === ans, tag + ' ' + a.id + ': the answer word');
@@ -86,7 +86,7 @@ for (const [tag, Q] of Object.entries(cases)) {
   });
   /* v2.7: the Result PDF has no five-answers card; the Answers PDF lists each answer with its word (the meaning stays on the screen). */
   const pt = P.model(r, env).blocks.map(b => [b.t, b.a, b.m].filter(Boolean).join(' ')).join('\n'), at = P.model(r, env, 'answers').blocks.filter(b => b.k === 'item').slice(0, 5);
-  ok(!P.model(r, env).blocks.some(b => b.t === m.ai.head) && m.answers.every((a, i) => at[i].name === a.title && at[i].check === a.q && at[i].val === a.a), tag + ': the Answers PDF carries each of the five answers as given; the Result PDF has no five-answers card');
+  ok(!P.model(r, env).blocks.some(b => b.t === m.ai.head) && m.answers.every((a, i) => at[i].name === a.title && at[i].check === a.q && at[i].val === a.a + (a.state ? ' (' + a.cond + ')' : '') && at[i].answer === 'Your answer: ' + a.a), tag + ': the Answers PDF carries each of the five answers as given; the Result PDF has no five-answers card');
 }
 {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: cases.withNo }), env);
@@ -97,5 +97,5 @@ for (const [tag, Q] of Object.entries(cases)) {
 }
 ok(/function aiCard\(m\)/.test(app) && /id="ai-rows"/.test(app) && /id="ai-head"/.test(app), 'the card: verdict word (#ai-head) and the five rows (#ai-rows)');
 ok(/#sum-ai\{grid-column:1\/-1\}/.test(css) && /\.sumgrid\{grid-template-columns:1fr;align-items:start\}/.test(css), 'layout: the AI card is full width, the cards size to content');
-ok(/m: L\.aiMeaningText\(a\)/.test(pdfSrc) && /if \(b\.m\)/.test(pdfSrc), 'PDF: each answer carries its meaning line');
+ok(/m: 'Your answer: ' \+ a\.a \+ '\. ' \+ L\.aiMeaningText\(a\)/.test(pdfSrc) && /if \(b\.m\)/.test(pdfSrc), 'PDF: each answer carries the answer given and its meaning line (v2.8.0 B5: the pill is the condition)');
 done();

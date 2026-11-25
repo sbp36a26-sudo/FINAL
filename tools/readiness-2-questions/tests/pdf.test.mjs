@@ -24,7 +24,7 @@ function spyPdf(log) {
   } };
 }
 function drawn(m) { const log = []; const r = P.draw(m, spyPdf(log), font); return { r, log }; }
-const texts = m => m.blocks.map(b => [b.t, b.a, b.m, b.name, b.check, b.answer, b.sub, b.box].filter(Boolean).join(' | '));
+const texts = m => m.blocks.map(b => [b.t, b.a, b.m, b.name, b.check, b.answer, b.sub, b.box, b.also].filter(Boolean).join(' | '));
 const all = m => texts(m).join('\n');
 const heads = m => m.blocks.filter(b => b.k === 'h').map(b => b.t);
 function mk(use, musts, tail, o) {
@@ -38,7 +38,7 @@ const NOT_IN_RESULT = m => [m.useTask, m.useLevel, m.areasHead].concat(m.areas.m
 /* Every word of the Result document must be as the result page says it; nothing of the other sections is in it. */
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
-  const need = [m.levelName + ' · ' + m.scoreHead, m.boxLine, m.reason, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.firstLabel]
+  const need = [m.levelName + ' · ' + m.scoreHead, m.boxLine, m.alsoLine, m.reasonShown, m.nothingElse, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.firstLabel]
     .concat(m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.legal ? [m.legalNote, m.legal.why, m.legal.country, m.legal.labour].concat(m.legal.could, m.legal.items.map(i => i.text), m.legal.items.map(i => i.sub)) : [], m.since ? [m.since.head].concat(m.since.lines) : []).filter(Boolean);
   const missing = need.filter(x => !t.includes(x));
@@ -54,7 +54,7 @@ function answersDoc(rec, tag) {
   const nTail = rec.use && rec.use !== 'none' ? TQ.uses[rec.use].qs.length : 0;
   ok(items.length === 5 + 10 + nTail && new Set(items.map(b => b.id)).size === items.length, tag + ': every question once: ' + items.length + ' = 5 + 10 + ' + nTail);
   ok(items.slice(0, 5).every((b, i) => b.name === C.QUESTIONS[i].title && b.check === C.QUESTIONS[i].q) && items.slice(5, 15).every((b, i) => b.id === F.MUST_IDS[i]) && items.slice(15).every((b, i) => b.name === TQ.uses[rec.use].qs[i].q), tag + ': in the order of the steps');
-  ok(items.slice(5, 15).every(b => b.check) && m.itemList.every((it, i) => { const b = items[5 + i]; return b.val === (m.ev.items[i].old ? 'Not answered' : it.answer) && b.answer === 'Your answer: ' + b.val; }) && m.answers.every((a, i) => items[i].val === a.a), tag + ': each answer is the one given');
+  ok(items.slice(5, 15).every(b => b.check) && m.itemList.every((it, i) => { const b = items[5 + i]; return b.val === (m.ev.items[i].old ? 'Not answered' : it.answer) && b.answer === 'Your answer: ' + b.val; }) && m.answers.every((a, i) => items[i].val === a.a + (a.state ? ' (' + a.cond + ')' : '') && items[i].answer === 'Your answer: ' + a.a), tag + ': each answer is the one given (step 2 with its condition, v2.8.0 B5)');
   ok(!SRC_RE.test(t) && !heads(pdf).some(h => /Sources|How this was worked out/.test(h)) && pdf.blocks.every(b => b.k !== 'src') && pdf.blocks[0].t === 'Can AI solve your problems? Your answers' && pdf.blocks.some(b => b.t === 'Result: ' + m.levelName + ' · ' + m.scoreHead) && t.includes('Date: ' + m.date) && (!m.useName || t.includes('Use case: ' + m.useName)), tag + ': a summary (hotel, use case, date, verdict and score), no sources');
   ok(!/Partly|Doesn’t apply/.test(t) && !/no longer offered/.test(t), tag + ': no retired answer words');
   return { m, pdf, t, items };
@@ -69,7 +69,7 @@ ok(pdf.blocks[0].t === 'Can AI solve your problems? Result' && t.includes('Hotel
 /* PDF redesign: page 1: the box (verdict, score, the short reason line, the must-haves line), the reason and the points under it,
    then "Start with"; a page break before "Is this an AI problem?". */
 const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
-ok(lv.k === 'verdict' && lv.t === 'Not ready yet · Score: 69%' && lv.name === 'Not ready yet' && lv.score === 'Score: 69%' && lv.box === 'Because 1 must-have is No.' && lv.sub === m.mustLine && lv.tone === 'lo' &&
+ok(lv.k === 'verdict' && lv.t === 'Not ready yet · Score: 69% of points from all questions' && lv.name === 'Not ready yet' && lv.score === 'Score: 69% of points from all questions' && lv.box === 'Because 1 must-have is No.' && lv.sub === m.mustLine && lv.tone === 'lo' &&
   why.id === 'reason' && why.t === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.' && sub.id === 'score-sub' && sub.t.startsWith('25 of 36 points on 18 questions: 16 answered, 2 not answered yet (0 points each). Your own answers; nobody checked them.'), 'the verdict box (name, score, box line, must-haves line, colour), then the reason, the points and the caveat: ' + lv.t + ' / ' + why.t + ' / ' + sub.t);
 ok(pdf.run.hotel === m.hotel && pdf.run.date === m.date && pdf.blocks.some(b => b.k === 'meta' && b.t === 'Use case: ' + m.useName), 'the use case and the date in the summary; the running header\'s hotel and date');
 ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
@@ -84,7 +84,7 @@ answersDoc(mk('fo-8', ['pl'], []), 'fo-8 draft');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label'), '"None of these fits": must-haves only, said so; no vendor or label section');
 { const a = answersDoc(mk('none', ['y', 'pl'], []), 'none'); ok(a.items.length === 15 && !a.pdf.blocks.some(b => b.k === 'label' && /^Step 5/.test(b.t)) && a.t.includes('Use case: None of these fits'), '"None of these fits": 5 + 10 answers, no step 5 group'); }
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
-x = sameWords(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Not sure', 'No', 'No', 'No', 'No']), 'the five step 2 answers as given (Not sure, No x4)'); }
+x = sameWords(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Not sure (To find out)', 'No (Not met)', 'No (Not met)', 'No (Not met)', 'No (Not met)']), 'the five step 2 answers as given, with the condition (v2.8.0 B5): Not sure, No x4'); }
 { /* answers saved before v2.3 (Partly, Doesn't apply) are no longer offered: "Not answered" */
   const o = mk('fo-4', [], []); o.A.m2 = 'p'; o.T[TQ.uses['fo-4'].qs[0].id] = 'na'; const a = answersDoc(o, 'retired answers'), im = a.m.ev.items;
   ok(im.filter(i => i.old).length === 2 && a.items.filter(b => b.val === 'Not answered').length >= 2 && !/earlier answer/.test(a.t), 'retired answers (Partly, Doesn\'t apply) read "Not answered"'); }

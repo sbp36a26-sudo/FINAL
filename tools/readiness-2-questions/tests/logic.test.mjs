@@ -49,7 +49,7 @@ ok(eq(C.QUESTIONS.map(q => q.q), [
   'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
   'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?',
   'Have you chosen what result should improve, and do you know where it stands today?']), 'the five questions (v2.6: Q1, Q3 and Q4 are the owner\'s new texts; Q2 is the owner\'s own; Q5 the team\'s plain wording)');
-ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information to learn from', 'Safety net', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
+ok(eq(C.QUESTIONS.map(q => q.title), ['Needs judgement', 'Return', 'Information to learn from', 'Safety net', 'Proof']), 'v2.8.0 (B10): the five plain names (Needs judgement, Return, Information to learn from, Safety net, Proof)');
 C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 17 }[q.id] || 15) && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');
 ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading');
@@ -68,11 +68,11 @@ C.MUSTS.forEach(m => {
   ok(m.name && m.why && m.good && m.act && C.WHO[m.who], m.id + ': title, why, what counts as Yes, action, who');
   ok((m.ev.length >= 1 || ['m6', 'm10'].includes(m.id)) && m.ev.every(e => e[0] && e[1] && /\d{4}|version/.test(e[1])), m.id + ': evidence with source (and date or version); v2.7.0: m6 and m10 lost their only evidence line (rules from authorities)');
   const sh = L.shareLines(m, TQ);
-  ok(sh.length === m.blocks.length && sh.every(t => /needed for \d+ of 90 use cases in the team’s resource analysis, Nov 2026/.test(t) && /team judgement/.test(t)), m.id + ': share from the Framework matrix, labelled as the team\'s analysis');
+  ok(sh.length === m.blocks.length && sh.every(t => /needed for \d+ of the 90 use cases analysed \(of 98\) in the team’s resource analysis, Nov 2026/.test(t) && /team judgement/.test(t)), m.id + ': share from the Framework matrix, labelled as the team\'s analysis');
   ok(!/\b[PFTDOG]\d\b/.test(m.q + m.name + m.why + m.good + m.act), m.id + ': no internal code in hotel-facing words');
 });
 ok(TQ.matrixTotal === 90 && TQ.blocks.length === 20, 'matrix: 20 blocks over 90 use cases (computed from the sheet)');
-ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of 90') && /foundation layer/.test(L.shareLines(L.MUST.m1, TQ)[0]), 'm1: 90 of 90, foundation layer');
+ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of the 90 use cases analysed (of 98)') && /foundation layer/.test(L.shareLines(L.MUST.m1, TQ)[0]), 'm1: 90 of the 90 analysed (of 98, read from the data; v2.8.0 B9), foundation layer');
 const shareOf = id => L.MUST[id].blocks.length ? TQ.blocks.find(b => b.name === L.MUST[id].blocks[0]).n : null;
 ok(eq(['m1', 'm2', 'm3', 'm4', 'm5'].map(shareOf), [90, 77, 58, 58, null]) && eq(['m6', 'm7', 'm8', 'm9', 'm10'].map(shareOf), [59, 48, 35, 30, 30]), 'order: the gates by share, then the rest by share');
 ok(C.MUSTS[2].q === 'Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?', 'KPI must-have in the team\'s plain wording (v2.2)');
@@ -165,7 +165,7 @@ ok(nr === 1500 && Object.keys(seen).length === 4, '1,500 random answer sets chec
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 let r = mk(U, ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'y', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → Yes
 let m = L.resultModel(r, env);
-ok(m.scoreHead === 'Score: 75%' && !/ready/.test(m.scoreHead), 'score reads "Score: 75%", never "% ready": ' + m.scoreHead);
+ok(m.scoreHead === 'Score: 75% of points from all questions' && !/ready/.test(m.scoreHead), 'score reads "Score: 75% of points from all questions" (v2.8.0 B3), never "% ready": ' + m.scoreHead);
 ok(m.scoreSub === '27 of 36 points on 18 questions: 16 answered, 2 not answered yet (0 points each). Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.', 'the points, the question counts and the caveat sit next to the score: ' + m.scoreSub);
 ok(m.levelName === 'Not ready yet' && m.cap && /every must-have at Yes/.test(m.cap), 'verdict name and the must-have cap line');
 ok(m.areas[0].name === 'Must-haves' && m.areas.length === 7 && m.areas.every(a => /^\S.*: \d+ of \d+ in place( · (Strong|Gaps to close|Weak))?( · \d+ not answered yet)?$/.test(a.line) && !/%/.test(a.line)), 'what is in place, by area: must-haves + six areas, counts and words, no percentage');

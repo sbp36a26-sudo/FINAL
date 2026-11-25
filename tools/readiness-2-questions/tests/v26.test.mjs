@@ -25,7 +25,7 @@ const Q = id => C.QUESTIONS.find(q => q.id === id);
 // ---------- A. question 1, the other way round ----------
 const q1 = Q('q1');
 ok(q1.q === 'Can each case be fixed with an “if this, then that” rule?', 'A: question 1 reads exactly as the owner gave it');
-ok(q1.title === 'Complex judgement', 'A: its title stays (C of C-R-I-S-P)');
+ok(q1.title === 'Needs judgement', 'A: its title is the plain name (v2.8.0 B10)');
 ok(q1.yesIf.startsWith('You could write it down as fixed rules, like “send an email 3 days before arrival”') && q1.noIf.startsWith('Every case is different, like guest emails, photos or tomorrow’s demand'), 'A: Yes-if and No-if swapped to the new meaning');
 ok(/Yes if you could write it down as fixed rules/.test(q1.hint) && /No if every case is different/.test(q1.hint), 'A: the hint follows the new meaning');
 ok(/pre-arrival email/.test(q1.yes) && /guest emails in five languages/.test(q1.no), 'A: the examples swapped');
@@ -51,7 +51,7 @@ ok(/Because you answered Yes to: “' \+ L\.QBY\.q1\.q/.test(pdfSrc) && !/Becaus
   const r = finished(F, D, 'gx-2', { Q: { q1: 'y', q2: 'y', q3: 'y', q4: 'y', q5: 'y' } }); r.step = 'stop';
   const pm = P.model(r, env); ok(pm.stop && pm.blocks.some(b => b.t === 'Because you answered Yes to: “' + q1.q + '”'), 'A: the stop PDF');
   const g = finished(F, D, 'gx-2'); const pg = P.model(g, env, 'answers').blocks.filter(b => b.k === 'item'); // v2.7: the five answers are the first rows of the Answers PDF
-  ok(pg[0].tone === 'hi' && pg[0].val === 'No', 'A: PDF: Q1 No is drawn in the good tone');
+  ok(pg[0].tone === 'hi' && pg[0].val === 'No (Met)', 'A: PDF: Q1 No is drawn in the good tone and reads Met (v2.8.0 B5)');
 }
 ok(/Question 1 is Yes\./.test(app) && !/Question 1 is No\./.test(app), 'A: step 2 says "Question 1 is Yes."');
 // v2.7.0: data/wording.json is gone (its core texts live in src/content.js)
@@ -121,7 +121,7 @@ ok(q3.title === 'Information to learn from' && q3.q === 'Are there past examples
 ok(q3.yesIf === 'You have hundreds of past cases stored digitally.' && q3.noIf === 'It happens rarely, or nothing was ever recorded.' && q3.whyShort === 'AI learns from examples; without many past cases it has nothing to learn from.', 'B: Q3 Yes-if, No-if, why');
 ok(q4.title === 'Safety net' && q4.q === 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?', 'B: Q4 title and question');
 ok(q4.yesIf === 'A wrong answer now and then can be caught or does little harm.' && q4.noIf === 'Every single result must be exactly right, for example a safety decision.' && q4.whyShort === 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.', 'B: Q4 Yes-if, No-if, why (v2.7.0: "legal or" removed from No-if)');
-ok(C.QUESTIONS.map(q => q.title.charAt(0)).join('') === 'CRISP', 'B: the C-R-I-S-P letters stay');
+ok(!/C-R-I-S-P/.test(readFileSync(join(root, 'index.html'), 'utf8')), 'B (v2.8.0 B10): no C-R-I-S-P anywhere in the page');
 // v2.7.0: the wording.json core checks are retired with the file
 const BM = 'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534';
 ok(C.SOURCES.q.some(s => s.startsWith(BM)), 'B: the source stands with the other questions\' sources');
@@ -134,7 +134,7 @@ ok(L.verdict(Object.assign({}, base, { q2: 'n', q4: 'n' })).key === 'worth' && L
 ok(C.VERDICT.exact === q4.outcome && C.VERDICT.data === q3.outcome && !('assist' in C.VERDICT), 'B: the verdict words are the outcomes; no "assistant only" verdict');
 for (const [k, o, held] of [['Q3 No', { q3: 'n' }, ['carried']], ['Q4 No', { q4: 'n' }, ['carried']], ['Q3 Not sure', { q3: 'u' }, ['notsure']], ['Q4 Not sure', { q4: 'u' }, ['notsure']]]) {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: Object.assign({}, base, o) }), env);
-  ok(m.level === 'almost' && eq(m.held, held) && /^Held back: /.test(m.boxLine) && /^Because /.test(m.reason), 'B: ' + k + ' holds the top verdict, reason shown (' + m.level + ' ' + JSON.stringify(m.held) + ')');
+  ok(m.level === 'almost' && eq(m.held, held) && (held[0] === 'carried' ? /^Also: the first questions suggest this may not be worth doing with AI \(.+: No\)\.$/.test(m.alsoLine) && !m.boxLine : /^Held back: /.test(m.boxLine) && !m.alsoLine) && /^Because /.test(m.reason), 'B: ' + k + ' holds the top verdict, reason shown (' + m.level + ' ' + JSON.stringify(m.held) + ')');
 }
 ok(L.resultModel(finished(F, D, 'gx-2'), env).level === 'ready', 'B: all fine: the top verdict');
 ok(!('Q4_NO_HOLDS_TOP' in L.JUDGEMENT) && !C.ASSIST_LINE && !/assist/.test(pdfSrc) && !/m\.assist|id="assist"/.test(app) && !/q4No/.test(logicSrc), 'B: the assistant-only condition is gone');

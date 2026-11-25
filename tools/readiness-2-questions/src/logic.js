@@ -59,7 +59,7 @@
      SENSITIVE_HOLDS_TOP   (council B5; v2.7.0, owner) true: no "Ready to start a pilot" for a use case the data file marks
                            sensitive (people's personal data or jobs: 12 use cases). The best verdict is "Almost ready" and the
                            result says why (the data file's sensitive_hold_reason). false: the flag line only.
-     CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 (C-R-I-S-P) holds back the top verdict, with
+     CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 holds back the top verdict, with
                            the reason shown. false: it is carried as a condition only (rules v2). (v2.5 left question 4 out
                            with its own switch, Q4_NO_HOLDS_TOP; v2.6, owner: the new question 4 holds like the others and the
                            switch is gone.)
@@ -117,14 +117,15 @@
   function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
   function aiMeaning(id, ans) {
     var q = QBY[id], a = Q_OK[ans] ? ans : '';
-    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null };
+    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null, cond: 'Not answered' };
     if (!q) return o;
     var bad = badAns(id);
     if (a === 'y' || a === 'n') {
-      o.good = a !== bad;
+      o.good = a !== bad; o.cond = o.good ? 'Met' : 'Not met'; // v2.8.0 (B5): the condition, not the raw answer (question 1 No is Met)
       o.line = o.good ? 'Met: ' + lcFirst(a === 'y' ? q.yesIf : q.noIf) : q.outcome + (q.add ? ' ' + q.add : '');
     }
     else if (a === 'u') {
+      o.cond = 'To find out';
       o.line = 'To find out: yes if ' + lcFirst(noStop(q.yesIf)) + '; no if ' + lcFirst(noStop(q.noIf)) + '.';
       o.ask = 'Ask ' + q.who + '.';
       o.ifNo = id === 'q1' ? Q1_UNSURE : 'If it turns out to be No, then ' + lcFirst(q.outcome);
@@ -216,7 +217,7 @@
   function areaWord(pts, max) { return !max ? 'thin' : pts * 100 >= T.STRONG * max ? 'strong' : pts * 100 >= T.GAPS * max ? 'gaps' : 'weak'; }
   var AREA_WORD_MIN = 2; // an area gets a word (Strong / Gaps to close / Weak) only with two or more known answers (council, item 6)
 
-  /* The score and the verdict (rules v2.5).
+  /* The score and the verdict (rules v2.6; v2.5 added the caps and holds below).
      Score = points earned / points possible over every question asked (must-haves + tailored). An answer that is no longer
      offered (it.old) counts as not answered, like a blank. A question not answered yet counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "not answered yet".
      No score is shown under "Not enough information yet" (ev.pct is null there; ev.pts and ev.max keep the sum).
@@ -252,7 +253,7 @@
     var missing = n_(must.no, 'must-have is', 'must-haves are') + ' missing: ' + namesOf('no') + '.';
     var v = verdict(rec.Q), sens = sensitiveOf(TQ, rec.use), none = rec.use === 'none', held = [];
     var carried = v.carried; // v2.6: every No on questions 2 to 5
-    var level, why, reason, kind, box = '';
+    var level, why, reason, kind, box = '', reasonShown = null;
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
       level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are not answered yet (' + c.unknown + ' of ' + c.total + ')';
@@ -284,7 +285,10 @@
         /* v2.7.0: the sensitive hold reads as the data file's sensitive_hold_reason, verbatim; any other hold follows it */
         reason = held.indexOf('sensitive') >= 0 ? C.SENSITIVE_HOLD + (parts.length ? ' Also because ' + parts.join(' Also because ') : '') : 'Because ' + parts.join(' Also because ');
         why = held.map(function (h) { return { sensitive: 'the use case involves people’s personal data or jobs', carried: 'a No from step 2 is still open', notsure: 'a Not sure from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
-        box = C.BOX.held.replace('{why}', held.map(function (h) { return C.BOX[h]; }).join('; '));
+        /* v2.8.0: a carried No is said by the "Also" line (B2); the sensitive hold once, in its own words (B4) */
+        var bh = held.filter(function (h) { return h !== 'carried' && h !== 'sensitive'; }).map(function (h) { return C.BOX[h]; }).join('; ');
+        box = held.indexOf('sensitive') >= 0 ? (bh ? C.SENS_BOX_MORE.replace('{why}', bh) : C.SENS_BOX) : bh ? C.BOX.held.replace('{why}', bh) : '';
+        reasonShown = held.indexOf('sensitive') >= 0 ? (parts.length ? 'Also because ' + parts.join(' Also because ') : '') : reason;
       } else {
         level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
         reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet.';
@@ -296,11 +300,13 @@
       else if (pts * 100 < T.READY * max) { why = 'the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%'; reason = 'Because the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%. The top verdict needs ' + T.READY + '% or more.'; }
       else { why = 'a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ').'; }
     }
-    return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
+    /* v2.8.0 (B2): any No on questions 2 to 5 is said in the verdict box, whatever the verdict */
+    var also = carried.length ? C.ALSO_STEP2.replace('{list}', carried.map(function (x) { return QBY[x.id].title + ': No'; }).join('; ')) : '';
+    return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, reasonShown: reasonShown === null ? reason : reasonShown, also: also, held: held, box: box,
       sensitive: sens, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
       mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
-  /* “Complex judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
+  /* “Needs judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
   function notSureTitles(v) { return v.find.map(function (x) { return '“' + QBY[x.id].title + '”'; }).join(' and '); }
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
@@ -374,11 +380,13 @@
   function noneLine(nUses) { return 'None of the catalogue’s ' + nUses + ' use cases matches your problem. That is worth telling the project team.'; }
 
   /* ---------- why-fold texts ---------- */
-  /* "needed for 90 of 90 use cases in the team's resource analysis, Nov 2026" for a must-have, from the workbook's Framework matrix. */
+  /* "needed for 90 of the 90 use cases analysed (of 98) in the team's resource analysis, Nov 2026" for a must-have, from the workbook's
+     Framework matrix (v2.8.0, B9: both counts read from the data, never typed). */
   function shareLines(m, TQ) {
+    var listed = Object.keys(TQ.uses || {}).length;
     return (m.blocks || []).map(function (name) {
       var b = (TQ.blocks || []).filter(function (x) { return x.name === name; })[0]; if (!b) return null;
-      return '“' + b.name + '”: needed for ' + b.n + ' of ' + TQ.matrixTotal + ' use cases in the team’s resource analysis, Nov 2026 (' + b.layer.replace(/^(\w+):.*$/, '$1').toLowerCase() + ' layer; team judgement, not a survey).';
+      return '“' + b.name + '”: needed for ' + b.n + ' of the ' + TQ.matrixTotal + ' use cases analysed (of ' + listed + ') in the team’s resource analysis, Nov 2026 (' + b.layer.replace(/^(\w+):.*$/, '$1').toLowerCase() + ' layer; team judgement, not a survey).';
     }).filter(Boolean);
   }
   /* v2.7.0: the fold under a step-5 question: the data file's "why" line, its area and who answers (all verbatim from the data). */
@@ -439,13 +447,13 @@
     if (zero) out.push('Team judgement: a question not answered yet counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as not answered yet.');
     if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here. Ask an adviser before a pilot.');
     if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
-    if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
-    if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
-    if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement (rules v2.5): a “Not sure” in step 2 holds the top verdict back until it is found out.');
-    if (JUDGEMENT.NONE_BEST_ALMOST) out.push('Team judgement (rules v2.5): with “None of these fits” the best verdict is “' + C.LEVELS.almost.name + '”, because nothing was checked for a particular tool.');
+    if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement: “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
+    if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement: “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
+    if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement: a “Not sure” in step 2 holds the top verdict back until it is found out.');
+    if (JUDGEMENT.NONE_BEST_ALMOST) out.push('Team judgement: with “None of these fits” the best verdict is “' + C.LEVELS.almost.name + '”, because nothing was checked for a particular tool.');
     out.push('Your verdict is “' + C.LEVELS[ev.level].name + '”. ' + ev.reason);
     if (ev.mustOnly) out.push(C.MUST_ONLY);
-    out.push('The answers are your own and nobody checks them. The cut-offs are the team’s judgement and have not been tested with hotels. Rules ' + RULES + '.');
+    out.push('The answers are your own and nobody checks them. The cut-offs are the team’s judgement and have not been tested with hotels. Version ' + C.VERSION_LINE + '.'); // v2.8.0: one version string
     return out;
   }
   /* "Data: 0 of 1 in place", with the word only when the area has two or more known answers, and how many are not answered yet. */
@@ -458,7 +466,7 @@
     return p.join(' · ');
   }
   /* The score is never worded as "% ready" (council, items 1 and 2): "Score: 83%", or no score at all under "Not enough information yet". */
-  function scoreHead(ev) { return ev.pct == null ? 'No score yet: you answered ' + ev.counts.known + ' of ' + ev.counts.total + ' questions.' : 'Score: ' + ev.pct + '%'; }
+  function scoreHead(ev) { return ev.pct == null ? 'No score yet: you answered ' + ev.counts.known + ' of ' + ev.counts.total + ' questions.' : 'Score: ' + ev.pct + '% ' + C.SCORE_OF; } // v2.8.0 (B3)
   /* The points and the question counts that stand next to the score, then the caveat. */
   function scoreSub(ev) {
     var c = ev.counts;
@@ -481,14 +489,16 @@
   /* "Settle this first: ..." for each hold that needs its own line (BUILD NOW 3; O2, O4). A 'tail' hold needs none: its
      planned and missing questions are already the open items. */
   function holdItems(ev, v) {
+    /* v2.8.0: the step-2 and hold items that come first in "Start with" and in the plan (whoKey: the person who does it).
+       B2: every No on questions 2 to 5, whatever the verdict. B4: the sensitive hold reads "Ask an adviser before a pilot" (GM).
+       Owner (25 Nov 2026): each "Not sure" in step 2 becomes "Find out: …" for the person its question names. "None of these fits". */
     var out = [], h = ev.held;
-    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
-    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'notsure' });
-    if (h.indexOf('sensitive') >= 0) out.push({ who: '', text: C.HOLD.sensitive, sub: 'Step 4: Where in the hotel?', hold: 'sensitive' });
+    ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
+    if (h.indexOf('sensitive') >= 0) out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.ADVISER, sub: 'Step 4: Where in the hotel?', hold: 'sensitive' });
+    v.find.forEach(function (f) { var q = QBY[f.id]; out.push({ who: C.WHO[q.whoKey], whoKey: q.whoKey, text: q.find, sub: 'Step 2: ' + q.title + ' · your answer: Not sure', hold: 'notsure' }); });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
   }
-
   /* v2.7.0: the vendor questions (C.VENDOR), with one more question for each of four open items: must-haves 4
      (systems), 6 (a person who checks) and 5 (personal data), and a card-payment question of the use case (id ending .x-pay). */
   function vendorQs(rec, ev) {
@@ -515,7 +525,7 @@
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
       /* v2.5.1: each answer also carries what it means (aiMeaning): state, line, ask, ifNo. */
-      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, good: x.good, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
+      answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, cond: x.cond, state: x.state, good: x.good, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u && explain(env.ex, u.id) ? explain(env.ex, u.id).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
@@ -535,7 +545,12 @@
     var holds = holdItems(ev, v), all = open(ev);
     o.first = holds.concat(all.map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + a.word }; })).slice(0, 3);
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
-    o.people = byPerson(ev).map(function (p) { return { who: p.who, name: p.name, items: p.items.map(function (a) { return { text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + a.word, must: a.must, state: a.state }; }) }; });
+    o.nothingElse = holds.length && !all.length ? C.NOTHING_ELSE : ''; // B4: the hold (or step 2) is all that is open
+    /* the plan by person: the step-2 and hold items first (each under its person), then the open questions */
+    var plan = holds.filter(function (x) { return x.whoKey; }).map(function (x) { return { who: x.whoKey, text: x.text, tag: x.sub, must: false, state: 'hold' }; })
+      .concat(all.map(function (a) { return { who: a.who, text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + a.word, must: a.must, state: a.state }; }));
+    o.people = C.WHO_ORDER.filter(function (w) { return plan.some(function (a) { return a.who === w; }); }).map(function (w) { return { who: w, name: C.WHO[w], items: plan.filter(function (a) { return a.who === w; }).map(function (a) { return { text: a.text, tag: a.tag, must: a.must, state: a.state }; }) }; });
+    o.alsoLine = ev.also; o.reasonShown = ev.reasonShown; o.version = C.VERSION_LINE;
     o.itemList = ev.items.map(function (it) { return { key: it.key, grp: it.grp, name: it.name, q: it.q, answer: answerWord(it) + (it.state === 'planned' && fmtDate(it.by) ? ' (' + plannedBy(it) + ')' : ''), state: it.state }; });
     o.vendor = u ? vendorQs(rec, ev) : [];
     return o;
