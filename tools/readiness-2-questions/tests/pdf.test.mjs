@@ -11,7 +11,7 @@ const D = data(), TQ = D.tq;
 const { ok, done } = tester('pdf');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const PG = P.PAGE;
-const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), today: '2026-11-24' };
+const env = { cat: D.cat, TQ, today: '2026-11-24' };
 
 const jctx = { atob, btoa, console, TextEncoder, TextDecoder }; jctx.self = jctx; jctx.globalThis = jctx;
 vm.runInNewContext(readFileSync(join(root, '../assessment/lib/jspdf.umd.min.js'), 'utf8'), jctx);
@@ -63,9 +63,9 @@ function answersDoc(rec, tag) {
 // ---------- a guest chatbot, mixed answers ----------
 let r = mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → No
 let { m, pdf, t } = sameWords(r, 'fo-4');
-ok(eq(heads(pdf), ['Result', 'Start with these three', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label']), 'sections exactly as the owner listed them, in this order');
+ok(eq(heads(pdf), ['Result', 'Start with these three', 'Action plan by person', 'Questions for the vendor']), 'sections as the owner listed them, in this order (v2.7.0: without the AI Act section)');
 answersDoc(r, 'fo-4');
-ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
+ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && !/legal advice/i.test(t) && t.includes('as of 25 Nov 2026'), 'title, hotel, role, date, prototype line');
 /* PDF redesign: page 1: the box (verdict, score, the short reason line, the must-haves line), the reason and the points under it,
    then "Start with"; a page break before "Is this an AI problem?". */
 const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
@@ -101,7 +101,7 @@ ok(n === 220, '220 answer sets (every use case at least once, both documents) ch
 r = finished(F, D, '', { Q: { q1: 'y', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf); // v2.6: Q1 Yes stops
 ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.']) && !SRC_RE.test(t) && pdf.blocks.every(b => b.k !== 'src') && eq(P.model(r, env, 'answers').blocks, pdf.blocks) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered Yes to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Can each case be fixed with an “if this, then that” rule?', 'stop PDF (no sources; the same for either kind): the heading, why, instead, the "Not sure" line, the because line');
 ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
-let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === 'Do you need AI? · student prototype, not legal advice · page 1 of 1', 'stop PDF: one page');
+let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === C.DISCLAIMER + ' · page 1 of 1', 'stop PDF: one page, the disclaimer in the footer (v2.7.0)');
 
 // ---------- drawing ----------
 /* PDF redesign: margins 20 mm; the body between the running header (y < 16) and the footer (y > 297 - 16). */

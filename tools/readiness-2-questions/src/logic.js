@@ -56,9 +56,9 @@
   /* ---------- TEAM JUDGEMENT (rules v2.1): three switches the owner can flip. Each is named in "How this was worked out". ----------
      UNKNOWN_SCORES_ZERO   (council B2) true: "Don't know yet" counts as 0 points, so the score is the share of everything asked
                            that is in place. false: it is left out of the points (rules v2). Either way it is listed as "to find out".
-     LEGAL_HOLDS_TOP       (council B5) true: no "Ready to start a pilot" for a use the AI Register labels high-risk, or that the
-                           team's sheet flags as handling sensitive personal data. The tool cannot check the legal items, so the
-                           best verdict is "Almost ready" and the result says why. false: the line under the verdict only.
+     SENSITIVE_HOLDS_TOP   (council B5; v2.7.0, owner) true: no "Ready to start a pilot" for a use case the data file marks
+                           sensitive (people's personal data or jobs: 12 use cases). The best verdict is "Almost ready" and the
+                           result says why (the data file's sensitive_hold_reason). false: the flag line only.
      CARRIED_NO_HOLDS_TOP  (council B6) true: a No on questions 2 to 5 of step 2 (C-R-I-S-P) holds back the top verdict, with
                            the reason shown. false: it is carried as a condition only (rules v2). (v2.5 left question 4 out
                            with its own switch, Q4_NO_HOLDS_TOP; v2.6, owner: the new question 4 holds like the others and the
@@ -70,15 +70,10 @@
                            answered (Yes, Planned or No) at Yes; otherwise the top verdict is held back. 0 switches it off.
      NOT_SURE_HOLDS_TOP    (O2 b) true: any "Not sure" in step 2 holds the top verdict back, with the reason shown.
      NONE_BEST_ALMOST      (O4 b) true: with "None of these fits" the best verdict is "Almost ready" (nothing to pilot). */
-  var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,
+  var JUDGEMENT = { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,
     ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true };
-  /* Does the use have legal items to check first? high: the AI Register's provisional label is High-risk (TQ.highRisk, set by
-     build.mjs from the register's label file); sens: the team's sheet flags sensitive personal data (the add-on question). */
-  function legalFlags(TQ, useId) {
-    var u = TQ && TQ.uses && useId ? TQ.uses[useId] : null;
-    var high = !!(u && TQ.highRisk && TQ.highRisk.indexOf(useId) >= 0), sens = !!(u && u.sensitive);
-    return { high: high, sens: sens, any: high || sens };
-  }
+  /* v2.7.0: is the chosen use case sensitive (the data file's flag: people's personal data or jobs)? */
+  function sensitiveOf(TQ, useId) { var u = TQ && TQ.uses && useId ? TQ.uses[useId] : null; return !!(u && u.sensitive); }
 
   /* ---------- the five questions ----------
      v2.6: Precedence Q1 > Q2 > Q3 > Q4 > Q5; "Not sure" sits below any No. Only Q1 Yes stops (fixed rules can do it).
@@ -154,15 +149,15 @@
     if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
     return o;
   }
-  /* v2.6: the detail layer's content as plain JSON (title, kicker, catName, draft, draftText, does, how, level, task, srcs, foot),
+  /* v2.6: the detail layer's content as plain JSON (title, kicker, catName, draft, draftText, does, how, level, srcs, foot),
      one source for the page's own dialog and the hub's layer on the main page ({ hub: 'detail' }, tools/hub/CONTRACTS.md).
      D: the page's data block (ex, detail); u: the catalogue use; d: its department. Strings only, except srcs. */
   function detailData(D, u, d, TQ) {
     var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
     return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u), draft: '', draftText: '',
-      does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u), task: String(u.task || ''),
+      does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u),
       srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
-      foot: 'From the hub’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+      task: '', foot: 'From the project team’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
   }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
@@ -229,12 +224,12 @@
        noinfo    more than half the questions unknown
        notready  any must-have at No, the score below 50%, or (v2.5, O1) fewer than half the must-haves at Yes
        ready     every must-have Yes, the score 75% or more, and fewer than a quarter of the questions unknown,
-                 unless a switch in JUDGEMENT holds the top verdict back: legal items to check; a No carried from step 2
+                 unless a switch in JUDGEMENT holds the top verdict back: a sensitive use case (v2.7.0); a No carried from step 2
                  (questions 2 to 5, v2.6); a Not sure in step 2 (v2.5, O2); fewer than half the answered tailored questions at Yes
                  (v2.5, O1); "None of these fits" (v2.5, O4)
        almost    everything else (50 to 74%; a must-have not Yes but none at No; 75%+ with a quarter or more unknown; a held top verdict)
      ev.reason: the plain sentence that heads "Start with" ("Because ..."). ev.held: what held the top verdict back, in this order:
-     'legal', 'carried', 'notsure', 'tail', 'none'. ev.box: the one short line in the verdict box (O5), '' unless the verdict is
+     'sensitive', 'carried', 'notsure', 'tail', 'none'. ev.box: the one short line in the verdict box (O5), '' unless the verdict is
      "Not ready yet" or held. ev.kind: why the verdict is what it is (for the line under it). */
   function evaluate(rec, TQ) {
     var items = questions(rec, TQ), c = { total: 0, known: 0, unknown: 0, yes: 0, planned: 0, no: 0 }, pts = 0, max = 0;
@@ -255,7 +250,7 @@
     var manyUnknown = c.unknown * 100 > T.UNKNOWN_NOINFO * c.total, fewUnknown = c.unknown * 100 < T.UNKNOWN_READY * c.total;
     var namesOf = function (st) { return items.filter(function (it) { return it.grp === 'must' && (st === 'open' ? it.state !== 'yes' : it.state === st); }).map(function (it) { return it.name; }).join('; '); };
     var missing = n_(must.no, 'must-have is', 'must-haves are') + ' missing: ' + namesOf('no') + '.';
-    var v = verdict(rec.Q), lf = legalFlags(TQ, rec.use), none = rec.use === 'none', held = [];
+    var v = verdict(rec.Q), sens = sensitiveOf(TQ, rec.use), none = rec.use === 'none', held = [];
     var carried = v.carried; // v2.6: every No on questions 2 to 5
     var level, why, reason, kind, box = '';
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
@@ -275,20 +270,20 @@
       box = 'Because ' + mYes + ' Yes.';
     }
     else if (must.allYes && pts * 100 >= T.READY * max && fewUnknown) {
-      if (JUDGEMENT.LEGAL_HOLDS_TOP && lf.any) held.push('legal');
+      if (JUDGEMENT.SENSITIVE_HOLDS_TOP && sens) held.push('sensitive');
       if (JUDGEMENT.CARRIED_NO_HOLDS_TOP && carried.length) held.push('carried');
       if (JUDGEMENT.NOT_SURE_HOLDS_TOP && v.find.length) held.push('notsure');
       if (JUDGEMENT.READY_MIN_TAIL_YES && tail.n && tail.yes * 100 < JUDGEMENT.READY_MIN_TAIL_YES * tail.known) held.push('tail');
       if (JUDGEMENT.NONE_BEST_ALMOST && none) held.push('none');
       if (held.length) {
         level = 'almost'; kind = 'held'; var parts = [];
-        if (held.indexOf('legal') >= 0) parts.push('this use has legal items to check first (the “EU AI Act” part of this result lists them). This tool cannot check them, so it does not give the top verdict for this use.');
         if (held.indexOf('carried') >= 0) parts.push('you answered No in step 2 to ' + carried.map(function (x) { return '“' + QBY[x.id].title + '” (' + x.text.replace(/\.$/, '') + ')'; }).join(' and ') + '. The top verdict is held back until that is settled.');
         if (held.indexOf('notsure') >= 0) parts.push('you answered Not sure to ' + notSureTitles(v) + ' in step 2. The top verdict is held back until that is found out.');
         if (held.indexOf('tail') >= 0) parts.push('only ' + tail.yes + ' of the ' + n_(tail.known, 'question', 'questions') + ' you answered for this use case ' + (tail.yes === 1 ? 'is' : 'are') + ' Yes. The top verdict needs at least half of them at Yes.');
         if (held.indexOf('none') >= 0) parts.push('no use case was chosen: the must-haves are in place, but nothing was checked for a particular tool.');
-        reason = 'Because ' + parts.join(' Also because ');
-        why = held.map(function (h) { return { legal: 'the use has legal items to check first', carried: 'a No from step 2 is still open', notsure: 'a Not sure from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
+        /* v2.7.0: the sensitive hold reads as the data file's sensitive_hold_reason, verbatim; any other hold follows it */
+        reason = held.indexOf('sensitive') >= 0 ? C.SENSITIVE_HOLD + (parts.length ? ' Also because ' + parts.join(' Also because ') : '') : 'Because ' + parts.join(' Also because ');
+        why = held.map(function (h) { return { sensitive: 'the use case involves people’s personal data or jobs', carried: 'a No from step 2 is still open', notsure: 'a Not sure from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
         box = C.BOX.held.replace('{why}', held.map(function (h) { return C.BOX[h]; }).join('; '));
       } else {
         level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
@@ -302,7 +297,7 @@
       else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
     }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
-      legal: lf, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
+      sensitive: sens, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
       mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
   /* “Complex judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
@@ -433,7 +428,7 @@
     out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions “Don’t know yet”. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions “Don’t know yet”.');
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
     if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
-    if (JUDGEMENT.LEGAL_HOLDS_TOP) out.push('Team judgement: a use that the AI Register labels high-risk, or that the team’s sheet flags as handling sensitive personal data, does not get the top verdict here, because this tool cannot check its legal items.');
+    if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here. Ask an adviser before a pilot.');
     if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
     if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
@@ -470,7 +465,7 @@
     if (ev.kind === 'fewMust') return C.ALMOST_FEW_MUST.replace('{n}', ev.must.yes).replace('{m}', ev.must.n);
     if (ev.kind !== 'held') return C.LEVELS[ev.level].line;
     var h = ev.held;
-    if (h.indexOf('legal') >= 0 || h.indexOf('carried') >= 0 || h.indexOf('notsure') >= 0) return C.ALMOST_HELD;
+    if (h.indexOf('sensitive') >= 0 || h.indexOf('carried') >= 0 || h.indexOf('notsure') >= 0) return C.ALMOST_HELD;
     if (h.indexOf('tail') >= 0) return C.READY_FEW_TAIL.replace('{y}', ev.tail.yes).replace('{n}', ev.tail.n).replace('{p}', ev.tail.planned);
     return C.NONE_ALMOST;
   }
@@ -480,13 +475,26 @@
     var out = [], h = ev.held;
     if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'carried' }); });
     if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'notsure' });
-    if (h.indexOf('legal') >= 0) out.push({ who: '', text: C.HOLD.legal, sub: 'EU AI Act', hold: 'legal' });
+    if (h.indexOf('sensitive') >= 0) out.push({ who: '', text: C.HOLD.sensitive, sub: 'Step 4: Where in the hotel?', hold: 'sensitive' });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
   }
 
+  /* v2.7.0: the vendor questions (C.VENDOR), with one more question for each of four open items: must-haves 4
+     (systems), 6 (a person who checks) and 5 (personal data), and a card-payment question of the use case (id ending .x-pay). */
+  function vendorQs(rec, ev) {
+    var V = C.VENDOR, out = [V.first].concat(V.all);
+    if (rec.dept === 'rm') out.push(V.pricing);
+    out = out.concat(V.last);
+    var open = function (pred) { return ev.items.some(function (it) { return pred(it) && it.state && it.state !== 'yes'; }); };
+    if (open(function (it) { return it.key === 'm4'; })) out.push(V.ask.m4);
+    if (open(function (it) { return it.key === 'm6'; })) out.push(V.ask.m6);
+    if (open(function (it) { return it.key === 'm5'; })) out.push(V.ask.m5);
+    if (open(function (it) { return /\.x-pay$/.test(it.key); })) out.push(V.ask.pay);
+    return out.filter(function (q, i, a) { return a.indexOf(q) === i; });
+  }
   /* ---------- the whole result, in words ----------
-     env: { cat (catalogue model), TQ, RC (the readiness check's RCLogic, optional), M (its model), hotel: rec.hotel, today } */
+     env: { cat (catalogue model), TQ, ex, today } */
   function resultModel(rec, env) {
     var TQ = env.TQ, cat = env.cat, v = verdict(rec.Q), ev = evaluate(rec, TQ), u = useOf(rec, cat), tu = u && TQ.uses[rec.use], H = rec.hotel || {};
     var today = env.today || localIso();
@@ -501,12 +509,12 @@
       answers: C.QUESTIONS.map(function (q, i) { var x = aiMeaning(q.id, (rec.Q || {})[q.id]); return { n: i + 1, id: q.id, title: q.title, q: q.q, a: x.answer, state: x.state, good: x.good, line: x.line, ask: x.ask, ifNo: x.ifNo }; }),
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
-      useTask: u ? (explain(env.ex, u.id) || { does: 'What AI does: ' + u.task }).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
+      useTask: u && explain(env.ex, u.id) ? explain(env.ex, u.id).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
       useLevel: u ? useLevelLine(u) : '', catName: catalogueName(TQ, u), useName: u ? useLabel(TQ, u) : '',
       none: rec.use === 'none' ? noneLine(cat.nUses) : '',
       levelName: C.LEVELS[ev.level].name,
       levelLine: levelLine(ev),
-      reason: ev.reason, held: ev.held.slice(), law: ev.legal.any ? C.LAW_LINE : '',
+      reason: ev.reason, held: ev.held.slice(), flag: ev.sensitive ? C.SENSITIVE_FLAG : '', disclaimer: C.DISCLAIMER,
       boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
       cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
@@ -520,19 +528,7 @@
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
     o.people = byPerson(ev).map(function (p) { return { who: p.who, name: p.name, items: p.items.map(function (a) { return { text: a.text, tag: (a.must ? 'Must-have · ' : '') + a.name + ' · ' + a.word, must: a.must, state: a.state }; }) }; });
     o.itemList = ev.items.map(function (it) { return { key: it.key, grp: it.grp, name: it.name, q: it.q, answer: answerWord(it) + (it.state === 'planned' && fmtDate(it.by) ? ' (' + plannedBy(it) + ')' : ''), state: it.state }; });
-    /* Vendor questions and the provisional AI Act label: the readiness check's own functions and data (rules v4 wording). */
-    o.vendor = []; o.legal = null; o.notTool = !!(u && u.notTool);
-    var x = env.RC && env.M && u ? env.M.UI[rec.use] : null;
-    if (x) {
-      var st = {}; ev.items.forEach(function (it) { st[it.key] = it.state; });
-      var acts = []; [['m4', 'T1'], ['m6', 'P5'], ['m5', 'D5b'], ['x-pay', 'G4']].forEach(function (p) { if (st[p[0]] && st[p[0]] !== 'yes') acts.push({ group: 'vendor', q: { code: p[1] } }); });
-      o.vendor = env.RC.vendorQs(env.M, x, { actions: acts });
-      var l = env.RC.legal(env.M, x, H);
-      if (l) o.legal = { name: l.name, applies: l.applies ? 'applies from ' + fmtDate(l.applies) : '', why: l.why || l.short, could: l.could.map(function (c) { return (c.to ? 'The label becomes “' + c.to + '” if: ' : 'Also check: ') + c.q; }),
-        itemsHead: l.itemsHead || '', items: l.items.map(function (i) { return { text: i.text, sub: i.who + (i.from ? ' · from ' + fmtDate(i.from) : '') }; }), labour: l.labour || '', country: l.country + ' The AI Register tab has the full list for your hotel.' };
-    }
-    o.legalNote = C.LEGAL_NOTE;
-    o.registerName = u ? u.n.replace(/\s*\(.*$/, '') : '';
+    o.vendor = u ? vendorQs(rec, ev) : [];
     return o;
   }
   /* One person's list as plain text (the "Copy for …" buttons). v2.5: Copy summary's summaryText was removed (audit v3, dead code). */
@@ -540,7 +536,7 @@
     return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
-  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
+  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, sensitiveOf: sensitiveOf, vendorQs: vendorQs, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,

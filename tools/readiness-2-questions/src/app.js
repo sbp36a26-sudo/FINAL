@@ -24,13 +24,13 @@
      fileNote 'old' after a file from the earlier Readiness check was chosen; else null
      corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
    host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
-   host.pong  true once the hub bar has answered our ping; only then do "Add to the AI Register" and the detail layer become hub messages
+   host.pong  true once the hub bar has answered our ping; only then does the detail layer become a hub message
    storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
    hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf, RC = window.RCLogic || null, S = window.RCStore || null;
+  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf, S = null; // v2.7.0: no shared store (no hub, no Team tab)
   /* Sharing a copy with the project team (opt-in, to the hub's "Team: readiness results" tab). One switch: false switches
      sharing off (withdrawing a copy that was already shared still works, from every place it did before).
      v2.5 (owner O7, 24 Nov 2026): off for the timed sessions with hotel managers, because the controller, a deletion date and a
@@ -42,8 +42,8 @@
   var STANDALONE = window.R2_STANDALONE === true;
   var SHARING_DEFAULT = false;
   var SHARING_ON = SHARING_DEFAULT || window.R2_TEST_SHARING === true;
-  var D, CAT, TQ, M = null;
-  try { D = JSON.parse($('r2-data').textContent); CAT = D.cat; TQ = D.tq; if (RC && D.rc) M = RC.model({ rdy: D.rc.rdy, cat: CAT, reg: D.rc.reg }); }
+  var D, CAT, TQ;
+  try { D = JSON.parse($('r2-data').textContent); CAT = D.cat; TQ = D.tq; }
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
   var USE = {}, DEPT = {};
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
@@ -124,7 +124,7 @@
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
   var ui = { confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, share: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
-  function env() { return { cat: CAT, TQ: TQ, RC: RC, M: M, ex: D.ex, today: L.localIso() }; }
+  function env() { return { cat: CAT, TQ: TQ, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
   function uName(u) { return L.useLabel(TQ, u); }
   function recOf(id) { return Object.prototype.hasOwnProperty.call(store.checks, id) ? store.checks[id] : null; }
@@ -411,8 +411,9 @@
       '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
       '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
       '<li><b>What is missing:</b> the three things to start with, and an action plan by person that you can copy and send.</li>' +
-      '<li><b>Questions for the vendor</b> and the provisional EU AI Act label for the use case.</li>' +
+      '<li><b>Questions for the vendor</b> about the use case.</li>' +
       '<li><b>Two PDFs and a file:</b> the result, and your answers to every question, to share with your owner or team, and a file to come back to later.</li></ul>' +
+      '<p class="disclaimer" id="cover-disclaimer"><strong>' + esc(C.DISCLAIMER) + '</strong></p>' +
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>' + myChecks();
   }
   function vHotel() {
@@ -423,8 +424,8 @@
       (need ? '<p class="needline" role="alert">Choose one to continue</p>' : '') + '<span class="meta">In a managed or franchised hotel the owner approves spending.</span></label>' +
       '<label class="fld"><span>Hotel name (optional)</span><input type="text" id="h-name" data-h="name" value="' + esc(H.name) + '" autocomplete="organization" maxlength="120"><span class="meta">Only for your own report.</span></label>' +
       '<label class="fld"><span>Your role (optional)</span><select id="h-role" data-h="role">' + opt('', 'Choose', H.role) + C.ROLES.map(function (t) { return opt(t[0], t[1], H.role); }).join('') + '</select></label>' +
-      '<label class="fld"><span>Country (optional)</span><select id="h-country" data-h="country">' + opt('', 'Choose', H.country) + C.COUNTRIES.map(function (c) { return opt(c, C.COUNTRY_LABEL[c] || c, H.country); }).join('') + '</select><span class="meta">Used for the EU AI Act note on the result.</span></label>' +
-      '</div>' + (storage === 'ok' ? '<p class="meta">These details are shared with the AI Register and the AI Act guide in this browser, so you type them once.</p>' : '') + '</section>' +
+      '<label class="fld"><span>Country (optional)</span><select id="h-country" data-h="country">' + opt('', 'Choose', H.country) + C.COUNTRIES.map(function (c) { return opt(c, C.COUNTRY_LABEL[c] || c, H.country); }).join('') + '</select><span class="meta">Only for your own report.</span></label>' +
+      '</div></section>' +
       nav('Back', 'Next: is this an AI problem?');
   }
   function vQ() {
@@ -541,12 +542,6 @@
   }
 
   // ---------- result ----------
-  function hubOpen(tool, hash, href, e) {
-    if (!host.pong) return; // plain link
-    e.preventDefault();
-    try { window.parent.postMessage(hash ? { hub: 'open', tool: tool, hash: hash } : { hub: 'open', tool: tool }, location.origin); } catch (err) { location.href = href; }
-  }
-  function registerHash() { var u = USE[rec.use]; return u ? 'add=' + rec.use + '&name=' + encodeURIComponent(u.n.replace(/\s*\(.*$/, '')) : ''; }
   function sharePhaseOf(id) { return ui.share && ui.share.id === id ? ui.share.phase : F.shareSettled(recOf(id)); }
   function sharePhase() { return sharePhaseOf(rec.id); }
   function sharePanel() {
@@ -568,11 +563,9 @@
   }
   function vResult() {
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
-    var regHref = '../register/index.html#' + registerHash();
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
     /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
-       "Your checks in this browser", "Add to the AI Register" in the EU AI Act fold; Copy summary and Print are gone. */
-    var toReg = u && !u.notTool && !STANDALONE ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
+       "Your checks in this browser"; Copy summary and Print are gone. */
     var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 25 Nov 2026: two PDFs, then Start a new check
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
@@ -585,10 +578,11 @@
       (m.boxLine ? '<p class="boxline" id="box-reason">' + esc(m.boxLine) + '</p>' : '') +
       '<p class="countline" id="must-line">' + esc(m.mustLine) + '</p></section>';
     if (m.pilot) h += '<p class="meta pilotgloss" id="pilot-gloss">' + esc(m.pilot) + '</p>'; // v2.5, council BUILD NOW 11
+    h += '<p class="disclaimer" id="result-disclaimer"><strong>' + esc(C.DISCLAIMER) + '</strong></p>'; // v2.7.0 (owner)
     h += acts; // design pass: the verdict first, then what to do with it
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
-      (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
+      (m.flag ? '<p class="flagline" id="sensitive-flag" role="note"><strong>' + esc(m.flag) + '</strong></p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Can this problem be solved with AI?</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
@@ -601,12 +595,6 @@
         p.items.map(function (a) { return '<li><span>' + esc(a.text) + '</span><span class="meta">' + esc(a.tag) + '</span></li>'; }).join('') + '</ul>' + copyBox('who:' + p.who) + '</div>';
     }).join('') : '<p>Nothing open.</p>') + '</section>';
     if (m.vendor.length) h += row('vendor', 'Questions for the vendor (' + m.vendor.length + ')', '<div class="btnrow"><button type="button" class="btn small" data-act="copy-vendor" id="copy-vendor">Copy all</button></div>' + copyBox('vendor') + '<ol class="tight" id="vendor-list">' + m.vendor.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ol>', ' id="vendor"');
-    if (m.legal) {
-      var l = m.legal, it = function (i) { return '<li>' + esc(i.text) + ' <span class="meta">' + esc(i.sub) + '</span></li>'; };
-      h += row('legal', 'EU AI Act: provisional label, not legal advice', '<p class="meta" id="legal-note">' + esc(m.legalNote) + '</p><p><span class="chip c-label" id="legal-label">' + esc(l.name) + '</span> ' + (l.applies ? '<span class="meta">' + esc(l.applies) + '</span> ' : '') + esc(l.why) + '</p>' +
-        l.could.map(function (c) { return '<p class="meta">' + esc(c) + '</p>'; }).join('') + (l.itemsHead ? '<h4>' + esc(l.itemsHead) + '</h4>' : l.items.length ? '<h4>Items to check</h4>' : '') +
-        (l.items.length ? '<ul class="tight" id="legal-items">' + l.items.map(it).join('') + '</ul>' : '') + (l.labour ? '<p class="meta">' + esc(l.labour) + '</p>' : '') + '<p class="meta">' + esc(l.country) + '</p>' + toReg, ' id="legal"');
-    } else if (m.notTool) h += row('legal', 'EU AI Act', '<p>“' + esc(uName(u)) + '” is a document, not an AI tool, so the AI Register has no label for it.</p>' + toReg, ' id="legal"');
     var grp = '';
     h += row('answers', 'Every question and your answer (' + m.itemList.length + ')', m.itemList.map(function (itm) {
       var g = itm.grp === 'must' ? 'Must-haves' : 'Questions for this use case', head = g !== grp ? '<h4>' + g + '</h4>' : ''; grp = g;
@@ -893,7 +881,6 @@
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
     else if (act === 'share') shareSend('share');
     else if (act === 'unshare') shareSend('withdraw', t.getAttribute('data-id') || rec.id);
-    else if (act === 'to-register') { if (rec.step !== 'result' || !USE[rec.use]) { e.preventDefault(); return; } hubOpen('register', registerHash(), t.getAttribute('href'), e); }
     else if (act === 'open' || act === 'remove' || act === 'remove-yes' || act === 'remove-withdraw') send(act, t.getAttribute('data-id'));
     else send(act);
   });
@@ -908,7 +895,7 @@
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches && t.matches('input[data-h="name"]')) send('hotel', { k: 'name', v: t.value }, { quiet: true }); });
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold') && !d.hasAttribute('data-print-open')) { var k = d.getAttribute('data-fold'), was = !!ui.open[k]; ui.open[k] = d.open; if (d.open && !was) ease(d.querySelector(':scope > .morebody, :scope > .foldbody'), 4, 150); } }, true);
-  /* Print (audit, "unverified"): a closed fold prints nothing, so the result's folds (vendor questions, AI Act label, every answer,
+  /* Print (audit, "unverified"): a closed fold prints nothing, so the result's folds (vendor questions, every answer,
      the working-out) are opened for printing and closed again afterwards. */
   window.addEventListener('beforeprint', function () { [].forEach.call(document.querySelectorAll('#view details.fold'), function (d) { if (!d.open) { d.setAttribute('data-print-open', ''); d.open = true; } }); });
   window.addEventListener('afterprint', function () { [].forEach.call(document.querySelectorAll('#view details[data-print-open]'), function (d) { d.open = false; setTimeout(function () { d.removeAttribute('data-print-open'); }, 0); }); });
@@ -941,7 +928,7 @@
   window.addEventListener('storage', function (e) { if (e.key === F.KEY) follow(); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) follow(); });
 
-  /* Old links and the AI Register: #use=<use id> starts a check with that use case already chosen in step 4. */
+  /* Old links: #use=<use id> starts a check with that use case already chosen in step 4. */
   function fromHash() {
     var m = /(?:^|[#&])use=([a-z]+-\d+)/.exec(location.hash || ''); if (!m || !USE[m[1]]) return false;
     return send('preselect', m[1]);

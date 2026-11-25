@@ -372,3 +372,8 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .srcaddr .srcurl{user-select:all;-webkit-user-select:all}
 .srcaddr .copysrc{font-size:0.8125rem;min-height:44px;padding:0 4px}
 @media print{ .srcaddr .copysrc{display:none} }
+
+/* v2.7.0: the disclaimer (cover, result, footer) and the sensitive-area flag */
+.disclaimer{margin:12px 0;padding:10px 14px;border-left:3px solid var(--ink3);background:var(--panel);color:var(--ink);font-size:.9375rem;border-radius:4px}
+#app[data-state="start"] #foot-disclaimer,#app[data-state="result"] #foot-disclaimer{display:none}
+.flagline{margin:8px 0;padding:10px 14px;border-left:3px solid var(--md);background:var(--md-s);color:var(--ink);border-radius:4px}

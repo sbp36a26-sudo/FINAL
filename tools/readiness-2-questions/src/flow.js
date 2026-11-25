@@ -87,6 +87,11 @@
   function deptOf(env, id) { return (env && env.cat && env.cat.depts || []).filter(function (d) { return d.id === id; })[0] || null; }
   function useIn(env, deptId, useId) { var d = deptOf(env, deptId); return !!(d && d.uses.some(function (u) { return u.id === useId; })); }
   function useName(env, deptId, useId) { var d = deptOf(env, deptId), u = d && d.uses.filter(function (x) { return x.id === useId; })[0]; return u ? u.n : ''; }
+  /* v2.7.0: the shown name is the data file's; a check saved earlier stored the catalogue's name, which the page keeps only as a
+     hash (u.alias, the same FNV-1a 32-bit over UTF-16 code units as build.mjs nameHash). A saved name matches when it is the name
+     now or its hash is the alias. */
+  function nameHash(str0) { var h = 0x811c9dc5, t = String(str0); for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+  function nameOk(env, deptId, useId, saved) { var d = deptOf(env, deptId), u = d && d.uses.filter(function (x) { return x.id === useId; })[0]; return !!u && (saved === u.n || (!!u.alias && nameHash(saved) === u.alias)); }
   function deptOfUse(env, useId) { return (env && env.cat && env.cat.depts || []).filter(function (d) { return d.uses.some(function (u) { return u.id === useId; }); })[0] || null; }
   function tailIds(env, useId) { return ((env && env.tq && env.tq[useId]) || []).map(function (q) { return q.id; }); }
   /* env.tq: { <use id>: [{ id, carry }] } (carry: the v2.6.1 question id whose answer this question takes over, v2.7.0) */
@@ -164,7 +169,7 @@
     if (!o.use && typeof r.use === 'string' && r.use && info) info.useChanged = true; // the saved use case is no longer in the catalogue
     if (o.use && o.use !== 'none') {
       var now = useName(env, o.dept, o.use);
-      if (typeof r.useName === 'string' && r.useName && r.useName !== now) { o.use = ''; if (info) info.useChanged = true; }
+      if (typeof r.useName === 'string' && r.useName && !nameOk(env, o.dept, o.use, r.useName)) { o.use = ''; if (info) info.useChanged = true; }
       else o.useName = now;
     }
     if (o.use && o.use !== 'none') {
@@ -449,7 +454,7 @@
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,
     SHARE: SHARE, shareSettled: shareSettled, shareNext: shareNext, shareSig: shareSig, shareStale: shareStale,
-    histAction: histAction, histEntry: histEntry, histRead: histRead, progress: progress, deptOfUse: deptOfUse, tailIds: tailIds };
+    nameHash: nameHash, nameOk: nameOk, histAction: histAction, histEntry: histEntry, histRead: histRead, progress: progress, deptOfUse: deptOfUse, tailIds: tailIds };
   root.R2Flow = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);

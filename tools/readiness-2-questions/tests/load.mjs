@@ -1,4 +1,4 @@
-// Loads the page's pure scripts into one Node context, the way the page does (the readiness check's rules first, as in build.mjs).
+// Loads the page's pure scripts into one Node context, the way the page does (v2.7.0: the readiness check's rules are no longer inlined).
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,11 +6,10 @@ import vm from 'node:vm';
 export const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export function load() {
   const ctx = { self: {} }; ctx.globalThis = ctx.self;
-  vm.runInNewContext(readFileSync(join(root, '../readiness-check/src/logic.js'), 'utf8'), ctx, { filename: 'rc-logic.js' });
   for (const f of ['content.js', 'logic.js', 'flow.js', 'pdf.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
-  return { C: ctx.self.R2Content, L: ctx.self.R2Logic, F: ctx.self.R2Flow, P: ctx.self.R2Pdf, RC: ctx.self.RCLogic };
+  return { C: ctx.self.R2Content, L: ctx.self.R2Logic, F: ctx.self.R2Flow, P: ctx.self.R2Pdf, RC: null };
 }
-/* The data block the built page carries: { cat, tq, rc, builtOn }. */
+/* The data block the built page carries: { cat, tq, ex, detail, builtOn }. */
 export function data() {
   const html = readFileSync(join(root, 'index.html'), 'utf8');
   return JSON.parse(html.match(/<script type="application\/json" id="r2-data">([\s\S]*?)<\/script>/)[1]);

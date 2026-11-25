@@ -46,15 +46,14 @@
       outcome: 'Too few examples to learn from.', add: 'Start keeping these cases digitally, or ask the vendor what examples its tool learned from. Then ask again.',
       who: 'IT or the department head' },
     /* v2.6 (owner): new question 4. Brynjolfsson & Mitchell 2017, criterion 6 ("a tolerance for error"). Checking results is must-have 6. */
-    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a legal or safety decision.',
+    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a safety decision.', // v2.7.0: two words removed (owner: nothing on rules from authorities in this tool)
       q: 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?',
       hint: '',
       whyShort: 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.',
       why: 'AI works on probabilities, so it is never right every time. It suits a task where an occasional wrong result can be caught or does little harm.',
       yes: 'Draft replies to reviews that a manager approves before they go out.',
       no: 'Answering guests’ allergen questions on its own.',
-      outcome: 'A rule-based tool or a person is the better choice.',
-      add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
+      outcome: 'A rule-based tool or a person is the better choice.', // v2.7.0: the line pointing to another hub tab is removed
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
       q: 'Have you chosen what result should improve, and do you know where it stands today?',
@@ -139,21 +138,21 @@
       ev: [['46% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
            ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
       act: 'Ask the provider of each system you want to connect (for example {ex}) whether other software can read from it and write back to it.' },
-    { id: 'm5', gate: 'D5', name: 'Data protection contact involved', who: 'dpo',
-      q: 'Has your data protection contact been told about this plan?',
-      gloss: 'If you have no data protection officer, this is whoever handles data protection for you, often an outside adviser.',
-      why: 'If the tool handles guest or staff data, data protection law asks for a written contract with the vendor and sometimes a written risk check. Your data protection contact knows what applies.',
-      good: 'Your data protection contact knows which guest or staff data the tool would use and has said what is needed before you start.',
-      blocks: ['Lawful basis and vendor data agreement'],
-      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['“Such legal act must be in writing, including in electronic form.” (on the contract between a hotel and a vendor that processes its personal data)', 'EDPB Guidelines 07/2020 on the concepts of controller and processor, version 2.1.']],
-      act: 'Tell your data protection contact about the plan and ask what is needed before any guest or staff data goes into a tool.' },
+    /* v2.7.0 (owner): title and question from the data file's fixed_texts (must_have_5), id and scoring kept. why, good and act
+       rewritten; the gloss, the second evidence line and the building block are removed (they were about rules from authorities). */
+    { id: 'm5', gate: 'D5', name: 'Personal data known', who: 'dept',
+      q: 'Do you know which guest or staff personal data the tool would use?',
+      why: 'Guest and staff data needs extra care. Knowing which data the tool would use tells you what to protect and what to ask the vendor.',
+      good: 'You can list the guest or staff data the tool would use and where it comes from.',
+      blocks: [],
+      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
+      act: 'List which guest or staff personal data the tool would use, and where it comes from.' },
     { id: 'm6', name: 'A person who checks the AI', who: 'dept',
       q: 'Is there a named person who will check the AI’s results and can overrule them?',
       why: 'AI is never right every time. Someone must be able to catch a wrong result and put it right before it is used.',
       good: 'A named role that checks the results, knows which results must be checked before they are used, and can stop or correct the tool.',
       blocks: ['Human reviewer who checks or overrides AI output'],
-      ev: [['57% of EU accommodation businesses that had considered AI but did not use it named a lack of clarity about the legal consequences.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
+      ev: [], // v2.7.0: its only evidence line is removed (it was about rules from authorities)
       act: 'Name the person who checks the AI’s results, and decide which results they must check before they count.' },
     { id: 'm7', name: 'Data you can reach and keep correct', who: 'dept',
       q: 'Is each piece of data this tool needs held in a system, with a named person who keeps it correct?',
@@ -184,7 +183,7 @@
       why: 'Tools fail and vendors change. The work still has to be done that day.',
       good: 'A short written backup plan for each task the tool does, which the shift leaders know.',
       blocks: ['Fallback if the tool or vendor fails'],
-      ev: [['“Contingency processes are in place to handle failures or incidents in third-party data or AI systems deemed to be high-risk.”', 'NIST AI Risk Management Framework 1.0, GOVERN 6.2 (Jan 2023).']],
+      ev: [], // v2.7.0: the NIST quote is removed (its wording names a risk class from rules by authorities)
       act: 'Write down how the job gets done if the tool stops working, and walk the shift leaders through it.' }
   ];
 
@@ -228,11 +227,14 @@
     notready: { name: 'Not ready yet', line: 'The list below shows what to do first.' },
     noinfo: { name: 'Not enough information yet', line: 'Find out first, then come back: the list below says whom to ask.' }
   };
-  /* v2.1: the line under "Almost ready" when the top verdict was held back (legal items, a No or a Not sure in step 2).
+  /* v2.1: the line under "Almost ready" when the top verdict was held back (a sensitive use case, a No or a Not sure in step 2).
      v2.5: "None of these fits" can no longer reach the top verdict (owner O4), so the v2.1 READY_NONE line is gone. */
   var ALMOST_HELD = 'Your answers would otherwise allow a start. Settle what is named above before you sign anything.';
-  /* v2.1, council item 7 (final copy): under any verdict when the use is labelled high-risk or flagged for sensitive personal data. It points to the existing block; it states no law. */
-  var LAW_LINE = 'This score does not cover the law. This use has legal items to check first (see “EU AI Act” below). Do not start a pilot before a named person has checked them.';
+  /* v2.7.0 (owner, 25 Nov 2026): these three texts are the data file's fixed_texts, verbatim (data/usecase_questions_only.json;
+     the banned-term test checks they match). */
+  var DISCLAIMER = 'This check does not cover legal requirements. Check those with your adviser before you start.';
+  var SENSITIVE_FLAG = 'This area involves people\'s personal data or jobs and has extra rules. Ask an adviser before a pilot.';
+  var SENSITIVE_HOLD = 'Held back: this area involves people\'s personal data or jobs. Ask an adviser before a pilot.';
   /* ---------- v2.5 (24 Nov 2026): reports/Council - Do you need AI v2.4.md, BUILD NOW items and owner decisions O1 to O5 (copy as given there) ---------- */
   /* BUILD NOW 1: under "Not ready yet" when no must-have is No but fewer than half are Yes (O1: "Almost ready" needs at least half). {n}: Yes, {m}: must-haves. */
   var ALMOST_FEW_MUST = 'No must-have is at No, but only {n} of {m} are in place. “Planned” is not done yet: finish these before you talk to vendors.';
@@ -243,12 +245,12 @@
   /* BUILD NOW 3: a held verdict lists its hold as item 1 of "Start with". */
   var HOLD = {
     carried: 'Settle this first: in step 2 you answered No to “{title}”. {outcome}',
-    legal: 'Settle this first: this use has legal items to check (see “EU AI Act” below). A named person must check them before a pilot.',
+    sensitive: SENSITIVE_HOLD, // v2.7.0: the data file's sensitive_hold_reason, verbatim
     notsure: 'Settle this first: you answered Not sure to {titles} in step 2. {find}',
     none: 'Settle this first: no use case chosen. The must-haves are in place, but nothing was checked for a particular tool.'
   };
   /* O5: one short line in the verdict box, only for "Not ready yet" and a held verdict. */
-  var BOX = { held: 'Held back: {why}.', legal: 'legal items to check', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
+  var BOX = { held: 'Held back: {why}.', sensitive: 'this area involves people\'s personal data or jobs', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
@@ -268,44 +270,54 @@
   var GET_SCORE = ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']; // cover bullet, council item 1
   var MUST_ONLY = 'No use case was chosen (“None of these fits”), so this result rests on the must-haves only.';
   var DRAFT = 'Draft questions: team to review';
-  var LEGAL_NOTE = 'Provisional label from the team’s AI Register, awaiting legal sign-off. Not a compliance verdict and not legal advice.';
+  /* v2.7.0: vendor questions, four of the register's list left out (who the maker is, the data agreement, the marking and
+     registration question, the AI notice question). The readiness check's own list and order: a demo, the register's general questions, cost, data back,
+     then one question per open item (systems, a person who checks, personal data, card payments). */
+  var VENDOR = {
+    first: 'Can you show the tool working on our own systems and data, not a standard demo?',
+    all: ['Does it rank, score or monitor individual staff, read emotions, or recognise people by face or voice? Can those features be switched off?',
+      'Do you train your models on our data or our guests\' data, and can we opt out?'],
+    pricing: 'Do your pricing or revenue recommendations use other hotels\' non-public data, or share ours with them?',
+    last: ['What does the full cost for the first 12 months add up to (subscription, set-up, connection, training)?', 'If we stop using the tool, how do we get all our data back, and in what format?'],
+    ask: { m4: 'Can you confirm in writing that the tool reads from and writes back to our systems, and show it on our own system?',
+      m6: 'How can our staff overrule or switch off the tool, and is every action it takes logged?',
+      m5: 'Which guest or staff data does the tool need, and for what purpose?',
+      pay: 'Can you share your security certifications and the result of your latest security test?' }
+  };
 
   /* ---------- "Where this comes from" per step: opened sources only, with dates ---------- */
   var SOURCES = {
     q: [
-      'EU AI Act, Regulation (EU) 2024/1689, Art. 3(1) and recital 12 (Official Journal, 12 Jul 2024).',
-      'European Commission, Guidelines on the definition of an AI system, C(2025) 5053 final (29 Jul 2025). Not binding.',
       'UK Government (DSIT), AI Playbook for the UK Government (10 Feb 2025).',
       'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019).',
       'NIST, AI Risk Management Framework 1.0, NIST AI 100-1 (Jan 2023).',
       'Google PAIR, People + AI Guidebook, “User Needs + Defining Success” (undated page, read 23 Nov 2026).',
       'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534 (questions 3 and 4).'
     ],
-    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell). Question 1 asks whether the job needs AI; it is not a legal classification (the AI Act guide tab covers that).',
+    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell). Question 1 asks whether the job needs AI.',
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
       'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
-      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, lack of clarity about the legal consequences 56.80%, data protection and privacy 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
+      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, data protection and privacy 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
       'HES-SO Valais-Wallis, “How AI is (and isn’t) transforming European hospitality”, survey news (9 Jul 2025).',
       'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
       'State of Hotel AI, Fall 2026 (29 Sep 2026), commissioned by Destination AI, research by Josiah Mackenzie (Actabl, a hotel software company): a global survey, vendor-linked, not comparable with the European figures.',
       'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
-      'EDPB, Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.1 (adopted 7 Jul 2021).',
       'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
     ],
-    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of {N} use cases”), it is that analysis, not a survey. The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later (their questions are drafts), and “AI use policies and governance” is a document, not a tool, so it is left out of the count. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
+    mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of {N} use cases”), it is that analysis, not a survey. The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
     where: [],
-    whereNote: 'The departments and use cases come from the hub’s Use-Case Catalogue (the project team’s catalogue, read when this page was built). “How common” is the catalogue’s rating (High, Medium, Low, Very low), built from the sources listed there for each use case.',
+    whereNote: 'The departments and use cases come from the project team’s Use-Case Catalogue (read when this page was built). “How common” is the catalogue’s rating (High, Medium, Low, Very low), built from the sources listed there for each use case.',
     tailored: [
-      'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026, sheets “Use case resources” and “Use case archetypes”.'
+      'The project team’s questions for each use case (25 Nov 2026), built on its resource analysis “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026.'
     ],
-    tailoredNote: 'Each question is built by a fixed rule from one cell of the team’s resource analysis for this use case (people, skills, financial investment, technology infrastructure, data, organisation and governance). The analysis is qualitative: no source gives costs or staffing per use case for European hotels. Where it names no evidence, the cell is the team’s judgement from the catalogue description. Legal points in it are signposts only.',
+    tailoredNote: 'Each use case has its own questions, about its systems, data, staff and guests. They are the team’s judgement, not a survey; no source gives costs or staffing per use case for European hotels.',
     result: [],
-    resultNote: 'The score and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The score is the share of points from your answers; it does not measure readiness and is not meant for comparing hotels. The cut-offs are the team’s judgement and have not been tested with hotels. The AI Act label comes from the hub’s AI Register and is provisional.'
+    resultNote: 'The score and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The score is the share of points from your answers; it does not measure readiness and is not meant for comparing hotels. The cut-offs are the team’s judgement and have not been tested with hotels.'
   };
 
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
-  var AS_OF = '24 Nov 2026';
+  var AS_OF = '25 Nov 2026';
   var USE_CHANGED = 'The catalogue changed: please pick your use case again.';
   var QUESTIONS_CHANGED = 'The questions for this use case changed since you answered. Please answer step 5 again.'; // v2.1 (audit M5)
   var CORRUPT = 'The checks saved in this browser could not be read, so this page started fresh. The unreadable data was set aside, not deleted.'; // v2.1 (audit L12)
@@ -319,8 +331,8 @@
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
-    LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, LEGAL_NOTE: LEGAL_NOTE,
-    ALMOST_HELD: ALMOST_HELD, LAW_LINE: LAW_LINE, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
+    LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
+    ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,

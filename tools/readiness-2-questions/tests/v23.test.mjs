@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { load, data, envOf, tester, finished, root } from './load.mjs';
+import { BANNED, nameHash } from '../build.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq, ENV = envOf(D, F);
 const { ok, done } = tester('v23');
@@ -110,10 +111,11 @@ ok(all.level === 'ready', 'all Yes is still Ready');
   const ids = []; let nSrc = 0;
   X.depts.forEach(d => d.uses.forEach((u, i) => {
     const id = d.id + '-' + (i + 1), b = D.detail[id]; ids.push(id);
-    const want = (u.srcs || []).map(s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || '']);
+    const want = (u.srcs || []).map(s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || ''])
+      .filter(s => !BANNED.test(s.join(' '))); // v2.7.0: a source carrying a banned word is left out
     nSrc += want.length;
     ok(b && !('ai' in b) && eq(b.srcs, want), id + ': bundled detail equals the catalogue entry (' + want.length + ' sources, in its order; v2.5: no technique notes, council BUILD NOW 8)');
-    const cu = D.cat.depts.find(x => x.id === d.id).uses[i]; ok(cu.n === u.n && cu.task === u.task && (cu.use || '') === (u.use || ''), id + ': name, task and rating from the catalogue');
+    const cu = D.cat.depts.find(x => x.id === d.id).uses[i]; ok(cu.alias === nameHash(u.n) && !('task' in cu) && (cu.use || '') === (u.use || ''), id + ': rating from the catalogue, its name kept as a hash (v2.7.0: the data file\'s name is shown, no task text)');
   }));
   ok(ids.length === 99 && eq(Object.keys(D.detail).sort(), ids.slice().sort()), 'detail for all 99 use cases, none left over');
   ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['srcs'])), 'only the fields the layer needs are bundled (v2.5: srcs only; the technique notes were dropped, council BUILD NOW 8)');

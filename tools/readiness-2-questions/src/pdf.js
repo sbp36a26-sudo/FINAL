@@ -1,6 +1,6 @@
 /* Do you need AI? v2: the two PDFs of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    v2.7 (owner, 25 Nov 2026): TWO documents, neither with sources. kind 'result': Result, Start with these three, Action plan by
-   person, Questions for the vendor, EU AI Act. kind 'answers': a short summary, then every question with the answer given
+   person, Questions for the vendor. kind 'answers': a short summary, then every question with the answer given
    (step 2, step 3, step 5). The stop screen keeps its one-page PDF (kind 'result').
    jsPDF and the "Register Sans" font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs: nothing is loaded.
    1. model(rec, env) → { stop, run: { hotel, date }, blocks }, built from R2Logic.resultModel(rec, env), the same object the
@@ -11,7 +11,7 @@
       (kind 'file': no suffix, for the JSON file's base name).
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4 for print. PDF redesign (24 Nov 2026): page 1 is the summary
       (hotel, use case, the verdict box in the verdict's colour, "Start with"); then the five questions, where it sits, the
-      areas as a table, the action plan as a checklist by person, vendor questions, the AI Act label, every answer as a
+      areas as a table, the action plan as a checklist by person, vendor questions, every answer as a
       two-column table, the method and the sources. A running header (tool, hotel, date) from page 2, a footer with
       "page n of N" on every page. Each block is measured before it is drawn: a block never splits and a heading always
       keeps its first lines with it. */
@@ -19,8 +19,9 @@
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
   var TITLE = 'Do you need AI? Result', TITLE_ANSWERS = 'Do you need AI? Your answers', TITLE_STOP = 'Do you need AI? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
-  var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Not legal advice. Questions, rules and content as of ' + C.AS_OF + '.';
-  var FOOT_L = 'Do you need AI? · student prototype, not legal advice', FOOT = FOOT_L + ' · page ';
+  var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Questions, rules and content as of ' + C.AS_OF + '.';
+  /* v2.7.0 (owner): the footer of every page is the disclaimer (the data file's fixed text), then the page number */
+  var FOOT_L = C.DISCLAIMER, FOOT = FOOT_L + ' · page ';
 
   function head(m, stop, use, title, extra) {
     var b = [{ k: 'title', t: title || (stop ? TITLE_STOP : TITLE) }];
@@ -49,7 +50,7 @@
     return kind === 'answers' ? answersModel(m, run, use) : resultModel(m, run, use);
   }
 
-  /* Document 1: Result, Start with these three, Action plan by person, Questions for the vendor, EU AI Act. */
+  /* Document 1: Result, Start with these three, Action plan by person, Questions for the vendor (v2.7.0: one section fewer). */
   function resultModel(m, run, use) {
     var b = head(m, false, use);
     /* the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with" */
@@ -60,8 +61,8 @@
     b.push({ k: 'p', t: m.levelLine });
     if (m.since) { b.push({ k: 'label', t: m.since.head }); m.since.lines.forEach(function (x) { b.push({ k: 'li', t: x }); }); }
 
+    if (m.flag) b.push({ k: 'lead', t: m.flag, id: 'flag', tone: 'md', under: true }); // v2.7.0: the sensitive-area flag
     b.push({ k: 'h', t: m.firstLabel });
-    if (m.law) b.push({ k: 'p', t: m.law, id: 'law' });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
     if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
@@ -74,15 +75,6 @@
 
     if (m.vendor.length) { b.push({ k: 'h', t: 'Questions for the vendor' }); m.vendor.forEach(function (q, i) { b.push({ k: 'num', n: i + 1, t: q, body: q, sub: '' }); }); }
 
-    if (m.legal) {
-      b.push({ k: 'h', t: 'EU AI Act: provisional label' }, { k: 'p', t: m.legalNote, small: true, keep: true }, { k: 'lead', t: m.legal.name + (m.legal.applies ? ' (' + m.legal.applies + ')' : ''), tone: 'accent' }, { k: 'p', t: m.legal.why });
-      m.legal.could.forEach(function (c) { b.push({ k: 'p', t: c, small: true }); });
-      if (m.legal.itemsHead) b.push({ k: 'label', t: m.legal.itemsHead });
-      else if (m.legal.items.length) b.push({ k: 'label', t: 'Items to check' });
-      m.legal.items.forEach(function (i) { b.push({ k: 'todo', t: i.text, sub: i.sub }); });
-      if (m.legal.labour) b.push({ k: 'p', t: m.legal.labour, small: true });
-      b.push({ k: 'p', t: m.legal.country, small: true });
-    }
     return { stop: false, kind: 'result', run: run, blocks: b };
   }
 
@@ -91,6 +83,7 @@
      the summary: plain lines, they fit on page 1 (tests/pdf.test.mjs checks that). */
   function answersModel(m, run, use) {
     var b = head(m, false, use, TITLE_ANSWERS, ['Result: ' + m.levelName + ' · ' + m.scoreHead]);
+    if (m.flag) b.push({ k: 'lead', t: m.flag, id: 'flag', tone: 'md' }); // v2.7.0
     b.push({ k: 'label', t: 'How the score was worked out' }); m.method.slice(0, 3).forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
     b.push({ k: 'h', t: 'Every question and your answer' });
     b.push({ k: 'label', t: 'Step 2: Can this problem be solved with AI?', group: true });

@@ -16,7 +16,7 @@ const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const rd = p => readFileSync(join(root, p), 'utf8');
 const SENS = Object.keys(TQ.uses).filter(k => TQ.uses[k].sensitive).sort();
 const carryT = (use, T) => { const o = {}; (TQ.uses[use] ? TQ.uses[use].qs : []).forEach(q => { if (q.carry && T && T[q.carry] != null) o[q.id] = T[q.carry]; }); return o; }; // v2.7.0: old answers taken over by carry_answer_from
-const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), today: '2026-11-24' };
+const env = { cat: D.cat, TQ, today: '2026-11-24' };
 function mk(use, musts, tail, o) {
   const r = finished(F, D, use, o);
   F.MUST_IDS.forEach((id, i) => { r.A[id] = (musts && musts[i]) || 'y'; });
@@ -88,17 +88,17 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): \d+ of \d+ in place/.test(t)).length === 7 && !m.method.some(t => /^(Must-haves|People|Skills|Data)[^.]*= \d+%/.test(t)), 'item 6: the working-out lists the areas as counts with their points, no area percentage');
 }
 {
-  // item 7: "This score does not cover the law…" on high-risk or sensitive-data uses, under any verdict
-  ok(C.LAW_LINE === 'This score does not cover the law. This use has legal items to check first (see “EU AI Act” below). Do not start a pilot before a named person has checked them.', 'item 7: the line (final copy)');
-  // v2.7.0: the register's high-risk list is no longer read; the data file's sensitive flag decides
+  // item 7 (v2.7.0, owner): the law line and the AI Act block are gone; the data file's sensitive-area flag is shown on the result
+  // (and the PDF) for the 12 sensitive use cases, under any verdict
+  ok(!('LAW_LINE' in C) && C.SENSITIVE_FLAG === "This area involves people's personal data or jobs and has extra rules. Ask an adviser before a pilot.", 'item 7: the sensitive flag (verbatim)');
   const sens = Object.keys(TQ.uses).filter(k => TQ.uses[k].sensitive).sort();
   ok(eq(sens, ['fo-3', 'fo-6', 'gx-4', 'hk-6', 'hr-1', 'hr-2', 'hr-4', 'hr-5', 'hr-6', 'it-4', 'res-8', 'sm-3']), 'item 7: the sensitive use cases: ' + sens);
   Object.keys(TQ.uses).forEach(id => {
     const flagged = sens.includes(id);
-    [mk(id, [], []), mk(id, ['n'], []), mk(id, rep('k', 10), [])].forEach(r => { const m = L.resultModel(r, env); ok((m.law === C.LAW_LINE) === flagged, id + ' (' + m.level + '): the law line is shown ' + (flagged ? 'under every verdict' : 'never')); });
-    if (flagged) { const m = L.resultModel(mk(id, [], []), env); ok(m.legal && m.legal.items.length >= 1, id + ': the “EU AI Act” block the line points to exists and lists items'); ok(pdfText(mk(id, [], [])).includes(C.LAW_LINE), id + ': the law line is in the PDF'); }
+    [mk(id, [], []), mk(id, ['n'], []), mk(id, rep('k', 10), [])].forEach(r => { const m = L.resultModel(r, env); ok((m.flag === C.SENSITIVE_FLAG) === flagged && !('legal' in m), id + ' (' + m.level + '): the flag is shown ' + (flagged ? 'under every verdict' : 'never')); });
+    if (flagged) ok(pdfText(mk(id, [], [])).includes(C.SENSITIVE_FLAG), id + ': the flag is in the PDF');
   });
-  ok(L.resultModel(mk('none', [], []), env).law === '', 'item 7: no law line without a use case');
+  ok(L.resultModel(mk('none', [], []), env).flag === '', 'item 7: no flag without a use case');
 }
 {
   // item 8 / M8: no bare evidence ids on a hotel-facing screen
@@ -116,7 +116,7 @@ ok(C.TAIL_TODAY === 'Answer for today. If something can only exist once the tool
 // ====================================================================================================================
 // Team judgement: B2, B5, B6, each behind one named constant
 // ====================================================================================================================
-ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true, ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true }), 'the three v2.1 switches, all on (v2.5 adds named constants, owner O1 to O4; v2.6 removes Q4_NO_HOLDS_TOP)');
+ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true, ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true }), 'the three v2.1 switches, all on (v2.5 adds named constants, owner O1 to O4; v2.6 removes Q4_NO_HOLDS_TOP)');
 {
   const J = L.JUDGEMENT, flip = (k, f) => { J[k] = false; try { f(); } finally { J[k] = true; } };
   // B2
@@ -130,13 +130,13 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   // B5
   SENS.forEach(id => { // v2.7.0: the data's 12 sensitive use cases (was: the register's high-risk list and the sens add-on)
     const e5 = L.evaluate(mk(id, [], []), TQ), m5 = L.resultModel(mk(id, [], []), env);
-    ok(e5.level === 'almost' && e5.pct === 100 && eq(e5.held, ['legal']) && e5.must.allYes, id + ': all Yes, 100%, but no top verdict (held: legal)');
-    ok(m5.reason === 'Because this use has legal items to check first (the “EU AI Act” part of this result lists them). This tool cannot check them, so it does not give the top verdict for this use.' && m5.levelLine === C.ALMOST_HELD && m5.law === C.LAW_LINE, id + ': the result says why in plain words');
+    ok(e5.level === 'almost' && e5.pct === 100 && eq(e5.held, ['sensitive']) && e5.must.allYes, id + ': all Yes, 100%, but no top verdict (held: sensitive, v2.7.0)');
+    ok(m5.reason === C.SENSITIVE_HOLD && m5.levelLine === C.ALMOST_HELD && m5.flag === C.SENSITIVE_FLAG && m5.boxLine === "Held back: this area involves people's personal data or jobs.", id + ': the result says why in plain words (the data file\'s hold reason)');
     ok(!/\b(must|requires?|applies|obliged|illegal|unlawful)\b/i.test(m5.reason + C.ALMOST_HELD), id + ': the reason makes no legal claim');
   });
-  flip('LEGAL_HOLDS_TOP', () => { const e5 = L.evaluate(mk('hr-2', [], []), TQ); ok(e5.level === 'ready' && e5.held.length === 0 && L.resultModel(mk('hr-2', [], []), env).law === C.LAW_LINE && !L.method(e5).some(t => /does not get the top verdict/.test(t)), 'B5 off: the top verdict is possible again; the law line (item 7) stays'); });
+  flip('SENSITIVE_HOLDS_TOP', () => { const e5 = L.evaluate(mk('hr-2', [], []), TQ); ok(e5.level === 'ready' && e5.held.length === 0 && L.resultModel(mk('hr-2', [], []), env).flag === C.SENSITIVE_FLAG && !L.method(e5).some(t => /does not get the top verdict/.test(t)), 'B5 off: the top verdict is possible again; the flag (item 7) stays'); });
   ok(Object.keys(TQ.uses).filter(id => L.evaluate(mk(id, [], []), TQ).level !== 'ready').sort().join() === SENS.join(), 'B5 (v2.7.0): with all Yes, exactly the 12 sensitive use cases miss the top verdict; the other 87 get it');
-  ok(L.method(L.evaluate(mk('fo-4', [], []), TQ)).some(t => t.startsWith('Team judgement: a use that the AI Register labels high-risk')), 'B5: listed in "How this was worked out" as team judgement');
+  ok(L.method(L.evaluate(mk('fo-4', [], []), TQ)).some(t => t.startsWith('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict')), 'B5: listed in "How this was worked out" as team judgement');
   ok(L.evaluate(mk('hr-2', ['n'], []), TQ).level === 'notready' && L.evaluate(mk('hr-2', ['n'], []), TQ).held.length === 0, 'B5: only the top verdict is held; a must-have No is still "Not ready yet"');
   // B6
   // v2.6 (owner): a No on any of questions 2 to 5 holds (v2.5 had left question 4 out); the new question 3 and 4 titles and outcomes
@@ -151,9 +151,9 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   flip('CARRIED_NO_HOLDS_TOP', () => ok(L.evaluate(r6, TQ).level === 'ready' && L.resultModel(r6, env).ai.carried.length === 1, 'B6 off: the No is carried as a condition only'));
   ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled\.$/.test(t)), 'B6 (v2.6 wording: question 4 holds too): listed in "How this was worked out" as team judgement');
   r6 = mk('hr-2', [], []); r6.Q.q5 = 'n'; const both = L.evaluate(r6, TQ);
-  ok(eq(both.held, ['legal', 'carried']) && /^Because this use has legal items .* Also because you answered No in step 2 to “Proof”/.test(both.reason), 'B5 + B6 together: both reasons, in one sentence each');
+  ok(eq(both.held, ['sensitive', 'carried']) && both.reason.startsWith(C.SENSITIVE_HOLD + ' Also because you answered No in step 2 to “Proof”'), 'B5 + B6 together: both reasons, in one sentence each');
   // the switches are named in the source where the owner flips them
-  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
+  ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage
   ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).cap && C.LEVELS.ready.name === 'Ready to start a pilot' && C.STOP.head === 'This is not suitable for AI.' && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP' && C.MUSTS.length === 10 && Object.keys(TQ.uses).length === 99, 'kept: must-haves cap, verdict name, Q1 stop wording, C-R-I-S-P, ten must-haves, 99 use cases');
 }
@@ -373,7 +373,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(F.migrate(5, ENV, {}) === null && F.migrate({ v: 0 }, ENV, {}) === null, 'L12: junk that parses is unreadable too');
   // L13
   ok(eq(L.tailRange(TQ), [6, 12]) && /id="cover-range" data-min="' \+ range\[0\] \+ '" data-max="' \+ range\[1\]/.test(app) && !/Six to ten questions/.test(app) && !/6 to 10 questions/.test(rd('README.md')), 'L13: the cover reads the range from the data (six to twelve since v2.7.0); README agrees');
-  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 99 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later (their questions are drafts), and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
+  ok(TQ.matrixTotal === 90 && TQ.nFromWorkbook === 91 && TQ.nDraft === 8 && D.cat.nUses === 99 && C.SOURCES.mustNote.includes('The analysis covers {N} of the catalogue’s {U} use cases: {D} were added to the catalogue later, and “AI use policies and governance” is a document, not a tool, so it is left out of the count.'), 'L13: the must-haves note says why 90 is not 99 (90 + 8 drafts + 1 document), with numbers read from the data');
   ok(!/90 of the catalogue’s 99 use cases: 8 were added/.test(pdfText(mk('fo-4', [], []))) && !/\{[NUD]\}/.test(pdfText(mk('fo-4', [], []))), 'L13: v2.7: the PDF has no sources, so no source text with the three numbers; no placeholder left');
   // print
   ok(/addEventListener\('beforeprint'/.test(app) && /details\.fold/.test(app) && /addEventListener\('afterprint'/.test(app), 'print: the result\'s folds are opened for printing and closed again');
@@ -420,6 +420,6 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(/kind: 'dyn', v: 2, qv: F\.QV, rules: L\.RULES, useId: rec\.use/.test(rd('src/app.js')), 'the share document keeps its shape (kind, v, rules, useId …; v2.6 adds qv); reason, held and rules per snapshot are added');
 }
 // storage keys and hub messages unchanged
-ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 3 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && /\{ hub: 'open', tool: tool, hash: hash \}/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'v2.7.0: own storage key; hub message shapes unchanged; store version 3');
+ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 3 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: 'open'/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'v2.7.0: own storage key; no message opens another hub tab; store version 3');
 ok(!/AIHA|AI Hospitality Alliance/i.test(rd('index.html').replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
 done();

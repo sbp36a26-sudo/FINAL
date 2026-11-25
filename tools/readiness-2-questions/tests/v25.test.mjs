@@ -26,7 +26,7 @@ ok(J.ALMOST_MIN_MUST_YES === 50 && J.READY_MIN_TAIL_YES === 50, 'O1 (c): the two
 ok(J.NOT_SURE_HOLDS_TOP === true, 'O2 (b): NOT_SURE_HOLDS_TOP');
 ok(!('Q4_NO_HOLDS_TOP' in J), 'O3 (b) is replaced by the owner\'s v2.6 decision: Q4_NO_HOLDS_TOP is gone, a No on the new question 4 holds');
 ok(J.NONE_BEST_ALMOST === true, 'O4 (b): NONE_BEST_ALMOST');
-ok(J.UNKNOWN_SCORES_ZERO === true && J.LEGAL_HOLDS_TOP === true && J.CARRIED_NO_HOLDS_TOP === true, 'the v2.1 switches stay');
+ok(J.UNKNOWN_SCORES_ZERO === true && J.SENSITIVE_HOLDS_TOP === true && !('LEGAL_HOLDS_TOP' in J) && J.CARRIED_NO_HOLDS_TOP === true, 'the v2.1 switches stay (v2.7.0: LEGAL_HOLDS_TOP renamed SENSITIVE_HOLDS_TOP)');
 
 // ---------- the council's nine answer patterns on gx-2 (and the legal hold on hr-2) ----------
 const mk = (use, o) => { const r = finished(F, D, use); if (o.Q) Object.assign(r.Q, o.Q); if (o.A) F.MUST_IDS.forEach(id => { r.A[id] = o.A; }); if (o.A1) Object.assign(r.A, o.A1); if (o.T && use !== 'none') TQ.uses[use].qs.forEach(q => { r.T[q.id] = o.T; }); return r; };
@@ -40,7 +40,7 @@ const PAT = {
   G: [mk('none', {}), 'almost', 100, ['none'], /^Held back: no use case chosen\.$/],
   H: [mk('fo-4', { A1: { m4: 'n' } }), 'notready', 94, [], /^Because 1 must-have is No\.$/],
   I: [mk('fo-4', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/], // v2.6: was ready with the assistant-only condition
-  legal: [mk('hr-2', {}), 'almost', 100, ['legal'], /^Held back: legal items to check\.$/]
+  sensitive: [mk('hr-2', {}), 'almost', 100, ['sensitive'], /^Held back: this area involves people's personal data or jobs\.$/] // v2.7.0: was the legal hold
 };
 const heads = {};
 for (const [k, [r, level, pct, held, box]] of Object.entries(PAT)) {
@@ -61,8 +61,8 @@ ok(L.resultModel(PAT.B[0], env).levelLine === 'Every must-have is in place. For 
 // BUILD NOW 3: the hold is item 1
 const mD = L.resultModel(PAT.D[0], env);
 ok(mD.first[0]?.text === 'Settle this first: in step 2 you answered No to “Proof”. Define success first. Write down the number and today’s figure, then come back.' && mD.firstLabel === 'Start with this one', 'BUILD NOW 3: D starts with the carried No: ' + mD.first[0]?.text);
-const mL = L.resultModel(PAT.legal[0], env);
-ok(mL.first[0]?.text === 'Settle this first: this use has legal items to check (see “EU AI Act” below). A named person must check them before a pilot.', 'BUILD NOW 3: legal hold is item 1');
+const mL = L.resultModel(PAT.sensitive[0], env);
+ok(mL.first[0]?.text === C.SENSITIVE_HOLD && mL.first[0].hold === 'sensitive', 'BUILD NOW 3 (v2.7.0): the sensitive hold is item 1, in the data file\'s words');
 const mE = L.resultModel(PAT.E[0], env);
 ok(/^Settle this first: you answered Not sure to “Complex judgement” in step 2\./.test(mE.first[0]?.text) && /[Yy]ou answered Not sure to “Complex judgement” in step 2\./.test(mE.reason), 'O2: E reason and first item name the Not sure: ' + mE.reason);
 const mG = L.resultModel(PAT.G[0], env);

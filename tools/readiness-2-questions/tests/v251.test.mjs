@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { load, data, tester, finished, root } from './load.mjs';
+import { BANNED } from '../build.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('v251');
@@ -24,16 +25,17 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
   let n = 0, nUrl = 0, bad = [], types = {};
   X.depts.forEach(d => d.uses.forEach((u, i) => {
     const id = d.id + '-' + (i + 1), bundled = D.detail[id].srcs;
-    (u.srcs || []).forEach((raw, j) => {
+    const res = s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || ''];
+    (u.srcs || []).filter(raw => !BANNED.test(res(raw).join(' '))).forEach((raw, j) => { // v2.7.0: sources with a banned word are left out
       n++; types[raw[0]] = (types[raw[0]] || 0) + 1;
       const url = urlOf(raw);
       for (const [tag, s] of [['bundled', bundled[j]], ['raw catalogue shape', raw]]) {
         const h = L.sourceRow(s, X.src), hrefs = [...h.matchAll(/href="([^"]*)"/g)].map(m => unesc(m[1]));
         // 24 Nov 2026: the address line (selectable, with Copy address) is the one place a URL may stand as text
+        const fail = why => bad.push(id + ' #' + (j + 1) + ' (' + raw[0] + ', ' + tag + '): ' + why);
         const addr = (h.match(/<span class="srcurl">([^<]*)<\/span>/) || [])[1];
         if (url && unesc(addr || '') !== url) fail('the address line does not show the link');
         const text = unesc(strip(h.replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
-        const fail = why => bad.push(id + ' #' + (j + 1) + ' (' + raw[0] + ', ' + tag + '): ' + why);
         if (url) { if (hrefs.length !== 1 || hrefs[0] !== url) fail('expected one link to ' + url + ', got ' + JSON.stringify(hrefs)); }
         else if (hrefs.length) fail('a link where the catalogue has no URL');
         if (/https?:\/\//.test(text)) fail('a URL printed as text');

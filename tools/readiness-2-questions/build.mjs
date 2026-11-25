@@ -1,9 +1,10 @@
-// Builds "Do you need AI?" v2 (index.html) from src/, data/usecase-questions.json, the Use-Case Catalogue's data and the
-// AI Register's label files (the same build inputs as the readiness check, whose rules and store scripts are inlined too).
-// It also inlines jsPDF (tools/assessment/lib) and the register's "Register Sans" PDF font (tools/register/fonts, OFL) for the PDF download.
-// The catalogue's <script id="data"> is read here at build time, never copied by hand: rebuild after the catalogue changes.
-// Run after editing anything in src/ or the catalogue:   node tools/readiness-2-questions/build.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Builds "Do you need AI?" v2.7.0 (questions-only, standalone): index.html, one self-contained file, from src/, the owner's
+// questions-only data (data/usecase_questions_only.json, verbatim), data/must-meta.json, data/explain.json and the Use-Case
+// Catalogue's data (read at build time from ../use-case-catalogue/index.html, never copied by hand).
+// It also inlines jsPDF (tools/assessment/lib) and the "Register Sans" PDF font (tools/register/fonts, SIL OFL 1.1).
+// No CDN, no external font or script. No legal content (owner, 25 Nov 2026): see BANNED below and tests/no-legal.test.mjs.
+// Run after editing anything in src/ or data/, or after the catalogue changes:   node tools/readiness-2-questions/build.mjs
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,21 +12,32 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const read = p => readFileSync(join(here, p), 'utf8');
 
-/* Catalogue data → only what this tool shows: category, department name, and per use case its name, task and use level.
-   Use-case ids are '<dept id>-<1-based index>', the same ids as the catalogue, the readiness check and the AI Register. */
-export function catalogueModel(catHtml, labels) {
+/* The owner's banned terms (prompt §4.4): whole words, any case. Only the disclaimer and the sensitive-area flag may carry one. */
+export const BANNED = /\b(AI Act|Article|Art\.|Annex|high-risk|transparency obligation|prohibited|DPIA|GDPR|FADP|CE mark|works council|PCI|consent|legal basis|law|laws|regulation|compliance|legal|not legal advice)\b/i;
+/* The same 32-bit FNV-1a (over UTF-16 code units) as R2Flow.nameHash (src/flow.js): a saved check's catalogue name is checked by
+   its hash, so the catalogue's own names (some carry banned words) are never written into the page. */
+export function nameHash(s) { let h = 0x811c9dc5; const t = String(s); for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+
+function catData(catHtml) {
   const m = catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
   if (!m) throw new Error('use-case-catalogue/index.html: no <script id="data"> block');
-  const X = JSON.parse(m[1]);
-  const notTool = new Set((labels && labels.uses || []).filter(u => u.base === 'notai').map(u => u.id));
-  const lab = Object.fromEntries((labels && labels.uses || []).map(u => [u.id, u]));
-  const depts = X.depts.map(d => ({ id: d.id, name: d.name, cat: d.cat, uses: d.uses.map((u, i) => {
-    const id = d.id + '-' + (i + 1), o = { id, n: u.n, task: u.task, use: u.use || '' }, l = lab[id];
-    /* kw and staff: the fields the readiness check's own model reads (search words; a tool that affects staff). */
-    if (l) { if (l.name !== u.n) throw new Error('register label file out of step with the catalogue at ' + id); o.kw = l.kw || ''; if (l.staff) o.staff = true; }
-    if (notTool.has(id)) o.notTool = true; // e.g. "AI use policies and governance": a document, not a tool; the readiness check has no check for it
-    return o;
-  }) }));
+  return JSON.parse(m[1]);
+}
+/* Catalogue data → only what this tool shows: area (category), department and per use case its name and use level.
+   v2.7.0: the names shown are the data file's (the team's plain names; lg-2 and lg-3 renamed, the department "Sustainability &
+   Governance"); the catalogue's own name is kept only as a hash (alias) so checks saved earlier still match their use case; the
+   catalogue's research-wording description (task) is no longer shipped (three carry legal words; "What it does" replaces it).
+   Use-case ids are '<dept id>-<1-based index>', the same ids as the catalogue. Q: the questions-only data. */
+export function catalogueModel(catHtml, Q) {
+  const X = catData(catHtml), QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u]));
+  const depts = X.depts.map(d => {
+    const first = QU[d.id + '-1'];
+    return { id: d.id, name: first ? first.department : d.name, cat: d.cat, uses: d.uses.map((u, i) => {
+      const id = d.id + '-' + (i + 1), q = QU[id];
+      if (!q) throw new Error('data/usecase_questions_only.json has no use case ' + id);
+      return { id, n: q.name, alias: nameHash(u.n), use: u.use || '' };
+    }) };
+  });
   /* The four category one-liners, from the catalogue page's own CATS constant (kept in step with it). */
   let catLines = {};
   const cm = catHtml.match(/const CATS = (\[[\s\S]*?\]\]);/);
@@ -36,23 +48,6 @@ export function catalogueModel(catHtml, labels) {
   return { cats, depts, nDepts: depts.length, nUses: depts.reduce((a, d) => a + d.uses.length, 0) };
 }
 
-/* The readiness check's own data model for vendor questions and the provisional AI Act label (rules v4): the same inputs and
-   the same cuts as tools/readiness-check/build.mjs (nothing unverified is embedded: no Swiss or UK labour notes, nothing marked
-   "to verify"). tests/build.test.mjs compares this block with the one the readiness check embeds. */
-export function rcModel(rdyHtml, labels, ref) {
-  const rdy = JSON.parse(rdyHtml.match(/<script id="rdy" type="application\/json">([\s\S]*?)<\/script>/)[1]);
-  const labourNotes = Object.fromEntries(Object.entries(ref.labourNotes).filter(([k, v]) => k !== 'CH' && k !== 'GB' && !/to\s+verify/i.test(v)));
-  const switches = Object.fromEntries(Object.entries(ref.switches).map(([k, v]) => [k, { q: v.q, yes: v.yes }]));
-  const reg = {
-    labels: ref.labels, dates: ref.dates, switches, labourNotes, vendorQuestions: ref.vendorQuestions,
-    items: ref.items.map(i => ({ id: i.id, pack: i.pack, role: i.role, since: i.since, who: i.who, text: i.text })),
-    uses: labels.uses.map(u => ({ id: u.id, base: u.base, chat: !!u.chat, staff: !!u.staff, why: u.why, packs: u.packs || [], switches: u.switches || [] }))
-  };
-  /* Only what RCLogic.model(), legal() and vendorQs() read. */
-  const rdyUsed = { areas: rdy.areas.map(a => ({ k: a.k, name: a.name })), q: rdy.q, blocks: rdy.blocks.map(b => ({ codes: b.codes })), arch: rdy.arch.map(a => ({ c: a.c, s: a.s, n: a.n })),
-    uc: rdy.uc.map(u => ({ id: u.id, int: u.int, arch: u.arch, add: u.add, r: { te: u.r.te, fi: u.r.fi }, chk: u.chk })), addons: rdy.addons };
-  return { rdy: rdyUsed, reg };
-}
 /* v2.7.0 (questions-only, owner 25 Nov 2026): step 5 reads data/usecase_questions_only.json, used verbatim (text, why, area,
    who answers). The signature of one use case's questions (ids and texts) marks which question list a saved answer belongs to. */
 export const AREA_KEY = { People: 'pe', Skills: 'sk', 'Financial investment': 'fi', 'Technology infrastructure': 'te', Data: 'da', 'Organisation & governance': 'or' };
@@ -76,23 +71,22 @@ export function tqModel(Q, meta) {
   return { uses, areas: meta.areas, blocks: meta.blocks, matrixTotal: meta.matrixTotal, nFromWorkbook: meta.nFromWorkbook, nDraft: meta.nDraft };
 }
 
-/* v2.4 (owner, 24 Nov 2026): the detail layer. Each use case's catalogue entry, read from the catalogue page's <script id="data">
-   at build time (one source of truth, never copied by hand): { <use id>: { srcs: [[type, name, note, url]] } }.
-   v2.5 (council BUILD NOW 8): the catalogue's "AI technique" research notes are no longer bundled; they stay in the catalogue tab.
-   Sources keep the catalogue's types: 'c' company, 'h' hotel (the catalogue shows a "Hotel" tag), 'r' a study in the catalogue's
-   source list (name and link resolved from it, as the catalogue page does), 'l' a plain link. Only the entries the catalogue shows. */
+/* The detail layer: each use case's catalogue sources, read from the catalogue page at build time: { <use id>: { srcs: [[type, name,
+   note, url]] } }. Types: 'c' company, 'h' hotel, 'r' a study in the catalogue's source list (resolved), 'l' a plain link.
+   v2.7.0 (owner): legal sources are not shown, and any source whose name, note or address would hit the banned-term scan is left
+   out; out.dropped lists them (the build prints them, the report names them). */
 export function detailModel(catHtml) {
-  const m = catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!m) throw new Error('use-case-catalogue/index.html: no <script id="data"> block');
-  const X = JSON.parse(m[1]), SRC = X.src || {}, out = {};
+  const X = catData(catHtml), SRC = X.src || {}, out = {}, dropped = [];
   X.depts.forEach(d => d.uses.forEach((u, i) => {
+    const id = d.id + '-' + (i + 1);
     const srcs = (u.srcs || []).map(s => {
-      if (s[0] === 'r') { const r = SRC[s[1]]; if (!r) throw new Error('catalogue source ' + s[1] + ' is not in its source list (' + d.id + '-' + (i + 1) + ')'); return ['r', r[0], s[2] || '', r[1] || '']; }
+      if (s[0] === 'r') { const r = SRC[s[1]]; if (!r) throw new Error('catalogue source ' + s[1] + ' is not in its source list (' + id + ')'); return ['r', r[0], s[2] || '', r[1] || '']; }
       if (s[0] === 'c' || s[0] === 'h') return [s[0], s[1], s[2] || '', s[3] || ''];
       return ['l', s[1], '', s[2] || ''];
-    });
-    out[d.id + '-' + (i + 1)] = { srcs };
+    }).filter(s => { const hit = s.join(' ').match(BANNED); if (hit) dropped.push({ id, name: s[1], word: hit[0] }); return !hit; });
+    out[id] = { srcs };
   }));
+  Object.defineProperty(out, 'dropped', { value: dropped, enumerable: false });
   return out;
 }
 
@@ -104,32 +98,25 @@ export function explainModel(E, ids) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const labels = JSON.parse(read('../register/data/uc-labels.json'));
-  const catHtml = read('../use-case-catalogue/index.html'), cat = catalogueModel(catHtml, labels), detail = detailModel(catHtml);
+  const catHtml = read('../use-case-catalogue/index.html');
   const Q = JSON.parse(read('data/usecase_questions_only.json')), meta = JSON.parse(read('data/must-meta.json'));
-  /* Every catalogue use case must have its tailored questions, and no question may be left over: run data/build-questions.mjs after the catalogue changes. */
-  const ids = cat.depts.flatMap(d => d.uses.map(u => u.id));
-  const qIds = Q.use_cases.map(u => u.id), missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
+  const cat = catalogueModel(catHtml, Q), detail = detailModel(catHtml);
+  const ids = cat.depts.flatMap(d => d.uses.map(u => u.id)), qIds = Q.use_cases.map(u => u.id);
+  const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
-  const TQ = tqModel(Q, meta);
-  const rc = rcModel(read('../readiness/index.html'), labels, JSON.parse(read('../register/data/reference.json')));
-  const ex = explainModel(JSON.parse(read('data/explain.json')), ids);
-  const data = { cat, tq: TQ, rc, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
+  const TQ = tqModel(Q, meta), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
+  const data = { cat, tq: TQ, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
-  /* PDF: jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it. */
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
   const fontBlock = `<script type="application/json" id="r2-font">${JSON.stringify(font)}</script>`;
   const safe = s => s.replace(/<\/script/gi, '<\\/script');
   let html = read('src/page.html');
   for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))],
-    ['/*__RCLOGIC__*/', safe(read('../readiness-check/src/logic.js'))], ['/*__RCSTORE__*/', safe(read('../readiness-check/src/store.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))],
-    ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
+    ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
     if (!html.includes(mark)) throw new Error('src/page.html: missing ' + mark);
     html = html.replace(mark, () => text);
   }
   writeFileSync(join(here, 'index.html'), html);
-  /* 25 Nov 2026: the shareable single file. Same page, with the flag that hides the links to the other hub tools. */
-  mkdirSync(join(here, 'standalone'), { recursive: true });
-  writeFileSync(join(here, 'standalone', 'index.html'), html.replace('<title>', '<script>window.R2_STANDALONE = true;</script>\n<title>'));
   console.log('wrote tools/readiness-2-questions/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(TQ.uses).reduce((a, u) => a + u.qs.length, 0), 'questions for the use cases');
+  if (detail.dropped.length) console.log('sources left out (banned word):', detail.dropped.map(x => x.id + ' ' + JSON.stringify(x.name.slice(0, 50)) + ' [' + x.word + ']').join('; '));
 }

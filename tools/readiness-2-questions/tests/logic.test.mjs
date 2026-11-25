@@ -54,7 +54,7 @@ C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 17 }[q.i
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');
 ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading');
 ok(C.HONEST === 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.', 'honesty line');
-ok(C.AS_OF === '24 Nov 2026', 'content date');
+ok(C.AS_OF === '25 Nov 2026', 'content date (v2.7.0)');
 const partial = L.verdict({ q1: 'n', q2: 'y' }); ok(partial.key === 'open' && !partial.complete, 'not all answered → open');
 ok(L.verdict({ q1: 'y' }).key === 'stop', 'Q1 Yes (v2.6) stops even when the rest is blank');
 
@@ -66,15 +66,15 @@ ok(eq(gates, ['D5', 'F1', 'F2', 'O1', 'P1', 'T1']), 'the six D6 gates of the wor
 C.MUSTS.forEach(m => {
   ok(/\?$/.test(m.q) && !/\?./.test(m.q) && m.q.split(/\s+/).length <= 26, m.id + ': one plain question');
   ok(m.name && m.why && m.good && m.act && C.WHO[m.who], m.id + ': title, why, what counts as Yes, action, who');
-  ok(m.ev.length >= 1 && m.ev.every(e => e[0] && e[1] && /\d{4}|version/.test(e[1])), m.id + ': evidence with source (and date or version)');
+  ok((m.ev.length >= 1 || ['m6', 'm10'].includes(m.id)) && m.ev.every(e => e[0] && e[1] && /\d{4}|version/.test(e[1])), m.id + ': evidence with source (and date or version); v2.7.0: m6 and m10 lost their only evidence line (rules from authorities)');
   const sh = L.shareLines(m, TQ);
   ok(sh.length === m.blocks.length && sh.every(t => /needed for \d+ of 90 use cases in the team’s resource analysis, Nov 2026/.test(t) && /team judgement/.test(t)), m.id + ': share from the Framework matrix, labelled as the team\'s analysis');
   ok(!/\b[PFTDOG]\d\b/.test(m.q + m.name + m.why + m.good + m.act), m.id + ': no internal code in hotel-facing words');
 });
 ok(TQ.matrixTotal === 90 && TQ.blocks.length === 20, 'matrix: 20 blocks over 90 use cases (computed from the sheet)');
 ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of 90') && /foundation layer/.test(L.shareLines(L.MUST.m1, TQ)[0]), 'm1: 90 of 90, foundation layer');
-const shareOf = id => TQ.blocks.find(b => b.name === L.MUST[id].blocks[0]).n;
-ok(eq(['m1', 'm2', 'm3', 'm4', 'm5'].map(shareOf), [90, 77, 58, 58, 22]) && eq(['m6', 'm7', 'm8', 'm9', 'm10'].map(shareOf), [59, 48, 35, 30, 30]), 'order: the gates by share, then the rest by share');
+const shareOf = id => L.MUST[id].blocks.length ? TQ.blocks.find(b => b.name === L.MUST[id].blocks[0]).n : null;
+ok(eq(['m1', 'm2', 'm3', 'm4', 'm5'].map(shareOf), [90, 77, 58, 58, null]) && eq(['m6', 'm7', 'm8', 'm9', 'm10'].map(shareOf), [59, 48, 35, 30, 30]), 'order: the gates by share, then the rest by share');
 ok(C.MUSTS[2].q === 'Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?', 'KPI must-have in the team\'s plain wording (v2.2)');
 ok(C.MUSTS[3].q === 'Can new AI tools easily be plugged in to your existing infrastructure?', 'systems must-have: owner wording of 24 Nov 2026');
 ok(L.systemsFor({}).fallback && L.systemsFor({ dept: 'fo' }).text === C.SYSTEMS.fo && L.systemsFor({ dept: 'fo', use: 'none' }).fallback, 'systems examples: generic before the department is known, by department after');
@@ -162,7 +162,7 @@ for (let i = 0; i < 1500; i++) {
 ok(nr === 1500 && Object.keys(seen).length === 4, '1,500 random answer sets checked; all four verdicts occurred');
 
 // ---------- result words ----------
-const env = { cat: D.cat, TQ, RC, M: RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), today: '2026-11-24' };
+const env = { cat: D.cat, TQ, today: '2026-11-24' };
 let r = mk(U, ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'y', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → Yes
 let m = L.resultModel(r, env);
 ok(m.scoreHead === 'Score: 75%' && !/ready/.test(m.scoreHead), 'score reads "Score: 75%", never "% ready": ' + m.scoreHead);
@@ -173,17 +173,18 @@ ok(m.first.length === 3 && m.firstLabel === 'Start with these three' && m.first[
 ok(m.first[1].sub.includes('your answer: Don’t know yet') && m.first[2].sub.includes('your answer: Planned'), 'then Don\'t know yet, then Planned');
 ok(eq(m.people.map(p => p.who), C.WHO_ORDER.filter(w => m.people.some(p => p.who === w))) && m.people.every(p => p.name === C.WHO[p.who]), 'action plan by person, in the readiness check\'s order and names');
 ok(m.people.find(p => p.who === 'owner').items[0].text === 'Finish: Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending (planned by 15 Jan 2027).', 'Planned: "Finish: … (planned by <date>)."');
-ok(m.people.find(p => p.who === 'dpo').items[0].text === 'Find out: “Has your data protection contact been told about this plan?”', 'Don\'t know yet: "Find out: “question”"');
+ok(m.people.find(p => p.who === 'dept').items.some(a => a.text === 'Find out: “Do you know which guest or staff personal data the tool would use?”'), 'Don\'t know yet: "Find out: “question”" (v2.7.0: must-have 5 "Personal data known", head of the department)');
 ok(m.people.reduce((a, p) => a + p.items.length, 0) === L.open(m.ev).length && L.open(m.ev).length === 6, 'every open item is in exactly one person\'s list');
-ok(m.vendor.length >= 4 && m.vendor[0] === 'Can you show the tool working on our own systems and data, not a standard demo?' && eq(m.vendor, RC.vendorQs(env.M, env.M.UI[U], { actions: [{ group: 'vendor', q: { code: 'D5b' } }] })), 'vendor questions are the readiness check\'s own for the use case');
-ok(m.legal && m.legal.name && m.legalNote === 'Provisional label from the team’s AI Register, awaiting legal sign-off. Not a compliance verdict and not legal advice.' && !/Art\.\s?\d|Annex/.test(JSON.stringify(m.legal)), 'provisional AI Act label with the readiness check\'s neutral wording, no article numbers');
-const hr = L.resultModel(mk('hr-2', [], []), env); ok(hr.legal.name === RC.legal(env.M, env.M.UI['hr-2'], { country: 'France' }).name && hr.legal.items.length > 3 && hr.legal.applies.startsWith('applies from '), 'hr-2: the register\'s high-risk label, with items to check');
-ok(L.resultModel(mk('lg-4', [], []), env).legal === null && L.resultModel(mk('lg-4', [], []), env).notTool, 'lg-4 (a document, not a tool): no label, said so');
+ok(eq(m.vendor, [C.VENDOR.first].concat(C.VENDOR.all, C.VENDOR.last, [C.VENDOR.ask.m5])), 'vendor questions (v2.7.0: no legal ones): demo, the general ones, cost, data back, and the personal-data question because must-have 5 is open');
+ok(!('legal' in m) && !('legalNote' in m) && m.disclaimer === C.DISCLAIMER, 'v2.7.0: no AI Act label; the disclaimer instead');
+const hr = L.resultModel(mk('hr-2', [], []), env); ok(hr.flag === C.SENSITIVE_FLAG && hr.held.join() === 'sensitive' && hr.reason === C.SENSITIVE_HOLD, 'hr-2 (sensitive): the flag and the hold reason, verbatim');
+const rmv = L.resultModel(mk('rm-1', [], []), env); ok(rmv.vendor.includes(C.VENDOR.pricing) && !m.vendor.includes(C.VENDOR.pricing), 'the pricing vendor question for revenue management only');
+ok(!('notTool' in L.resultModel(mk('lg-4', [], []), env)), 'v2.7.0: lg-4 has its own questions like every use case; no label note');
 ok(m.method.some(t => /^Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0\.$/.test(t)) && m.method.some(t => /^Must-haves: \d+ of 10 in place.*\(\d+ of \d+ points; \d+ of 10 answered\)\.$/.test(t)) && m.method.some(t => /^Cut-offs: /.test(t) && /75% or more/.test(t) && /50% to 74%/.test(t) && /more than half/.test(t)) && m.method.some(t => /not been tested with hotels/.test(t)), 'how this was worked out: points, per area, cut-offs, caveat');
 ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technology infrastructure|Data|Organisation & governance): /.test(t)).length === 7, 'points per area, seven lines');
 // v2.5 (audit v3): Copy summary and summaryText are gone; the PDF carries the same words in the same order
 const pb = P.model(r, env).blocks, pi = pb.findIndex(b => b.t === m.levelName + ' · ' + m.scoreHead);
-ok(pi > 0 && pb[pi + 1].t === m.reason && pb[pi + 2].t === m.scoreSub && pb.some(b => b.k === 'h' && b.t === 'Action plan by person') && pb.some(b => /as of 24 Nov 2026/.test(b.t || '')), 'the PDF carries the verdict with the score beside it, the reason, the points, and the plan');
+ok(pi > 0 && pb[pi + 1].t === m.reason && pb[pi + 2].t === m.scoreSub && pb.some(b => b.k === 'h' && b.t === 'Action plan by person') && pb.some(b => /as of 25 Nov 2026/.test(b.t || '')), 'the PDF carries the verdict with the score beside it, the reason, the points, and the plan');
 ok(L.personText(m, m.people[0], '').startsWith('Do you need AI? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
 // v2.7.0: no draft marks (the questions-only data replaces the draft rows); the why-fold is the data's own "why", area and who answers
 ok(!Object.values(TQ.uses).some(u => 'draft' in u) && !L.resultModel(mk('fo-8', [], []), env).draft, 'no draft marks');
