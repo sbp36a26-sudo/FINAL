@@ -119,7 +119,7 @@
 
   /* ---------- header, banner ---------- */
   function drawHeader() {
-    var st = rec.step, n = S.NUM[st], h = '<div class="hdrtop"><span class="brand">Do you need AI?</span>' +
+    var st = rec.step, n = S.NUM[st], h = '<div class="hdrtop">' + (st !== 'start' ? '<span class="brand">Do you need AI?</span>' : '') +
       (st !== 'start' ? '<button type="button" class="linkbtn" data-act="new" id="new-check">Start a new check</button>' : '') + '</div>';
     if (st !== 'start') {
       h += '<nav class="prog" aria-label="Progress"><p class="progline" id="progline">' + (n ? '<b>Step ' + n + ' of 5</b>: ' + esc(STEP_NAMES[n - 1]) : '<b>Result</b>: all five steps done') + '</p>' +
@@ -144,7 +144,7 @@
   /* ---------- screens ---------- */
   function vStart() {
     var has = S.hasAnswers(rec);
-    return '<div class="stephead"><h1 tabindex="-1" id="h">Do you need AI?</h1><p class="sub">A guided check for hotel managers. Is AI the right answer for one problem in your hotel, and is your hotel ready to try it? You do not need to know anything about AI.</p></div>' +
+    return '<div class="stephead"><h1 tabindex="-1" id="h">Do you need AI?</h1><p class="sub">A guided check for hotel managers. Is AI the right answer for one problem in your hotel, and is your hotel ready to try it? You do not need to know anything about AI.</p>' + gloss(['AI']) + '</div>' +
       '<section class="panel" aria-labelledby="how-h"><h2 id="how-h">Five steps</h2><ol class="journey">' +
       '<li><b>About your hotel</b><span>A few details for your result. All optional.</span></li>' +
       '<li><b>Is this an AI problem?</b><span>Five questions about the job you want help with.</span></li>' +
@@ -177,7 +177,7 @@
   function vHotel() {
     var H = rec.hotel;
     function opt(v, l, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; }
-    return '<div class="stephead"><p class="kicker">Step 1 of 5</p><h2 tabindex="-1" id="h">About your hotel</h2><p class="sub">All optional. The hotel name appears on your result.</p></div>' +
+    return '<div class="stephead"><h2 tabindex="-1" id="h">About your hotel</h2><p class="sub">All optional. The hotel name appears on your result.</p></div>' +
       '<section class="panel"><div class="formgrid">' +
       '<label class="fld" for="h-name"><span>Hotel name</span><input type="text" id="h-name" data-h="name" value="' + esc(H.name) + '" autocomplete="organization" maxlength="120"></label>' +
       '<label class="fld" for="h-type"><span>How the hotel is run</span><select id="h-type" data-h="type">' + opt('', 'Choose', H.type) + TYPES.map(function (t) { return opt(t[0], t[1], H.type); }).join('') + '</select></label>' +
@@ -187,7 +187,7 @@
   }
   function vS2() {
     var texts = D.step2.map(function (s) { return s.text; });
-    return '<div class="stephead"><p class="kicker">Step 2 of 5</p><h2 tabindex="-1" id="h">Is this an AI problem?</h2><p class="sub">Think of one job in your hotel that you want help with. These five questions earn no points. A No to question 1 or 2 means a simpler option may do the job.</p>' + gloss(texts) + '</div>' +
+    return '<div class="stephead"><h2 tabindex="-1" id="h">Is this an AI problem?</h2><p class="sub">Think of one job in your hotel that you want help with. These five questions earn no points. A No to question 1 or 2 means a simpler option may do the job.</p>' + gloss(texts) + '</div>' +
       D.step2.map(function (s, i) {
         return '<fieldset class="card" id="card-' + s.id + '"><legend id="lg-' + s.id + '"><span class="qtitle">Question ' + (i + 1) + ': ' + esc(s.title) + '</span><span class="qtext">' + esc(s.text) + '</span></legend>' +
           radios('s2', s.id, D.answers.step2, rec.step2[s.id], 'lg-' + s.id) + '</fieldset>';
@@ -196,7 +196,7 @@
   function contraFor(id) { return R.contradictions(D, A().use, A().gates, rec.mh).filter(function (c) { return c.id === id; })[0]; }
   function vMust() {
     var texts = D.must_haves.map(function (m) { return m.text + ' ' + (m.na_help || ''); });
-    return '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2 tabindex="-1" id="h">Must-haves</h2><p class="sub">Eleven things to have in place before any AI project starts. Each one must be Yes for a Ready result.</p>' + gloss(texts) + '</div>' +
+    return '<div class="stephead"><h2 tabindex="-1" id="h">Must-haves</h2><p class="sub">Eleven things to have in place before any AI project starts. Each one must be Yes for a Ready result.</p>' + gloss(texts) + '</div>' +
       D.must_haves.map(function (m, i) {
         var c = rec.mh[m.id] === 'na' ? contraFor(m.id) : null;
         return '<fieldset class="card must' + (ui.mark === m.id ? ' open-mark' : '') + '" id="card-' + m.id + '"><legend id="lg-' + m.id + '"><span class="qtitle">Must-have ' + (i + 1) + ': ' + esc(m.title) + '</span><span class="qtext">' + esc(m.text) + '</span>' +
@@ -210,7 +210,7 @@
   function vWhere() {
     var u = S.useOf(D, rec.use), dept = ui.dept || (u ? u.department : '');
     var deptObj = IX.DEPTS.filter(function (d) { return d.name === dept; })[0];
-    var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h2 tabindex="-1" id="h">Where in the hotel?</h2><p class="sub">Choose the use case closest to your idea. If none is close, choose None of these fits: you then get general questions.</p></div>';
+    var h = '<div class="stephead"><h2 tabindex="-1" id="h">Where in the hotel?</h2><p class="sub">Choose the use case closest to your idea. If none is close, choose None of these fits: you then get general questions.</p></div>';
     h += '<section class="panel"><label class="fld" for="dept"><span>Department</span><select id="dept"><option value="">Choose a department</option>' +
       IX.DEPTS.map(function (d) { return '<option value="' + esc(d.name) + '"' + (d.name === dept ? ' selected' : '') + '>' + esc(d.name) + ' (' + d.uses.length + ')</option>'; }).join('') + '</select></label>';
     if (deptObj) {
@@ -219,7 +219,8 @@
         return '<li><label class="opt" for="' + iid + '"><input type="radio" name="n-use" id="' + iid + '" value="' + esc(x.id) + '" data-kind="use"' + (rec.use === x.id ? ' checked' : '') + '>' + esc(x.title) + '</label></li>';
       }).join('') + '</ul></fieldset>';
     }
-    h += '<div><label class="opt" for="r-use-none"><input type="radio" name="n-use-none" id="r-use-none" value="none" data-kind="use"' + (rec.use === 'none' ? ' checked' : '') + '>None of these fits</label></div></section>';
+    if (deptObj) h += gloss(deptObj.uses.map(function (x) { return x.title; }));
+    h += '<div class="uclist"><label class="opt" for="r-use-none"><input type="radio" name="n-use-none" id="r-use-none" value="none" data-kind="use"' + (rec.use === 'none' ? ' checked' : '') + '>None of these fits</label></div></section>';
     if (u) {
       var e = EX[u.id] || {};
       h += '<section class="panel about" aria-labelledby="about-h" id="about"><h3 id="about-h">Your choice: ' + esc(u.title) + '</h3><dl><dt>Department</dt><dd>' + esc(u.department) + '</dd>' +
@@ -249,7 +250,7 @@
     var a = A(), u = S.useOf(D, a.use), gates = R.askedGates(D, a.use), G = a.gates, allG = gates.every(function (g) { return !!G[g.id]; });
     var qs = R.visible(D, a.use, G), texts = [u ? u.title : ''].concat(gates.map(function (g) { return g.text + ' ' + g.options.map(function (o) { return o.label; }).join(' '); }));
     if (allG) texts = texts.concat(qs.map(function (q) { return q.text + ' ' + (q.why || ''); }));
-    var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2 tabindex="-1" id="h">Questions for this use case</h2><p class="sub" id="use-line">Use case: <b>' + esc(u ? u.title : D.none_fits.title) + '</b></p>' +
+    var h = '<div class="stephead"><h2 tabindex="-1" id="h">Questions for this use case</h2><p class="sub" id="use-line">Use case: <b>' + esc(u ? u.title : D.none_fits.title) + '</b></p>' +
       (!rec.use ? '<p class="note info" id="no-use">You did not choose a use case, so these are the general questions for None of these fits.</p>' : '') + gloss(texts) + '</div>';
     h += '<section aria-labelledby="hiw-h" class="stephead" id="hiw"><h3 id="hiw-h" class="areahead">First, how will this tool work in your hotel?</h3><p class="sub">Your answers here decide which questions follow.</p></section>' + gates.map(function (g) { return gateCard(g, G); }).join('');
     if (!allG) h += '<p class="note info" id="gates-first">Answer ' + (gates.length === 1 ? 'the question above' : 'the questions above') + ' to see the questions for this use case.</p>';
@@ -268,7 +269,7 @@
       '<div class="btnrow"><button type="button" class="btn" data-act="change">Change my answers</button><button type="button" class="btn primary" data-act="continue">Continue anyway</button>' +
       '<button type="button" class="btn" data-act="pdf" id="pdf">Download (PDF)</button></div>' + copyBox() + '</section>' +
       '<section class="panel" aria-labelledby="top-h"><h2 id="top-h">Top 3 actions</h2>' + top3(m) + '</section>' +
-      '<p class="disc" id="disclaimer">' + esc(m.disclaimer) + '</p>';
+      '<p class="disc" id="disclaimer">' + esc(m.disclaimer) + '</p>' + gloss(m.simpler.concat(m.top3.map(function (a) { return a.text; })));
   }
   function top3(m) {
     if (!m.top3.length) return '<p id="top3">Nothing open.</p>';
@@ -284,12 +285,12 @@
     var m = model(), res = m.res;
     if (m.stop) return vStop();
     var h = '<section class="verdict v-' + m.tone + '" id="verdict" aria-labelledby="h"><p class="vkicker">Result for ' + esc(m.useTitle) + '</p><h1 tabindex="-1" id="h">' + esc(m.verdict) + '</h1>' +
-      '<p class="reason" id="reason">' + esc(m.reason) + '</p>' +
+      '<p class="reason" id="reason">' + esc(m.reason) + '</p></section>' +
       (m.flag ? '<p class="note flag" id="flag">' + esc(m.flag) + '</p>' : '') +
       m.notes.map(function (n) { return '<div class="note" id="contra-' + n.id + '"><p>' + esc(n.note) + '</p><p><button type="button" class="linkbtn" data-act="goto-mh" data-id="' + n.id + '">Change my answer</button></p></div>'; }).join('') +
-      (m.notFit ? '<div class="note" id="notfit"><p>' + esc(m.notFit) + '</p><p><button type="button" class="linkbtn" data-act="goto-where">Choose another use case</button></p></div>' : '') + '</section>';
+      (m.notFit ? '<div class="note" id="notfit"><p>' + esc(m.notFit) + '</p><p><button type="button" class="linkbtn" data-act="goto-where">Choose another use case</button></p></div>' : '');
     h += '<section class="panel" aria-labelledby="top-h"><h2 id="top-h">Top 3 actions</h2>' + top3(m) + '</section>';
-    h += '<div class="btnrow noprint" id="actions"><button type="button" class="btn" data-act="copy" id="copy">Copy</button><button type="button" class="btn primary" data-act="pdf" id="pdf">Download (PDF)</button>' +
+    h += '<div class="btnrow noprint" id="actions"><button type="button" class="btn" data-act="copy" id="copy">Copy the result</button><button type="button" class="btn primary" data-act="pdf" id="pdf">Download (PDF)</button>' +
       '<button type="button" class="btn" data-act="save-file" id="save-file">Save as file</button></div>' + copyBox();
     h += '<section class="panel" aria-labelledby="areas-h" id="areas"><h2 id="areas-h">Details by area</h2><ul class="areas">' + m.areas.map(function (a) {
       return '<li data-area="' + a.key + '"><b>' + esc(a.name) + '</b><span class="track" aria-hidden="true"><i style="width:' + Math.round(100 * a.yes / a.total) + '%"></i></span><span>' + esc(a.line) + '</span></li>';

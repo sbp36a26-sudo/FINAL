@@ -15,4 +15,9 @@ removed, so the banned-term grep skips it (spec §5, "excluding the change-log f
   consent, allergen law, PCI DSS wording), every cross-link to other hub tabs (`#use=`, `postMessage`, hub bridge, detail layer).
   Five legal phrases cut from the copy of `data/explain.json` (list in `LEGAL_LEFTOVERS.md`). The page is now built on the v3
   data and rules only. Banned-term grep in `build.mjs` (fails the build) and `tests/banned.test.mjs`: 0 matches.
-- **P4** `readiness-3: v3 UX, PDF, migration` — see the commit and README.
+- **P4** `readiness-3: v3 UX, PDF, migration` — screenshot review fixes (step kicker duplicated the progress line; brand line
+  on the cover; the sensitive reason repeated the flag, now "Held at Almost ready: …" with the flag under the verdict box; fold
+  markers; area bars of equal length; glossary on the cover, picker and stop screen), new tests `store3.test.mjs` (flow, files,
+  migration with real v2.7 store and file fixtures and readiness-2's v2.5 fixture) and `result3.test.mjs` (33 golden cases: §9
+  usefulness rules, Copy = PDF top 3, PDF page 1, footer, section order), browser test `tests/browser/ui.cjs` (358 checks at
+  1280×800 and 360×740), screenshots in `reports/readiness-3-screens/`.

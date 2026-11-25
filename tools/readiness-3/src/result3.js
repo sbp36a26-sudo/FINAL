@@ -37,6 +37,8 @@
       return m;
     }
     m.reason = res.reason;
+    /* the rules' reason for a held sensitive use case is the first sentence of the flag, which stands right under it: say why it is held instead */
+    if (res.verdictKey === 'almost' && res.sensitive && res.reason === D.texts.sensitive_flag.split('. ')[0] + '.') m.reason = 'Held at Almost ready: this use case involves people\'s personal data or jobs.';
 
     /* details by area: Yes of the visible, applicable items ("n of m in place"); the must-haves first */
     var order = ['mh'].concat(Object.keys(D.labels.areas)), byArea = {};

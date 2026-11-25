@@ -158,7 +158,7 @@ input[type=text],select{width:100%;min-width:0;min-height:44px;border:1px solid 
 .top3{padding-left:22px;display:flex;flex-direction:column;gap:8px}
 .top3 li span{display:block;font-size:.875rem;color:var(--ink3)}
 .areas{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-.areas li{display:grid;grid-template-columns:minmax(0,11rem) minmax(60px,1fr) auto;gap:10px;align-items:center}
+.areas li{display:grid;grid-template-columns:minmax(0,11rem) minmax(60px,1fr) 8.5rem;gap:10px;align-items:center}
 .track{height:10px;border:1px solid var(--ctl);border-radius:5px;background:var(--panel);overflow:hidden}
 .track i{display:block;height:100%;background:var(--accent)}
 .areas b{font-weight:600}
@@ -172,7 +172,11 @@ ul.plain{padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:
 .qarow .ans{font-weight:600}
 .qarow small{display:block;color:var(--ink3);font-size:.8125rem}
 @media (max-width:560px){ .qarow{grid-template-columns:minmax(0,1fr)} }
-details.fold > summary{cursor:pointer;font-family:var(--display);font-size:1.125rem;font-weight:600;min-height:44px;display:flex;align-items:center}
+details.fold > summary{cursor:pointer;font-family:var(--display);font-size:1.125rem;font-weight:600;min-height:44px;display:flex;align-items:center;gap:10px;list-style:none;color:var(--accent)}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary::before{content:"";flex:none;width:.5em;height:.5em;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(-45deg)}
+details.fold[open] > summary::before{transform:rotate(45deg)}
+details.panel.fold > summary{color:var(--ink)}
 details.fold[open] > summary{margin-bottom:10px}
 .score{font-family:var(--display);font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums}
 .copybox{display:flex;flex-direction:column;gap:8px}

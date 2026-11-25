@@ -55,6 +55,12 @@ count as Don't know yet; a second Next goes on.
 ```
 node tools/readiness-3/build.mjs
 for t in tools/readiness-3/tests/*.test.mjs; do node $t; done
+#   data3 (schema, counts), rules3 (golden 33/33, visibility, sweep 26,935 runs, invariants), store3 (flow, files, migration),
+#   result3 (33 golden results, Copy and PDF), banned (page, sources, exports, PDF text), build (the page, migration table)
 # browser (serve tools/ first: python3 -m http.server 8861 --bind 127.0.0.1), from tools/:
 node readiness-3/tests/browser/ui.cjs
 ```
+
+`ui.cjs` walks golden cases 1, 2, 9, 10, 14, 15, 19 and 28 by clicking, golden 1 by keyboard only, Back, reload, Start a new check,
+the contradiction note, files, migration, both download paths (a fake `window.claude` and none), blocked storage and
+`window.storage`; screenshots of golden 1, 9, 15 and 19 go to `reports/readiness-3-screens/` (`R3_SHOTS=0` to skip).

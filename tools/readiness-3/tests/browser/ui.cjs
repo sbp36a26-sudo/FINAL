@@ -36,7 +36,7 @@ async function mk(b, size, init) {
 }
 const st = p => p.evaluate(() => window.Readiness3.state());
 async function noHScroll(p, tag) { const w = await p.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]); ok(w[0] <= w[1], tag + ': no horizontal scroll (' + w[0] + ' > ' + w[1] + ')'); }
-async function shot(p, name) { if (DO_SHOTS) await p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: true }); }
+async function shot(p, name) { if (DO_SHOTS && p._shots) await p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: true }); }
 async function next(p) { await p.click('[data-act="next"]'); }
 async function pick(p, kind, id, key) { await p.check('#r-' + kind + '-' + uid(id) + '-' + key); }
 
@@ -75,6 +75,7 @@ async function walk(p, g, n, tag) {
     /* 1 + 2 + 3: golden cases through the page */
     for (const n of [1, 2, 9, 10, 14, 15, 19, 28]) {
       const g = G[n - 1], { ctx, p } = await mk(b, size);
+      p._shots = [1, 9, 15, 19].includes(n);
       await walk(p, g, n, tag);
       const s = await st(p), m = await p.evaluate(() => window.Readiness3.model());
       ok(s.verdict === g.expected_verdict, tag + ' golden ' + n + ' verdict ' + s.verdict + ' (expected ' + g.expected_verdict + ')');
