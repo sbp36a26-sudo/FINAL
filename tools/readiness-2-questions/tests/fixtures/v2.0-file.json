@@ -1,0 +1,72 @@
+{
+ "kind": "hftp-do-you-need-ai",
+ "v": 2,
+ "rules": "v2 (24 Nov 2026)",
+ "savedAt": "2026-11-24T09:57:49.906Z",
+ "check": {
+  "id": "dynmwuiu56n115l5",
+  "step": "result",
+  "hotel": {
+   "name": "Hotel Fixture",
+   "role": "gm",
+   "type": "independent",
+   "country": "France"
+  },
+  "Q": {
+   "q1": "y",
+   "q2": "y",
+   "q3": "y",
+   "q4": "y",
+   "q5": "y"
+  },
+  "A": {
+   "m1": "y",
+   "m2": "y",
+   "m3": "pl",
+   "m4": "y",
+   "m5": "p",
+   "m6": "y",
+   "m7": "y",
+   "m8": "n",
+   "m9": "y",
+   "m10": "k"
+  },
+  "By": {
+   "m3": "2027-03-01"
+  },
+  "cat": "Commercial",
+  "dept": "rm",
+  "use": "rm-1",
+  "useName": "Demand forecasting (rooms, by day/segment/room class)",
+  "T": {
+   "pe1": "y",
+   "sk1": "p",
+   "fi1": "k",
+   "te1": "na",
+   "da1": "y",
+   "or1": "n"
+  },
+  "TBy": {},
+  "snaps": [
+   {
+    "at": "2026-11-24T09:57:49.722Z",
+    "level": "notready",
+    "pct": 73,
+    "pts": 19,
+    "max": 26,
+    "known": 13,
+    "total": 15,
+    "mustYes": 6,
+    "mustN": 10,
+    "rules": "v2 (24 Nov 2026)"
+   }
+  ],
+  "share": {
+   "named": false
+  },
+  "sharedAt": "2026-11-24T09:57:49.874Z",
+  "sharedMode": "local",
+  "sharedSig": "[{\"q1\":\"y\",\"q2\":\"y\",\"q3\":\"y\",\"q4\":\"y\",\"q5\":\"y\"},{\"m1\":\"y\",\"m2\":\"y\",\"m3\":\"pl\",\"m4\":\"y\",\"m5\":\"p\",\"m6\":\"y\",\"m7\":\"y\",\"m8\":\"n\",\"m9\":\"y\",\"m10\":\"k\"},{\"m3\":\"2027-03-01\"},\"rm-1\",{\"pe1\":\"y\",\"sk1\":\"p\",\"fi1\":\"k\",\"te1\":\"na\",\"da1\":\"y\",\"or1\":\"n\"},{},\"independent\",\"gm\",\"France\",false,\"\"]",
+  "updated": "2026-11-24T09:57:49.874Z"
+ }
+}
