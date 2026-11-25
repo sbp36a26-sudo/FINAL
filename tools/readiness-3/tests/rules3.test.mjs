@@ -158,7 +158,8 @@ const Y = (use, ga) => Object.fromEntries(R3.visible(D, use, ga).map(q => [q.id,
   ok(eq(R3.contradictions(D, 'sm-1', { G_PAID: 'no', G_LINK: 'yes' }, { m2: 'na', m4: 'na' }).map(c => c.id), ['m2', 'm4']) && eq(R3.contradictions(D, 'sm-1', { G_PAID: 'yes', G_LINK: 'no' }, { m2: 'na', m4: 'na' }), []), 'contradictions() names the must-haves a gate answer contradicts');
   ok(r.contradictions[0].note === D.must_haves[1].contradiction_note && r.top3.some(a => a.from === 'm2' && /^Find out: /.test(a.text)), 'a contradicted Doesn\'t apply shows its note and becomes a Find out action');
   ok(eq(ids(R3.askedGates(D, 'none')), D.none_fits.gates) && R3.askedGates(D, 'fo-7').length === 1 && D.use_cases.every(u => { const n = R3.askedGates(D, u.id).length; return n >= 1 && n <= 2; }), 'step 5 asks 1 or 2 gates per use case, the five library gates for None fits');
-  ok(R3.notFit(D, 'gm-4', { 'gm4-group': 'one' }).startsWith('This use case is for hotel groups.') && R3.notFit(D, 'gm-4', { 'gm4-group': 'group' }) === '', 'not_fit text from the data');
+  const nfA = R3.evaluate(D, { use: 'gm-4', step2: S2_YES, gates: { 'gm4-group': 'one' } }).notFit, nfB = R3.evaluate(D, { use: 'gm-4', step2: S2_YES, gates: { 'gm4-group': 'group' } }).notFit;
+  ok(nfA.startsWith('This use case is for hotel groups.') && nfB === '' && !('notFit' in R3) && !('task' in R3), 'not_fit text from the data (through evaluate; the unused notFit and task exports are gone, clean-up D5)');
   const gk = ev('gx-2', S2_YES, { G_ACT: 'dk' }, MH_YES, Y('gx-2', { G_ACT: 'dk' }));
   ok(gk.top3[0].text === D.gate_library.G_ACT.options[2].effects.action, 'a gate answered Don\'t know yet adds its own action text');
   const un = ev('gx-2', S2_YES, {}, MH_YES, Y('gx-2', {}));
@@ -176,5 +177,20 @@ const Y = (use, ga) => Object.fromEntries(R3.visible(D, use, ga).map(q => [q.id,
   ok(s.sensitive && s.verdict === 'Almost ready' && s.reason === 'This area involves people\'s personal data or jobs and has extra rules.', 'always-sensitive use case: Almost ready, the flag\'s first sentence as reason');
   const dkq = ev('rm-1', S2_YES, { G_ACT: 'suggests' }, MH_YES, Object.assign(Y('rm-1', { G_ACT: 'suggests' }), { 'rm-1.fi1': 'dk' }));
   ok(dkq.actions.some(a => a.from === 'rm-1.fi1' && /^Find out: /.test(a.text)), 'a nice-to-have Don\'t know yet still becomes a Find out action in the full list');
+}
+{ // v3.0.1 clean-up H3: answers named after Object.prototype members count as Don't know yet, never NaN (cleanup3 U1)
+  const qa = Y('rm-1', { G_ACT: 'suggests' }), q0 = Object.keys(qa)[0];
+  const bad = ev('rm-1', S2_YES, { G_ACT: 'suggests' }, Object.assign({}, MH_YES, { m1: 'constructor' }), Object.assign({}, qa, { [q0]: 'toString' }));
+  const dk = ev('rm-1', S2_YES, { G_ACT: 'suggests' }, Object.assign({}, MH_YES, { m1: 'dk' }), Object.assign({}, qa, { [q0]: 'dk' }));
+  ok(Number.isFinite(bad.score) && bad.score === dk.score && bad.verdict === dk.verdict && bad.dk === dk.dk, 'H3: "constructor" / "toString" answers count as Don\'t know yet (score ' + bad.score + ', ' + bad.verdict + ')');
+}
+{ // council v3.0 BUILD NOW 2: the reason names at most two items
+  const qa = Y('res-1', {}), no = Object.assign({}, MH_YES, { m1: 'no', m3: 'no', m5: 'no', m6: 'no' });
+  const r = ev('res-1', S2_YES, {}, no, qa);
+  ok(r.verdict === 'Not ready' && r.reason === '4 Must be Yes questions are No: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + ' and 2 more (see the plan below).', 'BUILD NOW 2: 4 blockers No → two named, "and 2 more (see the plan below)": ' + r.reason);
+  const two = ev('res-1', S2_YES, {}, Object.assign({}, MH_YES, { m1: 'no', m3: 'no' }), qa);
+  ok(two.reason === '2 Must be Yes questions are No: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + '.', 'two blockers No: both named, no "more"');
+  const held = ev('rm-1', Object.assign({}, S2_YES, { s3: 'dk', s4: 'no', s5: 'dk' }), { G_ACT: 'suggests' }, MH_YES, Y('rm-1', { G_ACT: 'suggests' }));
+  ok(held.reason === 'In step 2 you did not answer Yes to: ' + D.step2[2].title + '; ' + D.step2[3].title + ' and 1 more (see the plan below).', 'step-2 list capped at two: ' + held.reason);
 }
 done();

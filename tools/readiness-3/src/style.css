@@ -82,7 +82,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .banner.info{background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink)}
 .banner.err{background:var(--lo-s);border:1px solid var(--lo);color:var(--ink)}
 .note{border-left:4px solid var(--md);background:var(--md-s);padding:10px 12px;border-radius:0 6px 6px 0;display:flex;flex-direction:column;gap:4px;max-width:70ch}
-.note.flag{border-color:var(--lo);background:var(--lo-s)}
+.note.flag{border-color:var(--accent);background:var(--accent-soft);position:relative;padding-left:40px}
+.note.flag::before{content:"i";position:absolute;left:12px;top:11px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--panel);font:700 .75rem/18px var(--body);text-align:center}
 .note.info{border-color:var(--accent);background:var(--accent-soft)}
 .gloss{font-size:.875rem;color:var(--ink2);max-width:70ch}
 .gloss b{color:var(--ink)}
@@ -104,7 +105,7 @@ textarea{width:100%;min-height:120px;padding:10px;border:1px solid var(--ctl);bo
 @media (max-width:560px){ .formgrid{grid-template-columns:minmax(0,1fr)} }
 .fld{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fld > span{font-size:.875rem;font-weight:600;color:var(--ink2)}
-input[type=text],select{width:100%;min-width:0;min-height:44px;border:1px solid var(--ctl);border-radius:6px;background:var(--panel);padding:8px 10px}
+input[type=text],input[type=search],select{width:100%;min-width:0;min-height:44px;border:1px solid var(--ctl);border-radius:6px;background:var(--panel);padding:8px 10px}
 
 /* step heads */
 .stephead{display:flex;flex-direction:column;gap:6px}
@@ -135,6 +136,8 @@ input[type=text],select{width:100%;min-width:0;min-height:44px;border:1px solid 
 .uclist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
 .uclist .opt{width:100%;align-items:flex-start}
 .uclist .opt input{margin-top:3px}
+.ucdept{display:block;font-size:.8125rem;font-weight:500;color:var(--ink3)}
+.ucresults{display:flex;flex-direction:column;gap:14px}
 .about dl{display:grid;grid-template-columns:minmax(0,10rem) minmax(0,1fr);gap:6px 14px;margin:0}
 .about dt{font-weight:600;color:var(--ink2);font-size:.9375rem}
 .about dd{margin:0}

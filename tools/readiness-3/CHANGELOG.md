@@ -3,6 +3,61 @@
 The history of the tool before v3 (v1 to v2.7) is in `tools/readiness-2/CHANGELOG.md`. This file is a change log: it names what was
 removed, so the banned-term grep skips it (spec §5, "excluding the change-log fields").
 
+## 3.0.1 (25 Nov 2026)
+
+Clean-up fixes (`reports/audit-readiness-3/cleanup_inventory_v1.md`) and the code-only BUILD NOW items of the council
+(`reports/Council - Do you need AI v3.0.md`, section a). No spec JSON text, no weight, cut-off or verdict changed: golden 33/33 and the
+sweep (26,935 runs, 0 verdict, score, caps or row-key diffs) still hold. Not published from this change. Every bug below has a test
+that failed on 3.0.0 and passes now (unit tests in `store3`, `rules3`, `data3`; browser tests in `ui.cjs` `cleanup()`, run alone with
+`R3_ONLY=cleanup`: 56 of 70 checks failed on the 3.0.0 page). Screenshots: `reports/readiness-3-screens/v301/`.
+
+### Bugs fixed
+
+| # | Fix | Test |
+|---|---|---|
+| H1 | The copy box is drawn under the banner on every screen without its own place (cover, steps 1 to 5), so the banner's Save as file works with storage blocked and no downloads; `resetUi()` clears it when the check changes | `ui.cjs` H1 (6 screens, paste back) |
+| H2 | Opening a file of a check this browser holds in a newer version opens it as a copy (new id, toast "Opened as a copy: …"); an equal or newer file replaces it (`R3Store.openMode`) | `store3` H2, `ui.cjs` H2 |
+| H3 | Own-property lookups in `clean()`, `fromV2()` and `R3Rules.evaluate` (`ANS`): "constructor", "toString" and the like are dropped / count as Don't know yet, never `NaN` | `store3` U1a–d, `rules3` H3 |
+| M1 | The index is merged with the stored one on every write (and on `storage` events); ids removed here or in another tab stay removed | `ui.cjs` M1 |
+| M2 | The same check in two tabs: a change elsewhere is taken over when nothing waits to be saved; otherwise a banner ("Use the other version" / "Keep my answers") holds the write | `ui.cjs` M2 |
+| M3 | Remove asks first ("Remove this check?", Cancel focused) through the shared confirm dialog | `ui.cjs` M3 |
+| M4 | Opening a check or file resets the department, search, notes and copy box (`replaceRec` → `resetUi`) | `ui.cjs` M4 |
+| L1 | A failed read (not "not found") of the index or record at boot moves to memory with the banner; the stored index is never overwritten | `ui.cjs` L1 |
+| L2 | `pagehide` / hidden flush writes a waiting save | `ui.cjs` L2 |
+| L3 | The readiness-2 import is written to the index at once | `ui.cjs` L3 |
+| L4 | Boot settles within 3 s (or on an error) in memory with the banner | `ui.cjs` L4 |
+| L5 | Focus returns: Close on the copy box → the button that opened it; OK on the import banner → the heading; Remove → the next check or the list heading | `ui.cjs` L5 |
+| L6 | `hasAnswers` no longer counts the hotel details (new `hasContent` for the banner's Save as file); untouched checks are not listed, not asked about and not kept | `store3` U3, `ui.cjs` L6 |
+| L7 | A file of a newer version: "This file was saved with a newer version of this tool. Open it there." | `store3` U2, `ui.cjs` L7 |
+| L8 | The import banner's N counts only questions new since v2.6.1 (m11, How it works, unmapped questions; s3/s4 for pre-v2.6 records); 0 says "no new questions to answer" | `store3` U4 |
+| L9 | Continue this check opens the first screen with something to answer | `ui.cjs` L9 |
+| L10 | Download buttons show "Preparing…" with `aria-busy`/`aria-disabled` while waiting; further clicks are ignored; no answer from the host within 10 s → Copy | `ui.cjs` L10 |
+| L11 | A `save()` that throws goes to the Copy box (no unhandled rejection) | `ui.cjs` L11 |
+| L12 | Save errors other than unavailable / not granted / capability: "The file couldn't be saved here. Use Copy instead." | `ui.cjs` L12 |
+
+Dead code removed: D3 (`ok` in `copyText`), D4 (`R3Rules.answerOptions` is now used by the page), D5 (`notFit` and the `task` export),
+D6 (`R3Data.label`, `IX.S2`), D7 (`R3Store.V`), D8 (stale `pdf3.test.mjs` comment), D9 (`R3Result.ansLabel` export). D1 (first-visit
+import of readiness-2 checks) is kept for local and same-origin copies, with L3 fixed and the README corrected; deleting it is an owner
+decision. D2 (`window.storage`) is kept and labelled optional and untested in the viewer.
+
+Tests that encoded a bug and were updated: `store3` "N new questions = unanswered after import" (now new questions only, L8) and
+"newer version → not a saved check" (now `{ newer: true }`, L7); `ui.cjs` and `questions.cjs` step 5 checks follow BUILD NOW 1.
+
+### Council BUILD NOW (section a)
+
+| # | Item | Status |
+|---|---|---|
+| 1 | Step 5 shows only the How it works questions until each has an answer; then the questions. The line says how many follow ("Answer the question above to see the 7 to 9 questions for this use case. Until then, they count as Don't know yet."; the range covers every answer still possible). Scoring unchanged (`R3Rules.visible` as before; unanswered = Don't know yet). This reverses the P5 change that showed them early | Done; `questions.cjs` checks all 1,636 combinations (988 held back, with the count from `sim_v3`) |
+| 2 | The reason sentence names at most two items, then "and N more (see the plan below)" (blockers No; step 2 not Yes). Text only, verdicts and scores untouched | Done; `rules3` |
+| 3 | Must-haves line: "Answer for the job you thought of in step 2. 'The tool' means the AI tool you have in mind; you pick the exact use case in step 4." | Done |
+| 4 | How it works line: "No tool chosen yet? Answer Don't know yet, or ask the vendor. You can change it later." | Done |
+| 5 | Sensitive flag in the information style (accent border, soft background, "i" mark), text verbatim; also in the PDF | Done; `a11y.cjs` contrast pairs updated |
+| 6 | Under a score of 50% or more with Not ready: "The verdict comes from the Must be Yes questions, not from the score." Screen only. For Not enough info the council's sentence would be wrong, so it reads "The verdict comes from the Don't know yet answers, not from the score." | Done (variant for Not enough info) |
+| 7 | "Search the 99 use cases" on step 4: all words, titles and departments, keyboard-operable, 44 px targets; empty search shows the department list | Done; `questions.cjs` |
+| 8 | `?session=1`: `rec.timing = { <step>: [first enter, last leave, ms] }` in the record and the saved file; nothing on screen, no network; `clean()` keeps it | Done; `store3`, `ui.cjs` |
+
+Sections (b) content changes and (c) owner decisions are not applied.
+
 ## 3.0.0 (25 Nov 2026)
 
 A new, separate, standalone artifact built from `spec/MASTER_PROMPT.md` and `spec/usecase_questions_v3.json`. `tools/readiness-2/`

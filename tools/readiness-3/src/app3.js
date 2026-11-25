@@ -1,19 +1,41 @@
 /* Do you need AI? v3 (tools/readiness-3): the page. Draws each screen from the record (R3Store), the rules (R3Rules) and the
    result model (R3Result); every hotel-facing string from the question data is used verbatim. Chrome text written here is plain
    English and passes the banned-term grep (lib/banned.mjs).
-   Storage: window.storage (artifact storage, personal scope) when the viewer offers it, else localStorage, else memory (with a
-   banner). Key hftp-readiness3-v1 holds the index { v, cur, ids }; each check is one record under hftp-readiness3-v1_c_<id>.
+   Storage: window.storage (artifact storage, personal scope; optional, its API is not part of the artifact runtime contract and is
+   untested in the viewer) when the viewer offers it, else localStorage, else memory (with a banner). Key hftp-readiness3-v1 holds
+   the index { v, cur, ids }; each check is one record under hftp-readiness3-v1_c_<id>.
    Downloads (PDF, saved file) go only through the artifact downloads capability (window.claude.use("downloads")); when it is not
    there, Copy is offered instead. No page-started download links.
-   Test and agent API: window.Readiness3 (state, record, model, send, pdfModel, pdfBytes, fileDoc, openText). */
+
+   State machines (v3.0.1 clean-up, reports/audit-readiness-3/cleanup_inventory_v1.md):
+   - Screen flow: rec.step = start | hotel | s2 | stop | must | where | use | result. The only writer is go() (through
+     R3Store.place). Events, all through send(): begin, resume, next, back, change, continue, goto <step>, goto-mh <id>, new, plus
+     answer, hotel, use, dept. Replacing the open check (new, open a check, open a file, remove) goes through replaceRec(), which
+     also resets the transient UI (resetUi).
+   - Storage: ST.kind = artifact | local | memory; save state = pending (a save waits, 120 ms) | saved | memory (not saved). A
+     failed read (not "not found") or write moves to memory with the banner. Boot settles within 3 s or falls back to memory.
+     The index is merged with the stored one on every write (two tabs keep both checks). A record changed elsewhere while this
+     tab has unsaved answers raises the conflict banner (ui.conflict) and holds the write until the user picks a version.
+   - Downloads: per button (pdf, save-file) idle | busy (aria-busy, "Preparing…", further clicks ignored); results saved |
+     declined | busy | fallback (Copy box).
+   - Copy box (ui.copy): closed | open { msg, label, text, from }; drawn under the banner on every screen without its own place.
+   - File open: bad | newer | opened | opened as a copy (this browser holds a newer version of the same check) | migrated.
+   AX: #app[data-state] = the step, #app[data-storage] = ST.kind; window.Readiness3.state() adds saved, copy, busy, conflict,
+   fileErr and session; window.Readiness3.send(event, arg) drives the flow.
+   Session timing (council v3.0, BUILD NOW 8): with ?session=1 in the URL, rec.timing = { <step>: [first enter, last leave, ms] }
+   is kept in the record and in saved files. Nothing is shown and nothing is sent anywhere.
+   Test and agent API: window.Readiness3 (state, record, model, send, pdfModel, pdfBytes, fileDoc, openText, flush). */
 (function () {
   'use strict';
   var R = window.R3Rules, S = window.R3Store, RES = window.R3Result, X3 = window.R3Data;
   function $(id) { return document.getElementById(id); }
   function json(id) { var e = $(id); if (!e) return null; try { return JSON.parse(e.textContent); } catch (err) { return null; } }
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
   var D = json('r3-data'), EX = json('r3-ex') || {}, MIG = json('r3-mig'), FONT = json('r3-font');
   var IX = X3.index(D);
   var KEY = 'hftp-readiness3-v1', OLD_KEY = 'hftp-readiness2-v1', REC = KEY + '_c_';
+  var BOOT_MS = 3000, DL_MS = 10000;
+  var SESSION = (function () { try { return /[?&]session=1(&|$)/.test(window.location.search); } catch (e) { return false; } })();
   var STEP_NAMES = ['About your hotel', 'Is this an AI problem?', 'Must-haves', 'Where in the hotel?', 'Questions for this use case'];
   var TYPES = [['independent', 'Independent hotel'], ['group', 'Part of a group, run by the group'], ['managed', 'Managed or franchised']];
   var ROLES = [['gm', 'General manager'], ['owner', 'Owner or asset manager'], ['dept', 'Head of a department'], ['it', 'IT or technology lead'], ['fin', 'Finance'], ['other', 'Other']];
@@ -22,62 +44,116 @@
   var T = {
     noStore: 'Your answers can\'t be saved in this browser. Use Save as file.',
     badFile: 'This file isn\'t a saved check from this tool.',
+    newerFile: 'This file was saved with a newer version of this tool. Open it there.',
     pdfFail: 'The PDF couldn\'t be made. Use Copy instead.',
-    noDl: 'Downloads are not available here. Use Copy instead.'
+    noDl: 'Downloads are not available here. Use Copy instead.',
+    saveFail: 'The file couldn\'t be saved here. Use Copy instead.',
+    copyOpened: 'Opened as a copy: this browser has a newer version of this check.',
+    conflict: 'This check was changed in another tab or window. Your latest answers are not saved yet.'
   };
+  var DL_LABEL = { pdf: 'Download (PDF)', 'save-file': 'Save as file' };
 
   var rec = S.blank(), idx = { v: 1, cur: rec.id, ids: [] }, ready = false;
-  var ui = { warned: '', why: {}, dept: '', copy: null, fileErr: '', focus: null, toTop: false, mark: '', events: [] };
+  var ui = { warned: '', why: {}, dept: '', q: '', copy: null, fileErr: '', focus: null, toTop: false, mark: '', busy: {}, conflict: null, listFocus: null, confirmBack: '', events: [], tStep: '', tRec: '', tAt: 0 };
+  /* The transient UI of one check: cleared whenever the open check is replaced (clean-up H1, M4). */
+  function resetUi() { ui.warned = ''; ui.why = {}; ui.dept = ''; ui.q = ''; ui.copy = null; ui.fileErr = ''; ui.mark = ''; ui.conflict = null; }
 
   /* ---------- storage ---------- */
-  var mem = {};
+  var mem = {}, removed = {}, base = null; /* base: the "updated" stamp of the open check as last read from or written to storage */
+  var MISSING = /not.?found|missing|no such|does ?n[o']?t exist|no value|unknown key/i;
+  function isMissing(e) { return !e || MISSING.test(String((e && (e.code || e.message)) || e)); }
   var ST = {
-    kind: 'memory',
+    kind: 'memory', locked: false,
     init: function () {
       var self = this;
-      function local() { try { localStorage.setItem(KEY + '_probe', '1'); localStorage.removeItem(KEY + '_probe'); self.kind = 'local'; } catch (e) { self.kind = 'memory'; } }
+      function local() { if (self.locked) return; try { localStorage.setItem(KEY + '_probe', '1'); localStorage.removeItem(KEY + '_probe'); self.kind = 'local'; } catch (e) { self.kind = 'memory'; } }
       try {
         if (window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function') {
-          return Promise.resolve(window.storage.set(KEY + '_probe', '1', false)).then(function () { self.kind = 'artifact'; try { window.storage.delete(KEY + '_probe', false); } catch (e) {} }, local);
+          return Promise.resolve(window.storage.set(KEY + '_probe', '1', false)).then(function () { if (self.locked) return; self.kind = 'artifact'; try { window.storage.delete(KEY + '_probe', false); } catch (e) {} }, local);
         }
       } catch (e) {}
       local(); return Promise.resolve();
     },
+    /* resolves the stored text, or null when the key is not there; rejects when the read failed (clean-up L1) */
     get: function (k) {
-      var self = this;
-      if (self.kind === 'artifact') return Promise.resolve().then(function () { return window.storage.get(k, false); }).then(function (r) { return r && typeof r.value === 'string' ? r.value : null; }, function () { return null; });
-      if (self.kind === 'local') { try { return Promise.resolve(localStorage.getItem(k)); } catch (e) { return Promise.resolve(null); } }
-      return Promise.resolve(Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null);
+      if (this.kind === 'artifact') return Promise.resolve().then(function () { return window.storage.get(k, false); }).then(function (r) { return r && typeof r.value === 'string' ? r.value : null; }, function (e) { if (isMissing(e)) return null; throw e; });
+      return Promise.resolve(this.peek(k));
+    },
+    /* synchronous read for localStorage and memory; undefined for artifact storage (async only) */
+    peek: function (k) {
+      if (this.kind === 'local') { try { return localStorage.getItem(k); } catch (e) { return null; } }
+      if (this.kind === 'memory') return own(mem, k) ? mem[k] : null;
+      return undefined;
     },
     set: function (k, v) {
       var self = this;
       if (self.kind === 'artifact') return Promise.resolve().then(function () { return window.storage.set(k, v, false); }).then(function () { return true; }, function () { self.fail(); mem[k] = v; return false; });
-      if (self.kind === 'local') { try { localStorage.setItem(k, v); return Promise.resolve(true); } catch (e) { self.fail(); } }
-      mem[k] = v; return Promise.resolve(false);
+      return Promise.resolve(self.setNow(k, v));
+    },
+    setNow: function (k, v) {
+      if (this.kind === 'local') { try { localStorage.setItem(k, v); return true; } catch (e) { this.fail(); } }
+      mem[k] = v; return false;
     },
     del: function (k) {
+      delete mem[k];
       if (this.kind === 'artifact') return Promise.resolve().then(function () { return window.storage.delete(k, false); }).catch(function () {});
       if (this.kind === 'local') { try { localStorage.removeItem(k); } catch (e) {} }
-      delete mem[k]; return Promise.resolve();
+      return Promise.resolve();
     },
-    fail: function () { if (this.kind !== 'memory') { this.kind = 'memory'; drawBanner(); } }
+    fail: function () { this.locked = true; if (this.kind !== 'memory') { this.kind = 'memory'; if (ready) drawBanner(); } }
   };
-  var saveTimer = null;
+  function parseRec(t) { try { return t ? S.clean(D, JSON.parse(t)) : null; } catch (e) { return null; } }
+  function parseIdx(t) { var I = null; try { I = t ? JSON.parse(t) : null; } catch (e) { I = null; } return I && Array.isArray(I.ids) ? { v: 1, cur: typeof I.cur === 'string' ? I.cur : '', ids: I.ids.filter(function (x) { return typeof x === 'string'; }) } : null; }
+  var saveTimer = null, flushQ = Promise.resolve();
   function save() {
     rec.updated = new Date().toISOString();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(flush, 120);
   }
+  function listIt(r) { if (S.hasAnswers(r) && idx.ids.indexOf(r.id) < 0) idx.ids.push(r.id); idx.cur = r.id; }
+  /* Merge the stored index into this tab's (clean-up M1): ids another tab listed are kept; ids removed here stay removed; with
+     localStorage, ids whose record is gone (removed in another tab) are dropped. */
+  function mergeIdx(t) {
+    var I = parseIdx(t);
+    if (I) I.ids.forEach(function (id) { if (!removed[id] && idx.ids.indexOf(id) < 0) idx.ids.push(id); });
+    if (ST.kind === 'local') idx.ids = idx.ids.filter(function (id) { return id === rec.id || ST.peek(REC + id) !== null; });
+  }
+  /* A stored record of the open check that differs from the one this tab last read or wrote: changed elsewhere (clean-up M2). */
+  function changedElsewhere(stored) { return !!stored && stored.updated !== base; }
   function flush() {
     clearTimeout(saveTimer); saveTimer = null;
-    var r = rec;
-    if (S.hasAnswers(r) && idx.ids.indexOf(r.id) < 0) idx.ids.push(r.id);
-    idx.cur = r.id;
-    return ST.set(REC + r.id, JSON.stringify(r)).then(function () { return ST.set(KEY, JSON.stringify(idx)); });
+    if (ST.kind !== 'artifact') { flushNow(); return Promise.resolve(); }
+    flushQ = flushQ.then(flushAsync, flushAsync); return flushQ;
   }
-  function loadRec(id) { return ST.get(REC + id).then(function (t) { try { return t ? S.clean(D, JSON.parse(t)) : null; } catch (e) { return null; } }); }
+  function flushNow() {
+    var r = rec; listIt(r);
+    if (ST.kind === 'local') {
+      var stored = parseRec(ST.peek(REC + r.id));
+      if (!ui.conflict && changedElsewhere(stored)) { ui.conflict = stored; if (ready) drawBanner(); }
+      if (!ui.conflict && ST.setNow(REC + r.id, JSON.stringify(r))) base = r.updated;
+      if (ST.kind === 'local') mergeIdx(ST.peek(KEY));
+    }
+    if (ST.kind === 'memory') mem[REC + r.id] = JSON.stringify(r);
+    ST.setNow(KEY, JSON.stringify(idx));
+  }
+  function flushAsync() {
+    var r = rec; listIt(r);
+    return ST.get(REC + r.id).then(function (t) {
+      if (r === rec && !ui.conflict && changedElsewhere(parseRec(t))) { ui.conflict = parseRec(t); if (ready) drawBanner(); }
+      if (r === rec && ui.conflict) return null;
+      return ST.set(REC + r.id, JSON.stringify(r)).then(function (done) { if (done && r === rec) base = r.updated; });
+    }).then(function () { return ST.kind === 'artifact' ? ST.get(KEY) : null; }).then(function (t) { mergeIdx(t); return ST.set(KEY, JSON.stringify(idx)); })
+      .catch(function () { ST.fail(); mem[REC + r.id] = JSON.stringify(r); mem[KEY] = JSON.stringify(idx); });
+  }
+  function loadRec(id) { return ST.get(REC + id).then(parseRec, function () { return null; }); }
   function listChecks() {
     return Promise.all(idx.ids.map(function (id) { return id === rec.id ? Promise.resolve(rec) : loadRec(id); })).then(function (rs) { return rs.filter(Boolean); });
+  }
+  /* Replace the open check (new, open a check, open a file, remove). b: the stored "updated" stamp of r, or null if r is not stored. */
+  function replaceRec(r, b) {
+    var old = rec;
+    if (old.id !== r.id && !S.hasAnswers(old) && idx.ids.indexOf(old.id) < 0) ST.del(REC + old.id); /* an untouched check is not kept */
+    rec = r; idx.cur = r.id; base = b == null ? null : b; resetUi();
   }
 
   /* ---------- helpers ---------- */
@@ -110,6 +186,11 @@
     return '<div class="navrow">' + (backLabel ? '<button type="button" class="btn back" data-act="back">' + esc(backLabel) + '</button>' : '') + (extra || '') +
       (nextLabel ? '<button type="button" class="btn primary" data-act="next">' + esc(nextLabel) + '</button>' : '') + '</div>';
   }
+  /* A download button (pdf, save-file) with its busy state (clean-up L10). */
+  function dlBtn(act, id, cls) {
+    var busy = !!ui.busy[act];
+    return '<button type="button" class="btn' + (cls ? ' ' + cls : '') + '" data-act="' + act + '" id="' + id + '" data-label="' + esc(DL_LABEL[act]) + '"' + (busy ? ' aria-busy="true" aria-disabled="true"' : '') + '>' + esc(busy ? 'Preparing…' : DL_LABEL[act]) + '</button>';
+  }
   function openNote(step) {
     if (ui.warned !== step) return '';
     var n = S.open(D, rec, step).length; if (!n) return '';
@@ -127,15 +208,22 @@
     }
     $('hdr').innerHTML = h;
   }
+  /* The copy box has its own place on the stop screen and the result; on every other screen it stands under the banner (H1). */
+  function copyInline() { return rec.step === 'result' || rec.step === 'stop'; }
   function drawBanner() {
     var h = '';
-    if (ST.kind === 'memory') h += '<div class="banner warn" id="nostore" role="status"><p>' + esc(T.noStore) + '</p>' + (S.hasAnswers(rec) ? '<p><button type="button" class="btn small" data-act="save-file">Save as file</button></p>' : '') + '</div>';
+    if (ST.kind === 'memory') h += '<div class="banner warn" id="nostore" role="status"><p>' + esc(T.noStore) + '</p>' + (S.hasContent(rec) ? '<p>' + dlBtn('save-file', 'save-file-banner', 'small') + '</p>' : '') + '</div>';
+    if (ui.conflict) {
+      h += '<div class="banner warn" id="conflict" role="alert"><p>' + esc(T.conflict) + '</p><p class="btnrow"><button type="button" class="btn small" data-act="conflict-theirs" id="conflict-theirs">Use the other version</button>' +
+        '<button type="button" class="btn small" data-act="conflict-mine" id="conflict-mine">Keep my answers</button></p></div>';
+    }
     if (rec.imported && !rec.imported.seen) {
       var im = rec.imported;
-      h += '<div class="banner info" id="imported" role="status"><p>Imported from v' + esc(im.from) + ': please answer ' + esc(plural(im.n, 'new question', 'new questions')) + '.' +
+      h += '<div class="banner info" id="imported" role="status"><p>Imported from v' + esc(im.from) + ': ' + (im.n ? 'please answer ' + esc(plural(im.n, 'new question', 'new questions')) : 'no new questions to answer') + '.' +
         (im.dropped ? ' ' + esc(plural(im.dropped, 'earlier answer was', 'earlier answers were')) + ' not carried over, because those questions were merged into others or removed.' : '') + '</p>' +
         '<p><button type="button" class="btn small" data-act="imported-ok">OK</button></p></div>';
     }
+    if (!copyInline()) h += copyBox();
     $('banner').innerHTML = h;
     $('app').setAttribute('data-storage', ST.kind);
     $('foot-keep').textContent = ST.kind === 'memory' ? '' : ' Your answers stay in this browser.';
@@ -153,8 +241,8 @@
       '<li><b>Questions for this use case</b><span>First how the tool will work in your hotel, then the questions that follow from that.</span></li></ol>' +
       '<p><b>What you get:</b> a verdict with the main reason, the three things to do first and who does them, a plan for each person, questions for the vendor, and a readiness score at the end.</p>' +
       '<p class="disc" id="disclaimer">' + esc(D.texts.disclaimer) + '</p>' +
-      '<div class="btnrow">' + (has ? '<button type="button" class="btn primary" data-act="resume">Continue this check</button><button type="button" class="btn" data-act="new">Start a new check</button>' : '<button type="button" class="btn primary" data-act="begin">Start</button>') + '</div></section>' +
-      '<section class="panel" aria-labelledby="mine-h"><h2 id="mine-h">Your checks in this browser</h2><div id="mychecks"><p class="meta">Loading…</p></div>' +
+      '<div class="btnrow">' + (has ? '<button type="button" class="btn primary" data-act="resume">Continue this check</button><button type="button" class="btn" data-act="new" id="new-cover">Start a new check</button>' : '<button type="button" class="btn primary" data-act="begin">Start</button>') + '</div></section>' +
+      '<section class="panel" aria-labelledby="mine-h"><h2 id="mine-h" tabindex="-1">Your checks in this browser</h2><div id="mychecks"><p class="meta">Loading…</p></div>' +
       '<h3>Open a saved file</h3><p class="meta">A file saved with Save as file, from this tool or from the earlier version (v2.6.1).</p>' +
       '<div class="btnrow"><label class="btn" for="file-in">Open a saved file<input type="file" id="file-in" accept=".json,application/json" class="sr"></label></div>' +
       '<details class="fold"><summary>Or paste a saved check</summary><label class="fld" for="paste-in"><span>Saved check (the text from Copy saved check)</span><textarea id="paste-in"></textarea></label><div class="btnrow"><button type="button" class="btn" data-act="paste-open">Open</button></div></details>' +
@@ -163,15 +251,21 @@
   function drawMyChecks() {
     var box = $('mychecks'); if (!box) return;
     listChecks().then(function (rs) {
-      if (!$('mychecks')) return;
+      if (!$('mychecks') || rec.step !== 'start') return;
       rs = rs.filter(function (r) { return S.hasAnswers(r); });
-      if (!rs.length) { $('mychecks').innerHTML = '<p class="meta">None yet.</p>'; return; }
-      $('mychecks').innerHTML = '<ul class="checks">' + rs.map(function (r) {
+      if (!rs.length) $('mychecks').innerHTML = '<p class="meta">None yet.</p>';
+      else $('mychecks').innerHTML = '<ul class="checks">' + rs.map(function (r) {
         var u = S.useOf(D, r.use), nm = (r.hotel.name || 'Hotel not named') + ' · ' + (u ? u.title : r.use === 'none' ? D.none_fits.title : 'no use case yet');
-        return '<li><span>' + esc(nm) + '<br><span class="meta">Last changed ' + esc((r.updated || '').slice(0, 10)) + (r.id === rec.id ? ' · open now' : '') + '</span></span><span class="btnrow">' +
-          (r.id === rec.id ? '' : '<button type="button" class="btn small" data-act="open-check" data-id="' + esc(r.id) + '">Open</button>') +
-          '<button type="button" class="btn small" data-act="remove-check" data-id="' + esc(r.id) + '">Remove</button></span></li>';
+        return '<li data-id="' + esc(r.id) + '"><span>' + esc(nm) + '<br><span class="meta">Last changed ' + esc((r.updated || '').slice(0, 10)) + (r.id === rec.id ? ' · open now' : '') + '</span></span><span class="btnrow">' +
+          (r.id === rec.id ? '' : '<button type="button" class="btn small" data-act="open-check" data-id="' + esc(r.id) + '" id="open-' + uid(r.id) + '">Open</button>') +
+          '<button type="button" class="btn small" data-act="remove-check" data-id="' + esc(r.id) + '" id="rm-' + uid(r.id) + '">Remove</button></span></li>';
       }).join('') + '</ul>';
+      /* after Remove: focus the next check in the list, else the list heading (clean-up L5) */
+      if (ui.listFocus != null) {
+        var items = document.querySelectorAll('#mychecks li'), li = items[Math.min(ui.listFocus, items.length - 1)];
+        var b = li && li.querySelector('button'); ui.listFocus = null;
+        (b || $('mine-h')).focus();
+      }
     });
   }
   function vHotel() {
@@ -190,36 +284,55 @@
     return '<div class="stephead"><h2 tabindex="-1" id="h">Is this an AI problem?</h2><p class="sub">Think of one job in your hotel that you want help with. These five questions earn no points. A No to question 1 or 2 means a simpler option may do the job.</p>' + gloss(texts) + '</div>' +
       D.step2.map(function (s, i) {
         return '<fieldset class="card" id="card-' + s.id + '"><legend id="lg-' + s.id + '"><span class="qtitle">Question ' + (i + 1) + ': ' + esc(s.title) + '</span><span class="qtext">' + esc(s.text) + '</span></legend>' +
-          radios('s2', s.id, D.answers.step2, rec.step2[s.id], 'lg-' + s.id) + '</fieldset>';
+          radios('s2', s.id, R.answerOptions(D, 'step2'), rec.step2[s.id], 'lg-' + s.id) + '</fieldset>';
       }).join('') + openNote('s2') + nav('Back', 'Next');
   }
   function contraFor(id) { return R.contradictions(D, A().use, A().gates, rec.mh).filter(function (c) { return c.id === id; })[0]; }
   function vMust() {
     var texts = D.must_haves.map(function (m) { return m.text + ' ' + (m.na_help || ''); });
-    return '<div class="stephead"><h2 tabindex="-1" id="h">Must-haves</h2><p class="sub">Eleven things to have in place before any AI project starts. Each one must be Yes for a Ready result.</p>' + gloss(texts) + '</div>' +
+    return '<div class="stephead"><h2 tabindex="-1" id="h">Must-haves</h2><p class="sub">Eleven things to have in place before any AI project starts. Each one must be Yes for a Ready result.</p>' +
+      '<p class="sub" id="must-help">Answer for the job you thought of in step 2. ‘The tool’ means the AI tool you have in mind; you pick the exact use case in step 4.</p>' + gloss(texts) + '</div>' +
       D.must_haves.map(function (m, i) {
         var c = rec.mh[m.id] === 'na' ? contraFor(m.id) : null;
         return '<fieldset class="card must' + (ui.mark === m.id ? ' open-mark' : '') + '" id="card-' + m.id + '"><legend id="lg-' + m.id + '"><span class="qtitle">Must-have ' + (i + 1) + ': ' + esc(m.title) + '</span><span class="qtext">' + esc(m.text) + '</span>' +
           '<span class="tags"><span class="tag mustyes">Must be Yes</span></span></legend>' +
-          radios('mh', m.id, m.na ? D.answers.check_da : D.answers.check, rec.mh[m.id], 'lg-' + m.id) +
+          radios('mh', m.id, R.answerOptions(D, 'mh', m.id), rec.mh[m.id], 'lg-' + m.id) +
           (m.na ? '<p class="help" id="na-' + m.id + '">' + esc(m.na_help) + '</p>' : '') +
           '<p class="help">' + esc(PLANNED_HELP) + '</p>' +
           (c ? '<div class="note" role="note" id="contra-mh-' + m.id + '"><p>' + esc(c.note) + '</p></div>' : '') + '</fieldset>';
       }).join('') + openNote('must') + nav('Back', 'Next');
   }
-  function vWhere() {
-    var u = S.useOf(D, rec.use), dept = ui.dept || (u ? u.department : '');
-    var deptObj = IX.DEPTS.filter(function (d) { return d.name === dept; })[0];
-    var h = '<div class="stephead"><h2 tabindex="-1" id="h">Where in the hotel?</h2><p class="sub">Choose the use case closest to your idea. If none is close, choose None of these fits: you then get general questions.</p></div>';
-    h += '<section class="panel"><label class="fld" for="dept"><span>Department</span><select id="dept"><option value="">Choose a department</option>' +
+  /* Search over every use-case title and department (council v3.0, BUILD NOW 7): all words must appear, any case. */
+  function searchUses(q) {
+    var words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return null;
+    return D.use_cases.filter(function (u) { var t = (u.title + ' ' + u.department).toLowerCase(); return words.every(function (w) { return t.indexOf(w) >= 0; }); });
+  }
+  function useRadio(x, sub) {
+    var iid = 'r-use-' + uid(x.id);
+    return '<label class="opt" for="' + iid + '"><input type="radio" name="n-use" id="' + iid + '" value="' + esc(x.id) + '" data-kind="use"' + (rec.use === x.id ? ' checked' : '') + '><span>' + esc(x.title) + (sub ? '<small class="ucdept">' + esc(x.department) + '</small>' : '') + '</span></label>';
+  }
+  function ucResults() {
+    var u = S.useOf(D, rec.use), found = searchUses(ui.q), h = '';
+    if (found) {
+      h += '<p class="meta" id="uc-count" role="status">' + (found.length ? esc(plural(found.length, 'use case matches', 'use cases match')) + ' “' + esc(ui.q.trim()) + '”.' : 'No use case matches “' + esc(ui.q.trim()) + '”. Try another word, clear the search to choose a department, or choose None of these fits.') + '</p>';
+      if (found.length) h += '<fieldset class="card" style="border:0;padding:0"><legend id="lg-uc" class="qtitle">Use cases that match</legend><div class="uclist" role="radiogroup" aria-labelledby="lg-uc">' + found.map(function (x) { return useRadio(x, true); }).join('') + '</div></fieldset>' + gloss(found.map(function (x) { return x.title; }));
+      return h;
+    }
+    var dept = ui.dept || (u ? u.department : ''), deptObj = IX.DEPTS.filter(function (d) { return d.name === dept; })[0];
+    h += '<label class="fld" for="dept"><span>Department</span><select id="dept"><option value="">Choose a department</option>' +
       IX.DEPTS.map(function (d) { return '<option value="' + esc(d.name) + '"' + (d.name === dept ? ' selected' : '') + '>' + esc(d.name) + ' (' + d.uses.length + ')</option>'; }).join('') + '</select></label>';
     if (deptObj) {
-      h += '<fieldset class="card" style="border:0;padding:0"><legend id="lg-uc" class="qtitle">Use cases in ' + esc(deptObj.name) + '</legend><div class="uclist" role="radiogroup" aria-labelledby="lg-uc">' + deptObj.uses.map(function (x) {
-        var iid = 'r-use-' + uid(x.id);
-        return '<label class="opt" for="' + iid + '"><input type="radio" name="n-use" id="' + iid + '" value="' + esc(x.id) + '" data-kind="use"' + (rec.use === x.id ? ' checked' : '') + '>' + esc(x.title) + '</label>';
-      }).join('') + '</div></fieldset>';
+      h += '<fieldset class="card" style="border:0;padding:0"><legend id="lg-uc" class="qtitle">Use cases in ' + esc(deptObj.name) + '</legend><div class="uclist" role="radiogroup" aria-labelledby="lg-uc">' + deptObj.uses.map(function (x) { return useRadio(x, false); }).join('') + '</div></fieldset>';
+      h += gloss(deptObj.uses.map(function (x) { return x.title; }));
     }
-    if (deptObj) h += gloss(deptObj.uses.map(function (x) { return x.title; }));
+    return h;
+  }
+  function vWhere() {
+    var u = S.useOf(D, rec.use);
+    var h = '<div class="stephead"><h2 tabindex="-1" id="h">Where in the hotel?</h2><p class="sub">Choose the use case closest to your idea. If none is close, choose None of these fits: you then get general questions.</p></div>';
+    h += '<section class="panel"><label class="fld" for="uc-search"><span>Search the ' + D.use_cases.length + ' use cases</span><input type="search" id="uc-search" value="' + esc(ui.q) + '" autocomplete="off" spellcheck="false" placeholder="For example: chat, pricing, energy"></label>' +
+      '<div id="uc-results" class="ucresults">' + ucResults() + '</div>';
     h += '<div class="uclist"><label class="opt" for="r-use-none"><input type="radio" name="n-use-none" id="r-use-none" value="none" data-kind="use"' + (rec.use === 'none' ? ' checked' : '') + '>None of these fits</label></div></section>';
     if (u) {
       var e = EX[u.id] || {};
@@ -244,16 +357,36 @@
     var B = q.weight === 'B';
     return '<fieldset class="card' + (B ? ' must' : '') + (ui.mark === q.id ? ' open-mark' : '') + '" id="card-' + uid(q.id) + '"><legend id="lg-' + uid(q.id) + '"><span class="qtext">' + esc(q.text) + '</span>' +
       '<span class="tags"><span class="tag">Who answers: ' + esc(D.labels.owners[q.owner] || q.owner) + '</span>' + (B ? '<span class="tag mustyes">Must be Yes</span>' : '<span class="tag">' + esc(D.labels.weights[q.weight]) + '</span>') + '</span></legend>' +
-      radios('q', q.id, D.answers.check, rec.qa[q.id], 'lg-' + uid(q.id)) + '<p class="help">' + esc(PLANNED_HELP) + '</p>' + whyToggle(q.id, q.why) + '</fieldset>';
+      radios('q', q.id, R.answerOptions(D, 'q', q.id), rec.qa[q.id], 'lg-' + uid(q.id)) + '<p class="help">' + esc(PLANNED_HELP) + '</p>' + whyToggle(q.id, q.why) + '</fieldset>';
+  }
+  /* How many questions follow once the open How it works questions are answered: the smallest and largest number of visible
+     questions over every answer they can still get (R3Rules.visible; the answers already given are kept). */
+  function pendingRange(use, gates, G) {
+    var open = gates.filter(function (g) { return !G[g.id]; }), lo = Infinity, hi = 0;
+    (function walk(i, acc) {
+      if (i === open.length) { var n = R.visible(D, use, acc).length; lo = Math.min(lo, n); hi = Math.max(hi, n); return; }
+      open[i].options.forEach(function (o) { var nx = Object.assign({}, acc); nx[open[i].id] = o.key; walk(i + 1, nx); });
+    })(0, Object.assign({}, G));
+    return [lo === Infinity ? 0 : lo, hi];
   }
   function vUse() {
     var a = A(), u = S.useOf(D, a.use), gates = R.askedGates(D, a.use), G = a.gates, allG = gates.every(function (g) { return !!G[g.id]; });
-    var qs = R.visible(D, a.use, G), texts = [u ? u.title : ''].concat(gates.map(function (g) { return g.text + ' ' + g.options.map(function (o) { return o.label; }).join(' '); }));
+    var qs = allG ? R.visible(D, a.use, G) : [], texts = [u ? u.title : ''].concat(gates.map(function (g) { return g.text + ' ' + g.options.map(function (o) { return o.label; }).join(' '); }));
     texts = texts.concat(qs.map(function (q) { return q.text + ' ' + (q.why || ''); }));
     var h = '<div class="stephead"><h2 tabindex="-1" id="h">Questions for this use case</h2><p class="sub" id="use-line">Use case: <b>' + esc(u ? u.title : D.none_fits.title) + '</b></p>' +
       (!rec.use ? '<p class="note info" id="no-use">You did not choose a use case, so these are the general questions for None of these fits.</p>' : '') + gloss(texts) + '</div>';
-    h += '<section aria-labelledby="hiw-h" class="stephead" id="hiw"><h3 id="hiw-h" class="areahead">First, how will this tool work in your hotel?</h3><p class="sub">Your answers here decide which questions follow.</p></section>' + gates.map(function (g) { return gateCard(g, G); }).join('');
-    if (!allG) h += '<p class="note info" id="gates-first">Answer ' + (gates.length === 1 ? 'the question above' : 'the questions above') + ' first: ' + (gates.length === 1 ? 'your answer decides' : 'your answers decide') + ' which of the questions below apply.</p>';
+    h += '<section aria-labelledby="hiw-h" class="stephead" id="hiw"><h3 id="hiw-h" class="areahead">First, how will this tool work in your hotel?</h3><p class="sub">Your answers here decide which questions follow.</p>' +
+      '<p class="sub" id="hiw-help">No tool chosen yet? Answer Don\'t know yet, or ask the vendor. You can change it later.</p></section>' + gates.map(function (g) { return gateCard(g, G); }).join('');
+    /* council v3.0, BUILD NOW 1: the questions appear once every How it works question has an answer (Don't know yet counts). Until
+       then they are not drawn; the scoring is unchanged (R3Rules.visible decides what counts, and unanswered questions count as
+       Don't know yet), and this line says how many will follow. */
+    if (!allG) {
+      var openG = gates.filter(function (g) { return !G[g.id]; }).length, rg = pendingRange(a.use, gates, G);
+      var which = gates.length === 1 ? 'the question above' : openG === 1 ? 'the other question above' : 'the questions above';
+      var n = rg[0] === rg[1] ? 'the ' + plural(rg[0], 'question', 'questions') : 'the ' + rg[0] + ' to ' + rg[1] + ' questions';
+      h += '<p class="note info" id="gates-first" data-min="' + rg[0] + '" data-max="' + rg[1] + '">Answer ' + which + ' to see ' + n + ' for this use case. Until then, ' + (rg[1] === 1 ? 'it counts' : 'they count') + ' as Don\'t know yet.</p>';
+      return h + openNote('use') + nav('Back', 'See the result');
+    }
     /* the visible questions in the data's order (R3Rules.visible = sim_v3.visible_questions; never reordered), under a plain area
        name each time the area changes */
     var last = '', seenA = {};
@@ -269,7 +402,7 @@
       '<section class="panel" aria-labelledby="simpler-h"><h2 id="simpler-h">Simpler options to try first</h2><ul class="plain" id="simpler">' + m.simpler.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       '<p>If you still think AI is needed, Continue anyway. The result can then be Almost ready at best.</p>' +
       '<div class="btnrow"><button type="button" class="btn" data-act="change">Change my answers</button><button type="button" class="btn primary" data-act="continue">Continue anyway</button>' +
-      '<button type="button" class="btn" data-act="pdf" id="pdf">Download (PDF)</button></div>' + copyBox() + '</section>' +
+      dlBtn('pdf', 'pdf') + '</div>' + copyBox() + '</section>' +
       '<section class="panel" aria-labelledby="top-h"><h2 id="top-h">Top 3 actions</h2>' + top3(m) + '</section>' +
       '<p class="disc" id="disclaimer">' + esc(m.disclaimer) + '</p>' + gloss(m.simpler.concat(m.top3.map(function (a) { return a.text; })));
   }
@@ -281,7 +414,7 @@
     if (!ui.copy) return '';
     return '<div class="copybox" id="copybox" role="region" aria-labelledby="copy-msg"><p class="banner warn" id="copy-msg">' + esc(ui.copy.msg) + '</p>' +
       '<label class="fld" for="copy-text"><span>' + esc(ui.copy.label) + '</span><textarea id="copy-text" readonly>' + esc(ui.copy.text) + '</textarea></label>' +
-      '<div class="btnrow"><button type="button" class="btn" data-act="copy-box">Copy</button><button type="button" class="btn" data-act="copy-close">Close</button></div></div>';
+      '<div class="btnrow"><button type="button" class="btn" data-act="copy-box" id="copy-box">Copy</button><button type="button" class="btn" data-act="copy-close" id="copy-close">Close</button></div></div>';
   }
   function vResult() {
     var m = model(), res = m.res;
@@ -292,29 +425,44 @@
       m.notes.map(function (n) { return '<div class="note" id="contra-' + n.id + '"><p>' + esc(n.note) + '</p><p><button type="button" class="linkbtn" data-act="goto-mh" data-id="' + n.id + '">Change my answer</button></p></div>'; }).join('') +
       (m.notFit ? '<div class="note" id="notfit"><p>' + esc(m.notFit) + '</p><p><button type="button" class="linkbtn" data-act="goto-where">Choose another use case</button></p></div>' : '');
     h += '<section class="panel" aria-labelledby="top-h"><h2 id="top-h">Top 3 actions</h2>' + top3(m) + '</section>';
-    h += '<div class="btnrow noprint" id="actions"><button type="button" class="btn" data-act="copy" id="copy">Copy the result</button><button type="button" class="btn primary" data-act="pdf" id="pdf">Download (PDF)</button>' +
-      '<button type="button" class="btn" data-act="save-file" id="save-file">Save as file</button></div>' + copyBox();
+    h += '<div class="btnrow noprint" id="actions"><button type="button" class="btn" data-act="copy" id="copy">Copy the result</button>' + dlBtn('pdf', 'pdf', 'primary') +
+      dlBtn('save-file', 'save-file') + '</div>' + copyBox();
     h += '<section class="panel" aria-labelledby="areas-h" id="areas"><h2 id="areas-h">Details by area</h2><ul class="areas">' + m.areas.map(function (a) {
       return '<li data-area="' + a.key + '"><b>' + esc(a.name) + '</b><span class="track" aria-hidden="true"><i style="width:' + Math.round(100 * a.yes / a.total) + '%"></i></span><span>' + esc(a.line) + '</span></li>';
     }).join('') + '</ul></section>';
     h += '<section class="panel" aria-labelledby="plan-h" id="plan"><h2 id="plan-h">Action plan by person</h2>' + (m.people.length ? m.people.map(function (p) {
-      return '<div class="person" data-owner="' + esc(p.key) + '"><div class="personhead"><h3>' + esc(p.owner) + '</h3><button type="button" class="btn small" data-act="copy-person" data-id="' + esc(p.key) + '">Copy for ' + esc(p.owner) + '</button></div><ul class="plain">' + p.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+      return '<div class="person" data-owner="' + esc(p.key) + '"><div class="personhead"><h3>' + esc(p.owner) + '</h3><button type="button" class="btn small" data-act="copy-person" data-id="' + esc(p.key) + '" id="copy-person-' + uid(p.key) + '">Copy for ' + esc(p.owner) + '</button></div><ul class="plain">' + p.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
     }).join('') : '<p>Nothing open.</p>') + '</section>';
     h += '<section class="panel" aria-labelledby="vendor-h" id="vendor"><h2 id="vendor-h">Questions to ask the vendor</h2>' + (m.vendor.length ? '<ul class="plain">' + m.vendor.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '<p>None: no answer is Don\'t know yet and nothing is left for the vendor.</p>') + '</section>';
     h += '<details class="panel fold" id="all-qa"><summary>Every question and your answer</summary>' + m.qa.filter(function (g) { return g.items.length; }).map(function (g) {
       return '<h3>' + esc(g.head) + '</h3><div class="qalist">' + g.items.map(function (i) { return '<div class="qarow"><span>' + (i.title ? '<small>' + esc(i.title) + '</small>' : '') + esc(i.text) + (i.weight ? '<small>' + esc(i.weight) + (i.owner ? ' · Who answers: ' + esc(i.owner) : '') + '</small>' : '') + '</span><span class="ans">' + esc(i.answer) + '</span></div>'; }).join('') + '</div>';
     }).join('') + '</details>';
     h += '<details class="panel fold" id="method"><summary>How this was worked out</summary><ul class="plain">' + m.method.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></details>';
-    h += '<section class="panel" aria-labelledby="score-h" id="score"><h2 id="score-h">Readiness score</h2><p class="score" id="score-val">' + esc(res.score) + '%</p><p class="meta">' + esc(m.scoreSub) + '</p></section>';
+    /* council v3.0, BUILD NOW 6: a high score under a red or grey verdict says where the verdict comes from (screen only) */
+    var why = res.score >= 50 ? (m.verdictKey === 'not' ? 'The verdict comes from the Must be Yes questions, not from the score.' : m.verdictKey === 'info' ? 'The verdict comes from the Don\'t know yet answers, not from the score.' : '') : '';
+    h += '<section class="panel" aria-labelledby="score-h" id="score"><h2 id="score-h">Readiness score</h2><p class="score" id="score-val">' + esc(res.score) + '%</p>' + (why ? '<p id="score-why">' + esc(why) + '</p>' : '') + '<p class="meta">' + esc(m.scoreSub) + '</p></section>';
     h += '<p class="disc" id="disclaimer">' + esc(m.disclaimer) + '</p>';
     h += gloss([m.useTitle].concat(m.top3.map(function (a) { return a.text; }), m.vendor, [].concat.apply([], m.people.map(function (p) { return p.items; })), [].concat.apply([], m.qa.map(function (g) { return g.items.map(function (i) { return i.text; }); }))));
-    return h + nav('Back', '', '<button type="button" class="btn" data-act="new">Start a new check</button>');
+    return h + nav('Back', '', '<button type="button" class="btn" data-act="new" id="new-result">Start a new check</button>');
   }
   var VIEWS = { start: vStart, hotel: vHotel, s2: vS2, stop: vStop, must: vMust, where: vWhere, use: vUse, result: vResult };
+
+  /* ---------- session timing (?session=1) ---------- */
+  function timeStep(st) {
+    if (!SESSION) return;
+    var t = Date.now(), iso = new Date(t).toISOString();
+    if (ui.tStep && ui.tRec === rec.id && rec.timing && rec.timing[ui.tStep]) { var e = rec.timing[ui.tStep]; e[1] = iso; e[2] += t - ui.tAt; }
+    if (!st) { ui.tAt = t; return; }
+    if (ui.tStep === st && ui.tRec === rec.id) { ui.tAt = t; return; }
+    rec.timing = rec.timing || {};
+    if (!rec.timing[st]) rec.timing[st] = [iso, '', 0];
+    ui.tStep = st; ui.tRec = rec.id; ui.tAt = t;
+  }
 
   function render() {
     if (!ready) return;
     var st = rec.step;
+    if (SESSION && (ui.tStep !== st || ui.tRec !== rec.id)) timeStep(st);
     $('app').setAttribute('data-state', st);
     drawHeader(); drawBanner();
     var y = window.scrollY, active = document.activeElement && document.activeElement.id;
@@ -325,12 +473,17 @@
     else { if (ui.focus && $(ui.focus)) $(ui.focus).focus({ preventScroll: true }); else if (active && $(active)) $(active).focus({ preventScroll: true }); window.scrollTo(0, y); }
     ui.focus = null;
   }
-  function go(step) { rec.step = step; rec.step = S.place(D, rec); ui.warned = ''; ui.copy = null; ui.mark = ''; ui.toTop = true; save(); render(); }
+  /* The only writer of rec.step (through R3Store.place). */
+  function go(step) { rec.step = step; rec.step = S.place(D, rec); ui.warned = ''; ui.copy = null; ui.mark = ''; ui.q = ''; ui.toTop = true; save(); render(); }
   function cardOf(openId) { return 'card-' + uid(openId); }
+  function focusCard(id, checked) {
+    var c = $(cardOf(id)); if (!c) return;
+    c.scrollIntoView({ block: 'center' });
+    var inp = (checked && c.querySelector('input:checked')) || c.querySelector('input'); if (inp) inp.focus({ preventScroll: true });
+  }
   function markFirstOpen(step) {
     var o = S.open(D, rec, step); if (!o.length) return;
-    ui.mark = o[0]; render();
-    var c = $(cardOf(o[0])); if (c) { c.scrollIntoView({ block: 'center' }); var inp = c.querySelector('input'); if (inp) inp.focus({ preventScroll: true }); }
+    ui.mark = o[0]; render(); focusCard(o[0]);
   }
 
   /* ---------- events (also the test API) ---------- */
@@ -338,7 +491,8 @@
     ui.events.push(ev);
     switch (ev) {
       case 'begin': go('hotel'); break;
-      case 'resume': go(rec.step === 'start' ? 'hotel' : rec.step); break;
+      /* "Continue this check": the first screen with something to answer (clean-up L9) */
+      case 'resume': go(S.firstOpen(D, rec)); break;
       case 'next': {
         var st = rec.step;
         if ((st === 's2' || st === 'must' || st === 'use') && S.open(D, rec, st).length && ui.warned !== st) { ui.warned = st; render(); var n = $('open-note'); if (n) n.scrollIntoView({ block: 'center' }); return; }
@@ -349,6 +503,7 @@
       case 'change': go('s2'); break;
       case 'continue': rec.cont = S.stopKey(D, rec); go('must'); break;
       case 'goto': go(arg); break;
+      case 'goto-mh': go('must'); ui.mark = arg; render(); focusCard(arg, true); break;
       case 'hotel': rec.hotel[arg.k] = String(arg.v || '').slice(0, 120); save(); break;
       case 'answer': {
         var k = arg.kind, id = arg.id, v = arg.value;
@@ -361,6 +516,7 @@
       }
       case 'use': rec.use = arg; if (arg !== 'none') { var u = S.useOf(D, arg); if (u) ui.dept = u.department; } save(); render(); break;
       case 'dept': ui.dept = arg; render(); break;
+      case 'search': ui.q = String(arg || ''); var box = $('uc-results'); if (box && rec.step === 'where') box.innerHTML = ucResults(); break;
       case 'new': newCheck(); break;
       default: break;
     }
@@ -368,51 +524,81 @@
   function newCheck() {
     var h = rec.hotel;
     flush();
-    rec = S.blank(); rec.hotel = { name: h.name, type: h.type, role: h.role, country: h.country };
-    idx.cur = rec.id; ui.dept = ''; go('hotel');
+    var nr = S.blank(); nr.hotel = { name: h.name, type: h.type, role: h.role, country: h.country };
+    replaceRec(nr, null); go('hotel');
   }
-  function askNew() {
-    if (!S.hasAnswers(rec)) { newCheck(); return; }
+  /* The confirm dialog: o = { title, text, yes, act, id, back (the id to focus on Cancel), focusYes } */
+  function ask(o) {
     var d = $('confirm');
-    d.innerHTML = '<h2 id="confirm-title">Start a new check?</h2><p>' + (ST.kind === 'memory' ? 'Your answers can\'t be saved in this browser. Save this check as a file first, or it will be lost.' : 'This check stays under Your checks in this browser.') + ' The hotel details carry over.</p>' +
-      '<div class="btnrow"><button type="button" class="btn primary" data-act="new-yes">Start a new check</button><button type="button" class="btn" data-act="new-no">Cancel</button></div>';
+    ui.confirmBack = o.back || '';
+    d.innerHTML = '<h2 id="confirm-title">' + esc(o.title) + '</h2><p>' + esc(o.text) + '</p>' +
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="' + o.act + '-yes"' + (o.id ? ' data-id="' + esc(o.id) + '"' : '') + '>' + esc(o.yes) + '</button><button type="button" class="btn" data-act="' + o.act + '-no">Cancel</button></div>';
     if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
-    var b = d.querySelector('[data-act="new-yes"]'); if (b) b.focus();
+    var b = d.querySelector('[data-act="' + o.act + (o.focusYes ? '-yes' : '-no') + '"]'); if (b) b.focus();
+  }
+  function askNew(from) {
+    if (!S.hasAnswers(rec)) { newCheck(); return; }
+    ask({ title: 'Start a new check?', act: 'new', yes: 'Start a new check', back: from || 'new-check', focusYes: true,
+      text: (ST.kind === 'memory' ? 'Your answers can\'t be saved in this browser. Save this check as a file first, or it will be lost.' : 'This check stays under Your checks in this browser.') + ' The hotel details carry over.' });
+  }
+  function askRemove(id) {
+    ask({ title: 'Remove this check?', act: 'remove', yes: 'Remove', id: id, back: 'rm-' + uid(id), focusYes: false,
+      text: 'It cannot be brought back. Save it as a file first if you may need it.' });
+  }
+  function removeCheck(id) {
+    var items = [].slice.call(document.querySelectorAll('#mychecks li')), pos = items.map(function (li) { return li.getAttribute('data-id'); }).indexOf(id);
+    removed[id] = 1; idx.ids = idx.ids.filter(function (x) { return x !== id; }); ST.del(REC + id);
+    if (id === rec.id) { replaceRec(S.blank(), null); rec.step = 'start'; }
+    flush(); ui.listFocus = pos < 0 ? 0 : pos; render();
   }
   function closeConfirm() { var d = $('confirm'); if (d.open) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); } }
+  function confirmBack() { var b = ui.confirmBack && $(ui.confirmBack); (b || $('h') || $('view')).focus(); }
 
   /* ---------- copy, downloads, files ---------- */
-  function copyText(text, done) {
-    var ok = false;
-    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast(done || 'Copied.'); }, function () { showCopy('Copying was blocked here. Select the text below and copy it.', 'Text to copy', text); }); return; } } catch (e) {}
-    if (!ok) showCopy('Select the text below and copy it.', 'Text to copy', text);
+  function copyText(text, done, from) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast(done || 'Copied.'); }, function () { showCopy('Copying was blocked here. Select the text below and copy it.', 'Text to copy', text, from); }); return; } } catch (e) {}
+    showCopy('Select the text below and copy it.', 'Text to copy', text, from);
   }
-  function showCopy(msg, label, text) { ui.copy = { msg: msg, label: label, text: text }; render(); var t = $('copy-text'); if (t) { t.focus(); t.select(); } }
+  function showCopy(msg, label, text, from) { ui.copy = { msg: msg, label: label, text: text, from: from || (ui.copy && ui.copy.from) || '' }; render(); var t = $('copy-text'); if (t) { t.focus(); t.select(); } }
   var dlP = null;
+  /* the downloads capability, or null (not offered, refused, or no answer within 10 s) */
   function downloads() {
     if (!dlP) dlP = new Promise(function (res) {
-      try { var c = window.claude; if (!c || typeof c.use !== 'function') { res(null); return; } Promise.resolve(c.use('downloads')).then(function (d) { res(d || null); }, function () { res(null); }); } catch (e) { res(null); }
+      var timer = setTimeout(function () { res(null); }, DL_MS);
+      function end(v) { clearTimeout(timer); res(v || null); }
+      try { var c = window.claude; if (!c || typeof c.use !== 'function') { end(null); return; } Promise.resolve(c.use('downloads')).then(end, function () { end(null); }); } catch (e) { end(null); }
     });
     return dlP;
   }
   function slug(s) { s = String(s || ''); if (s.normalize) s = s.normalize('NFKD').replace(/[̀-ͯ]/g, ''); return s.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60); }
   function fileBase() { return 'Do-you-need-AI_' + (slug(rec.hotel.name) || 'check') + '_' + today(); }
-  function offer(filename, data, fallback) {
-    return downloads().then(function (dl) {
-      if (!dl || typeof dl.save !== 'function') { fallback(T.noDl); return 'fallback'; }
-      return Promise.resolve(dl.save({ filename: filename, data: data })).then(function () { toast('Saved ' + filename); return 'saved'; }, function (e) {
-        var code = e && e.code;
-        if (code === 'declined') { toast('Download cancelled.'); return 'declined'; }
-        if (code === 'rate_limited') { toast('A download is already waiting for your answer.'); return 'busy'; }
-        fallback(T.noDl); return 'fallback';
-      });
+  function setBusy(act, on) {
+    if (on) ui.busy[act] = true; else delete ui.busy[act];
+    document.querySelectorAll('[data-act="' + act + '"]').forEach(function (b) {
+      if (on) { b.setAttribute('aria-busy', 'true'); b.setAttribute('aria-disabled', 'true'); b.textContent = 'Preparing…'; }
+      else { b.removeAttribute('aria-busy'); b.removeAttribute('aria-disabled'); b.textContent = b.getAttribute('data-label') || b.textContent; }
     });
   }
+  /* One download through the capability; act = the button (pdf | save-file). Returns 'saved' | 'declined' | 'busy' | 'fallback'. */
+  function offer(act, filename, data, fallback) {
+    if (ui.busy[act]) return Promise.resolve('busy');
+    setBusy(act, true);
+    function fb(msg) { setBusy(act, false); fallback(msg); return 'fallback'; }
+    return downloads().then(function (dl) {
+      if (!dl || typeof dl.save !== 'function') return fb(T.noDl);
+      return Promise.resolve().then(function () { return dl.save({ filename: filename, data: data }); }).then(function () { setBusy(act, false); toast('Saved ' + filename); return 'saved'; }, function (e) {
+        var code = e && e.code;
+        if (code === 'declined') { setBusy(act, false); toast('Download cancelled.'); return 'declined'; }
+        if (code === 'rate_limited') { setBusy(act, false); toast('A download is already waiting for your answer.'); return 'busy'; }
+        return fb(/^(unavailable|not_granted)$|^capability/.test(String(code || '')) ? T.noDl : T.saveFail);
+      });
+    }).catch(function () { return fb(T.saveFail); });
+  }
   function fileDoc() { return S.fileDoc(rec); }
-  function saveFile() {
+  function saveFile(from) {
     flush();
     var text = JSON.stringify(fileDoc(), null, 1);
-    return offer(fileBase() + '.json', text, function (msg) { showCopy(msg + ' Copy saved check: keep this text, and paste it under Open a saved file to continue later.', 'Saved check', text); });
+    return offer('save-file', fileBase() + '.json', text, function (msg) { showCopy(msg + ' Copy saved check: keep this text, and paste it under Open a saved file to continue later.', 'Saved check', text, from); });
   }
   function pdfBytes() {
     if (!window.R3Pdf || !window.jspdf) throw new Error('no PDF library');
@@ -420,19 +606,36 @@
   }
   function downloadPdf() {
     var m = model(), bytes;
-    try { bytes = pdfBytes(); } catch (e) { showCopy(T.pdfFail, 'The plan as text', RES.planText(m)); return Promise.resolve('failed'); }
-    return offer(fileBase() + '.pdf', bytes, function (msg) { showCopy(msg, 'The plan as text', RES.planText(m)); });
+    try { bytes = pdfBytes(); } catch (e) { showCopy(T.pdfFail, 'The plan as text', RES.planText(m), 'pdf'); return Promise.resolve('failed'); }
+    return offer('pdf', fileBase() + '.pdf', bytes, function (msg) { showCopy(msg, 'The plan as text', RES.planText(m), 'pdf'); });
   }
+  /* Open a saved file (text). Returns false for a bad or newer file; true when it opens (synchronously, except with artifact
+     storage, where the stored copy of the same check is read first). A file of a check this browser holds in a newer version opens
+     as a copy (clean-up H2). */
   function openText(text) {
     var doc = null; try { doc = JSON.parse(text); } catch (e) { doc = null; }
     var r = doc && S.readFile(D, MIG || {}, doc);
+    if (r && r.newer) { ui.fileErr = T.newerFile; render(); return false; }
     if (!r) { ui.fileErr = T.badFile; render(); return false; }
     ui.fileErr = '';
-    flush();
-    rec = r.rec; idx.cur = rec.id;
-    if (r.info.v3) rec.step = S.place(D, rec);
-    ui.toTop = true; save(); render(); toast('Opened the saved check.');
+    var f = r.rec;
+    function apply(stored) {
+      var copy = S.openMode(f, stored) === 'copy';
+      flush();
+      if (copy) f.id = S.newId();
+      replaceRec(f, copy ? null : stored ? stored.updated : null);
+      if (r.info.v3) rec.step = S.place(D, rec);
+      ui.toTop = true; save(); render(); toast(copy ? T.copyOpened : 'Opened the saved check.');
+    }
+    if (f.id === rec.id) { apply(rec); return true; }
+    var p = ST.peek(REC + f.id);
+    if (p !== undefined) { apply(parseRec(p)); return true; }
+    loadRec(f.id).then(apply);
     return true;
+  }
+  /* Take the other tab's version of this check (conflict, or a change seen while nothing is waiting to be saved here). */
+  function adopt(other) {
+    var st = rec.step; rec = other; rec.step = st; rec.step = S.place(D, rec); base = other.updated; ui.conflict = null; render();
   }
 
   /* ---------- wiring ---------- */
@@ -441,23 +644,27 @@
     var act = t.getAttribute('data-act'), id = t.getAttribute('data-id');
     switch (act) {
       case 'begin': case 'resume': case 'next': case 'back': case 'change': case 'continue': send(act); break;
-      case 'new': askNew(); break;
+      case 'new': askNew(t.id); break;
       case 'new-yes': closeConfirm(); newCheck(); break;
-      case 'new-no': closeConfirm(); var nb = $('new-check'); if (nb) nb.focus(); break;
+      case 'new-no': closeConfirm(); confirmBack(); break;
+      case 'remove-check': askRemove(id); break;
+      case 'remove-yes': closeConfirm(); removeCheck(id); break;
+      case 'remove-no': closeConfirm(); confirmBack(); break;
       case 'why': ui.why[id] = !ui.why[id]; ui.focus = t.id || null; t.setAttribute('aria-expanded', String(!!ui.why[id])); var w = $('why-' + uid(id)); if (w) w.hidden = !ui.why[id]; break;
       case 'first-open': markFirstOpen(rec.step); break;
-      case 'goto-mh': ui.mark = id; rec.step = 'must'; ui.warned = ''; ui.copy = null; save(); render(); var c = $('card-' + id); if (c) { c.scrollIntoView({ block: 'center' }); var inp = c.querySelector('input:checked') || c.querySelector('input'); if (inp) inp.focus({ preventScroll: true }); } break;
+      case 'goto-mh': send('goto-mh', id); break;
       case 'goto-where': send('goto', 'where'); break;
-      case 'imported-ok': if (rec.imported) { rec.imported.seen = true; save(); render(); } break;
-      case 'copy': copyText(RES.summaryText(model()), 'Copied the result.'); break;
-      case 'copy-person': copyText(RES.personText(model(), id), 'Copied.'); break;
+      case 'imported-ok': if (rec.imported) { rec.imported.seen = true; ui.focus = 'h'; save(); render(); } break;
+      case 'conflict-theirs': if (ui.conflict) { adopt(ui.conflict); ui.focus = 'h'; render(); toast('Showing the other version of this check.'); } break;
+      case 'conflict-mine': if (ui.conflict) { base = ui.conflict.updated; ui.conflict = null; save(); flush(); ui.focus = 'h'; render(); toast('Your answers are saved.'); } break;
+      case 'copy': copyText(RES.summaryText(model()), 'Copied the result.', 'copy'); break;
+      case 'copy-person': copyText(RES.personText(model(), id), 'Copied.', t.id); break;
       case 'copy-box': var ta = $('copy-text'); if (ta) copyText(ta.value, 'Copied.'); break;
-      case 'copy-close': ui.copy = null; render(); break;
-      case 'pdf': downloadPdf(); break;
-      case 'save-file': saveFile(); break;
+      case 'copy-close': { var from = ui.copy && ui.copy.from; ui.copy = null; ui.focus = from && from !== 'copy-box' ? from : 'h'; render(); if (document.activeElement === document.body) { var hh = $('h'); if (hh) hh.focus(); } break; }
+      case 'pdf': if (!ui.busy.pdf) downloadPdf(); break;
+      case 'save-file': if (!ui.busy['save-file']) saveFile(t.id); break;
       case 'paste-open': var p = $('paste-in'); if (p) openText(p.value); break;
-      case 'open-check': loadRec(id).then(function (r) { if (!r) { toast('This check could not be opened.'); return; } flush(); rec = r; idx.cur = r.id; ui.toTop = true; save(); render(); }); break;
-      case 'remove-check': idx.ids = idx.ids.filter(function (x) { return x !== id; }); ST.del(REC + id); if (id === rec.id) { rec = S.blank(); idx.cur = rec.id; } ST.set(KEY, JSON.stringify(idx)); render(); break;
+      case 'open-check': loadRec(id).then(function (r) { if (!r) { toast('This check could not be opened.'); return; } flush(); replaceRec(r, r.updated); ui.toTop = true; save(); render(); }); break;
     }
   });
   document.addEventListener('change', function (e) {
@@ -472,30 +679,66 @@
       var fr = new FileReader(); fr.onload = function () { openText(String(fr.result)); }; fr.onerror = function () { ui.fileErr = T.badFile; render(); }; fr.readAsText(t.files[0]);
     }
   });
-  document.addEventListener('input', function (e) { var t = e.target; if (t.matches('input[type=text][data-h]')) { rec.hotel[t.getAttribute('data-h')] = t.value.slice(0, 120); save(); } });
-  $('confirm').addEventListener('cancel', function () { setTimeout(function () { var nb = $('new-check'); if (nb) nb.focus(); }, 0); });
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (t.matches('input[type=text][data-h]')) { rec.hotel[t.getAttribute('data-h')] = t.value.slice(0, 120); save(); }
+    else if (t.id === 'uc-search') send('search', t.value);
+  });
+  $('confirm').addEventListener('cancel', function () { setTimeout(confirmBack, 0); });
   /* print opens the folds and closes them again after; a second beforeprint before afterprint (seen when printing to PDF) keeps the first state */
   window.addEventListener('beforeprint', function () { document.querySelectorAll('details.fold').forEach(function (d) { if (!d.hasAttribute('data-was')) d.setAttribute('data-was', d.open ? '1' : ''); d.open = true; }); });
   window.addEventListener('afterprint', function () { document.querySelectorAll('details.fold[data-was]').forEach(function (d) { d.open = d.getAttribute('data-was') === '1'; d.removeAttribute('data-was'); }); });
+  /* a save still waiting when the page is hidden or closed is written now (clean-up L2) */
+  function leave() { if (!ready) return; if (SESSION) timeStep(null); if (saveTimer || SESSION) flush(); }
+  window.addEventListener('pagehide', leave);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') leave(); });
+  /* another tab changed the index or this check (localStorage only; clean-up M1, M2) */
+  window.addEventListener('storage', function (e) {
+    if (!ready || ST.kind !== 'local' || !e.key) return;
+    if (e.key === KEY) { mergeIdx(e.newValue); if (rec.step === 'start') drawMyChecks(); return; }
+    if (e.key === REC + rec.id && e.newValue) {
+      var other = parseRec(e.newValue);
+      if (!other || other.updated === base || other.updated === rec.updated) return;
+      if (saveTimer) { ui.conflict = other; drawBanner(); }
+      else { adopt(other); toast('Updated with the answers from another tab.'); }
+    }
+  });
 
   /* ---------- start ---------- */
+  /* Boot settles once: with the stored check, or (no storage answer within 3 s, or a failed read) in memory with the banner. */
   function boot() {
-    return ST.init().then(function () { return ST.get(KEY); }).then(function (t) {
-      var I = null; try { I = t ? JSON.parse(t) : null; } catch (e) { I = null; }
-      if (I && Array.isArray(I.ids)) { idx = { v: 1, cur: String(I.cur || ''), ids: I.ids.filter(function (x) { return typeof x === 'string'; }) }; return idx.cur ? loadRec(idx.cur) : null; }
-      /* first visit: checks of the earlier version in this browser are imported once (never written back) */
+    var done = false, timer = null;
+    function finish(r) {
+      if (done) return; done = true; clearTimeout(timer);
+      if (r) { rec = r; rec.step = S.place(D, rec); base = r.updated; } else idx.cur = rec.id;
+      ready = true; render();
+    }
+    function toMemory() { ST.fail(); idx = { v: 1, cur: rec.id, ids: [] }; finish(null); }
+    timer = setTimeout(function () { if (!done) toMemory(); }, BOOT_MS);
+    Promise.resolve().then(function () { return ST.init(); }).then(function () { return done ? null : ST.get(KEY); }).then(function (t) {
+      if (done) return null;
+      var I = parseIdx(t);
+      if (I) { idx = I; return idx.cur ? ST.get(REC + idx.cur).then(parseRec) : null; }
+      /* first visit: checks of the earlier version in this browser are imported once (never written back). Only seen when this page
+         shares its origin with readiness-2 (a local or same-site copy); a published artifact has its own origin. */
       var old = null; try { old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); } catch (e) { old = null; }
       var list = old && MIG ? S.fromV2Store(D, MIG, old) : [];
       if (!list.length) return null;
-      return Promise.all(list.map(function (x) { idx.ids.push(x.rec.id); return ST.set(REC + x.rec.id, JSON.stringify(x.rec)); })).then(function () { idx.cur = list[0].rec.id; return list[0].rec; });
-    }).then(function (r) {
-      if (r) { rec = r; rec.step = S.place(D, rec); } else { idx.cur = rec.id; }
-      ready = true; render();
-    });
+      return Promise.all(list.map(function (x) { idx.ids.push(x.rec.id); return ST.set(REC + x.rec.id, JSON.stringify(x.rec)); })).then(function () {
+        idx.cur = list[0].rec.id;
+        return ST.set(KEY, JSON.stringify(idx)); /* clean-up L3: the import is written to the index at once */
+      }).then(function () { return list[0].rec; });
+    }).then(finish, toMemory);
   }
   window.Readiness3 = {
     ready: function () { return ready; },
-    state: function () { var a = A(); return { step: rec.step, storage: ST.kind, use: rec.use, gates: R.askedGates(D, a.use).map(function (g) { return g.id; }), visible: R.visible(D, a.use, a.gates).map(function (q) { return q.id; }), open: S.open(D, rec, rec.step), imported: rec.imported, verdict: rec.step === 'result' || rec.step === 'stop' ? model().verdict : null }; },
+    state: function () {
+      var a = A();
+      return { step: rec.step, storage: ST.kind, saved: ST.kind === 'memory' ? 'memory' : ui.conflict ? 'conflict' : saveTimer ? 'pending' : 'saved', use: rec.use,
+        gates: R.askedGates(D, a.use).map(function (g) { return g.id; }), visible: R.visible(D, a.use, a.gates).map(function (q) { return q.id; }), open: S.open(D, rec, rec.step),
+        imported: rec.imported, verdict: rec.step === 'result' || rec.step === 'stop' ? model().verdict : null,
+        copy: !!ui.copy, busy: Object.keys(ui.busy), conflict: !!ui.conflict, fileErr: ui.fileErr, session: SESSION };
+    },
     record: function () { return JSON.parse(JSON.stringify(rec)); },
     model: model, send: send, fileDoc: fileDoc, openText: openText, flush: flush,
     summaryText: function () { return RES.summaryText(model()); }, planText: function () { return RES.planText(model()); },

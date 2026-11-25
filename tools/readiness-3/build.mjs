@@ -12,7 +12,7 @@ import { scan, pageText, scanSources } from './lib/banned.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = p => readFileSync(join(here, p), 'utf8');
-export const VERSION = '3.0.0';
+export const VERSION = '3.0.1';
 
 /* The use-case explainer for the picker's "Your choice" panel: { <use id>: { does, how } } for exactly the 99 v3 use cases. */
 export function explainModel(E, ids) {

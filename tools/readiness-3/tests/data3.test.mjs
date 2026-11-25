@@ -81,5 +81,6 @@ ok([...caps].every(a => runtime.glossary[a]), 'every acronym in a question is in
 ok(eq(R3D.acronyms(runtime, 'Does the PMS send data to the AI tool and IT?').map(x => x.abbr), ['PMS', 'AI', 'IT']), 'acronyms in order of first appearance');
 ok(eq(R3D.acronyms(runtime, ['Is it an ITEM?', 'it is']).length, 0), 'no match inside words or in lower case');
 ok(eq(R3D.acronyms(runtime, 'The F&B team').map(x => x.full), ['food and beverage']), 'F&B spelled out from the glossary');
-ok(R3D.label(runtime, 'owners', 'VEN') === 'Vendor (ask them)' && R3D.label(runtime, 'areas', 'or') === 'Rules and controls' && R3D.label(runtime, 'weights', 'B') === 'Blocker', 'labels from the data');
+ok(runtime.labels.owners.VEN === 'Vendor (ask them)' && runtime.labels.areas.or === 'Rules and controls' && runtime.labels.weights.B === 'Blocker', 'labels from the data');
+ok(!('label' in R3D) && !('S2' in R3D.index(runtime)), 'v3.0.1 clean-up D6: R3Data.label and the unused S2 index are gone');
 done();

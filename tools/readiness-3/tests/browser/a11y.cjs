@@ -34,12 +34,12 @@ const PAIRS = [
   ['ink', 'bg', 4.5, 'body text'], ['ink', 'panel', 4.5, 'text on panels and cards'], ['ink2', 'panel', 4.5, 'sub text, help, why line'], ['ink2', 'bg', 4.5, 'step sub line, gloss'],
   ['ink3', 'panel', 4.5, 'meta, question titles'], ['ink3', 'bg', 4.5, 'progress labels, footer'], ['accent', 'panel', 4.5, 'link buttons, fold titles'], ['accent', 'bg', 4.5, 'links on the page'],
   ['panel', 'accent', 4.5, 'primary button, "Must be Yes" tag'], ['ink2', 'na-s', 4.5, 'tags'], ['ink', 'accent-soft', 4.5, 'chosen answer, info banner and notes'], ['ink', 'md-s', 4.5, 'warning banner, notes'],
-  ['ink', 'lo-s', 4.5, 'error banner, sensitive flag'], ['ink2', 'hi-s', 4.5, 'verdict kicker (Ready)'], ['ink2', 'md-s', 4.5, 'verdict kicker (Almost ready)'], ['ink2', 'lo-s', 4.5, 'verdict kicker (Not ready)'],
+  ['ink', 'lo-s', 4.5, 'error banner'], ['ink', 'accent-soft', 4.5, 'sensitive flag (information style, v3.0.1)'], ['panel', 'accent', 4.5, 'sensitive flag icon'], ['ink2', 'hi-s', 4.5, 'verdict kicker (Ready)'], ['ink2', 'md-s', 4.5, 'verdict kicker (Almost ready)'], ['ink2', 'lo-s', 4.5, 'verdict kicker (Not ready)'],
   ['ink2', 'na-s', 4.5, 'verdict kicker (Not enough info)'], ['ink2', 'accent-soft', 4.5, 'verdict kicker (Soft stop)'], ['ink3', 'hi-s', 4.5, 'top 3 owner on panels'],
   ['hi', 'hi-s', 3, 'verdict word Ready (large text)'], ['md', 'md-s', 3, 'verdict word Almost ready (large)'], ['lo', 'lo-s', 3, 'verdict word Not ready (large)'], ['na', 'na-s', 3, 'verdict word Not enough info (large)'], ['accent', 'accent-soft', 3, 'verdict word Soft stop (large)'],
   ['hi', 'hi-s', 4.5, 'verdict word Ready as normal text'], ['md', 'md-s', 4.5, 'verdict word Almost ready as normal text'], ['lo', 'lo-s', 4.5, 'verdict word Not ready as normal text'], ['na', 'na-s', 4.5, 'verdict word Not enough info as normal text'], ['accent', 'accent-soft', 4.5, 'verdict word Soft stop as normal text'],
   ['panel', 'ink', 4.5, 'toast'], ['ctl', 'panel', 3, 'borders of answers, buttons and fields (UI part)'], ['ctl', 'bg', 3, 'field borders on the page'], ['accent', 'bg', 3, 'focus outline on the page'], ['accent', 'panel', 3, 'focus outline on panels'],
-  ['accent', 'accent-soft', 3, 'focus outline on a chosen answer'], ['md', 'panel', 3, 'open-question outline (UI part)'], ['md', 'md-s', 3, 'note border'], ['lo', 'lo-s', 3, 'flag border']
+  ['accent', 'accent-soft', 3, 'focus outline on a chosen answer'], ['md', 'panel', 3, 'open-question outline (UI part)'], ['md', 'md-s', 3, 'note border'], ['accent', 'accent-soft', 3, 'flag border and icon (information style, v3.0.1)']
 ];
 const table = [];
 for (const [scheme, T] of [['light', light], ['dark', dark]]) {
@@ -153,6 +153,9 @@ async function scanTargets(p) {
     ['4-where', async p => { await openGolden(p, 1, 'where'); }],
     ['5-use-notes-why', async p => { await openGolden(p, 15, 'use'); await p.click('[data-act="why"]'); }],
     ['5-use-notfit', async p => { await openGolden(p, 28, 'use'); }],
+    /* v3.0.1: step 5 with How it works open (questions held back, the "how many follow" line), and the use-case search */
+    ['5-use-hiw-open', async p => { const d = goldenDoc(G[0]); d.check.gates = {}; d.check.step = 'use'; d.check.id = 'a11y-hiw-open'; await p.evaluate(t => window.Readiness3.openText(t), JSON.stringify(d)); }],
+    ['4-where-search', async p => { await openGolden(p, 1, 'where'); await p.fill('#uc-search', 'chat'); }],
     ['result-ready', async p => { await openGolden(p, 1); }],
     ['result-almost-flag', async p => { await openGolden(p, 19); await p.evaluate(() => document.querySelectorAll('details.fold').forEach(d => { d.open = true; })); }],
     ['result-almost-notes', async p => { await openGolden(p, 15); }],

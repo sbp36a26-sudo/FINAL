@@ -14,7 +14,6 @@
      askedGates(D, use)            the "How it works" questions step 5 opens with (1-2 per use case; the five library gates for None fits)
      visible(D, use, gates)        the use-case questions shown under those answers, in order (equals sim_v3.visible_questions)
      contradictions(D, use, gates, mh)  [{ id: 'm2'|'m4', note }] a Doesn't apply that a gate answer contradicts (§4)
-     notFit(D, use, gates)         the "This may not fit" text of the chosen gate option, or ''
      softStop(D, step2)            { ids: ['s1'|'s2'], messages: [...] } when s1 or s2 is No, else null
      evaluate(D, answers)          the result: verdict, score, dk share, caps, notes, sensitive flag, reason sentence, actions, top 3
      answerOptions(D, kind, id)    the answer buttons (data labels) for 'step2', a must-have id, or a use-case question */
@@ -79,9 +78,6 @@
     var c = contradicted(D, use, gates); mh = mh || {};
     return D.must_haves.filter(function (m) { return m.na && mh[m.id] === 'na' && c[m.id]; }).map(function (m) { return { id: m.id, note: m.contradiction_note }; });
   }
-  function notFit(D, use, gates) {
-    var t = ''; effects(D, use, gates).forEach(function (e) { if (e.effects.not_fit && !t) t = e.effects.not_fit; }); return t;
-  }
   function softStop(D, step2) {
     step2 = step2 || {};
     var ids = D.step2.filter(function (s) { return s.no_effect === 'soft_stop' && step2[s.id] === 'no'; });
@@ -97,6 +93,9 @@
   function task(text, a) { return (a === 'dk' ? 'Find out: ' : 'Make sure: ') + noQ(text); }
   function ownerLabel(D, k) { return D.labels.owners[k] || k; }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  /* A list in the reason sentence names at most two items, then "and N more (see the plan below)" (council v3.0, BUILD NOW 2). */
+  function firstTwo(list) { return list.length <= 2 ? list.join('; ') : list.slice(0, 2).join('; ') + ' and ' + (list.length - 2) + ' more (see the plan below)'; }
 
   /* The result. Follows sim_v3.evaluate exactly for verdict, score, dk, caps and notes. */
   function evaluate(D, A) {
@@ -146,13 +145,13 @@
 
     var items = [];
     D.must_haves.forEach(function (m) {
-      var raw = mhA[m.id], a = raw === 'na' ? 'na' : ANS[raw] ? raw : 'dk';
+      var raw = mhA[m.id], a = raw === 'na' ? 'na' : own(ANS, raw) ? raw : 'dk';
       if (a === 'na' && !m.na) a = 'dk';
       if (a === 'na' && contraSet[m.id]) { a = 'dk'; notes.push(m.contradiction_note); contra.push({ id: m.id, note: m.contradiction_note }); }
       items.push({ id: m.id, kind: 'mh', weight: 'B', raw: raw, answer: a, text: m.text, title: m.title, owner: MH_OWNER });
     });
     qs.forEach(function (q) {
-      var raw = qa[q.id], a = ANS[raw] ? raw : 'dk'; // Doesn't apply is not offered on use-case questions: counts as Don't know yet
+      var raw = qa[q.id], a = own(ANS, raw) ? raw : 'dk'; // Doesn't apply is not offered on use-case questions: counts as Don't know yet
       items.push({ id: q.id, kind: 'q', weight: q.weight, raw: raw, answer: a, text: q.text, area: q.area, owner: q.owner });
     });
     var W = D.scoring.weights, Fc = D.scoring.factors;
@@ -189,7 +188,7 @@
     var label = function (i) { return i.kind === 'mh' ? i.title : i.text; };
     if (key === 'info') res.reason = 'More than half of your answers are Don\'t know yet (' + ndk + ' of ' + app.length + ').';
     else if (key === 'not') {
-      if (bNo.length) res.reason = (bNo.length === 1 ? '1 Must be Yes question is No: ' : bNo.length + ' Must be Yes questions are No: ') + bNo.map(label).join('; ') + (/[?.]$/.test(label(bNo[bNo.length - 1])) ? '' : '.');
+      if (bNo.length) { var named = firstTwo(bNo.map(label)); res.reason = (bNo.length === 1 ? '1 Must be Yes question is No: ' : bNo.length + ' Must be Yes questions are No: ') + named + (/[?.]$/.test(named) ? '' : '.'); }
       else if (score < 50) res.reason = 'Too few answers are Yes: fewer than half of the possible points.';
       else res.reason = 'Fewer than half of the Must be Yes questions are Yes (' + bYes.length + ' of ' + blockers.length + ').';
     } else if (key === 'ready') res.reason = 'Every Must be Yes question is Yes, and nothing holds the check back.';
@@ -200,7 +199,7 @@
       else if (soft) res.reason = plural(soft, 'Must be Yes question is', 'Must be Yes questions are') + ' not Yes yet (Planned or Don\'t know yet).';
       else if (nf) res.reason = 'This use case may not fit your hotel.';
       else if (res.caps.indexOf('gate unanswered or dk') >= 0 || res.caps.indexOf('gate cap') >= 0) res.reason = 'A question about how the tool works is answered Don\'t know yet.';
-      else if (s2held.length) res.reason = 'In step 2 you did not answer Yes to: ' + s2held.map(function (s) { return s.title; }).join('; ') + '.';
+      else if (s2held.length) res.reason = 'In step 2 you did not answer Yes to: ' + firstTwo(s2held.map(function (s) { return s.title; })) + '.';
       else if (none) res.reason = 'None of the listed use cases fits, so the questions are general.';
       else if (dk >= 0.25) res.reason = 'A quarter or more of your answers are Don\'t know yet.';
       else res.reason = 'Some answers are not Yes yet.';
@@ -220,5 +219,5 @@
   }
 
   root.R3Rules = { RULES: RULES, VERDICT: VERDICT, askedGates: askedGates, effects: effects, visible: visible, contradictions: contradictions,
-    notFit: notFit, softStop: softStop, evaluate: evaluate, answerOptions: answerOptions, task: task };
+    softStop: softStop, evaluate: evaluate, answerOptions: answerOptions };
 })(typeof self !== 'undefined' ? self : this);

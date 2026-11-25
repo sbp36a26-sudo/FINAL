@@ -2,7 +2,10 @@
 //  1. every use case (99 + None of these fits) × every combination of its asked "How it works" answers (each option, or unanswered),
 //     from tests/fixtures/sim_v3_visible.json (written by sim_v3.visible_questions, tests/gen_sim_fixture.py): step 5 is drawn and
 //       - the How it works cards come first, in the data's order, each with its exact text and option labels;
-//       - the question cards shown equal R3Rules.visible AND sim_v3.visible_questions (same ids, same order);
+//       - once every How it works question has an answer, the question cards shown equal R3Rules.visible AND
+//         sim_v3.visible_questions (same ids, same order); before that (council v3.0, BUILD NOW 1, v3.0.1) no question card is drawn,
+//         R3Rules.visible still equals sim_v3 (scoring unchanged), and the line #gates-first names how many questions will follow:
+//         the smallest and largest count over every way the open How it works questions can still be answered (from sim_v3);
 //       - each question card shows its exact text, "Who answers: <owner>", its weight label ("Must be Yes" for blockers, else
 //         Important / Nice to have), the Planned help line, a collapsed "Why we ask" toggle holding its exact why line, and answers
 //         Yes / Planned / No / Don't know yet;
@@ -33,6 +36,7 @@ function askedGates(use) {
   return D.use_cases.find(x => x.id === use).gates.filter(g => g.asked);
 }
 const WEIGHT = { B: 'Must be Yes', I: D.labels.weights.I, N: D.labels.weights.N };
+const D_title = id => (D.use_cases.find(u => u.id === id) || {}).title + ' ' + (D.use_cases.find(u => u.id === id) || {}).department;
 const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up yet, answer Planned.';
 
 (async () => {
@@ -43,7 +47,7 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
     const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(String(e)));
     await p.goto(URL); await p.waitForFunction(() => window.Readiness3 && window.Readiness3.ready());
-    let combos = 0, questions = 0;
+    let combos = 0, questions = 0, hidden = 0;
     for (const use of Object.keys(SIM)) {
       const gates = askedGates(use);
       /* draw every combination in the page and read what is on screen */
@@ -62,7 +66,9 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
           });
           /* area headings: the heading right before each question card */
           const heads = [...view.querySelectorAll('fieldset.card')].map(c => { let e = c.previousElementSibling; while (e && e.tagName === 'FIELDSET') e = e.previousElementSibling; return e && e.classList.contains('areahead') ? e.textContent : null; });
-          return { step: st.step, visible: st.visible, cards, heads, hiw: !!document.getElementById('hiw-h'), wide: document.documentElement.scrollWidth > window.innerWidth };
+          const gf = document.getElementById('gates-first');
+          return { step: st.step, visible: st.visible, cards, heads, hiw: !!document.getElementById('hiw-h'), wide: document.documentElement.scrollWidth > window.innerWidth,
+            gf: gf ? { min: +gf.getAttribute('data-min'), max: +gf.getAttribute('data-max'), text: gf.textContent } : null };
         });
       }, [use, SIM[use]]);
       SIM[use].forEach(([ga, simIds], i) => {
@@ -74,9 +80,19 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
         ok(s.cards.slice(0, gc.length).every(c => c.kind === 'gate'), t + ': How it works cards come first');
         ok(JSON.stringify(gc.map(c => c.id)) === JSON.stringify(gates.map(g => g.id)), t + ': How it works cards ' + gc.map(c => c.id) + ' = ' + gates.map(g => g.id));
         gc.forEach(c => { const g = gates.find(x => x.id === c.id); ok(g && c.text === g.text && JSON.stringify(c.opts) === JSON.stringify(g.options.map(o => o.label)), t + ': gate ' + c.id + ' verbatim'); });
-        const ids = qc.map(c => c.id);
-        ok(JSON.stringify(ids) === JSON.stringify(simIds), t + ': shown = sim_v3.visible_questions\n   shown ' + ids + '\n   sim   ' + simIds);
+        const ids = qc.map(c => c.id), allAnswered = gates.every(g => ga[g.id] != null);
         ok(JSON.stringify(s.visible) === JSON.stringify(simIds), t + ': R3Rules.visible = sim_v3.visible_questions');
+        if (allAnswered) {
+          ok(!s.gf, t + ': no "answer the questions above" line once every How it works question is answered');
+          ok(JSON.stringify(ids) === JSON.stringify(simIds), t + ': shown = sim_v3.visible_questions\n   shown ' + ids + '\n   sim   ' + simIds);
+        } else {
+          hidden++;
+          /* completions: the sim rows that keep the answers given and answer every open How it works question */
+          const lens = SIM[use].filter(([g2]) => gates.every(g => g2[g.id] != null && (ga[g.id] == null || g2[g.id] === ga[g.id]))).map(([, sIds]) => sIds.length);
+          const lo = Math.min(...lens), hi = Math.max(...lens), want = lo === hi ? 'to see the ' + lo + (lo === 1 ? ' question' : ' questions') + ' for this use case.' : 'to see the ' + lo + ' to ' + hi + ' questions for this use case.';
+          ok(qc.length === 0, t + ': no question cards before the How it works answers (' + qc.length + ')');
+          ok(s.gf && s.gf.min === lo && s.gf.max === hi && s.gf.text.includes(want) && s.gf.text.includes('count as Don\'t know yet.'), t + ': the line says how many questions follow (' + lo + '-' + hi + '): ' + (s.gf && s.gf.text));
+        }
         let prevArea = null;
         qc.forEach((c, k) => {
           questions++;
@@ -95,7 +111,7 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
       });
     }
     ok(combos === 1636, tag + ': ' + combos + ' combinations (expected 1636)');
-    console.log(tag + ': ' + combos + ' use case × How it works combinations drawn, ' + questions + ' question cards checked');
+    console.log(tag + ': ' + combos + ' use case × How it works combinations drawn (' + hidden + ' with How it works open: questions held back), ' + questions + ' question cards checked');
 
     /* 2: every use case reachable in the picker */
     await p.evaluate(() => window.Readiness3.send('new'));
@@ -117,6 +133,23 @@ const PLANNED = 'If your vendor has confirmed it in writing but it isn\'t set up
       }
     }
     ok(reached === 99, tag + ': all 99 use cases reachable in the picker (' + reached + ')');
+    /* council v3.0, BUILD NOW 7: search over the 99 titles */
+    await p.fill('#uc-search', 'chat');
+    const found = await p.$$eval('input[name="n-use"]', is => is.map(i => i.value));
+    ok(found.includes('gx-2') && !(await p.$('#dept')) && found.every(id => /chat/i.test(D_title(id))), tag + ': search "chat" finds gx-2 (' + found.join(' ') + '), the department list is hidden');
+    const sz = await p.$eval('label[for="r-use-gx-2"]', l => l.getBoundingClientRect().height);
+    ok(sz >= 44, tag + ': search results are 44 px targets (' + sz + ')');
+    await p.check('#r-use-gx-2');
+    ok((await p.evaluate(() => window.Readiness3.state().use)) === 'gx-2' && (await p.inputValue('#uc-search')) === 'chat', tag + ': a search result can be chosen; the search stays');
+    await p.fill('#uc-search', 'zzzz nothing');
+    ok((await p.textContent('#uc-count')).startsWith('No use case matches'), tag + ': no match says so');
+    await p.fill('#uc-search', '');
+    ok(!!(await p.$('#dept')) && (await p.$$('#uc-count')).length === 0 && (await p.$eval('#dept', s => s.value)) === D.use_cases.find(u => u.id === 'gx-2').department, tag + ': empty search shows the department list again, on the chosen use case\'s department');
+    /* keyboard: type into the search, Tab to the results */
+    await p.focus('#uc-search'); await p.keyboard.type('pricing');
+    await p.keyboard.press('Tab');
+    const kf = await p.evaluate(() => document.activeElement && document.activeElement.name);
+    ok(kf === 'n-use', tag + ': keyboard: Tab from the search reaches the results (' + kf + ')');
     ok(errs.length === 0, tag + ': no page errors ' + errs.join(' | '));
     await ctx.close();
     console.log('questions ' + tag + ': ' + (pass - p0) + ' passed, ' + (fail - f0) + ' failed');

@@ -1,4 +1,4 @@
-/* Do you need AI? v3 (tools/readiness-3): the PDF (spec §6.10). Pure; runs in the page and in the Node tests (tests/pdf3.test.mjs).
+/* Do you need AI? v3 (tools/readiness-3): the PDF (spec §6.10). Pure; runs in the page and in the Node tests (tests/result3.test.mjs, tests/banned.test.mjs).
    blocks(m)  m = R3Result.model(...), the object the result screen draws, so the PDF and the screen say the same.
               Page 1: title, hotel, use case, date, the verdict box (verdict, reason), the flag, the notes, the top 3 actions.
               Then, in the result's order: details by area, action plan by person, questions for the vendor, every question and
@@ -15,7 +15,7 @@
     b.push({ k: 'meta', t: 'Use case: ' + (m.stop ? 'not chosen (the check stopped at step 2)' : m.useTitle) });
     b.push({ k: 'meta', t: 'Date: ' + m.date });
     b.push({ k: 'verdict', name: m.verdict, reason: m.reason, tone: m.tone });
-    if (m.flag) b.push({ k: 'note', t: m.flag, tone: 'lo' });
+    if (m.flag) b.push({ k: 'note', t: m.flag, tone: 'accent' }); /* information, not a second failure (council v3.0, BUILD NOW 5) */
     m.notes.forEach(function (n) { b.push({ k: 'note', t: n.note, tone: 'md' }); });
     if (m.notFit) b.push({ k: 'note', t: m.notFit, tone: 'md' });
     if (m.stop) {
@@ -129,7 +129,7 @@
       doc.setPage(p); var ft = footer(p, n); footers.push(ft);
       stroke('line', 0.2); doc.line(M, H - 19, W - M, H - 19);
       f('normal', SZ.small, 'ink2'); doc.text(safe(m.disclaimer), M, H - 14.5);
-      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? 3.0.0', M, H - 10.5);
+      f('normal', SZ.small, 'ink3'); doc.text('Do you need AI? 3.0.1', M, H - 10.5);
       var s = ft; doc.text(s, W - M - doc.getTextWidth(s), H - 10.5);
       if (p > 1) { var hl = doc.splitTextToSize(hd, TW - 4); doc.text(hl[0] + (hl.length > 1 ? '…' : ''), M, 12.5); stroke('line', 0.2); doc.line(M, 15, W - M, 15); }
     }

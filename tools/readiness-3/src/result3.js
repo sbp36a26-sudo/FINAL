@@ -117,5 +117,5 @@
     return L.join('\n');
   }
 
-  root.R3Result = { TONE: TONE, WEIGHT: WEIGHT, model: model, summaryText: summaryText, personText: personText, planText: planText, ansLabel: ansLabel };
+  root.R3Result = { TONE: TONE, WEIGHT: WEIGHT, model: model, summaryText: summaryText, personText: personText, planText: planText };
 })(typeof self !== 'undefined' ? self : this);

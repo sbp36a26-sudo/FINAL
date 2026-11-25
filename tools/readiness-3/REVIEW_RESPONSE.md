@@ -78,3 +78,10 @@ merged and removed ones (`src/store3.js` `fromV2`; `store3.test.mjs`, `build.tes
 | new questions added | 56 | New ids `n1`, `n2`, …; start empty after import | data | `review.test.mjs` count add | `8e0cbed` |
 | added by How it works | 122 | Gate-key ids (`rm-2.ACT_LIMITS`); shown only under their answer; never hidden by `hide_area` | `src/rules3.js` `visible` | `review.test.mjs` "794 … 122"; `rules3.test.mjs` visibility; `browser/questions.cjs` | `d91bf7f` |
 | **Total** | **661 originals → 794 v3 questions** | 661/661 originals accounted for | | `review.test.mjs` "661/661 originals accounted for" | `8e0cbed` |
+
+## 3.0.1 follow-up
+
+The clean-up inventory and the council's code-only BUILD NOW items are answered in `CHANGELOG.md` (3.0.1), one row per bug and per item,
+each with its test. Two rows above change in effect: T11 (step 5 now holds the use-case questions back until the How it works
+questions are answered, with a line saying how many follow; council BUILD NOW 1) and L6 (the reason sentence now names at most two
+items, then "and N more"; council BUILD NOW 2). Scoring, verdicts and the question data are unchanged.
