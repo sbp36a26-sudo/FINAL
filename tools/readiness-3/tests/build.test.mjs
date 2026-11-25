@@ -1,37 +1,39 @@
-// The built page (index.html): its data is read at build time from the catalogue, the workbook-generated questions and the
-// AI Register's files, never copied by hand; counts are computed. Run: node tools/readiness-3/tests/build.test.mjs
+// The built page (index.html): one self-contained file built from src/ and the v3 data; the migration table; no external URLs.
+// Run: node tools/readiness-3/tests/build.test.mjs (after node tools/readiness-3/build.mjs)
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { root, load, data, tester } from './load.mjs';
-import { catalogueModel, rcModel, tqModel } from '../build.mjs';
-const { C, L, F, RC } = load();
+import { root, tester, pageBlock } from './load.mjs';
+import { loadV3 } from '../lib/data3.mjs';
+import { build, explainModel, migrationModel } from '../build.mjs';
 const { ok, done } = tester('build');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const rd = p => readFileSync(join(root, p), 'utf8');
-const html = rd('index.html'), D = data();
-const labels = JSON.parse(rd('../register/data/uc-labels.json')), ref = JSON.parse(rd('../register/data/reference.json'));
+const html = rd('index.html'), { full, runtime } = loadV3();
 
-ok(eq(D.cat, catalogueModel(rd('../use-case-catalogue/index.html'), labels)), 'the inlined catalogue equals the catalogue now (rebuild after it changes)');
-ok(D.cat.nUses === 99 && D.cat.nDepts === 15 && D.cat.cats.length === 4 && D.cat.depts.reduce((a, d) => a + d.uses.length, 0) === D.cat.nUses, '4 areas, 15 departments, 99 use cases, counted');
-D.cat.depts.forEach(d => d.uses.forEach((u, i) => ok(u.id === d.id + '-' + (i + 1), 'use-case id is <dept>-<n>: ' + u.id)));
-ok(eq(D.tq, tqModel(JSON.parse(rd('data/usecase-questions.json')), labels)), 'the inlined tailored questions equal data/usecase-questions.json (with the register\'s high-risk list, v2.1)');
-ok(eq(Object.keys(D.tq.uses), D.cat.depts.flatMap(d => d.uses.map(u => u.id))), 'every catalogue use case has tailored questions (all 99 selectable)');
-ok(D.cat.depts.flatMap(d => d.uses).filter(u => u.notTool).map(u => u.id).join() === 'lg-4', 'lg-4 is flagged as a document, not a tool (from the register labels)');
-// the same build inputs as the readiness check for vendor questions and the provisional label
-const rcHtml = rd('../readiness-check/index.html'), rcD = JSON.parse(rcHtml.match(/<script type="application\/json" id="d-data">([\s\S]*?)<\/script>/)[1]);
-ok(eq(D.rc.reg, rcD.reg), 'the AI Register data embedded here is identical to what the readiness check embeds (labels, items, switches, vendor questions)');
-ok(eq(D.rc, rcModel(rd('../readiness/index.html'), labels, ref)) && !D.rc.reg.labourNotes.CH && !D.rc.reg.labourNotes.GB && !/to\s+verify/i.test(JSON.stringify(D.rc.reg.labourNotes)), 'rules v4 cuts kept: no Swiss or UK labour notes, nothing marked "to verify"');
-const M = RC.model({ rdy: D.rc.rdy, cat: D.cat, reg: D.rc.reg }), M0 = RC.model(rcD);
-ok(M.USES.length === 98 && M0.USES.length === 98, 'the readiness check\'s model knows 98 tools here and there (all but lg-4)');
-let same = 0;
-M0.USES.forEach(x0 => { const x = M.UI[x0.id]; ['France', 'Switzerland', 'United Kingdom', 'Other', ''].forEach(country => { if (eq(RC.legal(M, x, { country }), RC.legal(M0, x0, { country })) && eq(RC.vendorQs(M, x, { actions: [{ group: 'vendor', q: { code: 'T1' } }] }), RC.vendorQs(M0, x0, { actions: [{ group: 'vendor', q: { code: 'T1' } }] }))) same++; }); });
-ok(same === 98 * 5, 'for every tool and country type, the legal panel and the vendor questions equal the readiness check\'s own (' + same + ' of 490)');
-// the page
-ok(/<title>Do you need AI\? v3\.0<\/title>/.test(html) && html.includes("window.R2_STANDALONE = true") && !/fonts\.googleapis/.test(html) && html.includes('id="app" data-state="start"'), 'title and the data-state root');
-ok(html.includes('Student prototype, not legal advice.') && html.includes('as of 24 Nov 2026'), 'student-prototype footer with the content date');
-ok(html.includes('root.RCLogic = api') && html.includes('root.RCStore = api') && html.includes('window.Readiness3 = {') && html.includes('id="r2-font"') && /jsPDF/.test(html), 'the readiness check\'s rules and store, jsPDF and the PDF font are inlined');
-ok(!/AIHA|AI Hospitality Alliance|wikipedia/i.test(html.replace(/<script>[\s\S]*?jsPDF[\s\S]*?<\/script>/, '')), 'no banned source named anywhere in the page');
-['src/content.js', 'src/logic.js', 'src/flow.js', 'src/pdf.js', 'src/app.js', 'src/style.css'].forEach(f => ok(html.includes(rd(f).replace(/<\/script/gi, '<\\/script').slice(0, 400)), 'index.html is built from ' + f + ' as it is now'));
-ok(!/\b(P1|F1|F2|T1|D5|O1|G2s)\b/.test(JSON.stringify(D.tq.uses) + JSON.stringify(C.MUSTS.map(m => [m.name, m.q, m.why, m.good, m.act, m.gloss, m.ev]))), 'internal checklist codes are not in any hotel-facing text');
-ok(D.builtOn && /^\d{4}-\d{2}-\d{2}$/.test(D.builtOn), 'build date');
+ok(html === build().html, 'index.html is the output of build.mjs from the sources as they are now (rebuild after a change)');
+ok(Buffer.byteLength(html) < 3 * 1024 * 1024, 'under 3 MB: ' + Math.round(Buffer.byteLength(html) / 1024) + ' KB');
+ok(/<title>Do you need AI\? v3\.0<\/title>/.test(html) && html.includes('id="app" data-state="start"') && html.includes('Do you need AI? 3.0.0'), 'title, version and the data-state root');
+const own = html.replace(/<script[^>]*id="r3-(jspdf|font)"[^>]*>[\s\S]*?<\/script>/g, '');
+ok(!/<(script|link|img|iframe)\b[^>]*\b(src|href)\s*=/i.test(own) && !/@import|\bfetch\s*\(|fonts\.googleapis/.test(own), 'no script src, link href, @import, fetch or web font (jsPDF\'s own unused code aside)');
+ok(!/postMessage|#use=|R2_STANDALONE|AI Register|Readiness2|R2Logic|RCLogic/.test(html.replace(/<script id="r3-jspdf">[\s\S]*?<\/script>/, '')), 'no hub bridge, no cross-links to other tabs, no v2 code');
+ok(!/<a [^>]*download|createObjectURL/.test(html.replace(/<script id="r3-jspdf">[\s\S]*?<\/script>/, '')), 'no page-started download link (downloads go through the capability)');
+ok(html.includes("window.claude") && html.includes("use('downloads')"), 'downloads through window.claude.use("downloads")');
+ok(eq(pageBlock('r3-data'), runtime), 'the runtime data is inlined unchanged');
+const ex = pageBlock('r3-ex');
+ok(eq(ex, explainModel(JSON.parse(rd('data/explain.json')), runtime.use_cases.map(u => u.id))) && Object.keys(ex).length === 99, 'the explainer for all 99 use cases');
+const r2 = JSON.parse(readFileSync(join(root, '../readiness-2/data/usecase-questions.json'), 'utf8'));
+const mig = pageBlock('r3-mig');
+ok(eq(mig, migrationModel(full, r2)), 'the migration table is built from original_questions[].new_ids');
+const n = Object.values(mig.map).reduce((a, m) => a + Object.keys(m).length, 0);
+ok(n === 661 && eq(Object.entries(mig.counts).sort(), Object.entries({ keep: 395, fix: 105, merge: 65, split: 44, rewrite: 28, remove: 24 }).sort()), '661/661 originals in the table, by action');
+ok(Object.values(mig.map).every(m => Object.values(m).every(a => Array.isArray(a))) && Object.keys(mig.sig).length === 99, 'every use case has its v2.6.1 signature');
+let splitOk = 0, splitN = 0;
+full.use_cases.forEach(u => u.original_questions.filter(o => o.action === 'split').forEach(o => { splitN++; if (mig.map[u.id][o.qid].length >= 2) splitOk++; }));
+ok(splitN === 44 && splitOk === 44, 'split originals map to both parts (' + splitOk + '/44)');
+let gone = 0; full.use_cases.forEach(u => u.original_questions.filter(o => o.action === 'merge' || o.action === 'remove').forEach(o => { if (!mig.map[u.id][o.qid].length) gone++; }));
+ok(gone === 89, 'merged and removed originals carry nothing (89)');
+ok(pageBlock('r3-font') && pageBlock('r3-font').regular.length > 1000 && /<script id="r3-jspdf">[\s\S]*jsPDF/.test(html), 'jsPDF and the PDF font are inlined');
+['src/data3.js', 'src/rules3.js', 'src/store3.js', 'src/result3.js', 'src/pdf3.js', 'src/app3.js', 'src/style.css'].forEach(f => ok(html.includes(rd(f).replace(/<\/script/gi, '<\\/script')), 'index.html carries ' + f + ' as it is now'));
+ok(!/AIHA|AI Hospitality Alliance|wikipedia/i.test(html.replace(/<script id="r3-jspdf">[\s\S]*?<\/script>/, '')), 'no banned source named in the page');
+ok(!/Not sure|Unknown|N\/A/.test(own), 'no "Not sure", "Unknown" or "N/A" in the page');
 done();

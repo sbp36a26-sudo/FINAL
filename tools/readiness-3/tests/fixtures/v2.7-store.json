@@ -1,0 +1,84 @@
+{
+ "_about": "Real store written by the readiness-2 v2.7 standalone page (tools/readiness-2/standalone/index.html, commit 6676e3f) through its own send() API on 25 Nov 2026: hotel, step 2 (q1 n = towards AI in v2.6 polarity, q3 u, q5 n), must-haves with pl/n/k, use case rm-2, tailored answers cycling y/pl/n/k. localStorage key hftp-readiness2-v1.",
+ "state": "result",
+ "store": {
+  "v": 3,
+  "cur": "dynmwvz3k0s1d4al",
+  "checks": {
+   "dynmwvz3k0s1d4al": {
+    "id": "dynmwvz3k0s1d4al",
+    "step": "result",
+    "qv": 2,
+    "Qnew": [],
+    "hotel": {
+     "name": "Hotel Fixture",
+     "role": "gm",
+     "type": "independent",
+     "country": ""
+    },
+    "Q": {
+     "q1": "n",
+     "q2": "y",
+     "q3": "u",
+     "q4": "y",
+     "q5": "n"
+    },
+    "A": {
+     "m1": "y",
+     "m2": "pl",
+     "m3": "n",
+     "m4": "k",
+     "m5": "y",
+     "m6": "y",
+     "m7": "y",
+     "m8": "y",
+     "m9": "pl",
+     "m10": "y"
+    },
+    "By": {
+     "m2": "2027-01-15"
+    },
+    "cat": "Commercial",
+    "dept": "rm",
+    "use": "rm-2",
+    "useName": "Dynamic pricing & rate optimisation (incl. autopilot publishing)",
+    "from": "",
+    "tqSig": "61bc345115",
+    "T": {
+     "pe1": "y",
+     "pe2": "pl",
+     "sk1": "n",
+     "fi1": "k",
+     "te1": "y",
+     "da1": "pl",
+     "or1": "n",
+     "x-auto": "k"
+    },
+    "TBy": {},
+    "snaps": [
+     {
+      "at": "2026-11-25T10:20:49.236Z",
+      "level": "notready",
+      "pct": 55,
+      "pts": 20,
+      "max": 36,
+      "known": 15,
+      "total": 18,
+      "mustYes": 6,
+      "mustN": 10,
+      "rules": "v2.6 (24 Nov 2026)",
+      "use": "rm-2",
+      "sig": "61bc345115"
+     }
+    ],
+    "share": {
+     "named": false
+    },
+    "sharedAt": null,
+    "sharedMode": null,
+    "sharedSig": null,
+    "updated": "2026-11-25T10:20:49.236Z"
+   }
+  }
+ }
+}

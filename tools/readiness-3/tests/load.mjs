@@ -1,40 +1,41 @@
-// Loads the page's pure scripts into one Node context, the way the page does (the readiness check's rules first, as in build.mjs).
+// Loads the page's pure scripts into one Node context, in the page's order (src/page.html), plus helpers shared by the tests.
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 export const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export function load() {
+export function load(withPdf) {
   const ctx = { self: {} }; ctx.globalThis = ctx.self;
-  vm.runInNewContext(readFileSync(join(root, '../readiness-check/src/logic.js'), 'utf8'), ctx, { filename: 'rc-logic.js' });
-  for (const f of ['content.js', 'data3.js', 'rules3.js', 'logic.js', 'flow.js', 'pdf.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
-  return { R3D: ctx.self.R3Data, R3: ctx.self.R3Rules, C: ctx.self.R2Content, L: ctx.self.R2Logic, F: ctx.self.R2Flow, P: ctx.self.R2Pdf, RC: ctx.self.RCLogic };
+  let jspdf = null;
+  if (withPdf) { const j = { atob, btoa, console, TextEncoder, TextDecoder }; j.self = j; j.globalThis = j; vm.runInNewContext(readFileSync(join(root, '../assessment/lib/jspdf.umd.min.js'), 'utf8'), j, { filename: 'jspdf.js' }); jspdf = j.jspdf; }
+  for (const f of ['data3.js', 'rules3.js', 'store3.js', 'result3.js', 'pdf3.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
+  return { R3D: ctx.self.R3Data, R3: ctx.self.R3Rules, S: ctx.self.R3Store, RES: ctx.self.R3Result, P: ctx.self.R3Pdf, jspdf };
 }
-/* The data block the built page carries: { cat, tq, rc, builtOn }. */
-export function data() {
+/* The JSON blocks the built page carries. */
+export function pageBlock(id) {
   const html = readFileSync(join(root, 'index.html'), 'utf8');
-  return JSON.parse(html.match(/<script type="application\/json" id="r2-data">([\s\S]*?)<\/script>/)[1]);
-}
-export function envOf(D, F) {
-  const env = { cat: D.cat, tq: {} };
-  env.sig = {};
-  Object.keys(D.tq.uses).forEach(k => { env.tq[k] = D.tq.uses[k].qs.map(q => ({ id: q.id })); env.sig[k] = D.tq.uses[k].sig; });
-  return env;
+  const m = html.match(new RegExp('<script type="application/json" id="' + id + '">([\\s\\S]*?)</script>'));
+  return m ? JSON.parse(m[1]) : null;
 }
 export function tester(name) {
   let pass = 0, fail = 0;
   const ok = (c, n) => { if (c) pass++; else { fail++; console.log('FAIL  ' + n); } };
   const done = () => { console.log(name + ': ' + pass + ' passed, ' + fail + ' failed'); if (fail) process.exit(1); };
-  return { ok, done };
+  return { ok, done, count: () => ({ pass, fail }) };
 }
-/* A finished check (v2.6 meaning: every answer points towards AI): five answers, every must-have and every tailored question answered. o overrides. */
-export function finished(F, D, use, o) {
-  const r = F.blank('t' + String(use).replace(/\W/g, '') + 'x');
-  r.hotel = { name: 'Hotel Test', role: 'gm', type: 'independent', country: 'France' };
-  r.Q = { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' }; // v2.6: question 1 No (each case needs judgement) is the answer that goes on
-  F.MUST_IDS.forEach(id => { r.A[id] = 'y'; });
-  if (use && use !== 'none') { const d = D.cat.depts.find(x => x.uses.some(u => u.id === use)); r.cat = d.cat; r.dept = d.id; r.use = use; r.useName = d.uses.find(u => u.id === use).n; D.tq.uses[use].qs.forEach(q => { r.T[q.id] = 'y'; }); }
-  else if (use === 'none') r.use = 'none';
+/* A record for a golden case (spec/golden_cases_v3.json), built the way spec/golden_v3.py builds the inputs: "other answers" Yes. */
+export function goldenRecord(S, R3, D, g) {
+  const r = S.blank('gold' + String(g.name).replace(/\W/g, '').slice(0, 20));
+  r.hotel = { name: 'Hotel Golden', type: 'independent', role: 'gm', country: 'France' };
+  r.step2 = Object.assign({ s1: 'yes', s2: 'yes', s3: 'yes', s4: 'yes', s5: 'yes' }, g.step2 || {});
+  D.must_haves.forEach(m => { r.mh[m.id] = 'yes'; }); Object.assign(r.mh, g.must_haves_changed || {});
+  r.use = g.use_case;
+  const gk = g.use_case === 'none' ? 'none' : g.use_case;
+  r.gates[gk] = Object.assign({}, g.gates || {});
+  const vis = R3.visible(D, g.use_case, r.gates[gk]);
+  vis.forEach(q => { r.qa[q.id] = 'yes'; });
+  Object.assign(r.qa, g.questions_changed || {});
+  if (g.continued_after_soft_stop) r.cont = S.stopKey(D, r);
   r.step = 'result';
-  return Object.assign(r, o || {});
+  return r;
 }

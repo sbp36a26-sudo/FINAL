@@ -96,7 +96,7 @@
   "how": "A large language model pulls out details and AI agents make qualifying calls; the scoring itself is not shown to be AI."
  },
  "fo-1": {
-  "does": "The guest scans a passport or ID card before arrival or at a kiosk; the software reads it and fills in the registration and the police report required by law, so staff no longer type it in.",
+  "does": "The guest scans a passport or ID card before arrival or at a kiosk; the software reads it and fills in the registration and the police report, so staff no longer type it in.",
   "how": "It reads the text on the ID document from a photo; the kiosk steps themselves follow fixed rules, which is not AI."
  },
  "fo-2": {
@@ -116,7 +116,7 @@
   "how": "The provider says it uses AI but does not explain how it works."
  },
  "fo-6": {
-  "does": "Scores each booking before arrival using ID checks, behaviour data and past stays, and flags high-risk guests for staff to review.",
+  "does": "Scores each booking before arrival using ID checks, behaviour data and past stays, and flags guests for staff to review.",
   "how": "It learns from past data to give each booking a risk score, and checks that the guest's identity document is real."
  },
  "fo-7": {
@@ -236,7 +236,7 @@
   "how": "Image recognition identifies the discarded food, and analysis of past data shows where waste comes from."
  },
  "kc-2": {
-  "does": "Finds the 14 EU allergens (EU Regulation 1169/2011, Annex II) in the menu text, labels the dishes and translates the menus.",
+  "does": "Finds the 14 allergens in the menu text, labels the dishes and translates the menus.",
   "how": "It reads the menu text to find allergens; the provider says this is AI but does not explain how."
  },
  "kc-3": {
@@ -372,7 +372,7 @@
   "how": "It learns patterns from your past data to predict what will happen next. Hotel tools claim this without explaining it."
  },
  "it-4": {
-  "does": "Detects break-ins, loitering, incidents, weapons and people in the pool in difficulty from security cameras, and counts people in queues without identifying them. Face recognition is limited by EU law; pool drowning alerts are not yet proven in live pools.",
+  "does": "Detects break-ins, loitering, incidents, weapons and people in the pool in difficulty from security cameras, and counts people in queues without identifying them. Pool drowning alerts are not yet proven in live pools.",
   "how": "It recognises what is in photos or camera images."
  },
  "it-5": {
@@ -384,7 +384,7 @@
   "how": "A large language model (AI trained on huge amounts of text) runs the assistants; AI for collecting data and calculating emissions is claimed but unclear."
  },
  "lg-2": {
-  "does": "Maps the guest data the hotel holds, manages consent, runs privacy risk assessments and oversees AI tools bought from other companies.",
+  "does": "Maps the guest data the hotel holds, runs privacy risk assessments and oversees AI tools bought from other companies.",
   "how": "The main privacy steps follow fixed rules, which is not AI; AI is claimed but unclear for overseeing AI tools."
  },
  "lg-3": {
