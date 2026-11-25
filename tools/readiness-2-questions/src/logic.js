@@ -4,7 +4,7 @@
    2. evaluate(rec, TQ): the score in % and the verdict (owner, 24 Nov 2026: "percentage plus verdict").
       Every cut-off sits in T, one block, and is the team's judgement, not tested with hotels.
       Rules v2.1 (24 Nov 2026, after the clean-up audit and the council on v2.0): the three switches in JUDGEMENT.
-      Rules v2.3 (24 Nov 2026, owner): four answers on steps 3 and 5 (Yes, Planned, No, Don't know yet). "Partly" (p) and
+      Rules v2.3 (24 Nov 2026, owner): three answers on steps 3 and 5 (Yes, Planned, No; v2.7.1 removed the fourth: a blank is not answered yet). "Partly" (p) and
       "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
       Rules v2.5 (24 Nov 2026, owner decisions O1 to O4 of reports/Council - Do you need AI v2.4.md): two caps on "Planned" and three
       holds, each a named constant in JUDGEMENT; points unchanged.
@@ -36,7 +36,7 @@
     });
     return { Q: out, dropped: dropped };
   }
-  var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
+  var A_OK = { y: 1, pl: 1, n: 1 }; // v2.7.1: a blank is not answered yet; a stored 'k' is read as blank
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
   var MUST = {}; C.MUSTS.forEach(function (x) { MUST[x.id] = x; });
@@ -47,15 +47,15 @@
   var T = {
     READY: 75,          // "Ready to start a pilot": score of 75% or more ...
     ALMOST: 50,         // "Almost ready": 50% to 74%; below 50%: "Not ready yet"
-    UNKNOWN_READY: 25,  // ... and fewer than 25% of the questions "Don't know yet"
-    UNKNOWN_NOINFO: 50, // "Not enough information yet": more than 50% of the questions "Don't know yet"
+    UNKNOWN_READY: 25,  // ... and fewer than 25% of the questions not answered yet
+    UNKNOWN_NOINFO: 50, // "Not enough information yet": more than 50% of the questions not answered yet
     STRONG: 75, GAPS: 50 // an area in words: Strong (75% or more), Gaps to close (50 to 74%), Weak (below 50%)
   };
-  var POINTS = { y: 2, pl: 1, n: 0 }; // "Don't know yet": see JUDGEMENT.UNKNOWN_SCORES_ZERO (v2.3: no Partly, no "Doesn't apply")
+  var POINTS = { y: 2, pl: 1, n: 0 }; // not answered yet: see JUDGEMENT.UNKNOWN_SCORES_ZERO (v2.3: no Partly, no "Doesn't apply")
 
   /* ---------- TEAM JUDGEMENT (rules v2.1): three switches the owner can flip. Each is named in "How this was worked out". ----------
-     UNKNOWN_SCORES_ZERO   (council B2) true: "Don't know yet" counts as 0 points, so the score is the share of everything asked
-                           that is in place. false: it is left out of the points (rules v2). Either way it is listed as "to find out".
+     UNKNOWN_SCORES_ZERO   (council B2) true: a question not answered yet counts as 0 points, so the score is the share of everything asked
+                           that is in place. false: it is left out of the points (rules v2). Either way it is listed as "not answered yet".
      SENSITIVE_HOLDS_TOP   (council B5; v2.7.0, owner) true: no "Ready to start a pilot" for a use case the data file marks
                            sensitive (people's personal data or jobs: 12 use cases). The best verdict is "Almost ready" and the
                            result says why (the data file's sensitive_hold_reason). false: the flag line only.
@@ -218,7 +218,7 @@
 
   /* The score and the verdict (rules v2.5).
      Score = points earned / points possible over every question asked (must-haves + tailored). An answer that is no longer
-     offered (it.old) counts as not answered, like a blank. "Don't know yet" counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "to find out".
+     offered (it.old) counts as not answered, like a blank. A question not answered yet counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "not answered yet".
      No score is shown under "Not enough information yet" (ev.pct is null there; ev.pts and ev.max keep the sum).
      Verdict, in this order:
        noinfo    more than half the questions unknown
@@ -238,7 +238,7 @@
       var g = area[it.a] = area[it.a] || { k: it.a, name: it.a === 'must' ? 'Must-haves' : it.name, n: 0, known: 0, yes: 0, unknown: 0, pts: 0, max: 0 };
       c.total++; g.n++;
       if (it.grp === 'must') must.n++; else tail.n++;
-      if (!it.v || it.v === 'k') { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
+      if (!it.v) { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
       c.known++; g.known++; pts += POINTS[it.v]; max += 2; g.pts += POINTS[it.v]; g.max += 2; if (it.v === 'y') g.yes++;
       var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w;
       if (it.grp === 'must') must[w]++; else { tail.known++; tail[w]++; }
@@ -255,13 +255,13 @@
     var level, why, reason, kind, box = '';
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
-      level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')';
-      reason = 'Because more than half the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').' + (must.anyNo ? ' Already known: ' + missing : '');
+      level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are not answered yet (' + c.unknown + ' of ' + c.total + ')';
+      reason = 'Because more than half the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ').' + (must.anyNo ? ' Already known: ' + missing : '');
     }
     else if (must.anyNo) { level = 'notready'; kind = 'mustNo'; why = n_(must.no, 'must-have is', 'must-haves are') + ' answered No'; reason = 'Because ' + missing + ' A missing must-have outweighs the score.'; box = 'Because ' + n_(must.no, 'must-have is', 'must-haves are') + ' No.'; }
     else if (pts * 100 < T.ALMOST * max) {
       level = 'notready'; kind = 'score'; why = 'the score is below ' + T.ALMOST + '%'; box = 'Because the score is below ' + T.ALMOST + '%.';
-      reason = 'Because fewer than half the points are in place.' + (zero && c.unknown ? ' “Don’t know yet” counts as 0 points.' : '');
+      reason = 'Because fewer than half the points are in place.' + (zero && c.unknown ? ' A question not answered yet counts as 0 points.' : '');
     }
     else if (fewMust) {
       level = 'notready'; kind = 'fewMust'; why = 'only ' + must.yes + ' of ' + must.n + ' must-haves are Yes (“' + C.LEVELS.almost.name + '” needs at least half)';
@@ -287,14 +287,14 @@
         box = C.BOX.held.replace('{why}', held.map(function (h) { return C.BOX[h]; }).join('; '));
       } else {
         level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
-        reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are “Don’t know yet”.';
+        reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet.';
       }
     }
     else {
       level = 'almost'; kind = 'almost';
       if (!must.allYes) { why = n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet (none is No)'; reason = 'Because ' + n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet: ' + namesOf('open') + '.'; }
       else if (pts * 100 < T.READY * max) { why = 'the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%'; reason = 'Because the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%. The top verdict needs ' + T.READY + '% or more.'; }
-      else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
+      else { why = 'a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ').'; }
     }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
       sensitive: sens, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
@@ -312,11 +312,11 @@
   function task(it) {
     var d = fmtDate(it.by), tail = it.grp === 'tail';
     if (it.old) return 'Answer again: “' + it.q + '” (the earlier answer “' + OLD[it.old] + '” is no longer offered)';
-    if (it.state === 'unknown') return 'Find out: “' + it.q + '”';
+    if (it.state === 'unknown') return 'Answer this: “' + it.q + '”';
     if (it.state === 'planned') return tail ? 'Finish: ' + it.q + (d ? ' (' + plannedBy(it) + ')' : '') : 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act);
     return tail ? 'Make this a Yes: ' + it.q : it.act;
   }
-  /* Open items, weakest first: must-haves before tailored questions; within each No, Don't know yet, Planned; then the order asked. */
+  /* Open items, weakest first: must-haves before tailored questions; within each No, not answered yet, Planned; then the order asked. */
   function open(ev) {
     return ev.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return RANK[x.it.state] != null; })
       .sort(function (x, y) { return (x.it.grp === 'must' ? 0 : 1) - (y.it.grp === 'must' ? 0 : 1) || RANK[x.it.state] - RANK[y.it.state] || x.i - y.i; })
@@ -330,12 +330,12 @@
     var by = {}; open(ev).forEach(function (a) { (by[a.who] = by[a.who] || []).push(a); });
     return C.WHO_ORDER.filter(function (w) { return by[w]; }).map(function (w) { return { who: w, name: C.WHO[w], items: by[w] }; });
   }
-  var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Don’t know yet' };
+  var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Not answered yet' };
   /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such (Team tab). */
   function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
   /* Audit v3 L1: one name for every saved answer of steps 3 and 5, used by the page and the Team tab.
-     'yes' | 'planned' | 'no' | 'unknown' (Don't know yet) | 'old' (Partly or Doesn't apply, no longer offered) | 'blank'. */
-  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no', k: 'unknown' }[raw] || 'blank'; }
+     'yes' | 'planned' | 'no' | 'old' (Partly or Doesn't apply, no longer offered) | 'blank' (not answered yet; a stored 'k' too). */
+  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no' }[raw] || 'blank'; }
   /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3? } (v2.6: the must-have 7 line is gone) */
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
@@ -419,15 +419,15 @@
   /* ---------- how it was worked out ---------- */
   function method(ev) {
     var c = ev.counts, out = [], zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
-    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.'
-      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. “Don’t know yet” is left out of the points.');
-    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' “Don’t know yet”).');
+    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Not answered yet 0.'
+      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. A question not answered yet is left out of the points.');
+    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' not answered yet).');
     out.push(ev.pct != null ? 'Your points: ' + ev.pts + ' of ' + ev.max + ' possible = ' + ev.pct + '% (rounded down).'
-      : 'No score is shown while more than half the questions are “Don’t know yet”' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
+      : 'No score is shown while more than half the questions are not answered yet' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
     ev.areas.forEach(function (g) { out.push(areaLine(g) + ' (' + g.pts + ' of ' + g.max + ' points; ' + g.known + ' of ' + g.n + ' answered).'); });
-    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions “Don’t know yet”. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions “Don’t know yet”.');
+    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions are not answered yet.');
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
-    if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
+    if (zero) out.push('Team judgement: a question not answered yet counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as not answered yet.');
     if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here. Ask an adviser before a pilot.');
     if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
@@ -439,13 +439,13 @@
     out.push('The answers are your own and nobody checks them. The cut-offs are the team’s judgement and have not been tested with hotels. Rules ' + RULES + '.');
     return out;
   }
-  /* "Data: 0 of 1 in place", with the word only when the area has two or more known answers, and what is still to find out. */
+  /* "Data: 0 of 1 in place", with the word only when the area has two or more known answers, and how many are not answered yet. */
   function areaLine(g) {
-    return g.name + ': ' + g.yes + ' of ' + g.n + ' in place' + (g.word ? ' · ' + C.AREA_WORD[g.word] : '') + (g.unknown ? ' · ' + g.unknown + ' to find out' : '');
+    return g.name + ': ' + g.yes + ' of ' + g.n + ' in place' + (g.word ? ' · ' + C.AREA_WORD[g.word] : '') + (g.unknown ? ' · ' + g.unknown + ' not answered yet' : '');
   }
   function mustLine(ev) {
     var m = ev.must, p = [m.yes + ' of ' + m.n + ' must-haves in place'];
-    if (m.planned) p.push(m.planned + ' planned'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' to find out');
+    if (m.planned) p.push(m.planned + ' planned'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' not answered yet');
     return p.join(' · ');
   }
   /* The score is never worded as "% ready" (council, items 1 and 2): "Score: 83%", or no score at all under "Not enough information yet". */
@@ -455,7 +455,7 @@
     var c = ev.counts;
     if (ev.pct == null) return C.SCORE_NOTE;
     var base = !JUDGEMENT.UNKNOWN_SCORES_ZERO ? ev.pts + ' of ' + ev.max + ' points on the ' + n_(c.known, 'question', 'questions') + ' you answered' + (c.unknown ? ' (of ' + c.total + ')' : '') + '.'
-      : c.unknown ? ev.pts + ' of ' + ev.max + ' points on ' + n_(c.total, 'question', 'questions') + ': ' + c.known + ' answered, ' + c.unknown + ' “Don’t know yet” (0 points each).'
+      : c.unknown ? ev.pts + ' of ' + ev.max + ' points on ' + n_(c.total, 'question', 'questions') + ': ' + c.known + ' answered, ' + c.unknown + ' not answered yet (0 points each).'
       : ev.pts + ' of ' + ev.max + ' points on the ' + n_(c.known, 'question', 'questions') + ' you answered.';
     return base + ' ' + C.SCORE_NOTE;
   }

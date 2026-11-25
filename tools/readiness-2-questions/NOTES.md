@@ -31,8 +31,8 @@ jsPDF (`tools/assessment/lib`), the readiness check's `logic.js` (RCLogic) and `
 - `data/explain.json`: plain "What it does" / "How the AI works" per use case (shown in the detail layer and the result).
 
 ## Where answers are kept
-- Record (`R2Flow.blank`): `{ id, step, qv, Qnew, hotel{name,role,type,country}, Q{q1..q5: y|n|u}, A{m1..m10: y|pl|n|k}, By{m*: date},
-  cat, dept, use, useName (catalogue name, checked on load), from, tqSig, T{<question id>: y|pl|n|k}, TBy{<question id>: date}, snaps[],
+- Record (`R2Flow.blank`): `{ id, step, qv, Qnew, hotel{name,role,type,country}, Q{q1..q5: y|n|u}, A{m1..m10: y|pl|n}, By{m*: date},
+  cat, dept, use, useName (catalogue name, checked on load), from, tqSig, T{<question id>: y|pl|n}, TBy{<question id>: date}, snaps[],
   share{named}, sharedAt, sharedMode, sharedSig, updated }`. Step-5 answers are keyed by the **local question id** (`pe1`), not
   `useCaseId:questionId`; the use case is `rec.use`. Changing use case clears T and TBy.
 - Store: `localStorage['hftp-readiness2-v1']` = `{ v: 3, cur, checks: { id: rec }, notice }`; open check per tab in sessionStorage
@@ -42,7 +42,7 @@ jsPDF (`tools/assessment/lib`), the readiness check's `logic.js` (RCLogic) and `
   "questionsChanged" is said on step 5. Records without `qv: 2` get step 2 turned round (`legacyQ`). v1 records are converted.
 
 ## Scoring (src/logic.js)
-`evaluate()`: points Yes 2, Planned 1, No 0, Don't know 0 (`UNKNOWN_SCORES_ZERO`), over must-haves + step-5 questions; cut-offs in `T`
+`evaluate()`: points Yes 2, Planned 1, No 0, a blank (not answered yet) 0 (`UNKNOWN_SCORES_ZERO`; v2.7.1: a stored "k" reads as blank), over must-haves + step-5 questions; cut-offs in `T`
 (75 / 50 / a quarter / a half unknown); holds in `JUDGEMENT`: `LEGAL_HOLDS_TOP` (via `legalFlags`: register High-risk label in
 `TQ.highRisk`, or the `sens` add-on), `CARRIED_NO_HOLDS_TOP`, `ALMOST_MIN_MUST_YES` 50, `READY_MIN_TAIL_YES` 50 (the "fewer than half
 the questions for this use case are Yes" hold), `NOT_SURE_HOLDS_TOP`, `NONE_BEST_ALMOST`. `resultModel()` builds every word of the

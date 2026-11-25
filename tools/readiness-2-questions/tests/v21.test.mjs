@@ -15,7 +15,8 @@ const { ok, done } = tester('v21');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const rd = p => readFileSync(join(root, p), 'utf8');
 const SENS = Object.keys(TQ.uses).filter(k => TQ.uses[k].sensitive).sort();
-const carryT = (use, T) => { const o = {}; (TQ.uses[use] ? TQ.uses[use].qs : []).forEach(q => { if (q.carry && T && T[q.carry] != null) o[q.id] = T[q.carry]; }); return o; }; // v2.7.0: old answers taken over by carry_answer_from
+const noK = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== 'k')); // v2.7.1: a stored "k" is not an answer and is not carried
+const carryT = (use, T) => { const o = {}; (TQ.uses[use] ? TQ.uses[use].qs : []).forEach(q => { if (q.carry && T && T[q.carry] != null && T[q.carry] !== 'k') o[q.id] = T[q.carry]; }); return o; }; // v2.7.0: old answers taken over by carry_answer_from
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 function mk(use, musts, tail, o) {
   const r = finished(F, D, use, o);
@@ -52,7 +53,7 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
   // v2.3: Partly → Planned, Doesn't apply → No
   let m = L.resultModel(mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']), env);
   ok(m.scoreHead === 'Score: 69%' && m.ev.pts === 25 && m.ev.max === 36 && m.ev.counts.known === 16 && m.ev.counts.total === 18, 'item 1: "Score: 69%" = 25 of 36 points (16 of 18 answered, 2 unknown at 0)');
-  ok(m.scoreSub === '25 of 36 points on 18 questions: 16 answered, 2 “Don’t know yet” (0 points each). ' + C.SCORE_NOTE && C.SCORE_NOTE === 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.', 'item 1: the points and the answered-question counts stand next to the score, then the caveat (final copy)');
+  ok(m.scoreSub === '25 of 36 points on 18 questions: 16 answered, 2 not answered yet (0 points each). ' + C.SCORE_NOTE && C.SCORE_NOTE === 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.', 'item 1: the points and the answered-question counts stand next to the score, then the caveat (final copy)');
   ok(L.scoreSub(L.evaluate(mk('fo-4', [], []), TQ)) === '36 of 36 points on the 18 questions you answered. ' + C.SCORE_NOTE, 'item 1: with nothing unknown, "36 of 36 points on the 18 questions you answered."');
   ok(eq(C.GET_SCORE, ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']), 'item 1: the cover bullet (final copy)');
   // item 2: no score under "Not enough information yet"
@@ -65,7 +66,7 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
   ok(L.evaluate(mk('fo-4', ['n', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'n'], []), TQ).reason === 'Because 2 must-haves are missing: A named owner with time; Rules for staff on AI tools. A missing must-have outweighs the score.', 'item 3: two missing must-haves are both named');
   ok(L.evaluate(mk('fo-4', rep('pl', 10), ['n'].concat(rep('pl', 7))), TQ).reason === 'Because fewer than half the points are in place.', 'item 3: below 50% (final copy)');
   const ni = L.evaluate(mk('fo-4', ['n'].concat(rep('k', 9)), rep('k', 8)), TQ);
-  ok(ni.level === 'noinfo' && ni.reason === 'Because more than half the questions are still “Don’t know yet” (17 of 18). Already known: 1 must-have is missing: A named owner with time.', 'item 3: not enough information, with a must-have at No: "Already known: …"');
+  ok(ni.level === 'noinfo' && ni.reason === 'Because more than half the questions are still not answered yet (17 of 18). Already known: 1 must-have is missing: A named owner with time.', 'item 3: not enough information, with a must-have at No: "Already known: …"');
   ok(L.evaluate(mk('fo-4', ['pl'], []), TQ).reason === 'Because 1 must-have is not Yes yet: A named owner with time.' && /^Because the score is between 50% and 74%/.test(L.evaluate(mk('fo-4', [], ['n', 'n', 'n', 'n', 'n', 'y', 'y', 'y']), TQ).reason) && /^Because every must-have is Yes/.test(L.evaluate(mk('fo-4', [], []), TQ).reason), 'item 3: every verdict has its reason');
   m = L.resultModel(mk('fo-4', ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'n'], []), env);
   ok(m.method.includes('Your verdict is “Not ready yet”. ' + m.reason) && !/Too much is still missing/.test(everyWord(m)), 'item 3: the working-out repeats the same reason; "Too much is still missing" is gone from a 94% result');
@@ -80,7 +81,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   // item 6: areas as counts, not percentages; a word only with two or more known answers
   const r = mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']), m = L.resultModel(r, env); // v2.3: no p / na
   ok(m.areasHead === 'What is in place, by area' && m.areas.every(a => !/%/.test(a.line) && a.line.startsWith(a.name + ': ' + a.yes + ' of ' + a.n + ' in place')), 'item 6: "What is in place, by area", each row "<area>: n of m in place", no percentage');
-  ok(m.areas[0].line === 'Must-haves: 6 of 10 in place · Gaps to close · 1 to find out', 'item 6: must-haves row: ' + m.areas[0].line);
+  ok(m.areas[0].line === 'Must-haves: 6 of 10 in place · Gaps to close · 1 not answered yet', 'item 6: must-haves row: ' + m.areas[0].line);
   m.ev.areas.forEach(g => ok((g.known >= 2) === !!g.word, 'item 6: ' + g.name + ' has a word only with two or more known answers (' + g.known + ')'));
   const one = L.resultModel(mk('rm-3', [], ['y', 'y', 'y', 'y', 'n', 'y']), env).areas.find(a => a.k === 'da');
   ok(one.line === 'Data: 0 of 1 in place' && one.word === '', 'item 6: "Data: 0 of 1 in place", no "Weak" from one answer');
@@ -121,10 +122,10 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   const J = L.JUDGEMENT, flip = (k, f) => { J[k] = false; try { f(); } finally { J[k] = true; } };
   // B2
   let r = mk('fo-4', [], ['k', 'k', 'k', 'k', 'y', 'y', 'y', 'y']), e = L.evaluate(r, TQ);
-  ok(e.pts === 28 && e.max === 36 && e.pct === 77 && e.counts.unknown === 4 && L.mustLine(L.evaluate(mk('fo-4', ['k'], []), TQ)).includes('1 to find out'), 'B2 on: "Don\'t know yet" counts as 0 points (28 of 36 = 77%) and is still shown as "to find out"');
-  ok(L.open(e).filter(a => a.state === 'unknown').length === 4 && L.open(e).filter(a => a.state === 'unknown').every(a => a.text.startsWith('Find out: ')), 'B2: the unknown items stay on the to-do list as "Find out: …"');
-  flip('UNKNOWN_SCORES_ZERO', () => { const e2 = L.evaluate(r, TQ); ok(e2.pts === 28 && e2.max === 28 && e2.pct === 100 && L.scoreSub(e2).startsWith('28 of 28 points on the 14 questions you answered (of 18).'), 'B2 off: unknown is left out of the points again (the council\'s item 1 wording)'); ok(L.method(e2)[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. “Don’t know yet” is left out of the points.' && !L.method(e2).some(t => /counts as 0 points/.test(t)), 'B2 off: the working-out says so'); });
-  ok(L.method(e).some(t => t.startsWith('Team judgement: “Don’t know yet” counts as 0 points')), 'B2: listed in "How this was worked out" as team judgement');
+  ok(e.pts === 28 && e.max === 36 && e.pct === 77 && e.counts.unknown === 4 && L.mustLine(L.evaluate(mk('fo-4', ['k'], []), TQ)).includes('1 not answered yet'), 'B2 on: a question not answered yet counts as 0 points (28 of 36 = 77%) and is still shown as "not answered yet"');
+  ok(L.open(e).filter(a => a.state === 'unknown').length === 4 && L.open(e).filter(a => a.state === 'unknown').every(a => a.text.startsWith('Answer this: ')), 'B2: the unknown items stay on the to-do list as "Answer this: …"');
+  flip('UNKNOWN_SCORES_ZERO', () => { const e2 = L.evaluate(r, TQ); ok(e2.pts === 28 && e2.max === 28 && e2.pct === 100 && L.scoreSub(e2).startsWith('28 of 28 points on the 14 questions you answered (of 18).'), 'B2 off: unknown is left out of the points again (the council\'s item 1 wording)'); ok(L.method(e2)[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. A question not answered yet is left out of the points.' && !L.method(e2).some(t => /counts as 0 points/.test(t)), 'B2 off: the working-out says so'); });
+  ok(L.method(e).some(t => t.startsWith('Team judgement: a question not answered yet counts as 0 points')), 'B2: listed in "How this was worked out" as team judgement');
   // the less you know, the lower the score: never the reverse
   for (let k = 0; k <= 8; k++) { const a = L.evaluate(mk('fo-4', [], rep('k', k)), TQ), b = L.evaluate(mk('fo-4', [], rep('k', k + 1 > 8 ? 8 : k + 1)), TQ); ok((b.pct == null ? -1 : b.pct) <= (a.pct == null ? 101 : a.pct), 'B2: one more "Don\'t know yet" never raises the score (' + k + ')'); }
   // B5
@@ -389,13 +390,10 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(st && Object.keys(st.checks).length === 5 && st.cur === raw.cur && !info.newer && !info.questionsChanged && !info.useChanged && !st.notice, 'v2.0 store: all five checks open, nothing lost, no notice');
   Object.keys(raw.checks).forEach(k => {
     const a = raw.checks[k], b = st.checks[k];
-    // v2.3: a check that holds an old Partly / Doesn't apply is placed back on that step (answers kept as they were)
-    const oldM = Object.values(a.A || {}).some(v => v === 'p'), oldT = Object.values(a.T || {}).some(v => v === 'p' || v === 'na');
     // v2.6: step 2 is read in its old meaning: Q1 turned round, the old Q3/Q4 dropped, so a check past step 2 waits on step 2 again
     const conv = L.legacyQ(a.Q).Q, qDone = F.QIDS.every(q => conv[q]);
-    const newT = a.use && TQ.uses[a.use] ? TQ.uses[a.use].qs.some(q => !(a.T || {})[q.carry]) : false; // v2.7.0: a new question without an old answer
-    const want = ['start', 'hotel'].includes(a.step) ? a.step : conv.q1 === 'y' ? (a.step === 'q' ? 'q' : 'stop') : a.step === 'q' || !qDone ? 'q' : a.step === 'result' && oldM ? 'must' : a.step === 'result' && (oldT || newT) ? 'tailored' : a.step;
-    ok(b.step === want && eq(b.Q, conv) && b.qv === L.QV && eq(b.A, a.A) && eq(b.By, a.By) && eq(b.T, carryT(a.use, a.T)) && eq(b.TBy, carryT(a.use, a.TBy)) && b.use === a.use && eq(b.hotel, a.hotel) && b.sharedAt === a.sharedAt && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel, share state and history are kept');
+    const want = ['start', 'hotel'].includes(a.step) ? a.step : conv.q1 === 'y' ? (a.step === 'q' ? 'q' : 'stop') : a.step === 'q' || !qDone ? 'q' : a.step; // v2.7.1: blank and old answers do not hold a check (the step it was saved on)
+    ok(b.step === want && eq(b.Q, conv) && b.qv === L.QV && eq(b.A, noK(a.A)) && eq(b.By, a.By) && eq(b.T, carryT(a.use, a.T)) && eq(b.TBy, carryT(a.use, a.TBy)) && b.use === a.use && eq(b.hotel, a.hotel) && b.sharedAt === a.sharedAt && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel, share state and history are kept');
     if (a.step === 'result') { const m = L.resultModel(b, env); /* v2.3: worked out even where the check now waits on step 3 or 5 */ ok(/^(Score: \d+%|No score yet: )/.test(m.scoreHead) && m.reason && m.method.length > 8, 'v2.0 check ' + a.use + ': the result is worked out with rules v2.1 (' + m.levelName + ', ' + m.scoreHead + ')'); }
   });
   const rm1 = Object.values(st.checks).find(c => c.use === 'rm-1');
@@ -411,7 +409,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   // the file
   ok(file.kind === 'hftp-do-you-need-ai' && file.v === 2 && file.rules === 'v2 (24 Nov 2026)' && file.check.sharedAt, 'fixture: a v2.0 file (it still carried share fields)');
   const fi = {}, fr = F.cleanRec(JSON.parse(JSON.stringify(file.check)), ENV, fi, { file: true });
-  ok(fr && fr.step === 'q' && eq(fr.Q, L.legacyQ(file.check.Q).Q) && eq(fr.A, file.check.A) && eq(fr.T, carryT(file.check.use, file.check.T)) && fr.By.m3 === '2027-03-01' && fr.sharedAt === null && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every other answer kept, on step 2 (v2.6: Q1 turned round, the new questions 3 and 4 to answer; was step 3); its share fields are ignored');
+  ok(fr && fr.step === 'q' && eq(fr.Q, L.legacyQ(file.check.Q).Q) && eq(fr.A, noK(file.check.A)) && eq(fr.T, carryT(file.check.use, file.check.T)) && fr.By.m3 === '2027-03-01' && fr.sharedAt === null && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every other answer kept, on step 2 (v2.6: Q1 turned round, the new questions 3 and 4 to answer; was step 3); its share fields are ignored');
   const imp = F.reduce(F.blankStore(), 'import', fr, ENV);
   ok(imp.ok && F.cur(imp.store).step === 'q' && F.cur(imp.store).id === file.check.id && F.cur(imp.store).Q.q1 === fr.Q.q1, 'v2.0 file: imported (v2.6: on step 2, not turned twice)');
   // the copy v2.0 shared with the team still reads

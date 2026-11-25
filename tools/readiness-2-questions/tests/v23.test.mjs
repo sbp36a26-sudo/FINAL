@@ -19,10 +19,10 @@ const LINE_P = 'Your earlier answer was Partly; this answer is no longer offered
 const LINE_NA = 'Your earlier answer was Doesn’t apply; this answer is no longer offered, please choose again.';
 
 // ---------- 1. what is offered ----------
-ok(eq(C.ANSWERS, [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No'], ['k', 'Don’t know yet']]), 'the four answers, in the owner\'s order');
+ok(eq(C.ANSWERS, [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No']]), 'the three answers, in the owner\'s order (v2.7.1: no fourth answer)');
 ok(eq(C.Q_ANSWERS, [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']]), 'the five C-R-I-S-P questions keep Yes / No / Not sure');
 ok(!('NA' in C) || C.NA == null, 'no "Doesn\'t apply" option left in the content');
-ok(eq(Object.keys(L.A_OK).sort(), ['k', 'n', 'pl', 'y']), 'logic accepts only the four answers');
+ok(eq(Object.keys(L.A_OK).sort(), ['n', 'pl', 'y']), 'logic accepts only the three answers (v2.7.1)');
 ok(L.POINTS.y === 2 && L.POINTS.pl === 1 && L.POINTS.n === 0 && !('p' in L.POINTS), 'points: Yes 2, Planned 1, No 0; no Partly');
 ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.3, v2.5, now v2.6): ' + L.RULES);
 const app = rd('src/app.js');
@@ -35,11 +35,13 @@ const go = (ev, arg) => { const r = F.reduce(s, ev, arg, ENV); if (r.ok) s = r.s
 go('begin'); go('hotel', { k: 'type', v: 'independent' }); go('next'); F.QIDS.forEach(id => go('answer', { id, value: id === 'q1' ? 'n' : 'y' })); go('next'); // v2.6: Q1 No goes on
 ok(F.cur(s).step === 'must', 'walked to step 3');
 ok(!go('answer', { id: 'm1', value: 'p' }) && !go('answer', { id: 'm1', value: 'na' }), 'step 3: Partly and Doesn\'t apply are refused');
-['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'm1', value: v }) && F.cur(s).A.m1 === v, 'step 3: ' + v + ' is accepted'));
+['y', 'pl', 'n'].forEach(v => ok(go('answer', { id: 'm1', value: v }) && F.cur(s).A.m1 === v, 'step 3: ' + v + ' is accepted'));
+ok(!go('answer', { id: 'm1', value: 'k' }), 'step 3: a stored "k" is refused (v2.7.1)');
 F.MUST_IDS.forEach(id => go('answer', { id, value: 'y' })); go('next'); go('cat', 'Commercial'); go('dept', 'rm'); go('use', 'rm-1'); go('next');
 ok(F.cur(s).step === 'tailored', 'walked to step 5');
 ok(!go('answer', { id: 'rm-1.pe1', value: 'p' }) && !go('answer', { id: 'rm-1.pe1', value: 'na' }), 'step 5: Partly and Doesn\'t apply are refused');
-['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'rm-1.pe1', value: v }) && F.cur(s).T['rm-1.pe1'] === v, 'step 5: ' + v + ' is accepted'));
+['y', 'pl', 'n'].forEach(v => ok(go('answer', { id: 'rm-1.pe1', value: v }) && F.cur(s).T['rm-1.pe1'] === v, 'step 5: ' + v + ' is accepted'));
+ok(!go('answer', { id: 'rm-1.pe1', value: 'k' }), 'step 5: a stored "k" is refused (v2.7.1)');
 ok(F.cur(s).id === id0, 'same check throughout');
 
 // ---------- 3. the old saved store (localStorage) ----------
@@ -52,12 +54,12 @@ const st = F.migrate(FXS, ENV, info);
 ok(st && Object.keys(st.checks).length === 2 && st.cur === 'dynoldmust01' && !info.newer && !info.questionsChanged && !info.useChanged, 'old store: opens, both checks kept, no notice');
 const a = st.checks.dynoldmust01, b = st.checks.dynoldtail02;
 ok(a.A.m5 === 'p' && a.T['rm-1.sk1'] === 'p' && a.T['rm-1.te1'] === 'na' && b.T['rm-1.te1'] === 'na', 'old answers are kept as they were (not turned into another answer)');
-ok(a.A.m3 === 'pl' && a.By.m3 === '2027-03-01' && a.T['rm-1.or1'] === 'n' && a.T['rm-1.fi1'] === 'k', 'the other answers and the Planned date are kept');
-ok(a.step === 'must', 'a check with an old must-have answer opens on step 3 (it was on its result): ' + a.step);
-ok(b.step === 'tailored', 'a check with an old tailored answer only opens on step 5: ' + b.step);
+ok(a.A.m3 === 'pl' && a.By.m3 === '2027-03-01' && a.T['rm-1.or1'] === 'n' && !('rm-1.fi1' in a.T), 'the other answers and the Planned date are kept (v2.7.1: a stored "k" is blank and not kept)');
+ok(a.step === 'tailored', 'v2.7.1: this v2.2 record has questions with no carried answer, so it reopens on step 5 (v2.7.0), not on step 3: its old must-have answer no longer holds it: ' + a.step);
+ok(b.step === 'tailored', 'the same reopen on step 5 (v2.7.0): ' + b.step);
 let ca = F.ctxOf(a, ENV), cb = F.ctxOf(b, ENV);
 ok(!ca.mustDone && !ca.tailDone && cb.mustDone && !cb.tailDone, 'an old answer counts as not answered for the step guards');
-ok(!F.reachable('result', ca) && !F.reachable('result', cb) && !F.reachable('where', ca), 'the result cannot be reached until they pick again');
+ok(F.reachable('result', ca) && F.reachable('result', cb) && F.reachable('where', ca), 'v2.7.1: the result is reached without picking again (old answers count as not answered, like blanks)');
 // the line shown on the question
 ok(L.oldLine('p') === LINE_P && L.oldLine('na') === LINE_NA && L.oldLine('y') === '' && L.oldLine('') === '' && L.oldLine(undefined) === '', 'the short line, for Partly and Doesn\'t apply only');
 ok(/data-old=/.test(app) && /L\.oldLine\(/.test(app), 'app.js shows the line under a question whose saved answer is no longer offered');
@@ -73,11 +75,12 @@ ok(ia.find(it => it.key === 'm5').v === '' && ia.find(it => it.key === 'm5').old
 ok(L.evaluate(a, TQ).counts.total === 17, 'every question asked is counted (10 must-haves + 7 for rm-1 since v2.7.0), none left out as "Doesn\'t apply"');
 // picking again
 s = { v: 2, cur: a.id, checks: { [a.id]: a } };
+ok(go('back') && go('back') && F.cur(s).step === 'must', 'to pick again: Back from step 5 to step 3 (step 4, then step 3)');
 ok(!go('answer', { id: 'm5', value: 'p' }), 'Partly cannot be chosen again');
 ok(go('answer', { id: 'm5', value: 'pl' }) && F.cur(s).A.m5 === 'pl', 'choosing Planned replaces the old Partly');
-ok(F.ctxOf(F.cur(s), ENV).mustDone && go('next') && F.cur(s).step === 'where' && go('next') && F.cur(s).step === 'tailored', 'then step 3 is done and step 5 is next');
+ok(go('next') && F.cur(s).step === 'where' && go('next') && F.cur(s).step === 'tailored', 'then Next goes on from step 3 to step 5 (v2.7.1: blanks do not stop Next)');
 ok(!F.ctxOf(F.cur(s), ENV).tailDone, 'step 5 still holds two old answers');
-ok(go('answer', { id: 'rm-1.sk1', value: 'n' }) && go('answer', { id: 'rm-1.te1', value: 'y' }) && go('answer', { id: 'rm-1.n1', value: 'y' }) && F.ctxOf(F.cur(s), ENV).tailDone && go('next') && F.cur(s).step === 'result', 'after picking again the result is reached');
+ok(go('answer', { id: 'rm-1.sk1', value: 'n' }) && go('answer', { id: 'rm-1.te1', value: 'y' }) && go('answer', { id: 'rm-1.n1', value: 'y' }) && go('next') && F.cur(s).step === 'result', 'after picking again the result is reached');
 // results computed under earlier rules
 const ev3 = L.evaluate(F.cur(s), TQ), snaps = F.cur(s).snaps.concat([L.snapshot(ev3, '2026-11-24T12:00:00.000Z', 'rm-1')]);
 const sn = L.since(snaps);
@@ -87,9 +90,9 @@ ok(sn.earlier.length === 1 && sn.earlier[0].endsWith('(' + L.EARLIER_RULES + ')'
 // ---------- 4. a saved file ----------
 info = {};
 const fr = F.cleanRec(asV26(clone(FX.file.check)), ENV, info, { file: true });
-ok(fr && fr.A.m1 === 'p' && fr.T['rm-1.pe1'] === 'na' && fr.step === 'must' && !info.questionsChanged, 'old file: opens on step 3, old answers kept as they were');
+ok(fr && fr.A.m1 === 'p' && fr.T['rm-1.pe1'] === 'na' && fr.step === 'tailored' && !info.questionsChanged, 'old file: reopens on step 5 (v2.7.0), old answers kept as they were');
 const imp = F.reduce(F.blankStore(), 'import', asV26(clone(FX.file.check)), ENV);
-ok(imp.ok && F.cur(imp.store).id === 'dynoldfile03' && F.cur(imp.store).step === 'must', 'old file: the import event takes it');
+ok(imp.ok && F.cur(imp.store).id === 'dynoldfile03' && F.cur(imp.store).step === 'tailored', 'old file: the import event takes it');
 const ef = L.evaluate(fr, TQ);
 ok(ef.items.find(it => it.key === 'm1').old === 'p' && ef.items.find(it => it.key === 'rm-1.pe1').old === 'na' && ef.counts.total === 17, 'old file: both old answers count as not answered');
 
@@ -98,7 +101,7 @@ ok(ef.items.find(it => it.key === 'm1').old === 'p' && ef.items.find(it => it.ke
 const fin = finished(F, D, 'rm-1'); fin.A.m2 = 'pl'; fin.T['rm-1.sk1'] = 'n'; fin.T['rm-1.fi1'] = 'k';
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 const m = L.resultModel(fin, env), meth = m.method.join('\n'), pdfT = P.model(fin, env).blocks.map(x => x.t).join('\n');
-ok(m.method[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.', 'how this was worked out: the four answers and their points: ' + m.method[0]);
+ok(m.method[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Not answered yet 0.', 'how this was worked out: the three answers and their points: ' + m.method[0]);
 for (const [tag, t] of [['method', meth], ['PDF', pdfT], ['score note', m.scoreSub + ' ' + C.SCORE_NOTE]]) ok(!/Partly|partly|Doesn’t apply|does not apply|Doesn't apply/.test(t), tag + ': no Partly or Doesn\'t apply');
 const all = L.resultModel(finished(F, D, 'rm-1'), env);
 ok(P.model(finished(F, D, 'rm-1'), env).blocks.some(x => x.t === 'Every question is answered Yes.'), 'PDF: "Every question is answered Yes." (no "or does not apply")');

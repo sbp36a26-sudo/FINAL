@@ -1,5 +1,52 @@
 # Changelog: Do you need AI? (questions-only, readiness-2-questions)
 
+## v2.7.1 (25 Nov 2026): "Don't know yet" removed as an answer option (owner). Committed; not published.
+
+Owner request: remove "Don't know yet" as an answer option on the must-haves (step 3) and the use-case questions (step 5). Step 2 "Not sure" and its wording are unchanged. Scoring, cut-offs, verdict rules and the two downloads are unchanged.
+
+**What changed**
+- Steps 3 and 5 offer Yes / Planned, not done yet / No. The button, its help line and the "Answer this to continue" hint are gone.
+- A question left blank is **not answered yet**. It scores 0, counts in the total and is listed on the to-do list as "Answer this: “…”" (was "Find out: “…”"). Wording in bars, the must-have line, the method and the score sentence now says "not answered yet" (was "to find out").
+- **Next** on steps 3 and 5 goes on with blank questions. Each step says how many are still not answered: "8 of 10 must-haves are still not answered. A blank answer counts as not answered yet, and you can go on." (step 5: "… questions for this use case …").
+- A stored "k" (saved before this version) reads as blank: not offered, not carried over when an older check is migrated, not counted as kept in the migration notice. The Answers PDF shows "Not answered yet".
+- Placement: a saved check opens where it was saved. Blank questions do not hold it back. Two cases still reopen a result on step 5 with the first unanswered question focused (as in v2.1 and v2.7.0): its tailored questions changed, or it came from the older list and has questions with no carried answer.
+
+**Judgement calls (owner to confirm)**
+1. Next. The brief said to keep the existing behaviour (the person may go on). v2.7.0 did not allow that: Next on steps 3 and 5 waited until every question had an answer, and "Don't know yet" was the way past. Without that button the gate would force answers, which the brief rules out, so Next now goes on with blanks.
+2. Placement. Old answers (Partly, Doesn't apply, v2.3) count as blanks, so they no longer hold a saved check on their step. The v2.3 "pick again on that step" placement is gone as a result of point 1. The step-5 reopen in the two cases above is kept.
+3. Migration counts. Stored "k" answers are not carried: the gx-2 fixture is now 7 kept, 5 new (was 8, 4); the rm-1 fixture 5 kept, 2 new (was 6, 1).
+4. No "earlier answer" line for a stored "k". The v2.3 line names the earlier answer, and that cannot say "Don't know". A stored "k" simply reads as not answered yet.
+5. Kept as they are because they are not answer wording: "Find out first" on the "Not enough information yet" verdict line and the Step 2 "Not sure" lines ("it becomes something to find out").
+6. Scoring unchanged: a blank scores 0 and stays in the total (UNKNOWN_SCORES_ZERO true), and the 25% / 50% unknown cut-offs read blanks as before. The worked examples A to I in tests/scoring.test.mjs keep their numbers (89 pass, none changed). Some test helpers still name a blank "k" internally; the code reads it as blank, so the numbers are the same.
+7. The data file `data/usecase_questions_only.json` still says "Don't know yet" in its top "note" and in one "reason" text. Neither is shown in the tool, and the file is the owner's verbatim source, so it is not edited.
+8. The bundled jsPDF library (index.html) has one internal error message, "Don't know what to do with value type". It is never shown on the page and the library is not edited.
+9. Docs: README and NOTES answer-option lines updated. Older CHANGELOG entries keep their history wording.
+
+**Changed test expectations** (each because of the change above)
+- `flow.test.mjs`: must-have and tailored Next now go on with blanks (guard checks and probes); the where and result invariants no longer require must-haves or tailored answers; placeStep of a blank must-have → result; "k" refused as an answer.
+- `logic.test.mjs`: wording only ("not answered yet", "Answer this", "Not answered yet 0" in the method line, the area regex).
+- `pdf.test.mjs`: "2 not answered yet" in the verdict box, "Your answer: Not answered yet" in the Answers PDF.
+- `v21.test.mjs`: wording (B2 cases, item 1, item 3, item 6); helpers `noK` (a stored "k" is not kept) and `carryT` (a stored "k" is not carried); the v2.0 placement helper no longer holds on old answers; answers compared without "k".
+- `v23.test.mjs`: three answers, not four; "k" refused on steps 3 and 5 (two new assertions); a v2.2 record with questions that have no carried answer reopens on step 5 (v2.7.0 rule), not on step 3; two Back steps from step 5 to step 3; "k" not kept; method wording.
+- `v25.test.mjs`: "Answer this" for a blank question; `answerState('k')` is "blank"; the v2.4 check 1 carries 7 answers, not 8 (its one stored "k" is not carried; 25 of 44 = 56% unchanged).
+- `migration.test.mjs`: OK map without "k" (gx-2 7 kept, 5 new; rm-1 5 carried); first unanswered gx-2.da1 (was or1); a stored "k" is not kept; zero score for a blank in the score check (`pts[v] || 0`). The step-5 reopen expectations are unchanged.
+- `tests/browser/questions.cjs`: the kept count excludes "k"; the v2.6.1 file gives 7 kept, 5 new (was 8, 4).
+
+**Tests** (run from the repo, after `node tools/readiness-2-questions/build.mjs`)
+- Node, 15 suites, all pass: build 124, flow 6076, logic 7539, migration 29, no-legal 411, pdf 2350, questions 313, scoring 89, v21 1261, v22 114, v23 258, v25 114, v251 83, v26 79, v261 26 (18866 checks).
+- Browser `tests/browser/questions.cjs` (served from tools/ on a temporary port): 444 pass, 0 fail. Screenshots in `reports/readiness-2-questions-screens/` are regenerated.
+- Scratch check (not committed): both PDFs downloaded from the built page for (a) a fresh check left blank and taken on with Next and (b) the v2.6.1 fixture with stored "k" answers. Text extracted with pdftotext.
+
+**Grep (case-insensitive apostrophe forms)**
+- `index.html`: "Don't know" 1 hit, inside the bundled jsPDF library's error message (judgement 8); "know yet" 0 hits. The tool's own text: 0.
+- PDF text, 4 files (Result and Answers for (a) and (b)): "Don't know" 0, "know yet" 0.
+- On-screen text of the result page: 0.
+- "to find out" remains only in Step 2 "Not sure" wording (judgement 5) and the "Find out first" verdict line.
+
+**Still open**
+- Owner: confirm point 1 (Next goes on with blanks) and point 2 (placement), and decide on point 7 (the data file note).
+- Committed, not published. Owner sign-off is still needed for points 1, 2 and 7.
+
 ## v2.7.0 (25 Nov 2026), standalone artifact, copied from tools/readiness-2 at 74385fe (v2.7 with rules v2.6)
 - Step 5 reads `data/usecase_questions_only.json` verbatim (99 use cases, 723 questions, 6 to 12 each, no text in two use cases):
   text, why (in "Why this matters"), area, who answers. The generator, overrides, wording and workbook extract are removed;

@@ -216,7 +216,7 @@ async function run(p, use, tailFn, tag) {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: s => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('hftp-readiness2-v1', s); } }, arg: JSON.stringify(FX.store), wait: '#older-list' });
     const s = await st(p), cur = FX.store.cur;
     const use = FX.store.checks[cur].use, want = QU[use].questions;
-    const kept = want.filter(q => q.carry_answer_from && FX.store.checks[cur].T[q.carry_answer_from]).length;
+    const kept = want.filter(q => q.carry_answer_from && ['y', 'pl', 'n'].includes(FX.store.checks[cur].T[q.carry_answer_from])).length; // v2.7.1: a stored "k" is not an answer
     ok(s.id === cur && s.step === 'tailored' && s.older && s.older.kept === kept && s.older.fresh === want.length - kept, 'old key: the open check migrates, step 5, ' + kept + ' kept, ' + (want.length - kept) + ' new');
     const line = (await p.textContent('#older-list')).replace(/\s*OK$/, '').trim();
     ok(line === 'This check was made with an older question list. ' + (kept === 1 ? '1 answer was' : kept + ' answers were') + ' kept, ' + (want.length - kept === 1 ? '1 question is' : (want.length - kept) + ' questions are') + ' new.', 'the notice: ' + line);
@@ -234,7 +234,7 @@ async function run(p, use, tailFn, tag) {
     if (await p.locator('#import-yes').count()) await click(p, '#import-yes'); // the store above holds the same check: replace it with the file
     await p.waitForFunction(id => window.Readiness2.state().id === id, file.check.id);
     const f = await st(p);
-    ok(f.step === 'tailored' && f.older && f.older.kept === 8 && f.older.fresh === 4 && f.T['gx-2.ACT_OFF'] === 'pl' && f.TBy['gx-2.ACT_OFF'] === '2027-04-15', 'v2.6.1 file: opens on step 5, 8 kept, 4 new, dates carried');
+    ok(f.step === 'tailored' && f.older && f.older.kept === 7 && f.older.fresh === 5 && f.T['gx-2.ACT_OFF'] === 'pl' && f.TBy['gx-2.ACT_OFF'] === '2027-04-15', 'v2.6.1 file: opens on step 5, 7 kept, 5 new (v2.7.1: a stored "k" is not kept), dates carried');
     ok(!p._errs.length, 'migration: no page errors: ' + p._errs.join(' | '));
     count('migration', true);
     await ctx.close();

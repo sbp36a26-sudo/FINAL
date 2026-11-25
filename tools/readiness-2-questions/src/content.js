@@ -93,11 +93,11 @@
 
   /* ---------- Must-haves and tailored questions: the readiness check's answer scale ---------- */
   /* v2.3 (owner, 24 Nov 2026): four answers only, in this order. "Partly" and "Doesn't apply" are no longer offered. */
-  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No'], ['k', 'Don’t know yet']];
+  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No']]; // v2.7.1 (owner): three answers; a question left blank is not answered yet
   /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
   var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
   var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a

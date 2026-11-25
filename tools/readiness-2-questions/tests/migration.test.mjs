@@ -14,7 +14,8 @@ const rd = p => readFileSync(join(root, p), 'utf8');
 const clone = o => JSON.parse(JSON.stringify(o));
 const Q = JSON.parse(rd('data/usecase_questions_only.json')), QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u]));
 const FILE = JSON.parse(rd('tests/fixtures/v2.6.1-file.json')), STORE = JSON.parse(rd('tests/fixtures/v2.6.1-store.json'));
-const OK = { y: 1, pl: 1, n: 1, k: 1 };
+const OK = { y: 1, pl: 1, n: 1 }; // v2.7.1: a stored "k" is not an answer and does not carry over
+const noK = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== 'k'));
 /* The expected carry, worked out from the data file alone (independent of src/flow.js). */
 function expectCarry(use, T, TBy) {
   const o = { T: {}, TBy: {}, kept: 0 };
@@ -38,14 +39,14 @@ ok(F.OLD_KEY === 'hftp-readiness2-v1' && F.KEY === 'hftp-readiness2q-v1' && F.V 
   ok(r.T['gx-2.pe1a'] === 'y' && r.T['gx-2.pe1b'] === 'y', 'a split question takes the old answer twice (pe1 to pe1a and pe1b)');
   ok(!Object.keys(r.T).some(k => !k.startsWith('gx-2.')) && !('gx-2.fi1' in r.T), 'answers to old ids that no longer exist are dropped (gx-2 fi1: ' + QU['gx-2'].original_questions.find(o => o.old_id === 'fi1').status + ')');
   ok(QU['gx-2'].questions.filter(q => !q.carry_answer_from).every(q => !(q.id in r.T)), 'a question without carry_answer_from starts unanswered');
-  ok(eq(info.olderList, { kept: x.kept, fresh: x.fresh }) && x.kept === 8 && x.fresh === 4, 'the page is told: 8 answers kept, 4 questions new');
+  ok(eq(info.olderList, { kept: x.kept, fresh: x.fresh }) && x.kept === 7 && x.fresh === 5, 'the page is told: 7 answers kept, 5 questions new (v2.7.1: a stored "k" is not an answer and is not kept)');
   ok(r.step === 'tailored', 'it opens on step 5 (its result needs the new questions first): ' + r.step);
-  ok(eq(r.A, c.A) && eq(r.By, c.By) && r.A.m5 === 'pl' && r.By.m5 === '2027-02-01', 'must-have answers and dates migrate as they are; must-have 5\'s answer is kept');
+  ok(eq(r.A, noK(c.A)) && eq(r.By, c.By) && r.A.m5 === 'pl' && r.By.m5 === '2027-02-01', 'must-have answers and dates migrate as they are; must-have 5\'s answer is kept');
   ok(eq(r.Q, c.Q) && r.qv === c.qv && eq(r.hotel, c.hotel), 'hotel profile and step 2 migrate as they are');
   ok(r.useName === QU['gx-2'].name && r.tqSig === TQ.uses['gx-2'].sig, 'the use case is recognised by its old catalogue name (hash) and takes the new name and signature');
   // the first unanswered step-5 question
   const first = TQ.uses['gx-2'].qs.find(q => !OK[r.T[q.id]]);
-  ok(first && first.id === 'gx-2.or1', 'the first unanswered step-5 question is gx-2.or1');
+  ok(first && first.id === 'gx-2.da1', 'the first unanswered step-5 question is gx-2.da1 (its old answer was a stored "k")');
   // opened again (now in the new shape) nothing is carried twice and nothing is said
   const info2 = {}, r2 = F.cleanRec(clone(r), ENV, info2, { file: true });
   ok(eq(r2.T, r.T) && !info2.olderList && !info2.questionsChanged, 'a check already in the new shape opens unchanged, with no notice');
@@ -62,11 +63,11 @@ ok(F.OLD_KEY === 'hftp-readiness2-v1' && F.KEY === 'hftp-readiness2q-v1' && F.V 
   for (const k of ['gx2', 'rm1']) {
     const was = STORE.seen[k], c = s.checks[was.id], use = k === 'gx2' ? 'gx-2' : 'rm-1', x = expectCarry(use, was.T, was.TBy);
     ok(c && eq(c.T, x.T) && eq(c.TBy, x.TBy), use + ': answers carried by id with their dates');
-    ok(c.A.m5 === 'pl' && c.By.m5 === '2027-02-01' && c.A.m2 === 'k', use + ': must-have answers kept');
+    ok(c.A.m5 === 'pl' && c.By.m5 === '2027-02-01' && !('m2' in c.A), use + ': must-have answers kept; a stored "k" is not kept (v2.7.1)');
   }
   ok(eq(info.olderList, (() => { const w = STORE.seen[STORE.store.cur === STORE.seen.rm1.id ? 'rm1' : 'gx2']; const x = expectCarry(STORE.store.cur === STORE.seen.rm1.id ? 'rm-1' : 'gx-2', w.T, w.TBy); return { kept: x.kept, fresh: x.fresh }; })()), 'the open check\'s counts are reported for the notice: ' + JSON.stringify(info.olderList));
   const rm = s.checks[STORE.seen.rm1.id];
-  ok(rm.T['rm-1.n1'] === undefined && Object.keys(rm.T).length === 6 && rm.step === 'tailored', 'rm-1: 6 carried, the new question rm-1.n1 to answer, on step 5');
+  ok(rm.T['rm-1.n1'] === undefined && rm.T['rm-1.or1'] === undefined && Object.keys(rm.T).length === 5 && rm.step === 'tailored', 'rm-1: 5 carried (its or1 answer was a stored "k"), the new question rm-1.n1 left blank, on step 5 (v2.7.0 reopen; v2.7.1 counts "k" as not carried)');
   // a store record opened as a file (the page's "Open a saved file" accepts it): its open check
   const app = rd('src/app.js');
   ok(/o\.checks\[o\.cur\]\) r = F\.cleanRec\(o\.checks\[o\.cur\], ENV, info, \{ file: true \}\)/.test(app) && /readStore\(tabCur\(\), F\.OLD_KEY\)/.test(app), 'app.js: a store record can be opened as a file, and the old key is read on a first visit');
@@ -77,6 +78,6 @@ ok(F.OLD_KEY === 'hftp-readiness2-v1' && F.KEY === 'hftp-readiness2q-v1' && F.V 
   TQ.uses['gx-2'].qs.forEach(q => { if (!OK[r.T[q.id]]) r.T[q.id] = 'y'; }); r.step = 'result';
   const e = L.evaluate(r, TQ), pts = { y: 2, pl: 1, n: 0, k: 0 };
   const all = F.MUST_IDS.map(id => r.A[id]).concat(TQ.uses['gx-2'].qs.map(q => r.T[q.id]));
-  ok(e.pts === all.reduce((a, v) => a + pts[v], 0) && e.max === 2 * all.length && e.pct === Math.floor(100 * e.pts / e.max), 'after answering the new questions the score is the v2.6.1 formula over 22 questions: ' + e.pts + ' of ' + e.max);
+  ok(e.pts === all.reduce((a, v) => a + (pts[v] || 0), 0) && e.max === 2 * all.length && e.pct === Math.floor(100 * e.pts / e.max), 'after answering the new questions the score is the v2.6.1 formula over 22 questions: ' + e.pts + ' of ' + e.max);
 }
 done();

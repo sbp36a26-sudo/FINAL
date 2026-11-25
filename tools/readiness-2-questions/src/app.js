@@ -292,7 +292,8 @@
   }
   /* v2.3: a saved answer that is no longer offered (Partly, Doesn't apply): no option is checked, and this line says why. */
   function oldLine(id, raw) { var t = L.oldLine(raw); return t ? '<p class="oldans" id="old-' + id + '" data-old="' + esc(L.oldOf(raw)) + '" role="note">' + esc(t) + '</p>' : ''; }
-  function needLine(id) { return ui.missing === id ? '<p class="needline" role="alert">Answer this to continue (“Don’t know yet” is fine).</p>' : ''; }
+  /* v2.7.1 (owner): a blank answer does not stop Next. The step says how many questions are still not answered. */
+  function unansweredNote(id, n, of, noun) { return n ? '<p class="meta unanswered" id="' + id + '" role="status">' + n + ' of ' + of + ' ' + noun + ' ' + (n === 1 ? 'is' : 'are') + ' still not answered. A blank answer counts as not answered yet, and you can go on.</p>' : ''; }
   function nav(backLabel, nextLabel) {
     return '<div class="navrow"><button type="button" class="btn back" data-act="back" id="back">' + esc(backLabel || 'Back') + '</button><span class="spacer"></span>' +
       '<button type="button" class="btn primary" data-act="next" id="next">' + esc(nextLabel) + '</button></div>';
@@ -376,7 +377,7 @@
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
-      '<p class="sub">Answer honestly; “Don’t know yet” is a fine answer and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
+      '<p class="sub">Answer honestly. A question you leave blank counts as not answered yet and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
       '<section class="panel intro" id="intro-get"><h2>What you get</h2><ul class="tight">' +
       '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
       '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
@@ -436,17 +437,17 @@
   function vMust() {
     var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
     var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2>Must-haves</h2>' +
-      '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Each one needs an answer; “Don’t know yet” is fine and goes on your to-do list.</p>' +
+      '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Answer each one you can. A blank one counts as not answered yet and goes on your to-do list.</p>' +
       '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' +
       '<p class="meta" id="cap-note">The top verdict is only possible when every must-have is Yes. You can go on either way.</p></div>';
-    h += '<section class="panel">' + C.MUSTS.map(function (m, i) {
+    h += unansweredNote('unanswered-must', F.MUST_IDS.filter(function (id) { return !L.A_OK[rec.A[id]]; }).length, F.MUST_IDS.length, 'must-haves') + '<section class="panel">' + C.MUSTS.map(function (m, i) {
       var gloss = m.gloss && !(m.ex && /^PMS:/.test(m.gloss) && !sy.pms) ? m.gloss : '';
       var more = '<p class="whyshort"><strong>' + esc(m.why) + '</strong></p><p><b>What counts as Yes:</b> ' + esc(m.good) + '</p>' +
         (m.ex ? '<p class="qex" id="ex-' + m.id + '">' + esc(sy.line) + '</p>' : '') + (gloss ? '<p class="gloss" id="gloss-' + m.id + '">' + esc(gloss) + '</p>' : '') +
         evidence(m.ev, L.shareLines(m, TQ));
       return '<fieldset class="qa' + (ui.missing === m.id ? ' missing' : '') + '" id="f-' + m.id + '" aria-labelledby="t-' + m.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname">' + esc(m.name) + '</p><p class="qtext" id="t-' + m.id + '">' + esc(m.q) + '</p>' +
-        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + (cons[m.id] ? '<p class="consist" id="consist-' + m.id + '" role="note">' + esc(cons[m.id]) + '</p>' : '') + byField(m.id, rec.A[m.id], rec.By[m.id]) + needLine(m.id) +
+        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + (cons[m.id] ? '<p class="consist" id="consist-' + m.id + '" role="note">' + esc(cons[m.id]) + '</p>' : '') + byField(m.id, rec.A[m.id], rec.By[m.id]) +
         fold('why-' + m.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';
     h += sources('must') + nav('Back', 'Next: where in the hotel?');
@@ -499,12 +500,12 @@
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
     /* v2.7.0: each question exactly as in data/usecase_questions_only.json: text, "why it matters", area, who answers. */
-    h += '<section class="panel">' + qs.map(function (q, i) {
+    h += unansweredNote('unanswered-tail', qs.filter(function (q) { return !L.A_OK[rec.T[q.id]]; }).length, qs.length, 'questions for this use case') + '<section class="panel">' + qs.map(function (q, i) {
       var v = rec.T[q.id], why = L.tailWhy(TQ, rec.use, q);
       var more = '<p class="whyshort" data-why="' + esc(q.id) + '"><strong>' + esc(why[0]) + '</strong></p><p class="meta whyarea">' + esc(why[1]) + ' ' + esc(why[2]) + '</p>';
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + esc(q.id) + '" aria-labelledby="t-' + esc(q.id) + '" data-q="' + esc(q.id) + '" data-area="' + q.a + '" data-who="' + esc(q.whoLabel) + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname">' + esc(TQ.areas[q.a]) + ' · ' + esc(q.whoLabel) + '</p><p class="qtext" id="t-' + esc(q.id) + '">' + esc(q.q) + '</p>' +
-        radios(q.id, C.ANSWERS, v) + oldLine(q.id, v) + byField(q.id, v, rec.TBy[q.id]) + needLine(q.id) +
+        radios(q.id, C.ANSWERS, v) + oldLine(q.id, v) + byField(q.id, v, rec.TBy[q.id]) +
         fold('why-' + q.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';
     h += sources('tailored') + nav('Back', 'See the result');
@@ -539,7 +540,7 @@
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
-      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' to find out' : ''].filter(Boolean).join(' · ')) + '</span></div>';
+      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' not answered yet' : ''].filter(Boolean).join(' · ')) + '</span></div>';
     }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
     h += '<section class="panel" id="plan"><h2>Action plan by person</h2>' + (m.people.length ? '<p class="meta">One list per person. Copy it into an email or a message.</p>' + m.people.map(function (p) {
       return '<div class="person" data-who="' + p.who + '"><div class="personhead"><h3>' + esc(p.name) + ' <span class="meta">(' + p.items.length + ')</span></h3><button type="button" class="btn small" data-act="copy-who" data-who="' + p.who + '" id="copy-' + p.who + '">' + esc(copyLabel(p.name)) + '</button></div><ul class="todo">' +

@@ -898,11 +898,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   /* ---------- Must-haves and tailored questions: the readiness check's answer scale ---------- */
   /* v2.3 (owner, 24 Nov 2026): four answers only, in this order. "Partly" and "Doesn't apply" are no longer offered. */
-  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No'], ['k', 'Don’t know yet']];
+  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No']]; // v2.7.1 (owner): three answers; a question left blank is not answered yet
   /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
   var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
   var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No', k: 'Don’t know yet' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -1155,7 +1155,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
    2. evaluate(rec, TQ): the score in % and the verdict (owner, 24 Nov 2026: "percentage plus verdict").
       Every cut-off sits in T, one block, and is the team's judgement, not tested with hotels.
       Rules v2.1 (24 Nov 2026, after the clean-up audit and the council on v2.0): the three switches in JUDGEMENT.
-      Rules v2.3 (24 Nov 2026, owner): four answers on steps 3 and 5 (Yes, Planned, No, Don't know yet). "Partly" (p) and
+      Rules v2.3 (24 Nov 2026, owner): three answers on steps 3 and 5 (Yes, Planned, No; v2.7.1 removed the fourth: a blank is not answered yet). "Partly" (p) and
       "Doesn't apply" (na) are gone; a saved one counts as not answered and is carried as it.old so the page can say so.
       Rules v2.5 (24 Nov 2026, owner decisions O1 to O4 of reports/Council - Do you need AI v2.4.md): two caps on "Planned" and three
       holds, each a named constant in JUDGEMENT; points unchanged.
@@ -1187,7 +1187,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     });
     return { Q: out, dropped: dropped };
   }
-  var A_OK = { y: 1, pl: 1, n: 1, k: 1 };
+  var A_OK = { y: 1, pl: 1, n: 1 }; // v2.7.1: a blank is not answered yet; a stored 'k' is read as blank
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
   var MUST = {}; C.MUSTS.forEach(function (x) { MUST[x.id] = x; });
@@ -1198,15 +1198,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var T = {
     READY: 75,          // "Ready to start a pilot": score of 75% or more ...
     ALMOST: 50,         // "Almost ready": 50% to 74%; below 50%: "Not ready yet"
-    UNKNOWN_READY: 25,  // ... and fewer than 25% of the questions "Don't know yet"
-    UNKNOWN_NOINFO: 50, // "Not enough information yet": more than 50% of the questions "Don't know yet"
+    UNKNOWN_READY: 25,  // ... and fewer than 25% of the questions not answered yet
+    UNKNOWN_NOINFO: 50, // "Not enough information yet": more than 50% of the questions not answered yet
     STRONG: 75, GAPS: 50 // an area in words: Strong (75% or more), Gaps to close (50 to 74%), Weak (below 50%)
   };
-  var POINTS = { y: 2, pl: 1, n: 0 }; // "Don't know yet": see JUDGEMENT.UNKNOWN_SCORES_ZERO (v2.3: no Partly, no "Doesn't apply")
+  var POINTS = { y: 2, pl: 1, n: 0 }; // not answered yet: see JUDGEMENT.UNKNOWN_SCORES_ZERO (v2.3: no Partly, no "Doesn't apply")
 
   /* ---------- TEAM JUDGEMENT (rules v2.1): three switches the owner can flip. Each is named in "How this was worked out". ----------
-     UNKNOWN_SCORES_ZERO   (council B2) true: "Don't know yet" counts as 0 points, so the score is the share of everything asked
-                           that is in place. false: it is left out of the points (rules v2). Either way it is listed as "to find out".
+     UNKNOWN_SCORES_ZERO   (council B2) true: a question not answered yet counts as 0 points, so the score is the share of everything asked
+                           that is in place. false: it is left out of the points (rules v2). Either way it is listed as "not answered yet".
      SENSITIVE_HOLDS_TOP   (council B5; v2.7.0, owner) true: no "Ready to start a pilot" for a use case the data file marks
                            sensitive (people's personal data or jobs: 12 use cases). The best verdict is "Almost ready" and the
                            result says why (the data file's sensitive_hold_reason). false: the flag line only.
@@ -1369,7 +1369,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
   /* The score and the verdict (rules v2.5).
      Score = points earned / points possible over every question asked (must-haves + tailored). An answer that is no longer
-     offered (it.old) counts as not answered, like a blank. "Don't know yet" counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "to find out".
+     offered (it.old) counts as not answered, like a blank. A question not answered yet counts as 0 points (JUDGEMENT.UNKNOWN_SCORES_ZERO) and is still counted and shown as "not answered yet".
      No score is shown under "Not enough information yet" (ev.pct is null there; ev.pts and ev.max keep the sum).
      Verdict, in this order:
        noinfo    more than half the questions unknown
@@ -1389,7 +1389,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       var g = area[it.a] = area[it.a] || { k: it.a, name: it.a === 'must' ? 'Must-haves' : it.name, n: 0, known: 0, yes: 0, unknown: 0, pts: 0, max: 0 };
       c.total++; g.n++;
       if (it.grp === 'must') must.n++; else tail.n++;
-      if (!it.v || it.v === 'k') { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
+      if (!it.v) { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
       c.known++; g.known++; pts += POINTS[it.v]; max += 2; g.pts += POINTS[it.v]; g.max += 2; if (it.v === 'y') g.yes++;
       var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w;
       if (it.grp === 'must') must[w]++; else { tail.known++; tail[w]++; }
@@ -1406,13 +1406,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var level, why, reason, kind, box = '';
     var fewMust = must.yes * 100 < JUDGEMENT.ALMOST_MIN_MUST_YES * must.n;
     if (c.total === 0 || manyUnknown) {
-      level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')';
-      reason = 'Because more than half the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').' + (must.anyNo ? ' Already known: ' + missing : '');
+      level = 'noinfo'; kind = 'noinfo'; why = 'more than half the questions are not answered yet (' + c.unknown + ' of ' + c.total + ')';
+      reason = 'Because more than half the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ').' + (must.anyNo ? ' Already known: ' + missing : '');
     }
     else if (must.anyNo) { level = 'notready'; kind = 'mustNo'; why = n_(must.no, 'must-have is', 'must-haves are') + ' answered No'; reason = 'Because ' + missing + ' A missing must-have outweighs the score.'; box = 'Because ' + n_(must.no, 'must-have is', 'must-haves are') + ' No.'; }
     else if (pts * 100 < T.ALMOST * max) {
       level = 'notready'; kind = 'score'; why = 'the score is below ' + T.ALMOST + '%'; box = 'Because the score is below ' + T.ALMOST + '%.';
-      reason = 'Because fewer than half the points are in place.' + (zero && c.unknown ? ' “Don’t know yet” counts as 0 points.' : '');
+      reason = 'Because fewer than half the points are in place.' + (zero && c.unknown ? ' A question not answered yet counts as 0 points.' : '');
     }
     else if (fewMust) {
       level = 'notready'; kind = 'fewMust'; why = 'only ' + must.yes + ' of ' + must.n + ' must-haves are Yes (“' + C.LEVELS.almost.name + '” needs at least half)';
@@ -1438,14 +1438,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         box = C.BOX.held.replace('{why}', held.map(function (h) { return C.BOX[h]; }).join('; '));
       } else {
         level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
-        reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are “Don’t know yet”.';
+        reason = 'Because every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet.';
       }
     }
     else {
       level = 'almost'; kind = 'almost';
       if (!must.allYes) { why = n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet (none is No)'; reason = 'Because ' + n_(must.n - must.yes, 'must-have is', 'must-haves are') + ' not Yes yet: ' + namesOf('open') + '.'; }
       else if (pts * 100 < T.READY * max) { why = 'the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%'; reason = 'Because the score is between ' + T.ALMOST + '% and ' + (T.READY - 1) + '%. The top verdict needs ' + T.READY + '% or more.'; }
-      else { why = 'a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still “Don’t know yet” (' + c.unknown + ' of ' + c.total + ').'; }
+      else { why = 'a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ')'; reason = 'Because a quarter or more of the questions are still not answered yet (' + c.unknown + ' of ' + c.total + ').'; }
     }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, held: held, box: box,
       sensitive: sens, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
@@ -1463,11 +1463,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function task(it) {
     var d = fmtDate(it.by), tail = it.grp === 'tail';
     if (it.old) return 'Answer again: “' + it.q + '” (the earlier answer “' + OLD[it.old] + '” is no longer offered)';
-    if (it.state === 'unknown') return 'Find out: “' + it.q + '”';
+    if (it.state === 'unknown') return 'Answer this: “' + it.q + '”';
     if (it.state === 'planned') return tail ? 'Finish: ' + it.q + (d ? ' (' + plannedBy(it) + ')' : '') : 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act);
     return tail ? 'Make this a Yes: ' + it.q : it.act;
   }
-  /* Open items, weakest first: must-haves before tailored questions; within each No, Don't know yet, Planned; then the order asked. */
+  /* Open items, weakest first: must-haves before tailored questions; within each No, not answered yet, Planned; then the order asked. */
   function open(ev) {
     return ev.items.map(function (it, i) { return { it: it, i: i }; }).filter(function (x) { return RANK[x.it.state] != null; })
       .sort(function (x, y) { return (x.it.grp === 'must' ? 0 : 1) - (y.it.grp === 'must' ? 0 : 1) || RANK[x.it.state] - RANK[y.it.state] || x.i - y.i; })
@@ -1481,12 +1481,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var by = {}; open(ev).forEach(function (a) { (by[a.who] = by[a.who] || []).push(a); });
     return C.WHO_ORDER.filter(function (w) { return by[w]; }).map(function (w) { return { who: w, name: C.WHO[w], items: by[w] }; });
   }
-  var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Don’t know yet' };
+  var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Not answered yet' };
   /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such (Team tab). */
   function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
   /* Audit v3 L1: one name for every saved answer of steps 3 and 5, used by the page and the Team tab.
-     'yes' | 'planned' | 'no' | 'unknown' (Don't know yet) | 'old' (Partly or Doesn't apply, no longer offered) | 'blank'. */
-  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no', k: 'unknown' }[raw] || 'blank'; }
+     'yes' | 'planned' | 'no' | 'old' (Partly or Doesn't apply, no longer offered) | 'blank' (not answered yet; a stored 'k' too). */
+  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no' }[raw] || 'blank'; }
   /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3? } (v2.6: the must-have 7 line is gone) */
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
@@ -1570,15 +1570,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   /* ---------- how it was worked out ---------- */
   function method(ev) {
     var c = ev.counts, out = [], zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
-    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.'
-      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. “Don’t know yet” is left out of the points.');
-    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' “Don’t know yet”).');
+    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Not answered yet 0.'
+      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. A question not answered yet is left out of the points.');
+    out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' not answered yet).');
     out.push(ev.pct != null ? 'Your points: ' + ev.pts + ' of ' + ev.max + ' possible = ' + ev.pct + '% (rounded down).'
-      : 'No score is shown while more than half the questions are “Don’t know yet”' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
+      : 'No score is shown while more than half the questions are not answered yet' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
     ev.areas.forEach(function (g) { out.push(areaLine(g) + ' (' + g.pts + ' of ' + g.max + ' points; ' + g.known + ' of ' + g.n + ' answered).'); });
-    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions “Don’t know yet”. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions “Don’t know yet”.');
+    out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions are not answered yet.');
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
-    if (zero) out.push('Team judgement: “Don’t know yet” counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as something to find out.');
+    if (zero) out.push('Team judgement: a question not answered yet counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as not answered yet.');
     if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here. Ask an adviser before a pilot.');
     if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement (rules v2.5): “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
@@ -1590,13 +1590,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     out.push('The answers are your own and nobody checks them. The cut-offs are the team’s judgement and have not been tested with hotels. Rules ' + RULES + '.');
     return out;
   }
-  /* "Data: 0 of 1 in place", with the word only when the area has two or more known answers, and what is still to find out. */
+  /* "Data: 0 of 1 in place", with the word only when the area has two or more known answers, and how many are not answered yet. */
   function areaLine(g) {
-    return g.name + ': ' + g.yes + ' of ' + g.n + ' in place' + (g.word ? ' · ' + C.AREA_WORD[g.word] : '') + (g.unknown ? ' · ' + g.unknown + ' to find out' : '');
+    return g.name + ': ' + g.yes + ' of ' + g.n + ' in place' + (g.word ? ' · ' + C.AREA_WORD[g.word] : '') + (g.unknown ? ' · ' + g.unknown + ' not answered yet' : '');
   }
   function mustLine(ev) {
     var m = ev.must, p = [m.yes + ' of ' + m.n + ' must-haves in place'];
-    if (m.planned) p.push(m.planned + ' planned'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' to find out');
+    if (m.planned) p.push(m.planned + ' planned'); if (m.no) p.push(m.no + ' not in place'); if (m.unknown) p.push(m.unknown + ' not answered yet');
     return p.join(' · ');
   }
   /* The score is never worded as "% ready" (council, items 1 and 2): "Score: 83%", or no score at all under "Not enough information yet". */
@@ -1606,7 +1606,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var c = ev.counts;
     if (ev.pct == null) return C.SCORE_NOTE;
     var base = !JUDGEMENT.UNKNOWN_SCORES_ZERO ? ev.pts + ' of ' + ev.max + ' points on the ' + n_(c.known, 'question', 'questions') + ' you answered' + (c.unknown ? ' (of ' + c.total + ')' : '') + '.'
-      : c.unknown ? ev.pts + ' of ' + ev.max + ' points on ' + n_(c.total, 'question', 'questions') + ': ' + c.known + ' answered, ' + c.unknown + ' “Don’t know yet” (0 points each).'
+      : c.unknown ? ev.pts + ' of ' + ev.max + ' points on ' + n_(c.total, 'question', 'questions') + ': ' + c.known + ' answered, ' + c.unknown + ' not answered yet (0 points each).'
       : ev.pts + ' of ' + ev.max + ' points on the ' + n_(c.known, 'question', 'questions') + ' you answered.';
     return base + ' ' + C.SCORE_NOTE;
   }
@@ -1710,9 +1710,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         q --next--> 'stop' when Q1 is Yes (v2.6; whatever the rest); else 'must' only when all five questions are answered.
         'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes. (ctx.q1Stop; before v2.6 the
         stop answer was No.)
-        must --next--> where only with every must-have answered ("Don't know yet" counts).
+        must --next--> where with any must-have blank (v2.7.1: a blank is not answered yet and does not stop Next).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
-        tailored --next--> result only with every tailored question answered.
+        tailored --next--> result (v2.7.1: a blank tailored question does not stop Next).
    2. STORE (persisted in localStorage['hftp-readiness2q-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
       v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
       it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
@@ -1749,7 +1749,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   /* v2.3 (owner, 24 Nov 2026): steps 3 and 5 offer the same four answers. OLD_A / OLD_T: answers saved before v2.3 ("Partly" on
      both steps, "Doesn't apply" on step 5). A saved one is kept in the record as it was (never turned into another answer) but is
      not an answer: the step is not done until the person picks again, so a check that stood on its result opens on that step. */
-  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1, k: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
+  // v2.7.1: 'k' is no longer an answer; a stored one reads as blank
+  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var TYPES = ['independent', 'group', 'managed'], ROLES = ['gm', 'owner', 'dept', 'it', 'fin', 'other'];
   var MAX_SNAPS = 20, MAX_CHECKS = 50, HIST_SKIP_MAX = 60;
@@ -1817,9 +1818,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       case 'q': return c.hotelDone;
       case 'stop': return c.hotelDone && c.q1Stop;
       case 'must': return c.hotelDone && !c.q1Stop && c.qDone;
-      case 'where': return reachable('must', c) && c.mustDone;
+      case 'where': return reachable('must', c); // v2.7.1: a blank must-have does not stop Next
       case 'tailored': return reachable('where', c) && c.whereDone && !c.none && c.hasTail;
-      case 'result': return reachable('where', c) && c.whereDone && (c.none || !c.hasTail || c.tailDone);
+      case 'result': return reachable('where', c) && c.whereDone; // v2.7.1: blank tailored questions do not stop Next
     }
     return false;
   }
@@ -1894,6 +1895,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (!o.sharedAt || (opt && opt.file)) { o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; }
     o.updated = str(r.updated, 40);
     o.step = placeStep(typeof r.step === 'string' ? r.step : 'start', ctxOf(o, env));
+    /* v2.7.1: blank answers no longer hold a check back. The two cases that still reopen a result on step 5 are kept: its tailored
+       questions changed (answers dropped), or a check from the older list has questions with no carried answer (v2.7.0, focus on them). */
+    if (info && o.step === 'result' && (info.questionsChanged || (info.olderList && info.olderList.fresh > 0))) o.step = 'tailored';
     return o;
   }
   /* A record saved by the build before v2 ({ v: 1, step, Q, cat, dept, use, useName, A (b1..c9), By }): the five answers and the
@@ -2714,7 +2718,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   /* v2.3: a saved answer that is no longer offered (Partly, Doesn't apply): no option is checked, and this line says why. */
   function oldLine(id, raw) { var t = L.oldLine(raw); return t ? '<p class="oldans" id="old-' + id + '" data-old="' + esc(L.oldOf(raw)) + '" role="note">' + esc(t) + '</p>' : ''; }
-  function needLine(id) { return ui.missing === id ? '<p class="needline" role="alert">Answer this to continue (“Don’t know yet” is fine).</p>' : ''; }
+  /* v2.7.1 (owner): a blank answer does not stop Next. The step says how many questions are still not answered. */
+  function unansweredNote(id, n, of, noun) { return n ? '<p class="meta unanswered" id="' + id + '" role="status">' + n + ' of ' + of + ' ' + noun + ' ' + (n === 1 ? 'is' : 'are') + ' still not answered. A blank answer counts as not answered yet, and you can go on.</p>' : ''; }
   function nav(backLabel, nextLabel) {
     return '<div class="navrow"><button type="button" class="btn back" data-act="back" id="back">' + esc(backLabel || 'Back') + '</button><span class="spacer"></span>' +
       '<button type="button" class="btn primary" data-act="next" id="next">' + esc(nextLabel) + '</button></div>';
@@ -2798,7 +2803,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
-      '<p class="sub">Answer honestly; “Don’t know yet” is a fine answer and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
+      '<p class="sub">Answer honestly. A question you leave blank counts as not answered yet and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
       '<section class="panel intro" id="intro-get"><h2>What you get</h2><ul class="tight">' +
       '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
       '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
@@ -2858,17 +2863,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function vMust() {
     var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
     var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2>Must-haves</h2>' +
-      '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Each one needs an answer; “Don’t know yet” is fine and goes on your to-do list.</p>' +
+      '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Answer each one you can. A blank one counts as not answered yet and goes on your to-do list.</p>' +
       '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' +
       '<p class="meta" id="cap-note">The top verdict is only possible when every must-have is Yes. You can go on either way.</p></div>';
-    h += '<section class="panel">' + C.MUSTS.map(function (m, i) {
+    h += unansweredNote('unanswered-must', F.MUST_IDS.filter(function (id) { return !L.A_OK[rec.A[id]]; }).length, F.MUST_IDS.length, 'must-haves') + '<section class="panel">' + C.MUSTS.map(function (m, i) {
       var gloss = m.gloss && !(m.ex && /^PMS:/.test(m.gloss) && !sy.pms) ? m.gloss : '';
       var more = '<p class="whyshort"><strong>' + esc(m.why) + '</strong></p><p><b>What counts as Yes:</b> ' + esc(m.good) + '</p>' +
         (m.ex ? '<p class="qex" id="ex-' + m.id + '">' + esc(sy.line) + '</p>' : '') + (gloss ? '<p class="gloss" id="gloss-' + m.id + '">' + esc(gloss) + '</p>' : '') +
         evidence(m.ev, L.shareLines(m, TQ));
       return '<fieldset class="qa' + (ui.missing === m.id ? ' missing' : '') + '" id="f-' + m.id + '" aria-labelledby="t-' + m.id + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname">' + esc(m.name) + '</p><p class="qtext" id="t-' + m.id + '">' + esc(m.q) + '</p>' +
-        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + (cons[m.id] ? '<p class="consist" id="consist-' + m.id + '" role="note">' + esc(cons[m.id]) + '</p>' : '') + byField(m.id, rec.A[m.id], rec.By[m.id]) + needLine(m.id) +
+        radios(m.id, C.ANSWERS, rec.A[m.id]) + oldLine(m.id, rec.A[m.id]) + (cons[m.id] ? '<p class="consist" id="consist-' + m.id + '" role="note">' + esc(cons[m.id]) + '</p>' : '') + byField(m.id, rec.A[m.id], rec.By[m.id]) +
         fold('why-' + m.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';
     h += sources('must') + nav('Back', 'Next: where in the hotel?');
@@ -2921,12 +2926,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
     /* v2.7.0: each question exactly as in data/usecase_questions_only.json: text, "why it matters", area, who answers. */
-    h += '<section class="panel">' + qs.map(function (q, i) {
+    h += unansweredNote('unanswered-tail', qs.filter(function (q) { return !L.A_OK[rec.T[q.id]]; }).length, qs.length, 'questions for this use case') + '<section class="panel">' + qs.map(function (q, i) {
       var v = rec.T[q.id], why = L.tailWhy(TQ, rec.use, q);
       var more = '<p class="whyshort" data-why="' + esc(q.id) + '"><strong>' + esc(why[0]) + '</strong></p><p class="meta whyarea">' + esc(why[1]) + ' ' + esc(why[2]) + '</p>';
       return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + esc(q.id) + '" aria-labelledby="t-' + esc(q.id) + '" data-q="' + esc(q.id) + '" data-area="' + q.a + '" data-who="' + esc(q.whoLabel) + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
         '<p class="itemname">' + esc(TQ.areas[q.a]) + ' · ' + esc(q.whoLabel) + '</p><p class="qtext" id="t-' + esc(q.id) + '">' + esc(q.q) + '</p>' +
-        radios(q.id, C.ANSWERS, v) + oldLine(q.id, v) + byField(q.id, v, rec.TBy[q.id]) + needLine(q.id) +
+        radios(q.id, C.ANSWERS, v) + oldLine(q.id, v) + byField(q.id, v, rec.TBy[q.id]) +
         fold('why-' + q.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';
     h += sources('tailored') + nav('Back', 'See the result');
@@ -2961,7 +2966,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
-      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' to find out' : ''].filter(Boolean).join(' · ')) + '</span></div>';
+      return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' not answered yet' : ''].filter(Boolean).join(' · ')) + '</span></div>';
     }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
     h += '<section class="panel" id="plan"><h2>Action plan by person</h2>' + (m.people.length ? '<p class="meta">One list per person. Copy it into an email or a message.</p>' + m.people.map(function (p) {
       return '<div class="person" data-who="' + p.who + '"><div class="personhead"><h3>' + esc(p.name) + ' <span class="meta">(' + p.items.length + ')</span></h3><button type="button" class="btn small" data-act="copy-who" data-who="' + p.who + '" id="copy-' + p.who + '">' + esc(copyLabel(p.name)) + '</button></div><ul class="todo">' +

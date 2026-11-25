@@ -25,22 +25,22 @@ ok(F.flowNext('q', 'next', { ...full, q1Stop: true, qDone: false }) === 'stop' &
 // ---------- guards ----------
 ok(F.flowNext('hotel', 'next', { ...full, hotelDone: false }) === null, 'hotel: "how the hotel is run" is required');
 ok(F.flowNext('q', 'next', { ...full, qDone: false }) === null, 'q: all five answered');
-ok(F.flowNext('must', 'next', { ...full, mustDone: false }) === null, 'must-haves: every one needs an answer');
+ok(F.flowNext('must', 'next', { ...full, mustDone: false }) === 'where', 'must-haves: Next goes on with a blank must-have (v2.7.1)');
 ok(F.flowNext('where', 'next', { ...full, whereDone: false }) === null, 'where: a choice is needed');
-ok(F.flowNext('tailored', 'next', { ...full, tailDone: false }) === null, 'tailored: every question needs an answer');
+ok(F.flowNext('tailored', 'next', { ...full, tailDone: false }) === 'result', 'tailored: Next goes on with a blank question (v2.7.1)');
 // every combination of context: nothing past the questions is reachable while Q1 is No; reachable implies its predecessors
 const keys = Object.keys(full); let combos = 0;
 for (let m = 0; m < 1 << keys.length; m++) {
   const c = {}; keys.forEach((k, i) => { c[k] = !!(m & (1 << i)); }); combos++;
   if (c.q1Stop) ok(!['must', 'where', 'tailored', 'result'].some(s => F.reachable(s, c)), 'Q1 No: nothing past the questions is reachable ' + m);
   ok(!F.reachable('stop', c) || (c.q1Stop && c.hotelDone), 'stop only while Q1 is No ' + m);
-  ok(!F.reachable('result', c) || (c.mustDone && c.qDone && c.whereDone && c.hotelDone), 'result needs hotel, five answers, must-haves and a choice ' + m);
-  ok(!F.reachable('where', c) || c.mustDone, 'where needs every must-have answered ' + m);
+  ok(!F.reachable('result', c) || (c.qDone && c.whereDone && c.hotelDone), 'result needs hotel, five answers and a choice (v2.7.1: no blank holds it) ' + m);
+  ok(!F.reachable('where', c) || (c.qDone && c.hotelDone && !c.q1Stop), 'where needs the five answers (v2.7.1: no blank must-have holds it) ' + m);
   F.STEPS.forEach(s => { const p = F.placeStep(s, c); ok(F.reachable(p, c), 'placeStep(' + s + ') lands on a reachable step ' + m); if (F.reachable(s, c)) ok(p === s, 'a reachable step stays ' + s + ' ' + m); });
   F.STEPS.forEach(s => F.events(s, c).forEach(e => ok(F.reachable(F.flowNext(s, e, c), c), 'every accepted event leads to a reachable step')));
 }
 ok(combos === 256, '256 context combinations');
-ok(F.placeStep('nonsense', full) === 'start' && F.placeStep('result', { ...full, q1Stop: true }) === 'stop' && F.placeStep('result', { ...full, mustDone: false }) === 'must' && F.placeStep('result', { ...full, hotelDone: false }) === 'hotel', 'placeStep: unknown → start; Q1 No → stop; missing must-haves → must; no hotel type → hotel');
+ok(F.placeStep('nonsense', full) === 'start' && F.placeStep('result', { ...full, q1Stop: true }) === 'stop' && F.placeStep('result', { ...full, mustDone: false }) === 'result' && F.placeStep('result', { ...full, hotelDone: false }) === 'hotel', 'placeStep: unknown → start; Q1 No → stop; blank must-haves do not hold a check (v2.7.1) → result; no hotel type → hotel');
 
 // ---------- a full walk through reduce ----------
 let s = F.blankStore(), r;
@@ -53,7 +53,7 @@ s = drive(s, [['hotel', { k: 'type', v: 'managed' }], ['hotel', { k: 'name', v: 
 ok(F.cur(s).step === 'q' && eq(F.cur(s).hotel, { name: 'Hotel Alpenblick', role: 'gm', type: 'managed', country: 'Switzerland' }), 'hotel filled → q');
 ok(!F.reduce(s, 'answer', { id: 'm1', value: 'y' }, env).ok && !F.reduce(s, 'hotel', { k: 'type', v: 'group' }, env).ok && !F.reduce(s, 'use', 'none', env).ok, 'answers only on their own step');
 ok(!F.reduce(s, 'next', null, env).ok, 'q: Next refused with nothing answered');
-ok(!F.reduce(s, 'answer', { id: 'q1', value: 'k' }, env).ok, 'q: "Don\'t know yet" is not an answer to the five questions');
+ok(!F.reduce(s, 'answer', { id: 'q1', value: 'k' }, env).ok, 'q: a stored "k" is not an answer to the five questions (v2.7.1)');
 // Q1 No: the stop cannot be passed by any event
 let st = drive(s, [['answer', { id: 'q1', value: 'y' }], ['next']]).store;
 ok(F.cur(st).step === 'stop', 'Q1 Yes (v2.6) + Next → stop, with the other four blank');
@@ -70,10 +70,10 @@ ok(!F.reduce(st, 'answer', { id: 'q1', value: 'y' }, env).ok && !F.reduce(st, 'a
 st = F.reduce(st, 'change', null, env).store; ok(F.cur(st).step === 'q' && F.cur(st).Q.q1 === 'y', 'Change my answers → back on the questions');
 // go on with all Yes
 s = sendAll(s, 'answer', F.QIDS, 'y'); s = F.reduce(s, 'answer', { id: 'q1', value: 'n' }, env).store; s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'must', 'five answers (Q1 No, v2.6) → must-haves');
-ok(!F.reduce(s, 'next', null, env).ok, 'must-haves: Next refused with none answered');
-s = sendAll(s, 'answer', F.MUST_IDS.slice(0, 9), 'y'); ok(!F.reduce(s, 'next', null, env).ok, 'must-haves: Next refused with one unanswered');
+ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'where', 'must-haves: Next goes on with none answered (v2.7.1)');
+s = sendAll(s, 'answer', F.MUST_IDS.slice(0, 9), 'y'); ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'where', 'must-haves: Next goes on with one unanswered (v2.7.1)');
 ok(!F.reduce(s, 'answer', { id: 'm10', value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: 'm10', value: 'p' }, env).ok, 'must-haves: "Doesn\'t apply" and (v2.3) "Partly" are not offered');
-s = F.reduce(s, 'answer', { id: 'm10', value: 'k' }, env).store; ok(F.reduce(s, 'next', null, env).ok, '"Don\'t know yet" counts as an answer');
+ok(!F.reduce(s, 'answer', { id: 'm10', value: 'k' }, env).ok, 'a stored "k" is refused: a blank is not answered yet (v2.7.1)');
 s = F.reduce(s, 'answer', { id: 'm3', value: 'pl' }, env).store;
 ok(!F.reduce(s, 'by', { id: 'm3', date: '2026-02-31' }, env).ok && !F.reduce(s, 'by', { id: 'm1', date: '2027-01-15' }, env).ok, 'By when: real dates only, and only for a Planned answer');
 s = F.reduce(s, 'by', { id: 'm3', date: '2027-01-15' }, env).store; ok(F.cur(s).By.m3 === '2027-01-15', 'By when kept');
@@ -84,7 +84,7 @@ s = drive(s, [['cat', 'Guest-facing'], ['dept', 'gx'], ['use', 'gx-2']]).store;
 ok(F.cur(s).use === 'gx-2' && F.cur(s).useName === D.cat.depts.find(d => d.id === 'gx').uses[1].n, 'use case chosen, name kept');
 s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'tailored', 'a use case → tailored questions');
 const tids = F.tailIds(env, 'gx-2');
-ok(!F.reduce(s, 'next', null, env).ok && !F.reduce(s, 'answer', { id: 'zz1', value: 'y' }, env).ok, 'tailored: Next refused; an unknown question id refused');
+ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'result' && !F.reduce(s, 'answer', { id: 'zz1', value: 'y' }, env).ok, 'tailored: Next goes on with blanks (v2.7.1); an unknown question id refused');
 s = sendAll(s, 'answer', tids, 'y'); ok(!F.reduce(s, 'answer', { id: tids[0], value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: tids[0], value: 'p' }, env).ok && F.cur(s).T[tids[0]] === 'y', 'tailored (v2.3): "Doesn\'t apply" and "Partly" are not offered');
 s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'result', 'tailored answered → result');
 ok(!F.reduce(s, 'answer', { id: 'm1', value: 'n' }, env).ok && !F.reduce(s, 'next', null, env).ok, 'result: no answers, no Next');

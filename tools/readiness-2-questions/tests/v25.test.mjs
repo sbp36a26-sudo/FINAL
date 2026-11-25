@@ -84,7 +84,7 @@ const o5 = L.open(L.evaluate(r5, TQ)), t5 = k => o5.find(x => x.key === k)?.text
 ok(t5(GX[0].id) === 'Make this a Yes: ' + GX[0].q, 'O6: No → "Make this a Yes: {question}"');
 ok(t5(GX[1].id) === 'Finish: ' + GX[1].q + ' (planned by 1 Feb 2027)', 'O6: Planned with a date → "Finish: {question} (planned by …)": ' + t5(GX[1].id));
 ok(t5(GX[7].id) === 'Finish: ' + GX[7].q, 'O6: Planned → "Finish: {question}"');
-ok(t5(GX[2].id) === 'Find out: “' + GX[2].q + '”', 'O6: Don\'t know yet unchanged');
+ok(t5(GX[2].id) === 'Answer this: “' + GX[2].q + '”', 'O6: a blank question reads "Answer this: {question}" (v2.7.1; was "Find out")');
 ok(!GX.some(q => 'act' in q), 'O6 (v2.7.0): the questions-only data carries no action text; a step-5 task is the question itself');
 const r5m = finished(F, D, 'fo-4'); r5m.A.m1 = 'n'; ok(L.open(L.evaluate(r5m, TQ))[0]?.text === C.MUSTS[0].act, 'O6: must-have actions stay as they are');
 ok(!/Agree in writing: hand-off rules|Train or brief the people involved/.test(pdfText(r5)), 'O6: the PDF carries no workbook shorthand');
@@ -136,7 +136,7 @@ ok(!/SHARING_DEFAULT|SHARING_ON/.test(app), 'O7 (v2.7.0): sharing is gone, not o
   ok(f && /your answer: Not answered \(earlier answer: Partly, no longer offered\)/.test(f.sub), 'L1: first sub names the old answer: ' + (f && f.sub));
   ok(/^Answer again: “/.test(o[0]?.text) && /\(the earlier answer “Partly” is no longer offered\)$/.test(o[0]?.text), 'L1: the task reads "Answer again": ' + o[0]?.text);
   ok(m.people.some(p => p.items.some(a => /Not answered \(earlier answer: Partly/.test(a.tag))), 'L1: the action plan tag names it too');
-  ok(L.answerState && L.answerState('p') === 'old' && L.answerState('na') === 'old' && L.answerState('y') === 'yes' && L.answerState('pl') === 'planned' && L.answerState('n') === 'no' && L.answerState('k') === 'unknown' && L.answerState(undefined) === 'blank', 'L1: one helper answerState');
+  ok(L.answerState && L.answerState('p') === 'old' && L.answerState('na') === 'old' && L.answerState('y') === 'yes' && L.answerState('pl') === 'planned' && L.answerState('n') === 'no' && L.answerState('k') === 'blank' && L.answerState(undefined) === 'blank', 'L1: one helper answerState');
 }
 // L2: Team tab, copy of a gone use case
 ok(/DL\.answerWord\(/.test(team.slice(team.indexOf('function goneWord'), team.indexOf('function detailDyn'))) && !/DC\.ANSWER_WORD/.test(team), 'L2: detailGone words an old answer with answerWord');
@@ -166,7 +166,7 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   ok(st && c1 && c2 && !info.newer && !info.questionsChanged && !info.useChanged, 'v2.4 store opens with both checks and no notice');
   ok(c1.step === 'q' && c2.step === 'q' && c1.sharedAt && c1.sharedMode === 'local' && eq(c1.Qnew, ['q3', 'q4']), 'v2.4 store: both wait on step 2 (v2.6: questions 3 and 4 are new; was: on their result); check 1 still knows its copy');
   const m1 = L.resultModel(c1, env), m2 = L.resultModel(c2, env);
-  ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 56 && eq(Object.keys(c1.T).length, 8), 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready; v2.7.0: its 8 gx-2 answers carry to 8 of the 12 new questions (pe1 to pe1a and pe1b, x-auto to both limits questions), 4 new ones start unanswered, so 25 of 44 points = 56% (was 69%)');
+  ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 56 && eq(Object.keys(c1.T).length, 7), 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready; v2.7.0: its gx-2 answers carry to the new questions (pe1 to pe1a and pe1b, x-auto to both limits questions); v2.7.1: its one stored "k" is not an answer, so 7 carry and 5 new ones start unanswered; 25 of 44 points = 56% (was 69%)');
   ok(FX.seen.check2.levelName === 'Ready to start a pilot' && m2.level === 'almost' && m2.held.join() === 'none', 'v2.4 check 2 (None of these fits) was Ready, is Almost ready under rules v2.5 (O4)');
   ok(m1.since && /worked out with earlier rules/.test(m1.since.lines.concat(m1.since.earlier).join(' ') + ' ' + JSON.stringify(m1.since)) || (c1.snaps.length === 1 && c1.snaps[0].rules === 'v2.3 (24 Nov 2026)'), 'v2.4 snapshot kept with rules v2.3');
   const withNew = clone(c1); withNew.snaps.push(L.snapshot(L.evaluate(c1, TQ), '2026-11-25T10:00:00Z', c1.use, TQ.uses[c1.use].sig));

@@ -10,9 +10,9 @@
         q --next--> 'stop' when Q1 is Yes (v2.6; whatever the rest); else 'must' only when all five questions are answered.
         'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes. (ctx.q1Stop; before v2.6 the
         stop answer was No.)
-        must --next--> where only with every must-have answered ("Don't know yet" counts).
+        must --next--> where with any must-have blank (v2.7.1: a blank is not answered yet and does not stop Next).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
-        tailored --next--> result only with every tailored question answered.
+        tailored --next--> result (v2.7.1: a blank tailored question does not stop Next).
    2. STORE (persisted in localStorage['hftp-readiness2q-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
       v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
       it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
@@ -49,7 +49,8 @@
   /* v2.3 (owner, 24 Nov 2026): steps 3 and 5 offer the same four answers. OLD_A / OLD_T: answers saved before v2.3 ("Partly" on
      both steps, "Doesn't apply" on step 5). A saved one is kept in the record as it was (never turned into another answer) but is
      not an answer: the step is not done until the person picks again, so a check that stood on its result opens on that step. */
-  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1, k: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
+  // v2.7.1: 'k' is no longer an answer; a stored one reads as blank
+  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var TYPES = ['independent', 'group', 'managed'], ROLES = ['gm', 'owner', 'dept', 'it', 'fin', 'other'];
   var MAX_SNAPS = 20, MAX_CHECKS = 50, HIST_SKIP_MAX = 60;
@@ -117,9 +118,9 @@
       case 'q': return c.hotelDone;
       case 'stop': return c.hotelDone && c.q1Stop;
       case 'must': return c.hotelDone && !c.q1Stop && c.qDone;
-      case 'where': return reachable('must', c) && c.mustDone;
+      case 'where': return reachable('must', c); // v2.7.1: a blank must-have does not stop Next
       case 'tailored': return reachable('where', c) && c.whereDone && !c.none && c.hasTail;
-      case 'result': return reachable('where', c) && c.whereDone && (c.none || !c.hasTail || c.tailDone);
+      case 'result': return reachable('where', c) && c.whereDone; // v2.7.1: blank tailored questions do not stop Next
     }
     return false;
   }
@@ -194,6 +195,9 @@
     if (!o.sharedAt || (opt && opt.file)) { o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; }
     o.updated = str(r.updated, 40);
     o.step = placeStep(typeof r.step === 'string' ? r.step : 'start', ctxOf(o, env));
+    /* v2.7.1: blank answers no longer hold a check back. The two cases that still reopen a result on step 5 are kept: its tailored
+       questions changed (answers dropped), or a check from the older list has questions with no carried answer (v2.7.0, focus on them). */
+    if (info && o.step === 'result' && (info.questionsChanged || (info.olderList && info.olderList.fresh > 0))) o.step = 'tailored';
     return o;
   }
   /* A record saved by the build before v2 ({ v: 1, step, Q, cat, dept, use, useName, A (b1..c9), By }): the five answers and the
