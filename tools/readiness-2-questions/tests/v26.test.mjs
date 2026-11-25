@@ -124,8 +124,8 @@ ok(q4.yesIf === 'A wrong answer now and then can be caught or does little harm.'
 ok(!/C-R-I-S-P/.test(readFileSync(join(root, 'index.html'), 'utf8')), 'B (v2.8.0 B10): no C-R-I-S-P anywhere in the page');
 // v2.7.0: the wording.json core checks are retired with the file
 const BM = 'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534';
-ok(C.SOURCES.q.some(s => s.startsWith(BM)), 'B: the source stands with the other questions\' sources');
-ok(/Brynjolfsson/.test(C.SOURCES.qNote) && /24 Nov 2026/.test(C.SOURCES.qNote), 'B: the note says what changed and why');
+ok(C.SOURCES.q.some(s => s[0].startsWith(BM) && s[1] === 'https://doi.org/10.1126/science.aap8062'), 'B: the source stands with the other questions\' sources, with its DOI link (v2.8.0)');
+ok(C.SOURCES.qNote === 'The five questions and examples are the project team’s, based on these sources (Nov 2026).', 'B (v2.8.0, live review): the note keeps only "based on these sources"; the internal history line is gone');
 ok(readFileSync(join(root, '../../research_notes/AI starting point/research.md'), 'utf8').includes('v2.6 (24 Nov 2026)'), 'B: research.md carries the added note');
 // verdict rules
 const base = { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' };
@@ -165,7 +165,7 @@ ok(!/hub: 'link'|id="hublink"/.test(readFileSync(join(root, '../use-case-catalog
     const h = hubDetail(u.id, x); if (!h) bad.push(u.id); else { urls += h.srcs.filter(s => s.url).length; if (!eq(h.srcs.map(s => s.name), x.srcs.map(s => s.name))) bad.push(u.id + ' names'); }
   }));
   ok(n === 98, 'C (v2.7.0; v2.8.0: 98): the layer data of all listed use cases is built (the hub\'s own check is retired with the hub)');
-  ok(/function detailData\(id\) \{ return L\.detailData\(/.test(app) && /x\.srcs\.map\(L\.sourceRowItem\)/.test(app), 'C: the page\'s own dialog is drawn from the same data');
+  ok(/function detailData\(id\) \{ return L\.detailData\(/.test(app) && /L\.sourcesBox\(x, id\)/.test(app), 'C: the page\'s own dialog is drawn from the same data');
   ok(!/hubPost|host\.pong/.test(app) && /dlg\.showModal\(\)/.test(app), 'C (v2.7.0): no hub: the layer is always this page\'s own dialog');
   ok(/target="_blank" rel="noopener"/.test(rd('src/logic.js')), 'C (v2.7.0): source names are plain links that open in a new tab');
   ok(!/detail-close' \}\)/.test(app.replace("data-act=\"detail-close\"", '')), 'C (v2.7.0): no message when the layer closes');

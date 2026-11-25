@@ -104,7 +104,7 @@ ok(!/AI technique/.test(app) && !/research wording/.test(app), 'BUILD NOW 8 (v2.
 
 // ---------- BUILD NOW 9: sources ----------
 const evText = C.MUSTS.flatMap(m => m.ev.map(e => e.join(' '))).join('\n');
-ok(!/\d+\.\d+%/.test(evText) && /70% of EU accommodation/.test(evText) && /46% of EU accommodation/.test(evText), 'BUILD NOW 9: Eurostat shares rounded on screen');
+ok(!/\d+\.\d+%/.test(evText) && !/70% of EU accommodation/.test(evText) && /46% of EU accommodation/.test(evText), 'BUILD NOW 9: Eurostat shares rounded on screen (v2.8.0: the 70% line left must-have 8)');
 ok(/69\.89%/.test(C.SOURCES.must.join(' ')) && /45\.91%/.test(C.SOURCES.must.join(' ')), 'BUILD NOW 9: the exact shares stay in "Where this comes from"');
 ok((evText.match(/State of Hotel AI/g) || []).length === 4 && evText.split('\n').filter(t => /State of Hotel AI/.test(t)).every(t => /Destination AI/.test(t) && /global survey, vendor-linked; not comparable with the European figures/.test(t)), 'BUILD NOW 9: State of Hotel AI names its publisher and its base caveat');
 ok(/\b70%/.test(app) && /\b46%/.test(app) && !/69\.89|45\.91/.test(app), 'BUILD NOW 9: the cover rounds too');

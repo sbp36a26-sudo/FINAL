@@ -1,0 +1,752 @@
+[
+ {
+  "use_case": "rm-9",
+  "source": "Triptease Price Match: answers an undercutting OTA rate on metasearch and the booking engine by rules the hotel sets (vendor page, UK; no AI stated)",
+  "url": "https://www.triptease.com/price-match",
+  "status": "Live",
+  "action": "review",
+  "detail": "Fine as a non-AI alternative; label it so.",
+  "issue": "Rule-based price matching, no AI stated."
+ },
+ {
+  "use_case": "rm-9",
+  "source": "Hotelchamp RateBeat: a widget compares OTA prices with the direct rate and offers a matching price (vendor release, Netherlands, Feb 2026; no AI stated)",
+  "url": "https://www.hotelchamp.com/blog/press-release-ratebeat-free-trials",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "No AI stated."
+ },
+ {
+  "use_case": "rm-9",
+  "source": "Paraty Tech Parity Maker: acts automatically on rate disparities by criteria the hotel sets; the vendor says it solved this \"long before AI became the industry's favorite buzzword\" (vendor page, Spain, dated 03/08/2026; rule-based)",
+  "url": "https://www.paratytech.com/en/news/the-best-online-price-isnt-given-away-its-protected.html",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "Rule-based by the vendor's own words."
+ },
+ {
+  "use_case": "res-1",
+  "source": "(repeat) Schegg (2025) hotelinside.ch PDF",
+  "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Say what it shows (\"chatbots 31% of AI-using hotels\") or remove.",
+  "issue": "Repeat of the Schegg survey; it gives chatbot use (31%), not voice agents."
+ },
+ {
+  "use_case": "res-1",
+  "source": "(repeat) Grienberger et al. (2024) IAB-Kurzbericht 5/2024",
+  "url": "https://doku.iab.de/kurzber/2024/kb2024-05.pdf",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "Repeat of the IAB study about assistant hotel managers; nothing on voice agents."
+ },
+ {
+  "use_case": "res-4",
+  "source": "Triptease Email: automatic prompts to guests who abandon a booking (vendor page, UK; no AI stated)",
+  "url": "https://www.triptease.com/email",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "No AI stated."
+ },
+ {
+  "use_case": "sm-5",
+  "source": "(repeat) Google/Radisson",
+  "url": "https://cloud.google.com/customers/radisson?hl=en",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "Repeat: Radisson marketing content, not ad buying."
+ },
+ {
+  "use_case": "sm-5",
+  "source": "(repeat) Amadeus",
+  "url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+  "status": "Unverified",
+  "action": "edit_text",
+  "detail": "Check, else remove.",
+  "issue": "Repeat Amadeus AI strategy release; ad buying not shown in the summary."
+ },
+ {
+  "use_case": "sm-6",
+  "source": "(repeat) Amadeus",
+  "url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+  "status": "Unverified",
+  "action": "edit_text",
+  "detail": "Check, else remove.",
+  "issue": "Repeat Amadeus release; SEO/GEO not shown."
+ },
+ {
+  "use_case": "sm-7",
+  "source": "(repeat) hivr.ai",
+  "url": "https://www.conference-news.co.uk/?p=40832",
+  "status": "Unverified",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "hivr.ai is a phone agent for venue enquiries, not lead scoring."
+ },
+ {
+  "use_case": "fo-4",
+  "source": "Only 1 source: Oracle OPERA Cloud (same URL as above)",
+  "url": "https://www.oracle.com/news/announcement/new-ai-capabilities-in-oracle-opera-cloud-supercharge-hotel-operations-2026-06-16/",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Add an independent or hotel-side source (needs a source).",
+  "issue": "Only one source, from the PMS vendor; thin."
+ },
+ {
+  "use_case": "fo-5",
+  "source": "Hotel Barceló Hotel Group: AI-driven upsell offers at check-in with Oracle Nor1 (vendor customer page, 2024)",
+  "url": "https://www.oracle.com/customers/barcelo-hotel-group",
+  "status": "Broken",
+  "action": "remove",
+  "detail": "Remove, or find the current Oracle Barceló page (needs a source).",
+  "issue": "Broken link (404)."
+ },
+ {
+  "use_case": "fo-7",
+  "source": "EyeFeelIt: Holographic avatar check-in kiosk developed for Astral Hotels (Sep 2026)",
+  "url": "https://www.retailcustomerexperience.com/news/israeli-hotel-group-deploys-ai-powered-holographic-check-in-kiosk/",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove the duplicate entry.",
+  "issue": "The same link is listed twice in the dialog."
+ },
+ {
+  "use_case": "fo-8",
+  "source": "Faundit: \"helps hotels and hotel chains automate lost & found from item registration to guest communication, payment and shipping\" (vendor page, Europe; no AI stated)",
+  "url": "https://faundit.com/lost-and-found-software-for-hotels",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "No AI stated."
+ },
+ {
+  "use_case": "gx-1",
+  "source": "My Arbor (South Tyrol, Italy): post-stay messages sent automatically; Google reviews up \"approximately 55.5%\" on the same period a year earlier, and 70% of its 2025 Tripadvisor reviews came from the automated flow (one hotel, vendor case study by Customer Alliance, page dated 02/07/2025; review counts not published; no AI stated)",
+  "url": "https://www.customer-alliance.com/en/casestudies/post-stay-feedback-my-arbor-hotel",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Move to context or drop.",
+  "issue": "Feedback collection, no AI analysis."
+ },
+ {
+  "use_case": "gx-1",
+  "source": "The Cottage Hotel (Devon, UK): review link in post-stay e-mails; online reviews up 63% and total feedback volume up 430%, Q2 2025 against Q2 2024 (one hotel, vendor case study by GuestRevu; review counts not published; no AI stated)",
+  "url": "https://www.guestrevu.com/capturing-reviews-with-guestrevu-for-the-cottage-hotels-new-website",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "No AI stated."
+ },
+ {
+  "use_case": "gx-1",
+  "source": "Dorint Hotels & Resorts: Customer Alliance customer since 2013 across around 60 hotels in Germany, Austria and Switzerland (vendor case study, page dated 01/07/2026; no AI stated for the requests)",
+  "url": "https://www.customer-alliance.com/en/casestudies/dorint-hotels-guest-feedback-management",
+  "status": "Live",
+  "action": "review",
+  "detail": "As above.",
+  "issue": "No AI stated."
+ },
+ {
+  "use_case": "fb-5",
+  "source": "OECD (2024), Artificial Intelligence and tourism: G7/OECD policy paper, OECD Tourism Papers: OECD expects room service to be taken over by robots \"at some point\" (qualitative; PDF not re-opened in the audit)",
+  "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Delete the internal note from the text shown to users.",
+  "issue": "Qualitative; text contains the internal note \"PDF not re-opened in the audit\"."
+ },
+ {
+  "use_case": "fb-6",
+  "source": "Zenchef: AI phone assistant answers restaurant calls and writes the booking (page does not mention hotels)",
+  "url": "https://www.zenchef.com/call-ai",
+  "status": "Live (redirected)",
+  "action": "edit_text",
+  "detail": "Update the URL and product name.",
+  "issue": "Page does not mention hotels; URL now redirects to \"AI concierge\"."
+ },
+ {
+  "use_case": "hk-2",
+  "source": "Tuomi, Ashton, Schmidt & Ling (2025), After the Hype ... Cornell Hospitality Quarterly: Robots added tasks ...",
+  "url": "https://doi.org/10.1177/19389655251346383",
+  "status": "Live (DOI resolves)",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "Repeat: service robots, not floor-cleaning robots."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "Minut: sensors alert hotels and aparthotels to noise, smoking and unauthorised parties, without cameras or microphones (vendor page, Sweden; this page does not mention AI, but Minut claims machine learning for sound detection elsewhere, see the Minut entry below)",
+  "url": "https://www.minut.com/solutions/aparthotels",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove, or move to a smoking-sensor note; delete the dangling reference.",
+  "issue": "Noise/smoking sensors, not occupancy for room status. The text refers to \"the Minut entry below\", which does not exist."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "Consumers' Checkbook (US consumer organisation, Jun 2026): guests \"are charged cleaning fees of $250 to more than $560\", and it \"has heard from several travelers who never smoke or vape but were nonetheless hit with these fees\" (range of fees in the complaints it received, US; not a survey; it found no data on how many hotels use such sensors)",
+  "url": "https://www.checkbook.org/national/consumers-notebook/articles/Hotels-In-Room-Smoking-Sensors-Falsely-Charge-Some-Guests-Hundreds-in-Fees-7990",
+  "status": "Unverified",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "About false smoking fees, not occupancy-based cleaning."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "The Points Guy (15 Feb 2026): The Strat charged a couple \"a $396 smoking fee at checkout\"; at the Kimpton Palladian a card issuer sided with the hotel on the sensor printout, and the hotel's new manager said sensors \"should not be considered as a stand-alone confirmation of a smoking violation\" (travel press, from its consumer ombudsman's case files, US; individual cases as told by guests)",
+  "url": "https://thepointsguy.com/hotel/incorrect-hotel-room-smoking-fees-rest-sensor/",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "About smoking fees."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "ABC15 (Phoenix TV, 5 Aug 2026): two guests say the Holiday Inn & Suites Phoenix Airport North charged them $500 smoking fees; the reporters found 15 reviews \"describing similar smoking fee charges\" (one US hotel; unverified guest reviews, counted by the reporters)",
+  "url": "https://www.abc15.com/news/let-abc15-know/phoenix-hotel-guests-fight-500-smoking-fees-they-say-they-shouldnt-have-been-charged",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "About smoking fees."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "ABC7 New York (13 May 2024): guests of the NoMo SoHo say they were wrongly charged a $500 smoking fee; the reporters found \"at least 20 other similar complaints\" on the hotel's TripAdvisor and Expedia pages (one US hotel; unverified guest reviews, counted by the reporters; sensor brand not named)",
+  "url": "https://abc7ny.com/post/guests-of-the-swanky-nomo-hotel-in-soho-contacted-our-7-on-your-side-investigates-team-after-they-said-were-wrongfully-charged-a-500-smoking-fee/14807470/",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "About smoking fees."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "Rest (US): a \"proprietary algorithm evaluates multiple environmental indicators\" (vendor page; no date; no AI stated; no false-alarm rate published)",
+  "url": "https://restsensor.com/product-overview/technology-privacy",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "Smoking-sensor vendor."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "Rest: an alert is sent \"When a change in air quality meets defined thresholds\"; \"Rest does not issue charges, contact guests or make enforcement decisions\" (vendor blog, 2026; no AI stated)",
+  "url": "https://restsensor.com/blog/how-rest-sensor-detects-smoking-and-vaping-in-hotel-rooms",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "Smoking-sensor vendor."
+ },
+ {
+  "use_case": "hk-4",
+  "source": "Wynd Sentry (US): \"Powered by advanced AI\" (vendor page; no date; an unverified vendor claim, no test published; the only smoking-sensor vendor opened that claims AI)",
+  "url": "https://hellowynd.com/pages/sentry",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "Smoking-sensor vendor."
+ },
+ {
+  "use_case": "hk-6",
+  "source": "Jianu, Ashton & Lugosi (2025), IJHM (Delphi study): Panel of 22 managers and academics: algorithmic management can help with housekeeping schedules (press release of the study)",
+  "url": "https://www.surrey.ac.uk/news/are-hotel-managers-becoming-obsolete-age-ai",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Link the journal article if found; else label \"press release about the study\".",
+  "issue": "University press release about the study, not the paper itself."
+ },
+ {
+  "use_case": "kc-1",
+  "source": "KITRO: Camera-based food-waste tracking (URL slug: \"...ai-food-waste-scale-up-kitro-accelerates-international-growth-amid-new-regulatory-push\")",
+  "url": "https://www.hospitalitynet.org/news/4132907/ai-food-waste-scale-up-kitro-accelerates-international-growth-amid-new-regulatory-push",
+  "status": "Unverified",
+  "action": "replace",
+  "detail": "Replace with the other food-waste sources already listed (Orbisk, Winnow), or keep and do not quote the regulation.",
+  "issue": "URL slug and headline say \"new regulatory push\", which is legal framing."
+ },
+ {
+  "use_case": "kc-2",
+  "source": "Menutech: AI detects the 14 EU allergens from the menu text, without recipes",
+  "url": "https://menutech.com/en/features/allergens",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Reword to \"detects common allergens from the menu text\".",
+  "issue": "Text cites \"the 14 EU allergens\" (legal list)."
+ },
+ {
+  "use_case": "pr-1",
+  "source": "Access Group: Purchase-to-pay for hotels",
+  "url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+  "status": "Live",
+  "action": "review",
+  "detail": "Needs a specific source.",
+  "issue": "Generic purchase-to-pay page; no AI shown."
+ },
+ {
+  "use_case": "pr-2",
+  "source": "(repeat) Access Group: purchase-to-pay for hotels",
+  "url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+  "status": "Live",
+  "action": "review",
+  "detail": "Needs a specific source.",
+  "issue": "Repeats only."
+ },
+ {
+  "use_case": "pr-2",
+  "source": "(repeat) Eurostat isoc_eb_ain2: AI for logistics 0.68%",
+  "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+  "status": "Live",
+  "action": "review",
+  "detail": "Needs a specific source.",
+  "issue": "Repeats only."
+ },
+ {
+  "use_case": "pr-3",
+  "source": "(repeat) Access Group: purchase-to-pay for hotels",
+  "url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+  "status": "Live",
+  "action": "review",
+  "detail": "Needs a specific source for invoice matching (Phacet/Astotel, listed under supplier prices, fits here).",
+  "issue": "Repeats of two generic pages only."
+ },
+ {
+  "use_case": "pr-3",
+  "source": "(repeat) Inn-Flow AI Cart Optimizer",
+  "url": "https://www.hospitalitynet.org/news/4134394/inn-flow-introduces-connected-ai-for-hotel-purchasing-with-native-accounting-procurement-integration",
+  "status": "Unverified",
+  "action": "review",
+  "detail": "Needs a specific source for invoice matching (Phacet/Astotel, listed under supplier prices, fits here).",
+  "issue": "Repeats of two generic pages only."
+ },
+ {
+  "use_case": "pr-4",
+  "source": "(repeat) Access Group: purchase-to-pay for hotels (generic page)",
+  "url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Needs a source.",
+  "issue": "Generic purchase-to-pay page only; nothing on stock-loss detection."
+ },
+ {
+  "use_case": "pr-5",
+  "source": "Phacet: Astotel, 18 Paris hotels: supplier invoice checks",
+  "url": "https://www.phacetlabs.com/customers/astotel",
+  "status": "Live",
+  "action": "edit_text",
+  "detail": "Also list under the invoice-checking use case.",
+  "issue": "Supplier invoice checks: fits \"checking invoices\" better than price comparison."
+ },
+ {
+  "use_case": "pr-6",
+  "source": "(repeat) Club Med \"Future Buy Insights\" (award press release)",
+  "url": "https://www.journaldespalaces.com/communique-78659-france-evenements-club-med-entreprise-data-ia-de-l-annee-affirme-son-leadership-en-intelligence-artificielle-a-vivatech-2026.html",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Thin: needs a second source.",
+  "issue": "Only source: a Club Med award press release."
+ },
+ {
+  "use_case": "fa-4",
+  "source": "M3: Blog lists predictive forecasting as something AI can do; the only M3 AI function named is invoice reading",
+  "url": "https://www.m3as.com/the-power-of-using-ai-for-automated-hotel-accounting-in-2026/",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Thin: needs a source.",
+  "issue": "Blog; AI forecasting not shown as a product."
+ },
+ {
+  "use_case": "fa-5",
+  "source": "Hyperbots: Finance copilot and AP agents for hospitality (no hotel customer named)",
+  "url": "https://www.hyperbots.com/industries/hospitality",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Thin: needs a source.",
+  "issue": "No hotel customer named."
+ },
+ {
+  "use_case": "fa-6",
+  "source": "(no sources listed)",
+  "url": "",
+  "status": "No URL",
+  "action": "add",
+  "detail": "No sources. Verified, live candidates (vendor pages, not hotel results): Stayflexi \"Night Auditor\" AI agent https://stayflexi.com/agents/night-auditor ; eZee \"Enhanced Night Audit Flow\" (automation, no AI stated) https://release.ezeetechnosys.com/enhanced-night-audit-flow/",
+  "issue": "Empty source list."
+ },
+ {
+  "use_case": "fa-7",
+  "source": "Justt: Automated chargeback disputes for hotels using machine learning and LLM folio reading; results from four unnamed hotel chains (vendor data)",
+  "url": "https://justt.ai/hospitality",
+  "status": "Broken",
+  "action": "needs_source",
+  "detail": "Needs a source (find the vendor's current hospitality page).",
+  "issue": "Broken link (404)."
+ },
+ {
+  "use_case": "hr-1",
+  "source": "Jianu, Ashton & Lugosi (2025), International Journal of Hospitality Management (Delphi study): Panel of 22 managers and academics: algorithmic management already reaches shift scheduling and task assignment",
+  "url": "https://www.surrey.ac.uk/news/are-hotel-managers-becoming-obsolete-age-ai",
+  "status": "Live",
+  "action": "review",
+  "detail": "As for line 290.",
+  "issue": "Press release about the study."
+ },
+ {
+  "use_case": "hr-4",
+  "source": "Safa: Says it tells hotel owners which staff plan to quit (agreement with Tourism HR Canada, Feb 2020; no hotels named)",
+  "url": "https://tourismhr.ca/ai-hr-innovative-platform-to-boost-employee-retention/",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Thin: needs a source.",
+  "issue": "2020; no hotels named; the only source."
+ },
+ {
+  "use_case": "hr-5",
+  "source": "(repeat) Club Med (journaldespalaces) only — a Club Med data/AI award press release, no clear link to seasonal staff matching",
+  "url": "https://www.journaldespalaces.com/communique-78659-france-evenements-club-med-entreprise-data-ia-de-l-annee-affirme-son-leadership-en-intelligence-artificielle-a-vivatech-2026.html",
+  "status": "Live",
+  "action": "needs_source",
+  "detail": "Needs a source.",
+  "issue": "Club Med award release; no link to seasonal staff matching."
+ },
+ {
+  "use_case": "hr-6",
+  "source": "UK data regulator (ICO) ordered Serco Leisure and 7 leisure trusts to stop face and fingerprint attendance checks for 2,000+ staff at 38 leisure centres (Feb 2024; regulator case, not a hotel)",
+  "url": "https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/2024/02/ico-orders-serco-leisure-to-stop-using-facial-recognition-technology",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "A data regulator's enforcement order: legal content under Ludo's rule."
+ },
+ {
+  "use_case": "gm-3",
+  "source": "(repeat) Lighthouse",
+  "url": "https://hoteltechreport.com/de/news/lighthouse-launches-total-revenue-ai",
+  "status": "Unverified",
+  "action": "edit_text",
+  "detail": "Check, else remove.",
+  "issue": "Repeat Lighthouse BI; briefings not shown."
+ },
+ {
+  "use_case": "gm-4",
+  "source": "Hotel IHG: Generative AI travel planner built on Google Cloud Vertex AI (vendor, Apr 2024)",
+  "url": "https://www.googlecloudpresscorner.com/2024-04-09-IHG-Hotels-Resorts-Builds-a-New-Travel-Planner-Powered-by-Google-Cloud-AI",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove from this use case.",
+  "issue": "A guest-facing travel planner, not a company-wide AI and data platform."
+ },
+ {
+  "use_case": "gm-5",
+  "source": "Actabl: ProfitOwner owner reporting (AI not shown)",
+  "url": "https://hoteltechreport.com/news/actabl-launches-profitowner-real-time-business-intelligence-for-hotel-ownership-groups",
+  "status": "Unverified",
+  "action": "needs_source",
+  "detail": "Thin: needs a source.",
+  "issue": "AI not shown; the only source."
+ },
+ {
+  "use_case": "gm-6",
+  "source": "hotelkit: Knowledge AI answers staff questions only from the hotel's own handbook; 1,200+ hotels use the platform (use of Knowledge AI not stated)",
+  "url": "https://www.hotelkit.net/en/ai/",
+  "status": "Live (redirected)",
+  "action": "edit_text",
+  "detail": "Update the URL.",
+  "issue": "Use of Knowledge AI not stated; URL now redirects to a security page."
+ },
+ {
+  "use_case": "it-4",
+  "source": "ISO 20380:2017, the test standard for camera systems that detect drowning, \"does not apply to the systems used in domestic swimming pools and pool basins with a surface area of less than 150 m2\", so a vendor's ISO 20380 claim does not cover small hotel pools (scope read on a reseller's copy, to confirm against the ISO text)",
+  "url": "https://genorma.com/en/standards/iso-20380-2017",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove.",
+  "issue": "A standard's scope read on a reseller copy, with the unfinished note \"to confirm against the ISO text\"; standards/compliance content."
+ },
+ {
+  "use_case": "it-5",
+  "source": "HPE Juniper Networking: Mist AI detects and troubleshoots network anomalies across citizenM's 31 hotels (vendor case study, 2023)",
+  "url": "https://www.juniper.net/us/en/customers/citizenm-hotels-case-study.html",
+  "status": "Broken",
+  "action": "replace",
+  "detail": "Replace with HPE press release, 22 Sep 2026: \"Aethos London Shoreditch redefines luxury hospitality with HPE Self-Driving Network\" (AI-run network, 164-room London hotel; vendor release).",
+  "issue": "Broken: the case study is gone (redirects to a general HPE page). It is the only source."
+ },
+ {
+  "use_case": "lg-2",
+  "source": "OneTrust: Data and AI governance for hotel chains",
+  "url": "https://www.hosteltur.com/165491_onetrust-aliado-de-las-hoteleras-en-la-gestion-responsable-de-datos-e-ia.html",
+  "status": "Live",
+  "action": "remove",
+  "detail": "Remove together with the lg-2 use case.",
+  "issue": "Data and AI governance vendor (OneTrust); legal/compliance by nature."
+ },
+ {
+  "use_case": "lg-3",
+  "source": "(no sources listed)",
+  "url": "",
+  "status": "No URL",
+  "action": "add",
+  "detail": "No sources. Verified, live candidates: Legora customer story, Accor legal team uses Legora for contract review (vendor case study) https://legora.com/customers/accor ; Thomson Reuters case study, Swire Hotels uses CoCounsel (vendor PDF) https://www.thomsonreuters.com.hk/content/dam/ewp-m/documents/asia-region/en/pdf/brochures/swire-hotels-cs-hk.pdf",
+  "issue": "Empty source list."
+ },
+ {
+  "use_case": "it-5",
+  "source": "HPE press release, 22 Sep 2026: Aethos London Shoreditch redefines luxury hospitality with HPE Self-Driving Network (vendor)",
+  "url": "https://www.hpe.com/us/en/newsroom/press-release/2026/09/aethos-london-shoreditch-redefines-luxury-hospitality-with-hpe-self-driving-network.html",
+  "status": "Verified via search (curl timed out)",
+  "action": "add",
+  "detail": "Replaces the broken Juniper/citizenM link.",
+  "issue": ""
+ },
+ {
+  "use_case": "fa-6",
+  "source": "Stayflexi: \"Night Auditor\" AI agent runs the nightly audit and reconciles charges (vendor page)",
+  "url": "https://stayflexi.com/agents/night-auditor",
+  "status": "Live (200)",
+  "action": "add",
+  "detail": "Empty source list.",
+  "issue": ""
+ },
+ {
+  "use_case": "fa-6",
+  "source": "eZee: Enhanced Night Audit Flow, automated night audit (vendor release; no AI stated)",
+  "url": "https://release.ezeetechnosys.com/enhanced-night-audit-flow/",
+  "status": "Live (200)",
+  "action": "add",
+  "detail": "Empty source list.",
+  "issue": ""
+ },
+ {
+  "use_case": "lg-3",
+  "source": "Legora: Accor's legal team uses Legora for contract review (vendor customer story)",
+  "url": "https://legora.com/customers/accor",
+  "status": "Live (200)",
+  "action": "add",
+  "detail": "Empty source list.",
+  "issue": ""
+ },
+ {
+  "use_case": "lg-3",
+  "source": "Thomson Reuters: Swire Hotels uses CoCounsel (vendor case study PDF)",
+  "url": "https://www.thomsonreuters.com.hk/content/dam/ewp-m/documents/asia-region/en/pdf/brochures/swire-hotels-cs-hk.pdf",
+  "status": "Live (200)",
+  "action": "add",
+  "detail": "Empty source list.",
+  "issue": ""
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat ICT usage survey 2025, isoc_eb_ain2",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the Eurostat data browser link.",
+  "issue": "No link.",
+  "where": "Landing"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "UK Government (DSIT), AI Playbook for the UK Government (10 Feb 2025)",
+  "url": "https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link.",
+  "where": "Step 2 · Where this comes from"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019)",
+  "url": "https://www.gov.uk/guidance/assessing-if-artificial-intelligence-is-the-right-solution",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link.",
+  "where": "Step 2"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "NIST AI RMF 1.0, NIST AI 100-1 (Jan 2023)",
+  "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link. A risk framework, only loosely about \"is AI the right tool\".",
+  "where": "Step 2"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Google PAIR, People + AI Guidebook, \"User Needs + Defining Success\"",
+  "url": "https://pair.withgoogle.com/chapter/user-needs/",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link.",
+  "where": "Step 2"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Brynjolfsson & Mitchell (2017), Science 358(6370), 1530–1534",
+  "url": "https://doi.org/10.1126/science.aap8062",
+  "status": "DOI resolves (publisher blocks automated check)",
+  "action": "add_url",
+  "detail": "Add the DOI link.",
+  "issue": "No link.",
+  "where": "Step 2"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "\"Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell).\"",
+  "url": "",
+  "status": "—",
+  "action": "edit_text",
+  "detail": "Delete the sentence. Keep: \"The five questions and examples are the project team's, based on these sources (Nov 2026).\"",
+  "issue": "An internal changelog shown to users; means nothing to a GM.",
+  "where": "Step 2"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "NIST AI RMF 1.0, GOVERN 2.1 (quote)",
+  "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link (page with GOVERN 2.1).",
+  "issue": "No link.",
+  "where": "Step 3 · MH1 owner"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat isoc_eb_ain2: costs too high 41%",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link.",
+  "where": "Step 3 · MH2 budget"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "HES-SO Valais-Wallis survey news (9 Jul 2025): 35% high set-up costs; 1,500+ hotels, 6 countries",
+  "url": "https://www.hevs.ch/en/news/how-ai-is-and-isn-t-transforming-european-hospitality-212299",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link. Figure confirmed on the page (35%, over 1,500 hotels, Jan–Apr 2025).",
+  "where": "Step 3 · MH2 budget"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "OECD (May 2025), The Adoption of AI in Firms: \"lack of senior management buy-in\"",
+  "url": "https://www.oecd.org/en/publications/the-adoption-of-artificial-intelligence-in-firms_f9ef33c3-en.html",
+  "status": "Unverified (403 to bot; page found by search)",
+  "action": "add_url",
+  "detail": "Add the link and say \"manufacturing and ICT firms, not hotels\", or drop it.",
+  "issue": "The survey covers 840 manufacturing and ICT firms in G7 countries, not hotels; the quote was not re-checked.",
+  "where": "Step 3 · MH3 approved number"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "State of Hotel AI, Fall 2026 (Destination AI; research by Josiah Mackenzie): 14% executive mandates vs 34% experimentation",
+  "url": "https://stateofhotelai.com/",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link; check the figures in the full report or drop them.",
+  "issue": "No link. Report confirmed (107 hotel company leaders, Aug–Sep 2026); the 14%/34% figures were not checked against the full report.",
+  "where": "Step 3 · MH3"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat isoc_eb_ain2: incompatibility 46%",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link.",
+  "where": "Step 3 · MH4 systems"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "State of Hotel AI: 29% systems integration as a barrier",
+  "url": "https://stateofhotelai.com/",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link. The public page names integration among the main barriers.",
+  "where": "Step 3 · MH4"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat isoc_eb_ain2: data protection and privacy concerns 52%",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Keep the number but word it as \"concerns about personal data\" with no legal framing, or drop it.",
+  "issue": "A barrier statistic framed as data protection; borderline under the no-legal rule.",
+  "where": "Step 3 · MH5 personal data"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat: data availability or quality 43%; State of Hotel AI: 42% confident / 48% not",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add both links.",
+  "issue": "No links.",
+  "where": "Step 3 · MH7 data"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Eurostat: lack of relevant expertise 70%",
+  "url": "https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Move it to the skills or training evidence. For MH8 use State of Hotel AI (change management named as a main barrier) alone, or \"needs a source\".",
+  "issue": "Loose fit: lack of expertise is about skills, not about telling staff or reporting errors.",
+  "where": "Step 3 · MH8 staff told"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "State of Hotel AI: 35% change management as the top barrier",
+  "url": "https://stateofhotelai.com/",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link.",
+  "issue": "No link. Change management is close but not the same as \"staff told\".",
+  "where": "Step 3 · MH8"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "Britz & Schegg (Oct 2025), From Awareness to Action: only 9% have a formal AI strategy document",
+  "url": "https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf",
+  "status": "Live (200)",
+  "action": "add_url",
+  "detail": "Add the link and reword: \"Only 9% of hotels surveyed had a formal AI strategy, a sign that written AI rules are rare too\".",
+  "issue": "9% is confirmed in the PDF, but it is about a formal AI strategy, not rules on what staff may type into AI tools.",
+  "where": "Step 3 · MH9 staff AI rules"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "\"needed for n of 90 use cases\"; \"covers 90 of the catalogue's 99 use cases\"",
+  "url": "",
+  "status": "—",
+  "action": "edit_text",
+  "detail": "Write \"needed for n of the 90 use cases analysed (of 99)\" everywhere, or recount on 99 (98 if lg-2 is removed).",
+  "issue": "\"90\" next to \"99\" elsewhere reads as an error (the explanation is hidden in the fold).",
+  "where": "Step 3 · Where this comes from"
+ },
+ {
+  "use_case": "steps 1-3",
+  "source": "\"Rules v2.6 (24 Nov 2026)\", \"rules v2.5\"",
+  "url": "",
+  "status": "—",
+  "action": "edit_text",
+  "detail": "Show one version: \"Tool v2.7 (rules unchanged since v2.6)\". Drop the v2.5 mention.",
+  "issue": "The page title says v2.7, the rules text says v2.6 and v2.5.",
+  "where": "Results · How this was worked out"
+ }
+]

@@ -18,7 +18,12 @@ const D = data(), TQ = D.tq;
 const { ok, done } = tester('no-legal');
 const rd = p => readFileSync(join(root, p), 'utf8');
 const Q = JSON.parse(rd('data/usecase_questions_only.json')), FX = Q.fixed_texts;
-export const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'transparency obligation', 'prohibited', 'DPIA', 'GDPR', 'FADP', 'CE mark', 'works council', 'PCI', 'consent', 'legal basis', 'law', 'laws', 'regulation', 'compliance', 'legal', 'not legal advice'];
+/* v2.8.0: the prompt's added words (delete, deleted, kept for, retention, consent, regulator, ISO, regulatory) join the list. Owner
+   decision 2 (25 Nov 2026): the scan covers only the text the tool itself writes; the source entries (their titles, addresses and
+   quotes) are shown as given and are left out of the scan precisely: the data block's "detail" field, the PDF's 'src' blocks and, in
+   the browser test, the [data-sources] containers. The vendored jsPDF library is code, not tool text: it is left out whole. */
+export const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'transparency obligation', 'prohibited', 'DPIA', 'GDPR', 'FADP', 'CE mark', 'works council', 'PCI', 'consent', 'legal basis', 'law', 'laws', 'regulation', 'compliance', 'legal', 'not legal advice',
+  'delete', 'deleted', 'kept for', 'retention', 'regulator', 'ISO', 'regulatory'];
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const RE = () => new RegExp('(?<![A-Za-z0-9_])(' + BANNED.map(esc).join('|') + ')(?![A-Za-z0-9_])', 'gi'); // whole words ("Art." ends in a dot)
 const ALLOWED = [FX.disclaimer, FX.sensitive_flag];
@@ -39,11 +44,21 @@ ok(hits(JSON.stringify(L.MUST.m5)).length === 0, 'must-have 5 carries no banned 
 
 // ---------- 1. the built page ----------
 const html = rd('index.html');
-ok(html.split(JSPDF_SPAN).length - 1 === 2 && rd('../assessment/lib/jspdf.umd.min.js').split(JSPDF_SPAN).length - 1 === 2, 'the excluded jsPDF span occurs exactly twice, both inside jsPDF');
-const h1 = hits(html, { jspdf: true });
-ok(h1.length === 0, 'built index.html: 0 hits (' + h1.length + '): ' + h1.slice(0, 5).join(' | '));
+const LIB = rd('../assessment/lib/jspdf.umd.min.js').replace(/<\/script/gi, '<\\/script');
+ok(html.split(JSPDF_SPAN).length - 1 === 2 && rd('../assessment/lib/jspdf.umd.min.js').split(JSPDF_SPAN).length - 1 === 2 && html.includes(LIB), 'the vendored jsPDF library is inlined unchanged (it is left out of the scan whole)');
+/* the page without jsPDF and without the source entries (the data block's detail field) */
+const dataRe = /(<script type="application\/json" id="r2-data">)([\s\S]*?)(<\/script>)/, Dd = JSON.parse(html.match(dataRe)[2]);
+const srcCount = Object.values(Dd.detail).reduce((a, d) => a + d.srcs.length, 0);
+const noSrc = JSON.parse(JSON.stringify(Dd)); Object.values(noSrc.detail).forEach(d => { d.srcs = []; });
+export const TOOL_HTML = html.split(LIB).join(' ').replace(dataRe, (m0, a, b, c) => a + JSON.stringify(noSrc).replace(/</g, '\\u003c') + c);
+ok(srcCount > 400 && TOOL_HTML.length < html.length - 100000, 'excluded precisely: ' + srcCount + ' source entries (data block "detail") and the jsPDF library');
+ok(['delete', 'Deleted', 'kept for', 'retention', 'consent', 'regulator', 'ISO', 'regulatory'].every(w => hits('x ' + w + ' y').length === 1) && hits('isoc_eb_ain2 deleteProperty').length === 0, 'the scan catches each added word, on whole words only');
+const h1 = hits(TOOL_HTML);
+ok(h1.length === 0, 'built index.html (tool text and code, sources and jsPDF excluded): 0 hits (' + h1.length + '): ' + h1.slice(0, 5).join(' | '));
+const srcHits = Object.entries(Dd.detail).flatMap(([id, d]) => d.srcs.filter(e => hits([e.n, e.o, e.x, e.u].join(' ')).length).map(e => id + ': ' + (e.n || e.x).slice(0, 60)));
+console.log('source entries carrying a listed word (shown as given, for owner review): ' + srcHits.length);
 ok(html.split(FX.disclaimer).length - 1 >= 2, 'the disclaimer is in the page (content and footer)');
-ok(!/EU AI Act|AI Register|AI Act guide/i.test(html), 'no AI Act section, AI Register or AI Act guide anywhere in the page');
+ok(!/EU AI Act|AI Register|AI Act guide/i.test(TOOL_HTML), 'no AI Act section, AI Register or AI Act guide anywhere in the page (sources excluded)');
 const noLib = html.replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '');
 ok(noLib.length < html.length - 100000 && !/https?:\/\/fonts\.|<link[^>]+stylesheet|<script[^>]+src=/i.test(noLib), 'no external font, stylesheet or script (outside the jsPDF library text)');
 
@@ -51,19 +66,22 @@ ok(noLib.length < html.length - 100000 && !/https?:\/\/fonts\.|<link[^>]+stylesh
 const jctx = { atob, btoa, console, TextEncoder, TextDecoder }; jctx.self = jctx; jctx.globalThis = jctx;
 vm.runInNewContext(rd('../assessment/lib/jspdf.umd.min.js'), jctx);
 const font = { regular: readFileSync(join(root, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(root, '../register/fonts/rs-bold.ttf')).toString('base64') };
+/* v2.8.0: the source entries ('src' blocks) are drawn in the PDF but left out of the scan: drawn from the same model without them */
+const noSrcBlocks = m => Object.assign({}, m, { blocks: m.blocks.filter(b => b.k !== 'src') });
 function drawnText(m) {
   const log = [];
   const spy = { jsPDF: function (o) { const d = new jctx.jspdf.jsPDF(o), t = d.text.bind(d); d.text = function (s, x, y, op) { (Array.isArray(s) ? s : [s]).forEach(l => log.push(l)); return t(s, x, y, op); }; return d; } };
   const r = P.draw(m, spy, font);
   return { text: log.join('\n'), footers: r.footers, pages: r.pages };
 }
-const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-25' };
+const env = { cat: D.cat, TQ, ex: D.ex, detail: D.detail, today: '2026-11-25' };
 const mix = (use, k) => { const r = finished(F, D, use); const w = ['y', 'pl', 'n', 'k']; F.MUST_IDS.forEach((id, i) => { r.A[id] = w[(i + k) % 4]; }); if (use !== 'none') TQ.uses[use].qs.forEach((q, i) => { r.T[q.id] = w[(i + k + 1) % 4]; }); r.Q.q3 = k % 2 ? 'u' : 'y'; return r; };
-let pdfHits = 0, pdfs = 0, footOk = 0, footN = 0;
+let pdfHits = 0, pdfs = 0, footOk = 0, footN = 0, nSrcPdf = 0;
 const uses = Object.keys(TQ.uses);
 uses.forEach((use, i) => {
   for (const rec of [finished(F, D, use), mix(use, i)]) for (const kind of ['result', 'answers']) {
-    const m = P.model(rec, env, kind), d = drawnText(m), h = hits(d.text + '\n' + d.footers.join('\n'));
+    const m0 = P.model(rec, env, kind), m = noSrcBlocks(m0), d = drawnText(m), h = hits(d.text + '\n' + d.footers.join('\n'));
+    if (kind === 'result' && use !== 'none') { nSrcPdf += m0.blocks.filter(b => b.k === 'src').length; }
     pdfs++; if (h.length) { pdfHits += h.length; console.log('PDF hit', use, kind, h[0]); }
     d.footers.forEach(f => { footN++; if (f.startsWith(FX.disclaimer)) footOk++; });
     if (kind === 'result') ok(!m.blocks.some(b => /AI Act|provisional label/i.test(b.t || '')), use + ': no AI Act section in the result PDF');
@@ -71,6 +89,7 @@ uses.forEach((use, i) => {
 });
 const stop = finished(F, D, 'gx-2'); stop.Q.q1 = 'y'; stop.step = 'stop';
 { const d = drawnText(P.model(stop, env)); pdfs++; pdfHits += hits(d.text + d.footers.join('\n')).length; d.footers.forEach(f => { footN++; if (f.startsWith(FX.disclaimer)) footOk++; }); }
+ok(nSrcPdf > 800, 'the Result PDFs carry the use cases\' sources (' + nSrcPdf + ' source blocks, left out of the scan)');
 ok(pdfHits === 0, 'PDF text: 0 hits over ' + pdfs + ' PDFs (every use case, Result and Answers, all-Yes and mixed answers, the stop PDF)');
 ok(footOk === footN && footN > pdfs, 'every page footer of every PDF starts with the disclaimer (' + footOk + ' of ' + footN + ')');
 
@@ -84,8 +103,8 @@ uses.forEach((use, i) => {
   const plan = m.people.map(p => L.personText(m, p, '· ' + m.useName)).join('\n\n') + '\n' + m.vendor.join('\n');
   planHits += hits(plan).length;
 });
-ok(fileHits === 0, 'saved files: 0 hits over 99 use cases');
-ok(planHits === 0, 'exported plan and vendor texts: 0 hits over 99 use cases');
+ok(fileHits === 0, 'saved files: 0 hits over 98 use cases');
+ok(planHits === 0, 'exported plan and vendor texts: 0 hits over 98 use cases');
 
 // ---------- the result page ----------
 const SENS = Q.use_cases.filter(u => u.sensitive).map(u => u.id).sort();

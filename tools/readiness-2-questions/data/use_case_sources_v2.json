@@ -1,0 +1,1937 @@
+{
+ "version": "sources_v2-corrected (audit 2026-11-25)",
+ "note": "New sources only; add to the existing \"Examples and sources\" lists. Score = codebook 0–10 (credible = 7+). Entries below 7 are marked. Corrected after independent source audit (see source_audit.md): 2 wrong Eurostat indicators replaced, 34 minor fixes (years, titles, quotes, fit, scores).",
+ "use_cases": {
+  "rm-1": {
+   "name": "Demand forecasting for rooms (by day, guest type and room type)",
+   "examples_and_sources": [
+    {
+     "text": "Luís Nobre Pereira & Vítor Cerqueira: ML beats traditional hotel demand forecasting — “We found that the use of machine learning models can reduce the root mean squared error up to 54% for a 1-day forecast horizon” (Peer-reviewed journal article (Current Issues in Tourism); abstract only, 2021; Abstract; base: Daily demand series of one four-star hotel in southern Europe; score 8/10; abstract only) | https://doi.org/10.1080/13683500.2021.1999397",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/13683500.2021.1999397"
+    },
+    {
+     "text": "Daniele Contessi et al.: ML occupancy forecasting on real hotel data — “Evaluating the approach using real booking data from three European hotels (2018–2022), it outperformed two benchmarks” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2024; Abstract; base: Booking data from 3 European hotels, 2018–2022; score 8/10; abstract only) | https://doi.org/10.1016/j.ijhm.2024.103802",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijhm.2024.103802"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Predictive analytics (occupancy, profitability) use — “Predictive analytics climbed from 37% to 44% in DACH.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.44; base: DACH sub-sample (AT, DE, CH) of AI-using hotels; 2023 vs 2025 surveys (Schegg 2025, p.42–44); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "—"
+  },
+  "rm-2": {
+   "name": "Dynamic room pricing, including automatic rate publishing",
+   "examples_and_sources": [
+    {
+     "text": "Pilar Talón-Ballestero et al.: How hotels run dynamic pricing in practice — “Using a qualitative approach, the study analyzes how dynamic pricing is currently implemented in hotel RM.” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2022; Abstract; base: Qualitative interviews (n in full text); score 8/10; abstract only) | https://doi.org/10.1016/j.ijhm.2022.103184",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijhm.2022.103184"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Adoption of AI dynamic pricing among AI-using European hotels — “Other frequently used applications include review analysis (44%), dynamic pricing (42%), and personalized services (38%).” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.40; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "—"
+  },
+  "rm-3": {
+   "name": "Competitor rate tracking and market insight with machine learning",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotels report AI-assisted competitive analysis — “Examples include staff training through avatar videos, AI-assisted competitive analysis, and the use of cameras for guest flow analysis.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "—"
+  },
+  "rm-4": {
+   "name": "AI assistants for revenue questions, reports and price explanations",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "rm-5": {
+   "name": "AI agents that watch revenue, recommend and act",
+   "examples_and_sources": [
+    {
+     "text": "Ibrahim Mohammed & Basak Denizci Guillet: Hotels override RMS recommendations; human-in-the-loop risk — “In contrast, the frequent use of overconfidence arises from the lack of transparency and trust in the RMSs' algorithms.” (Peer-reviewed journal article (Journal of Hospitality & Tourism Research); abstract only, 2025; Abstract; base: Mixed methods; hotel revenue managers (n in full text); score 8/10; abstract only) | https://doi.org/10.1177/10963480251338222",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/10963480251338222"
+    },
+    {
+     "text": "Tian Tian et al.: ML that learns revenue-manager pricing decisions — “Results indicate that the AL-enhanced ML model effectively learns and simulates revenue managers’ pricing adjustment behaviors, reduces prediction bias, and increases revenue.” (Peer-reviewed journal article (Annals of Tourism Research Empirical Insights); abstract only, 2026; Abstract; base: Sales data from one five-star hotel in Malaysia; score 7/10; abstract only) | https://doi.org/10.1016/j.annale.2026.100227",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.annale.2026.100227"
+    }
+   ],
+   "gap": "—"
+  },
+  "rm-6": {
+   "name": "Total revenue and budget forecasting, including function space",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    },
+    {
+     "text": "Hagen Britz (independent hospitality strategist) & Roland Schegg (HES-SO Valais-Wallis): Hotel demand for AI forecasting beyond spreadsheets (expectation) — “Revenue management and forecasting are top strategic priorities: Hotels wish to go beyond spreadsheet-based planning and tap into predictive AI for yield optimization, demand prediction, and price setting.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.31; base: Britz & Schegg (HES-SO2) survey: sent Jul–Sep 2025 to 408 hoteliers from the earlier AI survey + ~80 Swiss hotels; n varies by question, not stated (p.10); sample skewed to AI-aware hotels; score 7/10; partial support) | https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "rm-7": {
+   "name": "Price optimisation for upsells and extras",
+   "examples_and_sources": [
+    {
+     "text": "Basak Denizci Guillet: Online upsell programmes in hotels — “The purpose of this study is to understand how online upselling is used in the hotel industry as a part of revenue management strategy.” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2020; Abstract; base: Mixed methods; secondary bidding data (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1016/j.ijhm.2019.102322",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijhm.2019.102322"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    },
+    {
+     "text": "Övünç Yılmaz et al.: Upgrade/upsell price optimisation in hotels — “An important challenge faced by hotels is how to set their premium room price differential over their standard rooms and how to manage the upsell process.” (Peer-reviewed journal article (Manufacturing & Service Operations Management); abstract only, 2017; Abstract; base: Analytical model (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1287/msom.2016.0596",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1287/msom.2016.0596"
+    },
+    {
+     "text": "Yao Cui et al.: Pricing of hotel upgrade offers — “We find that conditional upgrades create value by improving demand–supply matching for the firm.” (Peer-reviewed journal article (Management Science); abstract only, 2018; Abstract; base: Analytical model (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1287/mnsc.2017.2783",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1287/mnsc.2017.2783"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "rm-8": {
+   "name": "Spa and wellness yield management and demand-based treatment prices",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "rm-9": {
+   "name": "Rate parity checks (same price on all channels) and automatic matching",
+   "examples_and_sources": [
+    {
+     "text": "Sung W. Lee & Amit Sharma: Why rate parity matters commercially (not AI) — “Price parity across channels can significantly shift consumer preference toward the direct hotel booking website.” (Peer-reviewed journal article (Tourism Economics); abstract only, 2024; Abstract; base: Two online experiments (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1177/13548166241273881",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/13548166241273881"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-1": {
+   "name": "AI voice agents for reservation and front-desk calls (hotel and central lines)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotels report AI telephone assistants in use — “Common applications include chatbot-based telephone assistants, automated voice generators, and tools like PhoneAI.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments from AI-using hotels (qualitative; no count); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.61%) – category level, not the exact use case — “Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition): 6.61%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR"
+    },
+    {
+     "text": "Dimitrios Buhalis & Iuliia Moldavska: Voice assistants in hotels (guest side) — “It uses qualitative, semi-structured in-depth interviews with 7 expert hospitality VA technology providers and 21 hotel guests” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2021; Abstract; base: 7 VA providers + 21 hotel guests; score 8/10; partial support, abstract only) | https://doi.org/10.1108/jhtt-03-2021-0104",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-03-2021-0104"
+    }
+   ],
+   "gap": "—"
+  },
+  "res-2": {
+   "name": "AI handling of reservation emails and offers",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (13.06%) – category level, not the exact use case — “Enterprises using AI technologies performing analysis of written language (text mining): 13.06%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TTM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TTM"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-3": {
+   "name": "AI channel management (sending rates and availability to booking channels)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-4": {
+   "name": "AI assistant and personalisation in the website booking engine",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Reservations seen as top AI area (expectation) — “Hotels identify reservations (68%), content generation (62%), and customer relationship management (51%) as the most promising areas for AI.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.6; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-5": {
+   "name": "Predicting cancellations and no-shows to set overbooking",
+   "examples_and_sources": [
+    {
+     "text": "Nuno António et al.: Cancellation prediction deployed for hotels — “we combined the data from eight hotels’ property management systems with data from several sources” (Peer-reviewed journal article (Cornell Hospitality Quarterly); abstract only, 2019; Abstract; base: PMS data from 8 hotels; models run in a real production environment; score 8/10; abstract only) | https://doi.org/10.1177/1938965519851466",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/1938965519851466"
+    },
+    {
+     "text": "Nuno António et al.: Cancellation prediction accuracy in hotels — “authors demonstrate that it is possible to build models for predicting booking cancellations with accuracy results in excess of 90%” (Peer-reviewed journal article (Tourism & Management Studies); abstract only, 2017; Abstract; base: Data sets from 4 resort hotels; score 7/10; abstract only) | https://doi.org/10.18089/tms.2017.13203",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.18089/tms.2017.13203"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "—"
+  },
+  "res-6": {
+   "name": "AI for group rooming lists, rate loading and reservation tasks",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-7": {
+   "name": "Bookable hotel apps inside AI assistants (such as ChatGPT apps)",
+   "examples_and_sources": [
+    {
+     "text": "Han Xu et al.: Travellers accept ChatGPT for travel services (demand side) — “Findings reveal that social influence is the most potent predictor of ChatGPT acceptance” (Peer-reviewed journal article (Journal of Travel & Tourism Marketing); abstract only, 2024; Abstract; base: Tourist survey (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1080/10548408.2024.2364336",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/10548408.2024.2364336"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "res-8": {
+   "name": "AI scoring and analysis of reservation calls",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.61%) – category level, not the exact use case — “Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition): 6.61%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "sm-1": {
+   "name": "AI-written marketing text and translation",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Generative text AI use for guest communication and content — “The most widely implemented tool is generative AI for guest communication (e.g. ChatGPT, Gemini), used by 74% of respondents.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.40; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Yaozhi Zhang & Nina Katrine Prebensen: AI marketing text performs as well as marketers' text — “the findings reveal that tourism marketing materials created by ChatGPT successfully pass the Turing Test and achieve textual fluency and perceived attractiveness that are no lower than those yielded by tourism marketers” (Peer-reviewed journal article (Annals of Tourism Research Empirical Insights); abstract only, 2024; Abstract; base: Two online experiments (n in full text); score 7/10; partial support, abstract only) | https://doi.org/10.1016/j.annale.2024.100124",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.annale.2024.100124"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    },
+    {
+     "text": "Inês Carvalho & Stanislav Hristov Ivanov: Applications of ChatGPT incl. marketing — “the paper identifies areas of application of ChatGPT for several tourism stakeholders” (Peer-reviewed journal article (Tourism Review); abstract only, 2023; Abstract; base: Conceptual review (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1108/tr-02-2023-0088",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/tr-02-2023-0088"
+    }
+   ],
+   "gap": "—"
+  },
+  "sm-2": {
+   "name": "Handling group and event enquiries and requests for proposals",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "sm-3": {
+   "name": "Guest grouping, predictive targeting, loyalty and personalised email campaigns",
+   "examples_and_sources": [
+    {
+     "text": "Ali Ahani et al.: ML guest segmentation for hotels — “Hence, the objective of this study is to develop a method for spa hotel segmentation and travel choice prediction by applying machine learning approaches.” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2019; Abstract; base: TripAdvisor ratings/reviews of spa hotels (abstract via Semantic Scholar); score 8/10; abstract only) | https://doi.org/10.1016/j.ijhm.2019.01.003",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijhm.2019.01.003"
+    },
+    {
+     "text": "Elaheh Yadegaridehkordi et al.: ML guest segmentation for hotels — “a method combining segmentation and the Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS) techniques was developed to segment travellers based on their provided reviews” (Peer-reviewed journal article (Technology in Society); abstract only, 2021; Abstract; base: TripAdvisor reviews of Malaysian eco-hotels (abstract via Semantic Scholar); score 8/10; abstract only) | https://doi.org/10.1016/j.techsoc.2021.101528",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.techsoc.2021.101528"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "—"
+  },
+  "sm-4": {
+   "name": "AI-made images and video for marketing",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: AI image generation for marketing in hotels — “Tools like ChatGPT, Adobe Firefly, Gemini Advanced, HERA, and Luma AI are used to produce guest communication content, images, and social media posts.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments; chart p.42 shows image generation 3% (2023) → 19% (2025) of AI adopters; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (9.08%) – category level, not the exact use case — “Enterprises using AI technologies generating pictures, videos, sound/audio: 9.08%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPVSG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPVSG"
+    },
+    {
+     "text": "Joanne Yu & Ting Meng: AI images in tourism marketing — “The integration of image generative AI (GenAI) into tourism marketing represents a transformative shift in how destination images are created and perceived.” (Peer-reviewed journal article (Journal of Hospitality & Tourism Research); abstract only, 2025; Abstract; base: Literature review (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1177/10963480251324676",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/10963480251324676"
+    }
+   ],
+   "gap": "—"
+  },
+  "sm-5": {
+   "name": "Optimising paid ads, metasearch and automated ad buying",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "sm-6": {
+   "name": "Visibility in search engines and AI assistants (SEO, GEO)",
+   "examples_and_sources": [
+    {
+     "text": "Mirza Samad Ahmed Baig et al.: What drives hotel visibility in AI assistants (GEO) — “Travelers increasingly ask large language model (LLM) assistants which hotel to book, making these systems gatekeepers of property visibility” (Peer-reviewed journal article (Information Technology & Tourism); abstract only, 2026; Abstract; base: Conjoint audit across 12 LLMs (abstract via Semantic Scholar); score 8/10; abstract only) | https://doi.org/10.1007/s40558-026-00417-8",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1007/s40558-026-00417-8"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "—"
+  },
+  "sm-7": {
+   "name": "Finding, qualifying and scoring sales leads (groups, events, companies)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (12.53%) – category level, not the exact use case — “Enterprises using AI technologies for marketing or sales: 12.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PMS"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fo-1": {
+   "name": "Digital check-in with ID document scan (online, mobile or kiosk)",
+   "examples_and_sources": [
+    {
+     "text": "Chun Liu et al.: Self-service (kiosk) adoption in hotels — “The findings show that most hotels in China have taken wait-and-see attitudes toward innovative SSTs and that customers tend to remain unfamiliar with such devices.” (Peer-reviewed journal article (Journal of Hospitality Marketing & Management); abstract only, 2019; Abstract; base: Focus groups with 30 hotel practitioners; score 8/10; partial support, abstract only) | https://doi.org/10.1080/19368623.2020.1689216",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/19368623.2020.1689216"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Passport/ID validation at check-in exists but is underused — “Technologies supporting guest check-in (passport validation, facial recognition) are generally underused.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.48; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; chart p.42 shows passport validation 13% (2023) → 16% (2025); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "—"
+  },
+  "fo-2": {
+   "name": "AI room assignment",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fo-3": {
+   "name": "Biometric face check at check-in (selfie matched to ID photo)",
+   "examples_and_sources": [
+    {
+     "text": "Huey Chern Boo & Bee‐Lia Chua: Guest acceptance of face check-in — “Results showed that hotel guests performed calculative cognitive processes, weighing the benefits and risks of using facial recognition check-in system.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2022; Abstract; base: Guests of 4–5-star hotels in Singapore (n in full text); score 8/10; abstract only) | https://doi.org/10.1108/ijchm-12-2021-1471",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-12-2021-1471"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Very low uptake of facial recognition check-in (supports a low-maturity rating) — “Facial recognition is still at just 2% in DACH.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.45; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "—"
+  },
+  "fo-4": {
+   "name": "AI assistants and agents for the front desk and property management system",
+   "examples_and_sources": [
+    {
+     "text": "M. Omar Parvez et al.: GenAI use by front-desk staff — “Data were collected from multiple chain hotels across the United States, with responses from 425 front-office employees” (Peer-reviewed journal article (Current Issues in Tourism); abstract only, 2025; Abstract; base: 425 front-office employees, US chain hotels; score 8/10; abstract only) | https://doi.org/10.1080/13683500.2025.2498598",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/13683500.2025.2498598"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: AI features inside a PMS used by hotels — “Systems such as MEWS incorporate AI features for property management, while Pointchamp offers AI-based HR management.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "fo-5": {
+   "name": "Upselling at check-in (desk, kiosk, before arrival)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotels report AI-supported upselling — ““Smart host” and “Rainmaker” are used to support the guest journey through automated messaging and upselling strategies.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Basak Denizci Guillet: Pre-arrival/online and desk upselling in hotels (not AI-specific) — “Findings indicate that an omni-channel approach to upselling can tackle the fragmented nature of multichannel upselling communications” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2020; Abstract; base: Mixed methods; secondary bidding data (abstract via Semantic Scholar); score 8/10; partial support, abstract only) | https://doi.org/10.1016/j.ijhm.2019.102322",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "replaces Oracle Barceló customer page (broken)",
+     "url": "https://doi.org/10.1016/j.ijhm.2019.102322"
+    }
+   ],
+   "gap": "—"
+  },
+  "fo-6": {
+   "name": "Guest risk scoring before arrival (ID, behaviour, past stays)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fo-7": {
+   "name": "AI avatar or hologram receptionist (check-in kiosk)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using AI that generates written or spoken language (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    },
+    {
+     "text": "Aarni Tuomi et al.: Robots at hotel service encounters — “The results suggest that service robots either support or substitute employees in service encounters.” (Peer-reviewed journal article (Cornell Hospitality Quarterly); abstract only, 2020; Abstract; base: Empirical account of deployed robots (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1177/1938965520923961",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/1938965520923961"
+    },
+    {
+     "text": "Frederik Jan van der Meulen et al.: Service robot at a hotel front office (closest evidence for avatar/robot reception) — “This study examined guests’ and staff’s experiences with service robots in a 4-star southern Dutch hotel.” (Peer-reviewed journal article (Research in Hospitality Management); abstract only, 2024; Abstract; base: Staff interviews + guest survey, one Dutch 4-star hotel; score 7/10; partial support, abstract only) | https://doi.org/10.1080/22243534.2024.2403430",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/22243534.2024.2403430"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fo-8": {
+   "name": "Lost-and-found logging and matching guest claims",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gx-1": {
+   "name": "Review and guest-feedback analysis (including positive or negative tone)",
+   "examples_and_sources": [
+    {
+     "text": "Juan Luis Nicolau et al.: Review sentiment analysis linked to hotel results — “Daily sentiment can thus allow hotel managers to adjust their dynamic pricing strategies more accurately.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2023; Abstract; base: Budget-hotel performance and review data set (n in full text); score 8/10; abstract only) | https://doi.org/10.1108/ijchm-05-2022-0594",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-05-2022-0594"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Adoption of AI review analysis — “Other frequently used applications include review analysis (44%), dynamic pricing (42%), and personalized services (38%).” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.40; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (13.06%) – category level, not the exact use case — “Enterprises using AI technologies performing analysis of written language (text mining): 13.06%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TTM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TTM"
+    }
+   ],
+   "gap": "—"
+  },
+  "gx-2": {
+   "name": "AI chat assistant for guests in several languages, before booking and during the stay (website, WhatsApp, booking-site inbox)",
+   "examples_and_sources": [
+    {
+     "text": "Hua Fan et al.: Hotel chatbots in service recovery — “Using a multi-method approach combining survey, experimental, and field data obtained from hotel guests” (Peer-reviewed journal article (Journal of Travel Research); abstract only, 2023; Abstract; base: Survey, experiment and field data from hotel guests; score 8/10; abstract only) | https://doi.org/10.1177/00472875231201505",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1177/00472875231201505"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Chatbot adoption 2023→2025 — “Chatbots rose from 11% to 31% overall (and 17% to 37% in DACH).” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.45; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    },
+    {
+     "text": "OECD: Chatbots for booking and assistance in tourism businesses — “Chatbots are widely used for booking and real-time assistance” (OECD policy paper, 2024; PDF p.19 (printed p.18); base: No sample (policy synthesis); score 8/10; partial support) | https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "gx-3": {
+   "name": "Guest review replies drafted by AI",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: AI review replies in use — “The tool “Mara” is used both for review analysis and for automating responses” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments; chart p.42 shows \"Automation of responses to customer comments\" 17% (2023) → 37% (2025); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Yau Ni Wan: AI-drafted vs manager review replies — “We collected authentic guest complaints and responses from hotel managers from April 2012 to October 2022 in online travel forums, and then had GAI draft response letters on behalf of the hotel managers.” (Peer-reviewed journal article (Informatics); abstract only, 2024; Abstract; base: 115 complaints and responses, 4 Hong Kong luxury hotels; score 7/10; abstract only) | https://doi.org/10.3390/informatics11030066",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/informatics11030066"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "—"
+  },
+  "gx-4": {
+   "name": "Guest personalisation using one combined guest profile",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Adoption of AI personalised services (38%); customer profiling 15% on p.42 — “Other frequently used applications include review analysis (44%), dynamic pricing (42%), and personalized services (38%).” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.40; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Pola Qi Wang: GenAI personalisation in hotels (manager view) — “This study adopted a qualitative methodology using semi-structured interviews with hotel managers and AI experts in New Zealand.” (Peer-reviewed journal article (Current Issues in Tourism); abstract only, 2024; Abstract; base: Interviews with NZ hotel managers and AI experts; score 8/10; partial support, abstract only) | https://doi.org/10.1080/13683500.2023.2300030",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/13683500.2023.2300030"
+    }
+   ],
+   "gap": "—"
+  },
+  "gx-5": {
+   "name": "Digital concierge and recommendations during the stay",
+   "examples_and_sources": [
+    {
+     "text": "Stephanie Qing Liu et al.: Defines AI concierge — “An AI concierge is a technologically advanced, intelligent and personalized assistant that is designated to an individual customer” (Peer-reviewed journal article (Journal of Service Management); abstract only, 2024; Abstract; base: Conceptual (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1108/josm-12-2023-0523",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/josm-12-2023-0523"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gx-6": {
+   "name": "In-room voice assistant",
+   "examples_and_sources": [
+    {
+     "text": "Daniel Ruiz-Equihua et al.: In-room smart speakers improve hotel ratings — “Focusing on the hospitality industry, the first study shows that smart speakers improve evaluations of the hotels that use them in terms of customer ratings and positive affects.” (Peer-reviewed journal article (Psychology & Marketing); abstract only, 2023; Abstract; base: Three studies (n in full text); score 8/10; abstract only) | https://doi.org/10.1002/mar.21907",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1002/mar.21907"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Virtual voice assistants in use in small hotels — “Interestingly, hotels using virtual assistants often have fewer than 9 employees” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.48; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; chart p.42: virtual assistant (Siri/Alexa) 5% → 13%; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.61%) – category level, not the exact use case — “Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition): 6.61%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR"
+    }
+   ],
+   "gap": "—"
+  },
+  "fb-1": {
+   "name": "AI for event and banqueting sales (enquiries, proposals, contracts)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fb-2": {
+   "name": "Room-service and restaurant or bar ordering through chat or voice assistants",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fb-3": {
+   "name": "Improving menus and food and drink prices (menu engineering)",
+   "examples_and_sources": [
+    {
+     "text": "Rossano Linassi et al.: Menu engineering method (not AI) — “An improved ME model was developed and tested in an oriental restaurant in Brazil.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2016; Abstract; base: One restaurant in Brazil; score 8/10; partial support, abstract only) | https://doi.org/10.1108/ijchm-09-2014-0438",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-09-2014-0438"
+    },
+    {
+     "text": "Merve Özgür Göde & Vedat Ekergil: Menu engineering method (not AI) — “This study aims to develop a new menu analysis model using a time-based activity-based costing method which allocates costs to activities.” (Peer-reviewed journal article (Journal of Quality Assurance in Hospitality & Tourism); abstract only, 2023; Abstract; base: One à la carte restaurant; score 7/10; partial support, abstract only) | https://doi.org/10.1080/1528008x.2023.2262143",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/1528008x.2023.2262143"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fb-4": {
+   "name": "QR code or mobile ordering, with AI suggestions of extra items and automatic menu price changes",
+   "examples_and_sources": [
+    {
+     "text": "Noradzhar Baba et al.: Self-ordering kiosk acceptance (not AI upsell) — “During the data collection process, 430 responses were obtained.” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2023; Abstract; base: 430 quick-service restaurant customers; score 8/10; partial support, abstract only) | https://doi.org/10.1108/jhtt-08-2021-0226",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-08-2021-0226"
+    },
+    {
+     "text": "Ali İskender et al.: Guest acceptance of QR menus (not AI upsell) — “The study consists of 844 participants from the U.S.and employs multivariate analyses.” (Peer-reviewed journal article (Journal of Foodservice Business Research); abstract only, 2022; Abstract; base: 844 US restaurant patrons; score 7/10; partial support, abstract only) | https://doi.org/10.1080/15378020.2022.2133518",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/15378020.2022.2133518"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fb-5": {
+   "name": "Robots that deliver and serve (amenities, room service, restaurants and bars)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Robotics 3% of adopters (low maturity) — “Applications such as facial recognition (2%), robotics (3%), automatic menu generation (4%), and waste analysis (8%) have very low adoption” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.5; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.93%) – category level, not the exact use case — “Enterprises using AI technologies enabling physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones): 0.93%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR"
+    },
+    {
+     "text": "Jaime Romero & Nora Lado: Guest response to hotel service robots — “Focusing on robot employment at hotels and on Generation Z customers, this study aims to analyze guests’ perceptions about robots’ COVID-19 prevention efficacy and their impact on booking intentions.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2021; Abstract; base: Experiment with Gen Z (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1108/ijchm-10-2020-1214",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-10-2020-1214"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fb-6": {
+   "name": "Restaurant table bookings: AI that answers calls and AI table planning",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.61%) – category level, not the exact use case — “Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition): 6.61%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR"
+    },
+    {
+     "text": "Debjit Roy et al.: Data analytics for table management — “In particular, we focus on specific research questions across restaurant decision domains such as location, reservation and table management, queue management, menu design and engineering, and multichannel order management.” (Peer-reviewed journal article (Production and Operations Management); abstract only, 2022; Abstract; base: Review (no sample); score 8/10; partial support, abstract only) | https://doi.org/10.1111/poms.13809",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1111/poms.13809"
+    },
+    {
+     "text": "Muhittin Çavuşoğlu: Restaurant technology use incl. reservations (not AI-specific) — “Survey data were collected from 500 randomly selected restaurant technology managers who subscribe to Hospitality Technology Magazine.” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2019; Abstract; base: 500 US restaurant technology managers; score 8/10; partial support, abstract only) | https://doi.org/10.1108/jhtt-12-2017-0141",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-12-2017-0141"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-1": {
+   "name": "Staff tasks and messages in several languages (voice or chat turned into tasks, translation)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.61%) – category level, not the exact use case — “Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition): 6.61%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TSR"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Machine translation for multilingual operations in hotels — “Some hotels are planning to introduce AI-powered interpretation services at reception and already use machine translation tools to support multilingual operations.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-2": {
+   "name": "Self-driving floor-cleaning robots",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.93%) – category level, not the exact use case — “Enterprises using AI technologies enabling physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones): 0.93%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-3": {
+   "name": "Linen and amenity forecasting, or linen tracking with RFID (radio) tags",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.68%) – category level, not the exact use case — “Enterprises using AI technologies for logistics: 0.68%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-4": {
+   "name": "Cleaning and room status based on sensors that detect if a room is occupied",
+   "examples_and_sources": [
+    {
+     "text": "Pernille Eskerod et al.: IoT room systems in high-end hotels — “Internet-of-Things (IoT) technology provides the opportunity to integrate more systems (e.g., heating, air-conditioning, window-openings) on a platform” (Peer-reviewed journal article (Sustainability); abstract only, 2019; Abstract; base: Exploratory study, high-end hotels (n in full text); score 7/10; partial support, abstract only) | https://doi.org/10.3390/su11195372",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/su11195372"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-5": {
+   "name": "Room inspection with image recognition (computer vision)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-6": {
+   "name": "Planning room-cleaning order, staff assignments and workloads",
+   "examples_and_sources": [
+    {
+     "text": "Brana Jianu et al.: Algorithmic task assignment (staff reactions) — “As algorithmic management (AM) is increasingly implemented in traditional hospitality workplaces, understanding its impact on employees becomes essential.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2025; Abstract; base: Interviews, survey and experiment (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1108/ijchm-12-2024-1821",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-12-2024-1821"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hk-7": {
+   "name": "Bed-bug monitoring sensors with image recognition",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "me-1": {
+   "name": "AI tuning of central heating, cooling and ventilation (building management system), with energy analysis",
+   "examples_and_sources": [
+    {
+     "text": "OECD: Named hotel deployment of AI HVAC/energy optimisation — “The AI-driven system monitors and analyses energy usage patterns, identifying areas of excessive consumption and adjusting heating, ventilation, and air conditioning (HVAC) systems accordingly.” (OECD policy paper, 2024; PDF p.20 (printed p.19), Box 4; base: Single named case (Hilton); no figures; score 8/10) | https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf"
+    },
+    {
+     "text": "Rosana W.M. Wong & Becky P.Y. Loo: AI/ML HVAC optimisation in a hotel — “It focuses on the heating, ventilation and air conditioning (HVAC) systems in hotel buildings which rely on central air-conditioning 24/7” (Peer-reviewed journal article (Buildings); abstract only, 2025; Abstract; base: One Hong Kong hotel; score 7/10; abstract only) | https://doi.org/10.3390/buildings15244406",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/buildings15244406"
+    }
+   ],
+   "gap": "—"
+  },
+  "me-2": {
+   "name": "Sorting and creating repair requests, and the equipment register",
+   "examples_and_sources": [
+    {
+     "text": "Jonathan Reiss (CEO), WNW Hospitality Management (hotel operator): Named hotel operator using AI work-order tracking — “Maintenance IQ tracks work orders and their impact on room turnaround” (Hotel operator's own post, 2026; web page; base: One management company; no results yet; score 6/10; below credibility bar) | https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "me-3": {
+   "name": "Digital twins (a live virtual model of the building)",
+   "examples_and_sources": [
+    {
+     "text": "Rosana W.M. Wong & Becky P.Y. Loo: Digital twin deployed in a hotel — “Using data from real-world deployment in a Hong Kong hotel since 2013, we evaluated the evolution of digital twin applications” (Peer-reviewed journal article (Buildings); abstract only, 2025; Abstract; base: One Hong Kong hotel, deployment since 2013; score 7/10; abstract only) | https://doi.org/10.3390/buildings15244406",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/buildings15244406"
+    }
+   ],
+   "gap": "—"
+  },
+  "me-4": {
+   "name": "Guest-room energy management (heating, cooling and lighting adjusted to whether the room is occupied)",
+   "examples_and_sources": [
+    {
+     "text": "Pernille Eskerod et al.: Guest-room energy control via IoT in hotels — “Internet-of-Things (IoT) technology provides the opportunity to integrate more systems (e.g., heating, air-conditioning, window-openings) on a platform” (Peer-reviewed journal article (Sustainability); abstract only, 2019; Abstract; base: Exploratory study, high-end hotels (n in full text); score 7/10; abstract only) | https://doi.org/10.3390/su11195372",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/su11195372"
+    }
+   ],
+   "gap": "—"
+  },
+  "me-5": {
+   "name": "Predictive maintenance by the equipment maker (lifts, escalators, doors)",
+   "examples_and_sources": [
+    {
+     "text": "Chia Tai Angus Lai et al.: Maker-run predictive maintenance of lifts — “An in-depth case study was carried out to provide practical evidence that IoT enables elevator firms to achieve CBM.” (Peer-reviewed journal article (Journal of Quality in Maintenance Engineering); abstract only, 2019; Abstract; base: One elevator firm case study (not hotel-specific; abstract via Semantic Scholar); score 7/10; partial support, abstract only) | https://doi.org/10.1108/jqme-06-2018-0049",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jqme-06-2018-0049"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "me-6": {
+   "name": "Predictive maintenance run by the hotel (heating, ventilation and air conditioning, kitchen, technical devices)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotel interest in AI predictive maintenance (expectation, not use) — “In contrast, perceived usefulness in areas like human resources and predictive maintenance remains more limited, though not insignificant.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.56; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; chart p.55: predictive maintenance 30% (2023) → 26% (2025); score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "me-7": {
+   "name": "Water leak and fault detection",
+   "examples_and_sources": [
+    {
+     "text": "Noemí Padrón-Fumero et al.: Smart water meters in tourist accommodation (leak/fault detection is partial) — “utilising a geolocated panel dataset encompassing 213 high water-consuming establishments in San Bartolomé de Tirajana (Canary Islands)” (Peer-reviewed journal article (Current Issues in Tourism); abstract only, 2025; Abstract; base: 213 tourism accommodations, Canary Islands; score 8/10; partial support, abstract only) | https://doi.org/10.1080/13683500.2025.2519662",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/13683500.2025.2519662"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "kc-1": {
+   "name": "Measuring food waste with cameras (computer vision)",
+   "examples_and_sources": [
+    {
+     "text": "OECD: Named hotel deployments of AI food-waste tracking — “Hilton Hotels and Iberostar both use AI to track food production and categorise waste in hotels.” (OECD policy paper, 2024; PDF p.38 (printed p.37), Table; base: Named cases (Hilton, Iberostar); no figures; score 8/10; partial support) | https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Waste analysis 8% of adopters (low maturity) — “Applications such as facial recognition (2%), robotics (3%), automatic menu generation (4%), and waste analysis (8%) have very low adoption” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.5; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    },
+    {
+     "text": "Carlos Martin‐Rios et al.: Food-waste tech in hospitality — “Firms in HORECA (hospitality, restaurant and catering) represent a considerable share of total food waste” (Peer-reviewed journal article (Sustainability); abstract only, 2020; Abstract; base: HORECA firms (n in full text); score 7/10; partial support, abstract only) | https://doi.org/10.3390/su13010210",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.3390/su13010210"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "kc-2": {
+   "name": "Allergen handling and menu labelling",
+   "examples_and_sources": [
+    {
+     "text": "Bruce McAdams et al.: Allergen handling gap in restaurants (not AI) — “A total of 209 food-service workers were surveyed in full-service restaurants across Southern Ontario, Canada.” (Peer-reviewed journal article (British Food Journal); abstract only, 2018; Abstract; base: 209 restaurant workers, Ontario; score 7/10; partial support, abstract only) | https://doi.org/10.1108/bfj-01-2018-0028",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/bfj-01-2018-0028"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "kc-3": {
+   "name": "Smart cooking equipment (ovens that recognise the food)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "kc-4": {
+   "name": "Forecasting kitchen production, guest numbers (covers) and breakfast buffet, including purchase quantities",
+   "examples_and_sources": [
+    {
+     "text": "Konstantin Posch et al.: Kitchen sales/production forecasting — “properly predicting future sales of menu items allows for a precise ordering of food stock” (Peer-reviewed journal article (International Journal of Forecasting); abstract only, 2022; Abstract; base: POS data from canteens and restaurants; score 8/10; abstract only) | https://doi.org/10.1016/j.ijforecast.2021.06.001",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijforecast.2021.06.001"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "—"
+  },
+  "kc-5": {
+   "name": "Recipe and menu creation with generative AI",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Automatic menu generation 4% of adopters (low maturity) — “Applications such as facial recognition (2%), robotics (3%), automatic menu generation (4%), and waste analysis (8%) have very low adoption” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.5; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    },
+    {
+     "text": "Vahidullah Taç et al.: GenAI recipe creation tested with diners — “Compared to the Big Mac, its delicious burgers score the same or better in overall liking, flavor, and texture in a blinded sensory evaluation conducted in a restaurant setting with 101 participants” (Peer-reviewed journal article (npj Science of Food); abstract only, 2026; Abstract; base: 101 tasters, restaurant setting (not hotel); score 8/10; partial support, abstract only) | https://doi.org/10.1038/s41538-026-00953-x",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1038/s41538-026-00953-x"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "kc-6": {
+   "name": "Robotic cooking stations",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.93%) – category level, not the exact use case — “Enterprises using AI technologies enabling physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones): 0.93%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TAR"
+    },
+    {
+     "text": "Dong Hong Zhu & Ya Ping Chang: Robotic chefs in restaurants (consumer view) — “Robotic chefs are starting to replace human chefs in restaurant industry.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2020; Abstract; base: 221 respondents; score 8/10; partial support, abstract only) | https://doi.org/10.1108/ijchm-10-2019-0904",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-10-2019-0904"
+    },
+    {
+     "text": "Faruk Seyitoğlu & Stanislav Hristov Ivanov: Real robotic restaurants exist; guest experience — “The purpose of this study is to investigate the robotic restaurant experience of travellers around the world” (Peer-reviewed journal article (Journal of Tourism Futures); abstract only, 2020; Abstract; base: Traveller reviews of robotic restaurants (multiple cases); score 8/10; partial support, abstract only) | https://doi.org/10.1108/jtf-04-2020-0070",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jtf-04-2020-0070"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "pr-1": {
+   "name": "Automatic purchase suggestions and reordering",
+   "examples_and_sources": [
+    {
+     "text": "Omar Alsetoohy & Baker Ayoun: Intelligent-agent procurement tech improves hotel purchasing — “Data from a survey of managers at luxury hotels in Florida, which yielded an effective sample of 78” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2018; Abstract; base: 78 luxury-hotel managers, Florida; score 8/10; abstract only) | https://doi.org/10.1108/jhtt-04-2017-0028",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-04-2017-0028"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.68%) – category level, not the exact use case — “Enterprises using AI technologies for logistics: 0.68%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG"
+    }
+   ],
+   "gap": "—"
+  },
+  "pr-2": {
+   "name": "Forecasting demand and stock for purchasing",
+   "examples_and_sources": [
+    {
+     "text": "Konstantin Posch et al.: Forecasting demand to set purchase quantities — “properly predicting future sales of menu items allows for a precise ordering of food stock” (Peer-reviewed journal article (International Journal of Forecasting); abstract only, 2022; Abstract; base: POS data from canteens and restaurants; score 8/10; abstract only) | https://doi.org/10.1016/j.ijforecast.2021.06.001",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijforecast.2021.06.001"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (0.68%) – category level, not the exact use case — “Enterprises using AI technologies for logistics: 0.68%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PLOG"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotel interest in AI for inventory/supply chain (expectation) — “Hotels that primarily serve business travelers or MICE segments report higher expectations for AI in HR, finance, inventory, and cybersecurity.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.54; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; chart p.55: improving inventory and supply chain 28%; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "pr-3": {
+   "name": "Checking invoices against purchase orders (two- or three-way) and spotting invoice errors",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "pr-4": {
+   "name": "Spend analysis and detection of stock differences and losses (shrinkage)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.51%) – category level, not the exact use case — “Enterprises using AI technologies for accounting, controlling or finance management: 3.51%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "pr-5": {
+   "name": "Supplier price comparison, market benchmarks and checks on agreed contract prices",
+   "examples_and_sources": [
+    {
+     "text": "Omar Alsetoohy & Baker Ayoun: Agent tech in supplier/price procurement — “IAT usage has statistically significant positive effect on both FPPR and FPP.” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2018; Abstract; base: 78 luxury-hotel managers, Florida; score 8/10; partial support, abstract only) | https://doi.org/10.1108/jhtt-04-2017-0028",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-04-2017-0028"
+    },
+    {
+     "text": "Konstantinos Vasilakakis & Despoina Sdrali: Supplier selection practice (not AI) — “The purpose of this study is to investigate the factors affecting supplier selection in food and beverage divisions in the Greek hotel industry.” (Peer-reviewed journal article (Journal of Hospitality and Tourism Insights); abstract only, 2022; Abstract; base: Greek hotel purchasing managers (n in full text); score 7/10; partial support, abstract only) | https://doi.org/10.1108/jhti-07-2021-0169",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhti-07-2021-0169"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "pr-6": {
+   "name": "Forecasting supplier prices to prepare negotiations",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-1": {
+   "name": "Scanning supplier invoices and coding them to the general ledger",
+   "examples_and_sources": [
+    {
+     "text": "Jonathan Reiss (CEO), WNW Hospitality Management (hotel operator): Named hotel operator using AI invoice coding — “Every bill is read and coded line by line by AI” (Hotel operator's own post, 2026; web page; base: One management company; rollout announced, no results yet; score 6/10; below credibility bar) | https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-2": {
+   "name": "Spotting fraud and unusual patterns in payments",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.51%) – category level, not the exact use case — “Enterprises using AI technologies for accounting, controlling or finance management: 3.51%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN"
+    },
+    {
+     "text": "Rasha Kassem: Fraud types and counter-measures in hospitality — “This is the first systematic review of fraud in the hospitality sector” (Peer-reviewed journal article (International Journal of Hospitality Management); abstract only, 2024; Abstract; base: Systematic review; score 8/10; partial support, abstract only) | https://doi.org/10.1016/j.ijhm.2023.103630",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.ijhm.2023.103630"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-3": {
+   "name": "Automatic reconciliation of bank, card, booking-site commission, PMS and supplier statements",
+   "examples_and_sources": [
+    {
+     "text": "Jonathan Reiss (CEO), WNW Hospitality Management (hotel operator): Named hotel operator automating card/bank reconciliation — “Every deposit is proven daily” (Hotel operator's own post, 2026; web page; base: One management company; rollout announced, no results yet; score 6/10; below credibility bar) | https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-4": {
+   "name": "Forecasting cash flow and profit and loss (P&L), and budgeting",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.51%) – category level, not the exact use case — “Enterprises using AI technologies for accounting, controlling or finance management: 3.51%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotel interest in AI financial forecasting (expectation) — “These properties also tend to rate the usefulness of AI in streamlining processes and financial forecasting more highly than rural or resort-based hotels.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.54; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; chart p.55: streamlining financial analysis and forecasting 34%; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-5": {
+   "name": "Generative AI assistants for finance and agents for supplier invoices",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.51%) – category level, not the exact use case — “Enterprises using AI technologies for accounting, controlling or finance management: 3.51%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-6": {
+   "name": "Automating the night audit (end-of-day closing)",
+   "examples_and_sources": [
+    {
+     "text": "Jonathan Reiss (CEO), WNW Hospitality Management (hotel operator): Hotel operator adopting an AI back-office platform that covers night-audit work (automation of the audit itself not stated) — “It speaks our language, from night audit to the USALI chart of accounts” (Hotel operator's own post, 2026; web page; base: One management company; no results yet; score 6/10; partial support, below credibility bar) | https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations",
+     "score": 6,
+     "fit": "partial",
+     "replaces": "adds (none working before)",
+     "url": "https://www.wnwmanagement.com/blog/wnw-partners-with-hotelpilot-ai-hotel-operations"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (4.28%) – category level, not the exact use case — “Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation): 4.28%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TPA"
+    },
+    {
+     "text": "Otelier (vendor release): Named hotel group digitising night audit (not AI) — “DigiAudit for night audit compliance and storage” (Vendor press release, 2026; web page; base: 160+ hotels (Stonebridge); digital, not AI; score 5/10; partial support, below credibility bar) | https://otelier.io/press/stonebridge-chooses-otelier-to-centralize-data-and-drive-innovation/",
+     "score": 5,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://otelier.io/press/stonebridge-chooses-otelier-to-centralize-data-and-drive-innovation/"
+    },
+    {
+     "text": "Stayflexi (vendor): Vendor offers AI night-audit agent — “Run nightly audits at 2 AM without staff. The AI agent reconciles POS charges, validates rates, detects discrepancies, and emails reports to your team.” (Vendor page, n.d.; page body (accessed 25 Nov 2026); base: No customer named; vendor product page; score 4/10; partial support, below credibility bar) | https://stayflexi.com/agents/night-auditor",
+     "score": 4,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://stayflexi.com/agents/night-auditor"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "fa-7": {
+   "name": "Automatic handling of chargeback disputes (guests reversing card payments)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.51%) – category level, not the exact use case — “Enterprises using AI technologies for accounting, controlling or finance management: 3.51%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PFIN"
+    },
+    {
+     "text": "Ethoca (Mastercard) with Datos Insights: Size of the chargeback problem in hospitality (not automation) — “those offering travel and hospitality services report the highest average chargeback value at $120” (Vendor-sponsored industry study with stated sample, 2025; PDF p.11; base: 840 midsize/large merchants + 23 FIs in AU, BR, UK, US (Q4 2024); score 6/10; partial support, below credibility bar) | https://hs.ethoca.com/hubfs/2025%20state%20of%20chargebacks%20report.pdf?hsLang=en",
+     "score": 6,
+     "fit": "partial",
+     "replaces": "replaces justt.ai/hospitality (broken)",
+     "url": "https://hs.ethoca.com/hubfs/2025%20state%20of%20chargebacks%20report.pdf?hsLang=en"
+    },
+    {
+     "text": "Flywire (vendor-commissioned survey): Hotels give up disputing chargebacks (need for automation) — “58% have given up fighting chargebacks because of the time it takes to do so.” (Vendor-commissioned survey, 2025; web page; base: 300+ GMs/event directors at multinational hotel brands; score 6/10; partial support, below credibility bar) | https://www.flywire.com/news/new-flywire-research-into-hospitality-workflows-provides-a-blueprint-for-hotel-revenue-growth",
+     "score": 6,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.flywire.com/news/new-flywire-research-into-hospitality-workflows-provides-a-blueprint-for-hotel-revenue-growth"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hr-1": {
+   "name": "Forecasting staff needs and scheduling shifts (all departments, including room attendants)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: AI workforce planning in use (15% of adopters) — “The observed drop in the use of AI for workforce planning and predictive analytics likely reflects a shift in the sample composition” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.45; base: AI-adopting hotels in a survey of 1,485 hotels in AT, DE, FR, GR, IT, CH (Jan–Apr 2025); 41% of respondents use AI; exact n of adopters not stated on the page; chart p.42: workforce planning 29% (2023) → 15% (2025); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    },
+    {
+     "text": "AHLA with Actabl: Labour scheduling tool results in US hotels — “Hours per Occupied Room (HPOR) fell 3.1% at full-service hotels and 3.5% at select-service hotels using Actabl’s Hotel Effectiveness tool” (Industry association report co-developed with a vendor, 2026; web page; base: Hotels using one vendor tool, H1 2026; survey n not stated in release; score 6/10; below credibility bar) | https://www.ahla.com/news/new-ahla-report-says-ai-giving-hotel-teams-more-time-what-matters-most-guests",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://www.ahla.com/news/new-ahla-report-says-ai-giving-hotel-teams-more-time-what-matters-most-guests"
+    },
+    {
+     "text": "Brana Jianu et al.: Algorithmic scheduling/management in hospitality — “As algorithmic management (AM) is increasingly implemented in traditional hospitality workplaces, understanding its impact on employees becomes essential.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2025; Abstract; base: Interviews, survey and experiment (n in full text); score 8/10; partial support, abstract only) | https://doi.org/10.1108/ijchm-12-2024-1821",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-12-2024-1821"
+    }
+   ],
+   "gap": "—"
+  },
+  "hr-2": {
+   "name": "Recruiting with AI: chatting with applicants, screening and matching",
+   "examples_and_sources": [
+    {
+     "text": "Maher Georges Elmashhara et al.: AI recruitment in hospitality — “Artificial intelligence (AI)-assisted recruitment is evolving in the hospitality industry.” (Peer-reviewed journal article (International Journal of Contemporary Hospitality Management); abstract only, 2026; Abstract; base: 12 manager interviews + survey (n in full text); score 8/10; abstract only) | https://doi.org/10.1108/ijchm-05-2025-0709",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/ijchm-05-2025-0709"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotels name an AI HR tool in use — “Systems such as MEWS incorporate AI features for property management, while Pointchamp offers AI-based HR management.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "hr-3": {
+   "name": "Staff induction and training (AI-made courses, AI coaching, short lessons)",
+   "examples_and_sources": [
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotels report AI avatar training videos — “Examples include staff training through avatar videos, AI-assisted competitive analysis, and the use of cameras for guest flow analysis.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "hr-4": {
+   "name": "Predicting which staff may leave, and analysing staff engagement",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.16%) – category level, not the exact use case — “Enterprises using machine learning (e.g. deep learning) for data analysis: 3.16%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TML"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "hr-5": {
+   "name": "Matching seasonal staff to hotels",
+   "examples_and_sources": [],
+   "gap": "No credible source found"
+  },
+  "hr-6": {
+   "name": "Face or fingerprint time clocks for staff attendance",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-1": {
+   "name": "Business performance dashboards (KPIs) with AI analysis",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotel interest in AI data analysis and reporting (expectation) — “data analysis and reporting, which was newly introduced in 2025 and already cited by 49% of respondents.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.56; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-2": {
+   "name": "Generative AI assistants for managers and head-office staff",
+   "examples_and_sources": [
+    {
+     "text": "Debarun Chakraborty: GenAI adoption by hotels — “This study examines the use of Generative AI (GAI) in the hospitality industry, particularly in hotels and resorts.” (Peer-reviewed journal article (Current Issues in Tourism); abstract only, 2025; Abstract; base: Longitudinal survey (n in full text); score 8/10; abstract only) | https://doi.org/10.1080/13683500.2025.2517829",
+     "score": 8,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/13683500.2025.2517829"
+    },
+    {
+     "text": "Josiah Mackenzie, commissioned for Destination AI: Managers use general GenAI assistants — “72% of responding hotel company leaders get AI capabilities through general-purpose tools such as ChatGPT, Gemini or Copilot” (Industry survey with stated sample (commissioned), 2026; web page; base: 107 hotel company leaders, Aug–Sep 2026; score 6/10; below credibility bar) | https://stateofhotelai.com",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://stateofhotelai.com"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    },
+    {
+     "text": "Hagen Britz (independent hospitality strategist) & Roland Schegg (HES-SO Valais-Wallis): Back-office admin workload as AI target for managers — “The current hotel pain points identified in this study—administrative workload, communication overload, and sophisticated revenue forecasting—are precisely where the highest ROI potential often resides, particularly in back-office efficiencies.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.37; base: Britz & Schegg (HES-SO2) survey: sent Jul–Sep 2025 to 408 hoteliers from the earlier AI survey + ~80 Swiss hotels; n varies by question, not stated (p.10); sample skewed to AI-aware hotels; score 7/10; partial support) | https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf"
+    }
+   ],
+   "gap": "—"
+  },
+  "gm-3": {
+   "name": "Meeting, briefing and report automation",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-4": {
+   "name": "Company-wide AI and data platforms in hotel groups",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (21.31%) – category level, not the exact use case — “Enterprises using at least one of the AI technologies: AI_TTM, AI_TSR, AI_TNLG, AI_TIR, AI_TML, AI_TPA, AI_TAR, E_AI_TPVSG: 21.31%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TANY",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TANY"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-5": {
+   "name": "Reporting to owners and asset managers",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-6": {
+   "name": "Assistant answering frontline staff questions on handbooks and procedures",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "gm-7": {
+   "name": "Internal tools built with AI coding assistants",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "it-1": {
+   "name": "AI threat detection and automatic response (network, email, computers and phones)",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (2.8%) – category level, not the exact use case — “Enterprises using AI technologies for ICT security: 2.8%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS"
+    },
+    {
+     "text": "Hsiangting Shatina Chen & Joseph Fiscus: Cyber risk in hotels (not AI) — “used the database from Privacy Rights Clearinghouse and collected 76 information security incidents” (Peer-reviewed journal article (Journal of Hospitality and Tourism Technology); abstract only, 2018; Abstract; base: 76 hospitality security incidents; score 8/10; partial support, abstract only) | https://doi.org/10.1108/jhtt-07-2017-0044",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1108/jhtt-07-2017-0044"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Hotel interest in AI cybersecurity (expectation, not use) — “The addition of areas like cybersecurity, financial forecasting, and inventory management in the 2025 survey also reflects a shift in perception toward more strategic and operational uses of AI.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.56; base: 1,485 hotels in AT, DE, FR, GR, IT, CH (2025 survey), share naming the area as promising; chart p.55: cybersecurity and fraud detection 38%, financial forecasting 34%, inventory 28%; score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "it-2": {
+   "name": "AI help desk for IT problems",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using AI that generates written or spoken language (6.43%) – category level, not the exact use case — “Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis): 6.43%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TNLG"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "it-3": {
+   "name": "Detecting booking fraud: fake reservations, criminals posing as booking sites, online card fraud",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (2.8%) – category level, not the exact use case — “Enterprises using AI technologies for ICT security: 2.8%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "it-4": {
+   "name": "AI analysis of security camera video",
+   "examples_and_sources": [
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (3.42%) – category level, not the exact use case — “Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing): 3.42%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TIR"
+    },
+    {
+     "text": "Roland Schegg, HES-SO Valais-Wallis: Camera-based guest flow analysis (not security) — “Examples include staff training through avatar videos, AI-assisted competitive analysis, and the use of cameras for guest flow analysis.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.41; base: Open comments (qualitative); score 7/10; partial support) | https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "it-5": {
+   "name": "AI network management for guest and staff Wi-Fi",
+   "examples_and_sources": [
+    {
+     "text": "HPE (vendor release): Named hotel using AI network management — “AI-driven networking is helping Aethos simplify IT operations, resolve issues faster and improve operational efficiency by 90%” (Vendor press release, 2026; web page; base: One 164-room hotel; 90% figure is a vendor claim, method not stated; score 5/10; below credibility bar) | https://www.hpe.com/us/en/newsroom/press-release/2026/09/aethos-london-shoreditch-redefines-luxury-hospitality-with-hpe-self-driving-network.html",
+     "score": 5,
+     "fit": "direct",
+     "replaces": "replaces Juniper citizenM link (redirects to generic page)",
+     "url": "https://www.hpe.com/us/en/newsroom/press-release/2026/09/aethos-london-shoreditch-redefines-luxury-hospitality-with-hpe-self-driving-network.html"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using AI for ICT security (2.8%) – closest category; network management itself is not measured — “Enterprises using AI technologies for ICT security: 2.8%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PITS"
+    },
+    {
+     "text": "Juan Pedro Mellinas & Juan Luis Nicolau: Why Wi-Fi quality matters (not AI network management) — “The effects of Wi-Fi flaws on hotels' overall ratings are estimated and discussed.” (Peer-reviewed journal article (Annals of Tourism Research); abstract only, 2020; Abstract; base: 4,800 hotel reviews; score 8/10; partial support, abstract only) | https://doi.org/10.1016/j.annals.2019.102842",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1016/j.annals.2019.102842"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "lg-1": {
+   "name": "Collecting and reporting sustainability (ESG) and carbon data",
+   "examples_and_sources": [
+    {
+     "text": "OECD: AI energy data feeding carbon reduction (partial for ESG reporting) — “This proactive approach not only reduces the hotel's carbon footprint but also leads to substantial cost savings on energy expenditures.” (OECD policy paper, 2024; PDF p.20 (printed p.19), Box 4; base: Single named case (Hilton); no figures; score 8/10; partial support) | https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf"
+    },
+    {
+     "text": "Mireia Guix et al.: Hotel ESG reporting practice (not AI) — “focusing on stakeholder-related practices disclosed by the 50 largest hotel groups worldwide” (Peer-reviewed journal article (Journal of Sustainable Tourism); abstract only, 2017; Abstract; base: 50 largest hotel groups; score 8/10; partial support, abstract only) | https://doi.org/10.1080/09669582.2017.1410164",
+     "score": 8,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/09669582.2017.1410164"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "lg-3": {
+   "name": "Generative AI for reviewing contracts",
+   "examples_and_sources": [
+    {
+     "text": "Legora (vendor): Named hotel group using GenAI legal/contract tool — “Accor partners with Legora to scale consistency, speed, and strategic impact across its global legal team” (Vendor customer page, n.d.; web page; base: One hotel group (legal team); no figures; score 4/10; below credibility bar) | https://legora.com/customers/accor",
+     "score": 4,
+     "fit": "direct",
+     "replaces": "adds (none working before)",
+     "url": "https://legora.com/customers/accor"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (5.53%) – category level, not the exact use case — “Enterprises using AI technologies for organisation of business administration processes or management: 5.53%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_PBAM"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  },
+  "lg-4": {
+   "name": "Rules and oversight for using AI",
+   "examples_and_sources": [
+    {
+     "text": "Hagen Britz (independent hospitality strategist) & Roland Schegg (HES-SO Valais-Wallis): Few hotels have AI strategy/governance (supports need for AI rules) — “Only 10% of the hotels surveyed have strategically integrated artificial intelligence into their long-term planning.” (Academic survey report (HES-SO; not peer-reviewed), 2025; PDF p.16; base: Britz & Schegg (HES-SO2) survey: sent Jul–Sep 2025 to 408 hoteliers from the earlier AI survey + ~80 Swiss hotels; n varies by question, not stated (p.10); sample skewed to AI-aware hotels; score 7/10; partial support) | https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf"
+    },
+    {
+     "text": "Josiah Mackenzie, commissioned for Destination AI: AI governance exists but execution fragmented — “Among hotel companies with a defined AI strategy and governance, 70% say execution is still fragmented.” (Industry survey with stated sample (commissioned), 2026; web page; base: 107 hotel company leaders, Aug–Sep 2026; score 6/10; below credibility bar) | https://stateofhotelai.com",
+     "score": 6,
+     "fit": "direct",
+     "replaces": "adds",
+     "url": "https://stateofhotelai.com"
+    },
+    {
+     "text": "Eurostat (European Commission): Share of EU accommodation firms (10+ staff) using this AI technology/purpose (21.31%) – category level, not the exact use case — “Enterprises using at least one of the AI technologies: AI_TTM, AI_TSR, AI_TNLG, AI_TIR, AI_TML, AI_TPA, AI_TAR, E_AI_TPVSG: 21.31%” (Official statistics (EU ICT usage in enterprises survey), 2025; API value (dataset updated 2026-06-15); data browser: https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en; base: EU27 accommodation enterprises (NACE I55) with 10+ employees, 2025; % of enterprises; score 9/10; partial support) | https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TANY",
+     "score": 9,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT&size_emp=GE10&indic_is=E_AI_TANY"
+    },
+    {
+     "text": "Shabbir Pokkakillath: AI governance in hospitality — “This article addresses this gap through an integrative empirical review examining how different forms of AI reshape decision-making, service processes and organisational structures in hospitality.” (Peer-reviewed journal article (Research in Hospitality Management); abstract only, 2026; Abstract; base: Integrative review; score 7/10; partial support, abstract only) | https://doi.org/10.1080/22243534.2026.2726013",
+     "score": 7,
+     "fit": "partial",
+     "replaces": "adds",
+     "url": "https://doi.org/10.1080/22243534.2026.2726013"
+    }
+   ],
+   "gap": "Only partial support at 7+ (category-level or non-hotel/non-AI evidence); no credible source found showing this exact use case in hotels"
+  }
+ }
+}

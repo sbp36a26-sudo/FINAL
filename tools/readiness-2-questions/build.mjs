@@ -14,6 +14,9 @@ const read = p => readFileSync(join(here, p), 'utf8');
 
 /* The owner's banned terms (prompt §4.4): whole words, any case. Only the disclaimer and the sensitive-area flag may carry one. */
 export const BANNED = /\b(AI Act|Article|Art\.|Annex|high-risk|transparency obligation|prohibited|DPIA|GDPR|FADP|CE mark|works council|PCI|consent|legal basis|law|laws|regulation|compliance|legal|not legal advice)\b/i;
+/* v2.8.0: the prompt's added words (delete, deleted, kept for, retention, consent, regulator, ISO, regulatory) with the old ones, for the
+   list of sources to show the owner (the sources stay; owner decision 2). */
+export const BANNED_SRC = /\b(AI Act|Article|Art\.|Annex|high-risk|transparency obligation|prohibited|DPIA|GDPR|FADP|CE mark|works council|PCI|consent|legal basis|law|laws|regulation|compliance|legal|not legal advice|delete|deleted|kept for|retention|regulator|ISO|regulatory)\b/i;
 /* The same 32-bit FNV-1a (over UTF-16 code units) as R2Flow.nameHash (src/flow.js): a saved check's catalogue name is checked by
    its hash, so the catalogue's own names (some carry banned words) are never written into the page. */
 export function nameHash(s) { let h = 0x811c9dc5; const t = String(s); for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
@@ -86,8 +89,8 @@ export function tqModel(Q, meta, prev, acts) {
 
 /* The detail layer: each use case's catalogue sources, read from the catalogue page at build time: { <use id>: { srcs: [[type, name,
    note, url]] } }. Types: 'c' company, 'h' hotel, 'r' a study in the catalogue's source list (resolved), 'l' a plain link.
-   v2.7.0 (owner): legal sources are not shown, and any source whose name, note or address would hit the banned-term scan is left
-   out; out.dropped lists them (the build prints them, the report names them). */
+   v2.7.0 left out any source carrying a banned word; v2.8.0 (owner decision 2, 25 Nov 2026) keeps them all and only lists them
+   (out.dropped stays empty; sourcesModel applies the review's removals). */
 export function detailModel(catHtml, removed) {
   const X = catData(catHtml), SRC = X.src || {}, out = {}, dropped = [];
   X.depts.forEach(d => d.uses.forEach((u, i) => {
@@ -97,10 +100,65 @@ export function detailModel(catHtml, removed) {
       if (s[0] === 'r') { const r = SRC[s[1]]; if (!r) throw new Error('catalogue source ' + s[1] + ' is not in its source list (' + id + ')'); return ['r', r[0], s[2] || '', r[1] || '']; }
       if (s[0] === 'c' || s[0] === 'h') return [s[0], s[1], s[2] || '', s[3] || ''];
       return ['l', s[1], '', s[2] || ''];
-    }).filter(s => { const hit = s.join(' ').match(BANNED); if (hit) dropped.push({ id, name: s[1], word: hit[0] }); return !hit; });
+    }); // v2.8.0 (owner decision 2): no source is left out for a banned word in its title, address or quote; the build lists them
     out[id] = { srcs };
   }));
   Object.defineProperty(out, 'dropped', { value: dropped, enumerable: false });
+  return out;
+}
+
+/* v2.8.0: every use case's examples and sources, in one list (live review, 25 Nov 2026; prompt Part 1 §5 and Part 2; owner decision
+   4: shown inside the use case: the detail layer, step 5's box, the result page and the Result PDF). Built from:
+     the catalogue's sources (detailModel, nothing left out for a banned word since v2.8.0: owner decision 2),
+     data/sources_fixes.json (remove; replace = remove the old one; add = append the given text and URL; needs_source / review: nothing),
+     data/sources_edits.json (how each edit_text item is applied; the per-use notes, me-6),
+     data/use_case_sources_v2.json (the audited sources_v2, appended word for word; "replaces" removes the old source it names),
+     data/source_scores_v27.json (the review's credibility score and "supports" for the catalogue's sources).
+   Entry: { k: 'cat' | 'v2', t: type ('c' company, 'h' hotel, 'r' study, 'l' line, 'v' sources_v2), n: name, o: note, x: the v2 text
+   without its " | URL" tail, u: url, s: score or null, f: 'direct' | 'partial' | '' }. Sorted: 7+ direct, then 7+ partial, then the
+   rest (each group in its order). thin: no direct entry at 7+. Eurostat rows are always partial. out.log lists what was done. */
+const REPLACES = { 'fo-5': 'https://www.oracle.com/customers/barcelo-hotel-group', 'fa-7': 'https://justt.ai/hospitality', 'it-5': 'https://www.juniper.net/us/en/customers/citizenm-hotels-case-study.html' };
+export function sourcesModel(catHtml, removed, fixes, edits, v2, scores) {
+  const det = detailModel(catHtml, removed), out = {}, log = [], SC = {};
+  (scores.rows || []).forEach(r => { SC[r.use + ' ' + r.url] = r; });
+  const eurostat = u => /ec\.europa\.eu\/eurostat/.test(u);
+  Object.keys(det).forEach(id => {
+    out[id] = { srcs: det[id].srcs.map(s => { const r = SC[id + ' ' + s[3]], sup = r && r.supports; return { k: 'cat', t: s[0], n: s[1], o: s[2], u: s[3], s: r && typeof r.score === 'number' ? r.score : null, f: eurostat(s[3]) ? 'partial' : sup === 'Y' ? 'direct' : sup === 'partial' ? 'partial' : '' }; }), thin: false, note: '', nV2: 0 };
+  });
+  const find = (id, url, name) => { const L = (out[id] || { srcs: [] }).srcs, m = L.filter(e => e.k === 'cat' && e.u === url); if (m.length > 1 && name) { const n2 = m.filter(e => name.startsWith(e.n) || name.includes(e.n + ':')); if (n2.length) return n2; } return m; };
+  const drop = (id, e, why) => { out[id].srcs = out[id].srcs.filter(x => x !== e); log.push(id + ' removed: ' + e.n.slice(0, 60) + ' (' + why + ')'); };
+  fixes.forEach(f => {
+    if (!out[f.use_case]) return;
+    if (f.action === 'remove' || f.action === 'replace') { const m = find(f.use_case, f.url, f.source.replace(/^\(repeat\) /, '')); if (m.length !== 1) throw new Error('sources_fixes: ' + f.action + ' ' + f.use_case + ' matches ' + m.length + ' sources: ' + f.url); drop(f.use_case, m[0], f.action); }
+    if (f.action === 'add' && f.url) { out[f.use_case].srcs.push({ k: 'cat', t: 'l', n: f.source, o: '', u: f.url, s: null, f: '' }); log.push(f.use_case + ' added: ' + f.source.slice(0, 60)); }
+  });
+  edits.edits.forEach(e => {
+    const m = find(e.use, e.url); if (m.length !== 1) throw new Error('sources_edits: ' + e.use + ' matches ' + m.length + ' sources: ' + e.url);
+    const x = m[0];
+    if (e.remove) return drop(e.use, x, 'edit: ' + e.why);
+    if (e.copyTo) { out[e.copyTo].srcs.push(Object.assign({}, x, { s: null, f: '' })); log.push(e.copyTo + ' added (copied from ' + e.use + '): ' + x.n); return; }
+    if (e.set) { if (e.set.name) x.n = e.set.name; if (e.set.note != null) x.o = e.set.note; if (e.set.url) x.u = e.set.url; }
+    if (e.prefix) x.n = e.prefix + x.n;
+    if (e.suffix) x.n = x.n + e.suffix;
+    log.push(e.use + ' edited: ' + x.n.slice(0, 60));
+  });
+  Object.entries(edits.notes || {}).forEach(([id, t]) => { out[id].note = t; });
+  Object.entries(v2.use_cases).forEach(([id, u]) => {
+    if (!out[id]) throw new Error('use_case_sources_v2: unknown use case ' + id);
+    u.examples_and_sources.forEach(e => {
+      if (/^replaces /.test(e.replaces)) { const old = out[id].srcs.find(x => x.k === 'cat' && x.u === REPLACES[id]); if (old) drop(id, old, e.replaces); }
+      const tail = ' | ' + e.url; if (!e.text.endsWith(tail)) throw new Error('use_case_sources_v2: ' + id + ' text does not end with " | URL"');
+      out[id].srcs.filter(x => x.k === 'cat' && x.u === e.url && x.s == null).forEach(x => drop(id, x, 'the audited sources_v2 entry for the same address replaces it'));
+      out[id].srcs.push({ k: 'v2', t: 'v', n: '', o: '', x: e.text.slice(0, -tail.length), u: e.url, s: e.score, f: eurostat(e.url) ? 'partial' : e.fit });
+      out[id].nV2++;
+    });
+  });
+  Object.keys(out).forEach(id => {
+    const L = out[id].srcs, g = e => e.s != null && e.s >= 7 ? (e.f === 'direct' ? 0 : 1) : 2;
+    out[id].srcs = L.map((e, i) => [g(e), i, e]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(a => a[2]);
+    out[id].thin = !L.some(e => e.s != null && e.s >= 7 && e.f === 'direct');
+  });
+  Object.defineProperty(out, 'log', { value: log, enumerable: false });
   return out;
 }
 
@@ -114,7 +172,8 @@ export function explainModel(E, ids) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const catHtml = read('../use-case-catalogue/index.html');
   const Q = JSON.parse(read('data/usecase_questions_only.json')), meta = JSON.parse(read('data/must-meta.json'));
-  const cat = catalogueModel(catHtml, Q), detail = detailModel(catHtml, cat.removed);
+  const cat = catalogueModel(catHtml, Q);
+  const detail = sourcesModel(catHtml, cat.removed, JSON.parse(read('data/sources_fixes.json')), JSON.parse(read('data/sources_edits.json')), JSON.parse(read('data/use_case_sources_v2.json')), JSON.parse(read('data/source_scores_v27.json')));
   const ids = cat.depts.flatMap(d => d.uses.map(u => u.id)), qIds = Q.use_cases.filter(u => !u.removed).map(u => u.id);
   const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
@@ -132,5 +191,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   }
   writeFileSync(join(here, 'index.html'), html);
   console.log('wrote tools/readiness-2-questions/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(TQ.uses).reduce((a, u) => a + u.qs.length, 0), 'questions for the use cases');
-  if (detail.dropped.length) console.log('sources left out (banned word):', detail.dropped.map(x => x.id + ' ' + JSON.stringify(x.name.slice(0, 50)) + ' [' + x.word + ']').join('; '));
+  const all = Object.values(detail).flatMap(d => d.srcs), hitW = []; Object.entries(detail).forEach(([id, d]) => d.srcs.forEach(e => { const h = [e.n, e.o, e.x, e.u].join(' ').match(BANNED_SRC); if (h) hitW.push(id + ' [' + h[0] + '] ' + (e.n || e.x).slice(0, 70)); }));
+  console.log('sources:', all.length, 'entries (' + all.filter(e => e.k === 'v2').length + ' from sources_v2),', Object.values(detail).filter(d => d.thin).length, 'use cases marked thin,', Object.values(detail).filter(d => !d.srcs.length).length, 'with no source');
+  if (process.env.SHOW_SOURCES) { console.log(detail.log.join('\n')); console.log('sources carrying a banned word (shown, for owner review):\n' + hitW.join('\n')); }
 }

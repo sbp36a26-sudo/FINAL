@@ -1,0 +1,1823 @@
+{
+"note": "v2.8.0: the live review's credibility score (1-10, credible = 7+) and \"supports the use case\" (Y / partial / N) for each catalogue source it checked, from spec/review/live_review.xlsx sheet \"Sources\" (25 Nov 2026). Keyed by use case and URL. Sources the review did not see have no score.",
+"rows": [
+{
+"use": "rm-1",
+"url": "https://ideas.com/science-behind-g3-rms/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-1",
+"url": "https://beonx.com/press-events/beonx-germain-hotels-ai-revenue-management-canada/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-1",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "rm-1",
+"url": "https://hoteltechreport.com/news/flyr-hospitality-to-power-business-intelligence-for-ennismore",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://ideas.com/science-behind-g3-rms/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://www.smartness.com/en",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://doi.org/10.1287/mnsc.2022.03740",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://doku.iab.de/kurzber/2024/kb2024-05.pdf",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "rm-2",
+"url": "https://skift.com/2026/06/15/ihg-spent-8-years-rebuilding-its-hotel-systems-now-it-says-the-payoff-is-starting/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "rm-2",
+"url": "https://www.duettocloud.com/library/minor-hotels-uses-duetto-to-optimize-the-full-demand-curve",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-3",
+"url": "https://en.10minhotel.com/2026/01/29/ideas-unveils-rate-data-advantage-to-help-hospitality-providers-drive-higher-revenue-improve-market-penetration/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-3",
+"url": "https://www.mylighthouse.com/platform/rate-insight",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-4",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-4",
+"url": "https://hoteltechreport.com/news/flyr-hospitality-to-power-business-intelligence-for-ennismore",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-4",
+"url": "https://www.lodgiq.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-5",
+"url": "https://www.hospitalitynet.org/news/4135158/hotels-are-putting-ai-agents-to-work-in-live-operations-with-apaleo-mcp-server-use-up-70",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-5",
+"url": "https://hoteltechreport.com/news/lighthouse-launches-revenue-agent",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://hoteltechreport.com/news/ideas-sees-rapid-adoption-of-commercial-strategy-solutions-as-hotels-expand-beyond-traditional-revenue-management",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://www.hospitalitynet.org/news/4135158/hotels-are-putting-ai-agents-to-work-in-live-operations-with-apaleo-mcp-server-use-up-70",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://research.ehl.edu/hubfs/EHL-RESEARCH/Artificial-Intelligence-in-Hospitality-Transforming-Service-Experience-and-Efficiency.pdf",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://lodgingmagazine.com/five-advantages-for-group-sales-teams-leveraging-ai-powered-revenue-management/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://www.getintomore.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://hotelsmag.com/news/amadeus-adds-ai-booking-and-workflow-tools-to-hospitality-portfolio/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-6",
+"url": "https://www.duettocloud.com/en-us/library/unlock-more-profit-with-every-group",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "rm-7",
+"url": "https://hoteltechreport.com/news/oaky-and-ota-insight-integration",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "rm-7",
+"url": "https://oaky.com/en/integrations/ideas",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "rm-8",
+"url": "https://www.spabusiness.com/wellness-products-and-services/Elevating-spa-profitability-booking-optimisation-with-Agilysys-Spa-powered-by-guestsenseai/361260",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-8",
+"url": "https://www.hospitalitynet.org/ai/snapshot/trybe-intelligence",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://www.hoteldive.com/press-release/20260622-lighthouse-and-bowerbird-technologies-give-hotels-the-first-end-to-end-solu/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://www.hotelmanagement-network.com/newsletters/lighthouse-and-bowerbird-partner-to-curb-hotel-rate-undercutting",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://insights.ehotelier.com/global-news/2026/07/06/radisson-hotel-group-launches-hospitality-industry-leading-ai-powered-real-time-price-matching-technology/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://www.ttgasia.com/2026/07/29/radisson-rolls-out-ai-powered-real-time-rate-matching/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://hoteltechnologynews.com/2026/07/radisson-hotel-group-launches-ai-powered-price-matching-as-direct-booking-battle-enters-a-new-phase/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "rm-9",
+"url": "https://www.triptease.com/price-match",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "rm-9",
+"url": "https://www.hotelchamp.com/blog/press-release-ratebeat-free-trials",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "rm-9",
+"url": "https://www.paratytech.com/en/news/the-best-online-price-isnt-given-away-its-protected.html",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "res-1",
+"url": "https://www.merca2.es/2025/07/12/ia-reservas-restaurantes-hoteles-2211546/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "res-1",
+"url": "https://entnerd.com/en/be-a-launches-ai-powered-phone-guest-service-at-czech-republics-pecr-hotel/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-1",
+"url": "https://www.traveloutlook.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-1",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "partial"
+},
+{
+"use": "res-1",
+"url": "https://doku.iab.de/kurzber/2024/kb2024-05.pdf",
+"score": 8,
+"supports": "N"
+},
+{
+"use": "res-1",
+"url": "https://lodgingmagazine.com/tech-roundup-brand-c-level-execs-tout-impact-of-cloud-based-systems-artificial-intelligence/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-2",
+"url": "https://www.hospitalitynet.org/casestudy/4135267/47-hours-back-every-month-for-beaumiers-central-reservations-team",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-2",
+"url": "https://www.hospitalitynet.org/news/4126037.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-3",
+"url": "https://www.hospitalitynet.org/news/4122948.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-3",
+"url": "https://doi.org/10.1016/j.techsoc.2023.102430",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "res-4",
+"url": "https://www.hospitalitynet.org/news/4135266/2026-siteminder-partner-awards-honour-the-innovators-putting-ai-to-work-for-hotels",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-4",
+"url": "https://www.hospitalitynet.org/news/4085358.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-4",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-4",
+"url": "https://www.profitroom.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-4",
+"url": "https://www.hotelchamp.com/blog/case-study-eden-hotels-converting-leaving-booking-engine-guests",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "res-4",
+"url": "https://www.triptease.com/email",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "res-4",
+"url": "https://workshop.horwathhtl.com/resources/case-studies/ovolo-revinate-cart-abandonment",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "res-5",
+"url": "https://ideas.com/science-behind-g3-rms/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-5",
+"url": "https://doi.org/10.1016/j.techsoc.2023.102430",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "res-6",
+"url": "https://www.mews.com/en/press/mews-raises-the-bar-at-itb-berlin",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-6",
+"url": "https://hoteltechreport.com/news/apaleo-and-the-flag-bring-agentic-ai-into-live-hotel-operations",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-6",
+"url": "https://www.oracle.com/news/announcement/new-ai-capabilities-in-oracle-opera-cloud-supercharge-hotel-operations-2026-06-16/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-7",
+"url": "https://www.hospitalitynet.org/news/4134795/mirai-launches-the-first-plugins-on-chatgpt-that-allow-bookings-on-the-hotels-direct-channel",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-7",
+"url": "https://thenextweb.com/news/radisson-motel-6-chatgpt-apps-agentic-commerce-hotels",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "res-7",
+"url": "https://blog.thehotelsnetwork.com/connect-chat-gpt-app-launch",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "res-7",
+"url": "https://www.tageskarte.io/technologie/detail/motel-one-startet-ki-gestuetzte-hotelsuche-ueber-chatgpt.html",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "res-8",
+"url": "https://www.hospitalitynet.org/news/4133042/revinate-brings-ivy-to-work-automated-call-scoring-and-revinate-chat-put-hospitality-ai-on-the-front-line",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "res-8",
+"url": "https://dstny.dk/en/products/scriptiq/hospitality",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "sm-1",
+"url": "https://cloud.google.com/customers/radisson?hl=en",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "sm-1",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "sm-1",
+"url": "https://doi.org/10.37741/t.72.3.10",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "sm-2",
+"url": "https://www.conference-news.co.uk/?p=40832",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-2",
+"url": "https://hoteltechreport.com/news/meetingpackage-expands-partnership-with-cvent-to-power-fully-automated-group-proposal-creation-for-hotels",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-2",
+"url": "https://www.proposales.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "sm-3",
+"url": "https://www.hospitalitynet.org/news/4134921/revinate-launches-hospitalitys-first-data-activation-platform",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-3",
+"url": "https://www.salesforce.com/eu/travel-hospitality-transportation/hospitality/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "sm-4",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "sm-4",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "Y"
+},
+{
+"use": "sm-5",
+"url": "https://cloud.google.com/customers/radisson?hl=en",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "sm-5",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "sm-5",
+"url": "https://triptease.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "sm-5",
+"url": "https://www.hosteltur.com/158676_google-premia-a-riu-por-su-uso-de-inteligencia-artificial-en-marketing.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-5",
+"url": "https://www.marketingdirecto.com/marketing-general/digital-innovation-trends-by-t2o/estrategia-digital-iberostar-conquistar-consumidor",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "sm-6",
+"url": "https://www.hospitalitynet.org/news/4132997/cendyn-unveils-ai-native-infrastructure-tackling-hotels-invisibility-cliff",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://uno.rategain.com/?p=1064",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://oer.lib.polyu.edu.hk/concern/works/tx31qj14d",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://insights.ehotelier.com/insights/2026/06/19/the-black-box-of-hotel-distribution/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://hotelsmag.com/news/ai-powered-agentic-hospitality-launches-to-help-hotels-drive-visibility-and-direct-bookings/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "sm-6",
+"url": "https://skift.com/2026/02/17/ihg-overhauls-its-hotel-data-for-ai-agents/",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "sm-7",
+"url": "https://www.salesforce.com/eu/travel-hospitality-transportation/hospitality/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "sm-7",
+"url": "https://www.conference-news.co.uk/?p=40832",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "sm-7",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "fo-1",
+"url": "https://hoteligy.com/en/modules/online-precheckin/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-1",
+"url": "https://chekin.com/en/identity-verification/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-1",
+"url": "https://www.straiv.io/en",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-1",
+"url": "https://doi.org/10.3390/world6040134",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "fo-2",
+"url": "https://forbes.es/economia/896754/iberostar-optimizara-la-asignacion-de-habitaciones-en-sus-32-hoteles-en-espana-tras-empezar-con-9-de-ellos/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "fo-2",
+"url": "https://www.oracle.com/news/announcement/new-ai-capabilities-in-oracle-opera-cloud-supercharge-hotel-operations-2026-06-16/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-2",
+"url": "https://doi.org/10.1016/j.techsoc.2023.102430",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "fo-3",
+"url": "https://chekin.com/en/identity-verification/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-3",
+"url": "https://hoteligy.com/en/modules/online-precheckin/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-3",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "fo-4",
+"url": "https://www.oracle.com/news/announcement/new-ai-capabilities-in-oracle-opera-cloud-supercharge-hotel-operations-2026-06-16/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-5",
+"url": "https://duve.com/duve-ai/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-5",
+"url": "https://www.oracle.com/news/announcement/guest-engagement-and-merchandising-capabilities-now-available-in-oracle-opera-cloud-hospitality-platform-2024-10-29/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-5",
+"url": "https://www.oracle.com/customers/barcelo-hotel-group",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-6",
+"url": "https://europe-re.com/safeguest-launches-guest-risk-scoring-tool-to-tackle-problem-short-let-stays-across-europe/74353",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "fo-7",
+"url": "https://www.retailcustomerexperience.com/news/israeli-hotel-group-deploys-ai-powered-holographic-check-in-kiosk/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://www.bounte.net/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://www.stayntouch.com/integrations/bounte",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://www.notlost.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://chargerback.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://www.bounte.net/curator-hotel-and-resort-collection-a-leader-in-luxury-and-lifestyle-hospitality-has-selected-bounte-as-their-preferred-vendor-for-lost-found-and-parcel-tracking/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fo-8",
+"url": "https://ilost.co/business/hotel",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fo-8",
+"url": "https://faundit.com/lost-and-found-software-for-hotels",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-1",
+"url": "https://hoteltechreport.com/marketing/reputation-management/trustyou",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-1",
+"url": "https://mara-solutions.com/features/ai-review-response-generator",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-1",
+"url": "https://www.medallia.com/solutions/hospitality/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-1",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "gx-1",
+"url": "https://www.customer-alliance.com/en/casestudies/post-stay-feedback-my-arbor-hotel",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-1",
+"url": "https://www.guestrevu.com/capturing-reviews-with-guestrevu-for-the-cottage-hotels-new-website",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-1",
+"url": "https://www.customer-alliance.com/en/casestudies/dorint-hotels-guest-feedback-management",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-2",
+"url": "https://www.journaldespalaces.com/en/pressrelease-79606-mews-launches-guest-messaging-and-automations-gms-set-the-workflow-front-desk-staff-get-back-to-hosting-NL.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://duve.com/duve-ai/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://www.oehv.at/fileadmin/user_upload/MediaLibrary/Archiv/Bilder/Partner_Sponsoren/Technologie_Umfrage/OEHV_Technologie-Umfrage_Ergebnisse_2025.pdf",
+"score": 7,
+"supports": "partial"
+},
+{
+"use": "gx-2",
+"url": "https://www.hospitalitynet.org/opinion/4132683/whats-new-at-mews-the-announcements-you-need-to-know-about",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://www.dialogshift.com/en",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://www.dialogshift.com/en/blog-posts/dialogshift-and-motel-one-draw-a-positive-balance",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-2",
+"url": "https://globetrender.com/2026/05/18/multilingual-ai-hugely-exciting-hotel-operator-pphe/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gx-3",
+"url": "https://mara-solutions.com/features/ai-review-response-generator",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-3",
+"url": "https://www.hospitalitynet.org/news/4134921/revinate-launches-hospitalitys-first-data-activation-platform",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://www.hospitalitynet.org/news/4126037.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://hoteltechreport.com/news/alliants-personalization-capabilities",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://ireckonu.com/cdp/match-merge/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://my.trustyou.com/blog/single-guest-profile-hotel-cdp",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-4",
+"url": "https://www.hospitalityupgrade.com/magazine/summer-2026/the-golden-guest-record-why-hotels-still-struggle-with-guest-identity",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gx-4",
+"url": "https://tealium.com/resource/case-study/radisson-hotel-group-is-reshaping-the-future-of-intelligent-hospitality/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gx-5",
+"url": "https://duve.com/duve-ai/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-5",
+"url": "https://www.hospitalitynet.org/news/4132547/innspire-and-ehvaai-announce-strategic-partnership-to-deliver-true-global-operational-autonomy",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gx-5",
+"url": "https://www.viqal.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-6",
+"url": "https://developer.amazon.com/en-US/docs/alexa/alexa-smart-properties/managing-subscriptions-hospitality.html",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gx-6",
+"url": "https://prnewswire.com/apac/news-releases/millennium-hotels-and-resorts-partners-with-aiello-to-revolutionize-hospitality-with-ai-voice-technology-302301956.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "fb-1",
+"url": "https://techintelpro.com/news/ai/robotics-and-automation/tripleseat-launches-ai-platform-for-hospitality-event-teams",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "fb-1",
+"url": "https://hoteltechreport.com/news/event-temple-launches-ai-sales-suite-turning-hotel-rfps-into-revenue-in-seconds",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "fb-2",
+"url": "https://technode.global/prnasia/aiello-integrates-with-shiji-infrasys-pos-to-enable-ai-powered-fb-ordering-across-the-hotel/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "fb-3",
+"url": "https://www.restaurant365.com/blog/how-ai-menu-generators-can-improve-efficiency/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fb-3",
+"url": "https://www.casestudies.com/company/apicbase/case-study/citizenm-customer-case-study",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fb-4",
+"url": "https://www.mobihq.com/restaurant-types/hotels",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fb-4",
+"url": "https://duve.com/digital-menus-and-mobile-ordering/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fb-5",
+"url": "https://press.igus.eu/summer-holiday-2-0-service-robot-brings-a-drink-directly-to-your-room/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fb-5",
+"url": "https://doi.org/10.24251/HICSS.2025.072",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "fb-5",
+"url": "https://doi.org/10.54055/ejtr.v38i.3387",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "fb-5",
+"url": "https://doi.org/10.1177/19389655251346383",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "fb-5",
+"url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "fb-5",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "partial"
+},
+{
+"use": "fb-6",
+"url": "https://sevenrooms.com/platform/artificial-intelligence/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fb-6",
+"url": "https://www.zenchef.com/call-ai",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hk-1",
+"url": "https://www.hospitalitynet.org/news/4132955/vsr-and-quore-integrate-agentic-ai-powered-voice-automation-into-hotel-operations",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "hk-1",
+"url": "https://flexkeeping.com/product-news/flexie-ai",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-1",
+"url": "https://boostlingo.com/industries/travel-and-hospitality/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-2",
+"url": "https://cleaningmag.com/news/mcdreams-hotels-automates-cleaning-with-nexaro-technology",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "hk-2",
+"url": "https://doi.org/10.1177/19389655251346383",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "hk-2",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "partial"
+},
+{
+"use": "hk-3",
+"url": "https://www.laundris.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-4",
+"url": "https://interel.squarespace.com/solutions",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hk-4",
+"url": "https://www.minut.com/solutions/aparthotels",
+"score": 4,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://www.checkbook.org/national/consumers-notebook/articles/Hotels-In-Room-Smoking-Sensors-Falsely-Charge-Some-Guests-Hundreds-in-Fees-7990",
+"score": 6,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://thepointsguy.com/hotel/incorrect-hotel-room-smoking-fees-rest-sensor/",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://www.abc15.com/news/let-abc15-know/phoenix-hotel-guests-fight-500-smoking-fees-they-say-they-shouldnt-have-been-charged",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://abc7ny.com/post/guests-of-the-swanky-nomo-hotel-in-soho-contacted-our-7-on-your-side-investigates-team-after-they-said-were-wrongfully-charged-a-500-smoking-fee/14807470/",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://restsensor.com/product-overview/technology-privacy",
+"score": 4,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://restsensor.com/blog/how-rest-sensor-detects-smoking-and-vaping-in-hotel-rooms",
+"score": 4,
+"supports": "N"
+},
+{
+"use": "hk-4",
+"url": "https://hellowynd.com/pages/sentry",
+"score": 4,
+"supports": "N"
+},
+{
+"use": "hk-5",
+"url": "https://www.mews.com/en/products/marketplace/miqa",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-6",
+"url": "https://www.optiisolutions.com/blogs/ai-in-hotel-operations-4-models-working-inside-optii-right-now",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-6",
+"url": "https://www.surrey.ac.uk/news/are-hotel-managers-becoming-obsolete-age-ai",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "hk-6",
+"url": "https://par.nsf.gov/servlets/purl/10618218",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "hk-6",
+"url": "https://help.amadeus-hospitality.com/operations/service-optimization/content/hskp-attendant-productivity-dashboard.html",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hk-6",
+"url": "https://www.unifocus.com/housekeeping/productivity-tracking",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hk-7",
+"url": "https://insights.ehotelier.com/suppliers/2020/11/04/spotta-puts-bed-bugs-to-the-test/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "hk-7",
+"url": "https://www.spotta.co/solutions/bed-pod",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hk-7",
+"url": "https://icup.org.uk/media/drthsi0w/16-miller-34-f-pp-107-111.pdf",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "hk-7",
+"url": "https://skift.com/2022/04/14/luxury-hotels-turn-to-unlikely-tech-to-fight-bedbugs/",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "me-1",
+"url": "https://www.casestudies.com/company/aedifion/case-study/holiday-inn-customer-case-study",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-1",
+"url": "https://www.casestudies.com/company/brainbox-ai/case-study/one-hotel-optimized-its-hvac-systems-while-maintaining-occupant-comfort",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-1",
+"url": "https://www.corresponsables.com/actualidad/iberostar-hotels-resorts-integra-inteligencia-artificial-sener-para-reducir-su-huella-energetica/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "me-1",
+"url": "https://esg.hilton.com/wp-content/uploads/2020/04/Hilton-LightStay.pdf",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "me-1",
+"url": "https://ei3.com/case-studies/hilton-ai-energy-management-savings",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "me-1",
+"url": "https://hoteltechnologynews.com/2026/04/why-the-hotel-industrys-sustainability-technology-ambitions-still-surpass-operational-reality/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "me-2",
+"url": "https://www.hospitalitynet.org/news/4132955/vsr-and-quore-integrate-agentic-ai-powered-voice-automation-into-hotel-operations",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "me-2",
+"url": "https://www.hospitalitynet.org/news/4131775/actabl-launches-ai-asset-setup-to-eliminate-manual-data-entry-for-hotel-maintenance-and-capital-planning",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "me-2",
+"url": "https://lodgingmagazine.com/actabl-debuts-ai-asset-setup-to-support-hotel-engineering-teams/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "me-2",
+"url": "https://info.actabl.com/tr-ai-asset-setup",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-3",
+"url": "https://www.vicomtech.org/en/rdi-tangible/projects/project/twinhotel-digital-twins-and-virtual-models-to-optimize-integrated-hotel-management",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-3",
+"url": "https://doi.org/10.3390/buildings15244406",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "me-4",
+"url": "https://www.franklinenergy.com/hotel-energy-management",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-4",
+"url": "https://www.hotelmanagement.net/tech/how-vda-telkonet-drives-hotel-appeal-through-sustainability",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "me-5",
+"url": "https://www.kone.co.uk/existing-buildings/maintenance/247-connected-services/hotel-life.aspx",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "me-6",
+"url": "https://www.telefonica.com/en/communication-room/press-room/telefonica-accelerates-the-evolution-of-melias-global-technology-model-through-ai-and-cybersecurity/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "me-6",
+"url": "https://doi.org/10.3390/tourhosp7090264",
+"score": 8,
+"supports": "N"
+},
+{
+"use": "me-7",
+"url": "https://www.shayp.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://www.hospitalitynet.org/news/4132907/ai-food-waste-scale-up-kitro-accelerates-international-growth-amid-new-regulatory-push",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://orbisk.com/blog/hundreds-of-thousands-of-kilos-less-food-waste-in-accor-hotels-worldwide/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://www.leanpath.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://yunu.me/files/SSRN_Empirical_Winnow.pdf",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://doi.org/10.1016/j.resconrec.2025.108689",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://www.hospitalitynet.org/news/4093893.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://www.hospitalitynet.org/news/4118407.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://press.iberostar.com/en/news/iberostar-food-waste-ai-implementation",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "kc-1",
+"url": "https://redcarnationhotels.com/sustainability/food-sustainability",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "kc-2",
+"url": "https://menutech.com/en/features/allergens",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "kc-2",
+"url": "https://cordis.europa.eu/project/id/826923",
+"score": 7,
+"supports": "partial"
+},
+{
+"use": "kc-3",
+"url": "https://www.fcsi.org/industry/products/north-american-premier-convotherm-mini-pro",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-4",
+"url": "https://www.hospitalitynet.org/news/4134632/winnow-announces-winnow-foresight-a-mobile-first-ai-powered-forecasting-tool-designed-to-predict-kitchen-demand-and-prevent-food-waste-developed-with-hilton-chefs",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-4",
+"url": "https://www.hospitalitynet.org/news/4118407.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "kc-5",
+"url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+"score": 7,
+"supports": "Y"
+},
+{
+"use": "kc-6",
+"url": "https://www.fanuc.eu/eu-en/news/a-fanuc-robot-takes-lead-kitchen",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "kc-6",
+"url": "https://www.leonardo-hotels.com/press/fully-automated-cooking-robot-complements-24-7-service-offering-at-the-leonardo-smart-vienna-airport",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "pr-1",
+"url": "https://www.hospitalitynet.org/news/4134394/inn-flow-introduces-connected-ai-for-hotel-purchasing-with-native-accounting-procurement-integration",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "pr-1",
+"url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "pr-1",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "partial"
+},
+{
+"use": "pr-2",
+"url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "pr-2",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "partial"
+},
+{
+"use": "pr-2",
+"url": "https://www.hospitalitynet.org/news/4134022/actabl-and-reeco-launch-innovative-partnership-to-bring-forecast-intelligence-into-ai-powered-hotel-procurement",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "pr-3",
+"url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "pr-3",
+"url": "https://www.hospitalitynet.org/news/4134394/inn-flow-introduces-connected-ai-for-hotel-purchasing-with-native-accounting-procurement-integration",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "pr-4",
+"url": "https://www.theaccessgroup.com/en-gb/hospitality/software/purchase-to-pay/hotels/",
+"score": 4,
+"supports": "N"
+},
+{
+"use": "pr-5",
+"url": "https://www.phacetlabs.com/customers/astotel",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "pr-5",
+"url": "https://doku.iab.de/kurzber/2024/kb2024-05.pdf",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "pr-5",
+"url": "https://www.journaldespalaces.com/communique-78659-france-evenements-club-med-entreprise-data-ia-de-l-annee-affirme-son-leadership-en-intelligence-artificielle-a-vivatech-2026.html",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "pr-6",
+"url": "https://www.journaldespalaces.com/communique-78659-france-evenements-club-med-entreprise-data-ia-de-l-annee-affirme-son-leadership-en-intelligence-artificielle-a-vivatech-2026.html",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "fa-1",
+"url": "https://www.basware.com/en/solutions/industries/hospitality",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fa-2",
+"url": "https://docs.adyen.com/risk-management/next-phase/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fa-2",
+"url": "https://stripe.com/en-de/radar",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "fa-3",
+"url": "https://www.mews.com/en/products/automated-reconciliation",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fa-4",
+"url": "https://www.m3as.com/the-power-of-using-ai-for-automated-hotel-accounting-in-2026/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fa-5",
+"url": "https://www.hyperbots.com/industries/hospitality",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "fa-7",
+"url": "https://justt.ai/hospitality",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://www.deputy.com/au/industry/hotels",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hr-1",
+"url": "https://www.quinyx.com/en-gb/workforce-management/demand-forecasting",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hr-1",
+"url": "https://www.nesto-software.com/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://www.surrey.ac.uk/news/are-hotel-managers-becoming-obsolete-age-ai",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "hr-1",
+"url": "https://doi.org/10.1016/j.techsoc.2023.102430",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://www.mdpi.com/2673-5768/6/4/203",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://doi.org/10.3389/fpsyg.2026.1958975",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://doi.org/10.1016/j.ijhm.2025.104474",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "hr-1",
+"url": "https://www.quinyx.com/customers/scandic",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hr-2",
+"url": "https://www.paradox.ai/case-studies/marriott",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hr-2",
+"url": "https://doi.org/10.1002/jsc.2632",
+"score": 8,
+"supports": "Y"
+},
+{
+"use": "hr-2",
+"url": "https://hyring.com/use-cases/hospitality",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hr-3",
+"url": "https://www.lingio.com/en/global/create-course",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hr-3",
+"url": "https://www.thrivelearning.com/industries/hospitality",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "hr-3",
+"url": "https://hospitalityinsights.ehl.edu/hubfs/Blog-EHL-Insights/Download-resources/EHL-Hospitality-Outlook-Report-2026.pdf",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "hr-4",
+"url": "https://tourismhr.ca/ai-hr-innovative-platform-to-boost-employee-retention/",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "hr-5",
+"url": "https://www.journaldespalaces.com/communique-78659-france-evenements-club-med-entreprise-data-ia-de-l-annee-affirme-son-leadership-en-intelligence-artificielle-a-vivatech-2026.html",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "hr-6",
+"url": "https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/2024/02/ico-orders-serco-leisure-to-stop-using-facial-recognition-technology",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "hr-6",
+"url": "https://www.unifocus.com/en/time-attendance-software/attendance-tracking",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "hr-6",
+"url": "https://www.planday.com/features/punch-clock/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gm-1",
+"url": "https://hoteltechreport.com/de/news/lighthouse-launches-total-revenue-ai",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gm-1",
+"url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gm-1",
+"url": "https://juyo.ai/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gm-2",
+"url": "https://openai.com/index/hyatt-advances-ai-with-chatgpt-enterprise",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "gm-2",
+"url": "https://lodgingmagazine.com/tech-roundup-brand-c-level-execs-tout-impact-of-cloud-based-systems-artificial-intelligence/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gm-2",
+"url": "https://group.accor.com/en/news-stories/accor-leading-hospitality-ai",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-2",
+"url": "https://www.pymnts.com/news/artificial-intelligence/2025/club-med-2-1-billion-data-points-ai-powered-playbook/",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-3",
+"url": "https://www.travolution.com/news/apaleo-launches-integrated-ai-copilot-to-ease-hotel-teams-workload/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "gm-3",
+"url": "https://hoteltechreport.com/de/news/lighthouse-launches-total-revenue-ai",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "gm-4",
+"url": "https://www.tuigroup.com/en/newsroom/news/tui-lets-employees-build-their-personal-ai-assistants",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-4",
+"url": "https://alumni.edhec.edu/medias/editor/PVCP%20Edhec%20Alumni%20GenAI%20REX-22092025.pdf",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-4",
+"url": "https://lodgingmagazine.com/tech-roundup-brand-c-level-execs-tout-impact-of-cloud-based-systems-artificial-intelligence/",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "gm-4",
+"url": "https://www.googlecloudpresscorner.com/2024-04-09-IHG-Hotels-Resorts-Builds-a-New-Travel-Planner-Powered-by-Google-Cloud-AI",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "gm-5",
+"url": "https://hoteltechreport.com/news/actabl-launches-profitowner-real-time-business-intelligence-for-hotel-ownership-groups",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "gm-6",
+"url": "https://www.hotelkit.net/en/ai/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gm-6",
+"url": "https://www.getflip.com/",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gm-6",
+"url": "https://www.hotelinvestmenttoday.com/Asset-Management/From-dirty-data-to-performing-miracles-hotel-approaches-to-AI",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-6",
+"url": "https://group.accor.com/en/news-stories/accor-leading-hospitality-ai",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-7",
+"url": "https://skift.com/2026/04/20/hyatt-chatgpt-enterprise-roll-out/",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "gm-7",
+"url": "https://hoteltechinsider.com/p/vai-resort-deploys-12-ai-apps",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "gm-7",
+"url": "https://superblocks.com/blog/transforming-cruise-operations-with-vibe-coding",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "gm-7",
+"url": "https://workshop.horwathhtl.com/resources/ai-tools",
+"score": 6,
+"supports": "partial"
+},
+{
+"use": "gm-7",
+"url": "https://clients.nevron.co/AI-in-hospitality/report",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "it-1",
+"url": "https://www.casestudies.com/company/abnormal-ai/case-study/sage-hospitality-group-aligns-security-and-business-goals-to-strengthen-trust",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "it-1",
+"url": "https://darktrace.com/customers/gcp-hospitality",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "it-1",
+"url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/isoc_eb_ain2?geo=EU27_2020&nace_r2=I55&time=2025&unit=PC_ENT",
+"score": 9,
+"supports": "Y"
+},
+{
+"use": "it-2",
+"url": "https://www.telefonica.com/en/communication-room/press-room/telefonica-accelerates-the-evolution-of-melias-global-technology-model-through-ai-and-cybersecurity/",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "it-2",
+"url": "https://technode.global/prnasia/global-hospitality-leader-selects-3clogic-to-enhance-existing-servicenow-investment-and-transform-it-service-desk-operations/",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "it-2",
+"url": "https://www.forrester.com/blogs/inside-club-meds-conversational-ai-strategy-an-interview-with-siddhartha-chatterjee",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "it-3",
+"url": "https://hoteltechreport.com/operations/cyber-security/sift-science",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "it-3",
+"url": "https://www.hospitalitynet.org/external/4126363.html",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://www.omnilert.com/industries/hospitality-and-hotel-security-systems",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://www.lynxight.com/content/which-ai-drowning-systems-do-large-public-operators-use",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://blogs.cisco.com/industries/elevating-the-guest-experience-how-lhm-tackles-the-device-explosion",
+"score": 6,
+"supports": "Y"
+},
+{
+"use": "it-4",
+"url": "https://superb-ai.com/en/resources/blog/ai-crowd-analysis-in-hotels",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://v-count.com/hotels",
+"score": 4,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://lodgingmagazine.com/ai-video-and-staff-safety-how-hotel-operators-are-rethinking-security-for-frontline-teams/",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://pubmed.ncbi.nlm.nih.gov/42976332/",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "it-4",
+"url": "https://genorma.com/en/standards/iso-20380-2017",
+"score": 5,
+"supports": "N"
+},
+{
+"use": "it-5",
+"url": "https://www.juniper.net/us/en/customers/citizenm-hotels-case-study.html",
+"score": 4,
+"supports": "Y"
+},
+{
+"use": "lg-1",
+"url": "https://hotelguestexperience.co.uk/news/minor-hotels-partners-with-deepki-to-accelerate-net-zero-transition-across-europe-and-americas",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "lg-1",
+"url": "https://hoteltechreport.com/operations/hotel-sustainability-software/greenview",
+"score": 5,
+"supports": "Y"
+},
+{
+"use": "lg-1",
+"url": "https://doi.org/10.1108/IJPPM-04-2025-0303",
+"score": 8,
+"supports": "partial"
+},
+{
+"use": "lg-2",
+"url": "https://www.hosteltur.com/165491_onetrust-aliado-de-las-hoteleras-en-la-gestion-responsable-de-datos-e-ia.html",
+"score": 5,
+"supports": "partial"
+},
+{
+"use": "lg-4",
+"url": "https://eho.zse.hr/fileadmin/issuers/ARNT/FI-ARNT-d6706eb8a39530df00b8bfe360df9138.pdf",
+"score": 6,
+"supports": "Y"
+}
+]
+}

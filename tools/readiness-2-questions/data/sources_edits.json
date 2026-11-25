@@ -1,0 +1,92 @@
+{
+ "note": "v2.8.0: how each edit_text item of sources_fixes.json (live review, 25 Nov 2026) is applied to the catalogue source it names (use case + URL). One row per change; 'why' quotes the review's detail. Judgement calls are listed in the CHANGELOG.",
+ "edits": [
+  {
+   "use": "res-1",
+   "url": "https://hotelinside.ch/wp-content/uploads/PDF-AI-Adoption-in-European-Hotels-2025.pdf",
+   "set": {
+    "note": "Shows chatbot use (31% of AI-using hotels), not voice agents"
+   },
+   "why": "Say what it shows (\"chatbots 31% of AI-using hotels\") or remove."
+  },
+  {
+   "use": "sm-5",
+   "url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+   "remove": true,
+   "why": "Check, else remove. The page blocks automated checks, so it could not be checked: removed."
+  },
+  {
+   "use": "sm-6",
+   "url": "https://www.hospitalitynet.org/news/4133021/amadeus-unveils-major-expansion-of-ai-strategy-across-hospitality-sector",
+   "remove": true,
+   "why": "Check, else remove. The page blocks automated checks, so it could not be checked: removed."
+  },
+  {
+   "use": "gx-1",
+   "url": "https://www.customer-alliance.com/en/casestudies/post-stay-feedback-my-arbor-hotel",
+   "prefix": "Context (collecting reviews, not analysing them): ",
+   "why": "Move to context or drop."
+  },
+  {
+   "use": "fb-5",
+   "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2024/12/artificial-intelligence-and-tourism_41e7f157/3f9a4d8d-en.pdf",
+   "set": {
+    "note": "OECD expects room service to be taken over by robots \"at some point\" (qualitative)"
+   },
+   "why": "Delete the internal note from the text shown to users."
+  },
+  {
+   "use": "fb-6",
+   "url": "https://www.zenchef.com/call-ai",
+   "set": {
+    "name": "Zenchef (AI Concierge)",
+    "url": "https://www.zenchef.com/ai-concierge"
+   },
+   "why": "Update the URL and product name. The old address redirects to /ai-concierge, titled \"AI Concierge – Phone assistant 24/7 for restaurants\" (checked 25 Nov 2026)."
+  },
+  {
+   "use": "hk-6",
+   "url": "https://www.surrey.ac.uk/news/are-hotel-managers-becoming-obsolete-age-ai",
+   "suffix": " (press release about the study)",
+   "why": "Link the journal article if found; else label \"press release about the study\"."
+  },
+  {
+   "use": "kc-2",
+   "url": "https://menutech.com/en/features/allergens",
+   "set": {
+    "note": "AI detects common allergens from the menu text, without recipes"
+   },
+   "why": "Reword to \"detects common allergens from the menu text\"."
+  },
+  {
+   "use": "pr-5",
+   "url": "https://www.phacetlabs.com/customers/astotel",
+   "copyTo": "pr-3",
+   "why": "Also list under the invoice-checking use case."
+  },
+  {
+   "use": "gm-3",
+   "url": "https://hoteltechreport.com/de/news/lighthouse-launches-total-revenue-ai",
+   "remove": true,
+   "why": "Check, else remove. The page blocks automated checks, so it could not be checked: removed."
+  },
+  {
+   "use": "gm-6",
+   "url": "https://www.hotelkit.net/en/ai/",
+   "set": {
+    "url": "https://hotelkit.net/products/knowledge-ai/",
+    "note": "Knowledge AI answers staff questions from the hotel's own digital handbook (vendor page; use in hotels not stated)"
+   },
+   "why": "Update the URL. The old address now opens an AI-security page; the Knowledge AI page (checked 25 Nov 2026) says it \"works as a chatbot for your digital handbook\"; it does not give the 1,200+ figure, so that figure is dropped."
+  },
+  {
+   "use": "hk-4",
+   "url": "https://www.minut.com/blog/how-minut-works-with-gdpr",
+   "remove": true,
+   "why": "Prompt Part 1 §5: remove the smoking-sensor sources from hk-4. This Minut entry (a noise and smoking sensor vendor's data-privacy blog) was hidden in v2.7 by the banned-word filter, so the review did not list it; it is removed for being off topic (not occupancy-based cleaning), not for its words."
+  }
+ ],
+ "notes": {
+  "me-6": "No hotel example found; included because vendors offer it."
+ }
+}

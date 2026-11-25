@@ -391,3 +391,14 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 @media print{.printbar{display:none !important}}
 /* v2.8.0 (B7): a check's name and status */
 .mycheck .checkname{overflow-wrap:anywhere}
+/* v2.8.0: examples and sources inside each use case, with credibility labels */
+.srcbox .dsrcs li{margin:0 0 10px;line-height:1.45;overflow-wrap:anywhere}
+.badges{display:inline-flex;gap:4px;margin-right:4px;vertical-align:1px}
+.badge{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 6px;border-radius:999px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.badge.b-cred{border-color:#1f6f43;color:#1f6f43}
+.badge.b-low{border-color:var(--line);color:var(--ink3)}
+.badge.b-part{border-color:#7e5700;color:#7e5700}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge.b-cred{color:#7ccf9e;border-color:#7ccf9e}:root:not([data-theme="light"]) .badge.b-part{color:#e3b95c;border-color:#e3b95c}}
+.srcbox .thin{font-weight:600;color:var(--ink2);margin:8px 0 0}
+.citelink{overflow-wrap:anywhere;font-size:.85em}
+.srcpanel{padding-top:6px;padding-bottom:6px}

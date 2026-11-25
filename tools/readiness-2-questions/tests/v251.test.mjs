@@ -23,42 +23,32 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
   const strip = h => h.replace(/<a\b[^>]*>/g, '').replace(/<[^>]+>/g, ' ');
   const unesc = h => h.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   let n = 0, nUrl = 0, bad = [], types = {};
-  X.depts.forEach(d => d.uses.forEach((u, i) => {
-    const id = d.id + '-' + (i + 1); if (id === 'lg-2') return; const bundled = D.detail[id].srcs; // v2.8.0: lg-2 removed
-    const res = s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || ''];
-    (u.srcs || []).filter(raw => !BANNED.test(res(raw).join(' '))).forEach((raw, j) => { // v2.7.0: sources with a banned word are left out
-      n++; types[raw[0]] = (types[raw[0]] || 0) + 1;
-      const url = urlOf(raw);
-      for (const [tag, s] of [['bundled', bundled[j]], ['raw catalogue shape', raw]]) {
-        const h = L.sourceRow(s, X.src), hrefs = [...h.matchAll(/href="([^"]*)"/g)].map(m => unesc(m[1]));
-        // 24 Nov 2026: the address line (selectable, with Copy address) is the one place a URL may stand as text
-        const fail = why => bad.push(id + ' #' + (j + 1) + ' (' + raw[0] + ', ' + tag + '): ' + why);
-        const addr = (h.match(/<span class="srcurl">([^<]*)<\/span>/) || [])[1];
-        if (url && unesc(addr || '') !== url) fail('the address line does not show the link');
-        const text = unesc(strip(h.replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
-        if (url) { if (hrefs.length !== 1 || hrefs[0] !== url) fail('expected one link to ' + url + ', got ' + JSON.stringify(hrefs)); }
-        else if (hrefs.length) fail('a link where the catalogue has no URL');
-        if (/https?:\/\//.test(text)) fail('a URL printed as text');
-        const it = L.sourceItem(s, X.src);
-        if (!it.name.trim() || (raw[0] === 'r' && it.name === raw[1])) fail('no readable name: ' + it.name); // a company may be called "M3"; a study never shows its bare key
-        if (raw[0] === 'r' && it.name !== X.src[raw[1]][0]) fail('a study is named by its citation, not its key');
-        if ((raw[0] === 'c' || raw[0] === 'h' || raw[0] === 'r') && raw[2] && !text.includes(raw[2])) fail('the note is missing');
-        if (raw[0] === 'h' && !/<span class="tag">Hotel<\/span>/.test(h)) fail('no Hotel tag');
-        if (url && !/target="_blank" rel="noopener"/.test(h)) fail('the link does not open in a new tab');
-      }
-      if (url) nUrl++;
+  /* v2.8.0: every bundled source of every listed use case, rendered through R2Logic.sourcesBox (the page, step 5 and the result) */
+  const USES = D.cat.depts.flatMap(d => d.uses);
+  Object.keys(D.detail).forEach(id => {
+    const dd = L.detailData(D, USES.find(u => u.id === id), null, TQ), h = L.sourcesBox(dd, id), items = h.split('<li').slice(1);
+    if (items.length !== dd.srcs.length) bad.push(id + ': ' + items.length + ' rows for ' + dd.srcs.length + ' sources');
+    dd.srcs.forEach((x, j) => {
+      n++; types[x.type] = (types[x.type] || 0) + 1; const li = items[j] || '', fail = why => bad.push(id + ' #' + (j + 1) + ' (' + x.type + '): ' + why);
+      const hrefs = [...li.matchAll(/href="([^"]*)"/g)].map(m => unesc(m[1]));
+      if (x.url) { nUrl++; if (hrefs.length !== 1 || hrefs[0] !== x.url) fail('expected one link to ' + x.url + ', got ' + JSON.stringify(hrefs)); if (!/target="_blank" rel="noopener"/.test(li)) fail('the link does not open in a new tab'); }
+      const text = unesc(strip(li.replace(/<span class="srcaddr">[\s\S]*?<\/span><\/span>/, '').replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
+      if (x.kind === 'v2') { if (!unesc(strip(li)).includes(x.text)) fail('the audited text is not shown word for word'); }
+      else { if (/https?:\/\/(?!\S*\s*$)/.test(text.replace(/\s+/g, ' ').trim()) && /https?:\/\//.test(text)) fail('a URL printed as text'); if (!x.name.trim()) fail('no name'); if (x.note && !text.includes(x.note)) fail('the note is missing'); if (x.type === 'h' && !/<span class="tag">Hotel<\/span>/.test(li)) fail('no Hotel tag'); }
+      const want = x.score == null ? 'Not scored' : x.score >= 7 ? 'Credible (7+)' : 'Below 7';
+      if (!li.includes('>' + want + '<') || li.includes('>Partial<') !== (x.fit === 'partial')) fail('labels');
     });
-  }));
-  ok(!bad.length, 'every source of all 99 use cases: one link per catalogue URL, no URL as text, a readable name and its note (' + n + ' sources, ' + nUrl + ' with a URL; ' + JSON.stringify(types) + ')' + (bad.length ? '\n  ' + bad.slice(0, 8).join('\n  ') : ''));
-  ok(['c', 'h', 'r', 'l'].every(t => types[t] > 0), 'all four source types are covered');
-  ok(Object.values(D.detail).every(x => x.srcs.every(s => s.length === 4)), 'the bundle carries one shape for every type: [type, name, note, url]');
+  });
   // Edge cases the renderer must survive (nothing in today's catalogue, but a later edit must not print a URL or a key).
   ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '').replace(/href="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
   ok(L.sourceItem(['r', 'S99', 'note'], {}).name === 'S99' && L.sourceItem(['r', 'S99', 'note'], {}).url === '', 'an unknown study key does not throw and gives no link');
   ok(!/href/.test(L.sourceRow(['c', 'Vendor', 'note', 'javascript:alert(1)'])), 'a non-http(s) URL is never a link');
   // v2.6: the name is the link (no data-ext marker); the layer renders from L.detailData through R2Logic.sourceRowItem (tests/v26.test.mjs)
   ok(/<a href="https:\/\/a\.com\/" target="_blank" rel="noopener">A<\/a>/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links: the name is the link (v2.6; was a data-ext="source" "Open the source" link)');
-  ok(/x\.srcs\.map\(L\.sourceRowItem\)/.test(app) && !/s\[3\] \? ' <a href/.test(app), 'the detail layer renders through R2Logic.sourceRowItem');
+  ok(!bad.length, 'every source of all 98 use cases: one link per URL, labels, a readable name and its note, sources_v2 text word for word (' + n + ' sources, ' + nUrl + ' with a URL; ' + JSON.stringify(types) + ')' + (bad.length ? '\n  ' + bad.slice(0, 8).join('\n  ') : ''));
+  ok(['c', 'h', 'r', 'l', 'v'].every(t => types[t] > 0), 'all five source types are covered (v2.8.0: v = sources_v2)');
+  ok(Object.values(D.detail).every(x => x.srcs.every(s => ['k', 't', 'n', 'o', 'u', 's', 'f'].every(k => k in s))), 'the bundle carries one shape for every entry (v2.8.0)');
+  ok(/L\.sourcesBox\(x, id\)/.test(app) && !/s\[3\] \? ' <a href/.test(app), 'the detail layer renders through R2Logic.sourcesBox (v2.8.0)');
 }
 
 // ---------- 1b. v2.6: the link bridge is gone (changed expectation: inside the hub the hub draws the layer, tests/v26.test.mjs) ----------

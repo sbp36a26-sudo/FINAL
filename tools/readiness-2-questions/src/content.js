@@ -111,15 +111,15 @@
       why: 'Without one person who owns it, nobody watches the results, deals with the vendor or decides on changes.',
       good: 'A named role with weekly hours written into a job description or the project plan.',
       blocks: ['Named owner with time set aside'],
-      ev: [['“Roles and responsibilities and lines of communication related to mapping, measuring, and managing AI risks are documented and are clear to individuals and teams throughout the organization.”', 'NIST AI Risk Management Framework 1.0, GOVERN 2.1 (Jan 2023).']],
+      ev: [['“Roles and responsibilities and lines of communication related to mapping, measuring, and managing AI risks are documented and are clear to individuals and teams throughout the organization.”', 'NIST AI Risk Management Framework 1.0, GOVERN 2.1 (Jan 2023).', 'https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf']],
       act: 'Name the person in charge of this AI project and agree the hours they will spend on it.' },
     { id: 'm2', gate: 'F1', name: 'Budget for the full first year', who: 'fin',
       q: 'Is there a written budget for the first 12 months that covers the full cost, not only the subscription?',
       why: 'AI keeps costing money after launch: the subscription, fees based on use, connecting it to your systems, training, and staff time to check results.',
       good: 'A budget line covering subscription, set-up and connection to your systems, training and running costs.',
       blocks: ['Recurring subscription or usage budget'],
-      ev: [['41% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['35% of hotels named high set-up costs as a barrier.', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in Austria, France, Germany, Greece, Italy and Switzerland, Jan–Apr 2025.']],
+      ev: [['41% of EU accommodation businesses that had considered AI but did not use it said the costs seem too high.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.', 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en'],
+           ['35% of hotels named high set-up costs as a barrier.', 'HES-SO Valais-Wallis survey, news of 9 Jul 2025. Base: over 1,500 hotels in Austria, France, Germany, Greece, Italy and Switzerland, Jan–Apr 2025.', 'https://www.hevs.ch/en/news/how-ai-is-and-isn-t-transforming-european-hospitality-212299']],
       act: 'Write a 12-month budget line for the full cost (subscription, set-up, connection, training, running costs).' },
     { id: 'm3', gate: 'F2, O1', name: 'A number to improve, approved', who: 'owner',
       q: 'Has the person who approves spending agreed the number (KPI) this tool must improve, with today’s figure and the target?',
@@ -127,8 +127,8 @@
       why: 'Without today’s figure and a target, nobody can tell later whether the tool worked, and keeping it becomes a matter of opinion.',
       good: 'The number (KPI), today’s figure and the target, approved in writing and dated.',
       blocks: ['KPI baseline and scale/stop rule', 'Approved goal and clear approval path'],
-      ev: [['“Lack of senior management buy-in in many companies also appears problematic.”', 'OECD, The Adoption of Artificial Intelligence in Firms, May 2025. Base: survey of 840 enterprises in G7 countries, 2022–23, plus interviews.'],
-           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
+      ev: [['“Lack of senior management buy-in in many companies also appears problematic.”', 'OECD, The Adoption of Artificial Intelligence in Firms, May 2025. Base: survey of 840 enterprises in G7 countries, 2022–23, plus interviews; manufacturing and ICT firms, not hotels.', 'https://www.oecd.org/en/publications/the-adoption-of-artificial-intelligence-in-firms_f9ef33c3-en.html'],
+           ['Only 14% of hotel company leaders credited executive mandates for their AI success, against 34% for experimentation: light written backing, not a top-down order.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.', 'https://stateofhotelai.com/']],
       act: 'Agree the KPI this tool must improve, today’s figure and the target, and get them approved by the person who decides on spending.' },
     { id: 'm4', gate: 'T1', name: 'Systems that can connect', who: 'it', ex: true,
       q: 'Can new AI tools easily be plugged in to your existing infrastructure?',
@@ -136,8 +136,8 @@
       why: 'An AI tool that cannot read from and write back to your hotel systems leaves staff copying data by hand.',
       good: 'For each system you want to connect, its provider has confirmed that other software can connect to the version you use.',
       blocks: ['Two-way link to core systems (PMS, CRS, POS, accounting)'],
-      ev: [['46% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
+      ev: [['46% of EU accommodation businesses that had considered AI but did not use it named incompatibility with their existing equipment, software or systems as a reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.', 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en'],
+           ['29% of hotel company leaders named systems integration as a barrier to getting value from AI.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.', 'https://stateofhotelai.com/']],
       act: 'Ask the provider of each system you want to connect (for example {ex}) whether other software can read from it and write back to it.' },
     /* v2.7.0 (owner): title and question from the data file's fixed_texts (must_have_5), id and scoring kept. why, good and act
        rewritten; the gloss, the second evidence line and the building block are removed (they were about rules from authorities). */
@@ -146,7 +146,7 @@
       why: 'Guest and staff data needs extra care. Knowing which data the tool would use tells you what to protect and what to ask the vendor.',
       good: 'You can list the guest or staff data the tool would use and where it comes from.',
       blocks: [],
-      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about data protection and privacy.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.']],
+      ev: [['52% of EU accommodation businesses that had considered AI but did not use it named concerns about personal data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.', 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en']],
       act: 'List which guest or staff personal data the tool would use, and where it comes from.' },
     { id: 'm6', name: 'A person who checks the AI', who: 'dept',
       q: 'Is there a named person who will check the AI’s results and can overrule them?',
@@ -160,16 +160,16 @@
       why: 'AI works from your data. If the facts are on paper, out of date or spread over systems that disagree, the tool gives wrong answers that sound sure.',
       good: 'You can name where each piece of data sits, and a named person checks it at set times.',
       blocks: ['Historical operational data', 'Curated knowledge and hotel content (FAQ, SOPs, menus, policies)'],
-      ev: [['43% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
+      ev: [['43% of EU accommodation businesses that had considered AI but did not use it named difficulties with the availability or quality of the data.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.', 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en'],
+           ['42% of hotel company leaders were confident their data is ready for their AI goals; 48% were not.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.', 'https://stateofhotelai.com/']],
       act: 'List the data the tool needs and the system each piece sits in, and name who keeps it right.' },
     { id: 'm8', name: 'Staff told, and able to report errors', who: 'dept',
       q: 'Have the staff involved been told about the plan, and do they know who to tell when the tool gets something wrong?',
       why: 'Staff who were not told work around a tool, and errors nobody reports are never fixed.',
       good: 'The staff involved have heard the plan from their manager, and one named person collects what goes wrong.',
       blocks: ['Frontline adoption and change support'],
-      ev: [['70% of EU accommodation businesses that had considered AI but did not use it named a lack of relevant expertise, the most common reason.', 'Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2). Base: EU accommodation enterprises with 10+ persons employed.'],
-           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.']],
+      ev: [ // v2.8.0 (live review): the Eurostat "lack of expertise 70%" line is gone (it is about skills; no must-have here is about skills)
+           ['35% of hotel company leaders named change management as a barrier to getting value from AI, the most often cited.', 'State of Hotel AI, Fall 2026, commissioned by Destination AI (research by Josiah Mackenzie, Actabl). Base: 107 hotel company leaders, worldwide, Aug–Sep 2026; global survey, vendor-linked; not comparable with the European figures.', 'https://stateofhotelai.com/']],
       act: 'Tell the staff concerned about the plan, and name the person they tell when the tool gets something wrong.' },
     { id: 'm9', name: 'Rules for staff on AI tools', who: 'gm',
       q: 'Do you have written rules telling staff what they must not type into AI tools?',
@@ -177,7 +177,7 @@
       why: 'Without a rule, guest or company data ends up in tools nobody has checked.',
       good: 'One page every member of staff has seen, saying what must never go into an AI tool.',
       blocks: ['AI-use policy and use-case risk review'],
-      ev: [['Only 9% of the hotels surveyed had a formal AI strategy document.', 'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis, Oct 2025. Base: hoteliers surveyed Jul–Sep 2025, median 37.5 rooms; the authors warn the sample is likely more digitally aware than average.']],
+      ev: [['Only 9% of hotels surveyed had a formal AI strategy, a sign that written AI rules are rare too.', 'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis, Oct 2025. Base: hoteliers surveyed Jul–Sep 2025, median 37.5 rooms; the authors warn the sample is likely more digitally aware than average.', 'https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf']],
       act: 'Write one page of rules on what staff must not put into AI tools.' },
     { id: 'm10', name: 'A way to work when the tool is down', who: 'dept',
       q: 'If the tool stops working for a day, is there a written way to do the job without it?',
@@ -298,23 +298,24 @@
 
   /* ---------- "Where this comes from" per step: opened sources only, with dates ---------- */
   var SOURCES = {
+    /* v2.8.0 (live review, sources_fixes add_url): every citation of steps 1 to 3 carries its checked address: [text, url] */
     q: [
-      'UK Government (DSIT), AI Playbook for the UK Government (10 Feb 2025).',
-      'GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019).',
-      'NIST, AI Risk Management Framework 1.0, NIST AI 100-1 (Jan 2023).',
-      'Google PAIR, People + AI Guidebook, “User Needs + Defining Success” (undated page, read 23 Nov 2026).',
-      'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534 (questions 3 and 4).'
+      ['UK Government (DSIT), AI Playbook for the UK Government (10 Feb 2025).', 'https://www.gov.uk/government/publications/ai-playbook-for-the-uk-government'],
+      ['GOV.UK, Assessing if artificial intelligence is the right solution (10 Jun 2019).', 'https://www.gov.uk/guidance/assessing-if-artificial-intelligence-is-the-right-solution'],
+      ['NIST, AI Risk Management Framework 1.0, NIST AI 100-1 (Jan 2023).', 'https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf'],
+      ['Google PAIR, People + AI Guidebook, “User Needs + Defining Success” (undated page, read 23 Nov 2026).', 'https://pair.withgoogle.com/chapter/user-needs/'],
+      ['Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534 (questions 3 and 4).', 'https://doi.org/10.1126/science.aap8062']
     ],
-    qNote: 'The five questions, the order of the outcomes and the examples are the project team’s, built from these sources on 23 Nov 2026 and reworded more simply on 24 Nov 2026. Later that day question 1 was turned round and questions 3 and 4 replaced (owner; Brynjolfsson & Mitchell). Question 1 asks whether the job needs AI.',
+    qNote: 'The five questions and examples are the project team’s, based on these sources (Nov 2026).', // v2.8.0: the internal history line is gone
     must: [
       'The project team’s resource analysis: “AI Use Cases: Resources Needed per Use Case (D4 × D6)”, Nov 2026. {N} catalogue use cases coded against 20 building blocks; the coding is team judgement, not a survey.',
-      'Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).',
-      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, data protection and privacy 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
-      'HES-SO Valais-Wallis, “How AI is (and isn’t) transforming European hospitality”, survey news (9 Jul 2025).',
-      'Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).',
-      'State of Hotel AI, Fall 2026 (29 Sep 2026), commissioned by Destination AI, research by Josiah Mackenzie (Actabl, a hotel software company): a global survey, vendor-linked, not comparable with the European figures.',
-      'OECD, The Adoption of Artificial Intelligence in Firms (May 2025).',
-      'NIST, AI Risk Management Framework 1.0 (Jan 2023).'
+      ['Eurostat, Use of AI in enterprises, ICT usage survey of early 2025, dataset isoc_eb_ain2 (updated 15 Jun 2026; queried 23 Nov 2026).', 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en'],
+      'Eurostat shares are rounded to whole numbers on screen. Exact shares, among EU accommodation businesses with 10+ persons employed that had considered AI but did not use it: lack of relevant expertise 69.89%, concerns about personal data 52.36%, incompatibility with existing equipment, software or systems 45.91%, availability or quality of the data 42.61%, costs seem too high 40.95%.',
+      ['HES-SO Valais-Wallis, “How AI is (and isn’t) transforming European hospitality”, survey news (9 Jul 2025).', 'https://www.hevs.ch/en/news/how-ai-is-and-isn-t-transforming-european-hospitality-212299'],
+      ['Britz & Schegg, From Awareness to Action: AI Readiness in Hotels, HES-SO Valais-Wallis (Oct 2025).', 'https://www.hevs.ch/media/document/22/britz-schegg-2025-ai-readiness-in-hotels.pdf'],
+      ['State of Hotel AI, Fall 2026 (29 Sep 2026), commissioned by Destination AI, research by Josiah Mackenzie (Actabl, a hotel software company): a global survey, vendor-linked, not comparable with the European figures.', 'https://stateofhotelai.com/'],
+      ['OECD, The Adoption of Artificial Intelligence in Firms (May 2025): manufacturing and ICT firms, not hotels.', 'https://www.oecd.org/en/publications/the-adoption-of-artificial-intelligence-in-firms_f9ef33c3-en.html'],
+      ['NIST, AI Risk Management Framework 1.0 (Jan 2023).', 'https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf']
     ],
     mustNote: 'The ten must-haves are the team’s choice: the six gates of its readiness checklist and the building blocks that most use cases need, in its resource analysis. Where a share is shown (“needed for n of the {N} use cases analysed (of {U})”), it is that analysis, not a survey. The analysis covered {N} use cases; this tool lists {U}: {D} were added to the catalogue later, “AI use policies and governance” is a document, not a tool, so it was left out of the count, and one use case analysed is no longer listed. The wording follows the team’s earlier readiness check. Typical systems (the examples under the systems question): the team’s own list, based on the catalogue’s use cases.',
     where: [],
@@ -328,6 +329,7 @@
   };
 
   /* v2.7.0 (owner, 25 Nov 2026): the heading of step 2, everywhere it appears (step title, cover, result card, PDF) */
+  var EUROSTAT_URL = 'https://ec.europa.eu/eurostat/databrowser/view/isoc_eb_ain2/default/table?lang=en'; // v2.8.0: the cover's figure links to its table
   var STEP2_HEAD = 'Should this problem be solved by AI?';
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
   var AS_OF = '25 Nov 2026';
@@ -336,7 +338,7 @@
   var USE_CHANGED = 'The catalogue changed: please pick your use case again.';
   var USE_REMOVED = 'This use case is no longer in the list. The check carries on as “None of these fits”.'; // v2.8.0: lg-2 was taken off the list
   var QUESTIONS_CHANGED = 'The questions for this use case changed since you answered. Please answer step 5 again.'; // v2.1 (audit M5)
-  var CORRUPT = 'The checks saved in this browser could not be read, so this page started fresh. The unreadable data was set aside, not deleted.'; // v2.1 (audit L12)
+  var CORRUPT = 'The checks saved in this browser could not be read, so this page started fresh. The unreadable data was set aside, not thrown away.'; // v2.1 (audit L12)
   var NO_KEEP = 'This browser is not keeping checks. Save a file to keep one.'; // v2.1 (audit L6)
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
@@ -354,7 +356,7 @@
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
-    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
+    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, EUROSTAT_URL: EUROSTAT_URL, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, DL_BLOCKED: DL_BLOCKED, NEW_ASK: NEW_ASK, PRINT_BAR: PRINT_BAR, STOPPED: STOPPED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
     ALSO_STEP2: ALSO_STEP2, SENS_BOX: SENS_BOX, SENS_BOX_MORE: SENS_BOX_MORE, ADVISER: ADVISER, NOTHING_ELSE: NOTHING_ELSE, SCORE_OF: SCORE_OF, VERSION: VERSION, VERSION_LINE: VERSION_LINE,

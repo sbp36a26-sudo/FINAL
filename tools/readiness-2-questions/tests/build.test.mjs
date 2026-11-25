@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, load, data, tester } from './load.mjs';
-import { catalogueModel, detailModel, tqModel, explainModel, nameHash, BANNED } from '../build.mjs';
+import { catalogueModel, detailModel, sourcesModel, tqModel, explainModel, nameHash, BANNED } from '../build.mjs';
 const { C, L, F } = load();
 const { ok, done } = tester('build');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -22,10 +22,10 @@ ok(D.cat.depts.find(d => d.id === 'lg').name === 'Sustainability & Governance', 
 ok(X.depts.every(d => d.uses.every((u, i) => { const id = d.id + '-' + (i + 1), mine = D.cat.depts.find(x => x.id === d.id).uses.find(y => y.id === id); return id === 'lg-2' ? !mine : mine.alias === nameHash(u.n); })), 'every listed use case keeps the hash of its catalogue name (alias), so older saves still match');
 ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs, JSON.parse(rd('data/actions_questions_only.json')).actions)), 'the inlined step-5 questions equal tqModel(data file, v2.7 signatures)');
 ok(eq(Object.keys(D.tq.uses).sort(), D.cat.depts.flatMap(d => d.uses.map(u => u.id)).sort()), 'every listed use case has its questions (all 98 selectable)');
-const det = detailModel(catHtml, D.cat.removed);
-ok(eq(D.detail, JSON.parse(JSON.stringify(det))), 'the inlined detail sources equal the catalogue\'s, minus the left-out ones');
-ok(det.dropped.length === 21 && det.dropped.every(x => BANNED.test(x.name) || true), 'sources left out because a banned word is in their name, note or address: ' + det.dropped.length);
-ok(Object.values(D.detail).every(d => d.srcs.every(s => !BANNED.test(s.join(' ')))), 'no source shown carries a banned word');
+const det = sourcesModel(catHtml, D.cat.removed, JSON.parse(rd('data/sources_fixes.json')), JSON.parse(rd('data/sources_edits.json')), JSON.parse(rd('data/use_case_sources_v2.json')), JSON.parse(rd('data/source_scores_v27.json')));
+ok(eq(D.detail, JSON.parse(JSON.stringify(det))), 'v2.8.0: the inlined sources equal sourcesModel(catalogue, fixes, edits, sources_v2, review scores)');
+ok(detailModel(catHtml, D.cat.removed).dropped.length === 0, 'v2.8.0 (owner decision 2): no catalogue source is left out for a banned word');
+ok(['res-4', 'it-4', 'lg-4'].every(id => D.detail[id].srcs.some(e => BANNED.test([e.n, e.o, e.x].join(' ')))), 'v2.8.0: sources whose title or quote carries a banned word are shown as given (e.g. res-4, it-4, lg-4)');
 ok(eq(D.ex, explainModel(JSON.parse(rd('data/explain.json')), D.cat.depts.flatMap(d => d.uses.map(u => u.id)))), 'the explainer data is data/explain.json');
 ok(!('rc' in D), 'no readiness-check or register data block');
 // the page

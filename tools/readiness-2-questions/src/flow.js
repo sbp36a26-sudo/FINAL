@@ -274,8 +274,8 @@
         var id = arg && arg.id, v = arg && arg.value; r = copy(rec);
         /* Answers only on their own step, so no answer can make the screen being shown impossible. */
         if (QIDS.indexOf(id) >= 0 && Q_OK[v] && rec.step === 'q') { r.Q[id] = v; r.Qnew = r.Qnew.filter(function (x) { return x !== id; }); }
-        else if (MUST_IDS.indexOf(id) >= 0 && A_OK[v] && rec.step === 'must') { r.A[id] = v; if (v !== 'pl') delete r.By[id]; }
-        else if (rec.step === 'tailored' && T_OK[v] && tailIds(env, rec.use).indexOf(id) >= 0) { r.T[id] = v; if (v !== 'pl') delete r.TBy[id]; }
+        else if (MUST_IDS.indexOf(id) >= 0 && A_OK[v] && rec.step === 'must') { r.A[id] = v; if (v !== 'pl') Reflect.deleteProperty(r.By, id); }
+        else if (rec.step === 'tailored' && T_OK[v] && tailIds(env, rec.use).indexOf(id) >= 0) { r.T[id] = v; if (v !== 'pl') Reflect.deleteProperty(r.TBy, id); }
         else return no;
         return done(r);
       }
@@ -283,8 +283,8 @@
         if (!arg || typeof arg.date !== 'string' || (arg.date && !validDate(arg.date))) return no;
         if (arg.date && arg.date < ((env && env.today) || localToday())) return no; // "by when" cannot lie in the past (audit L5)
         r = copy(rec);
-        if (rec.step === 'must' && rec.A[arg.id] === 'pl') { if (arg.date) r.By[arg.id] = arg.date; else delete r.By[arg.id]; }
-        else if (rec.step === 'tailored' && rec.T[arg.id] === 'pl') { if (arg.date) r.TBy[arg.id] = arg.date; else delete r.TBy[arg.id]; }
+        if (rec.step === 'must' && rec.A[arg.id] === 'pl') { if (arg.date) r.By[arg.id] = arg.date; else Reflect.deleteProperty(r.By, arg.id); }
+        else if (rec.step === 'tailored' && rec.T[arg.id] === 'pl') { if (arg.date) r.TBy[arg.id] = arg.date; else Reflect.deleteProperty(r.TBy, arg.id); }
         else return no;
         return done(r);
       }
@@ -333,7 +333,7 @@
         /* v2.8.0 (B6): arg { same: false } starts with a blank hotel; otherwise (same hotel) step 1 carries over and steps 2 to 5 are new */
         r = blank(); if (!(arg && arg.same === false)) r.hotel = Object.assign({}, rec.hotel);
         s = withRec(store, r); s.cur = r.id;
-        if (!listed(rec)) delete s.checks[rec.id]; // an untouched check is not kept
+        if (!listed(rec)) Reflect.deleteProperty(s.checks, rec.id); // an untouched check is not kept
         return { store: s, ok: true };
       }
       case 'preselect': {
@@ -341,19 +341,19 @@
         if (rec.use === arg) return { store: store, ok: true }; // already this use case: keep the check as it is
         if (listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
         r = blank(); r.hotel = Object.assign({}, rec.hotel); r.cat = du.cat; r.dept = du.id; r.use = arg; r.useName = useName(env, du.id, arg); r.from = 'link'; r.tqSig = tailSig(env, arg);
-        s = withRec(store, r); s.cur = r.id; if (!listed(rec)) delete s.checks[rec.id];
+        s = withRec(store, r); s.cur = r.id; if (!listed(rec)) Reflect.deleteProperty(s.checks, rec.id);
         return { store: s, ok: true };
       }
       case 'open': {
         if (!own(store.checks, arg) || arg === store.cur) return no;
-        s = withRec(store, rec); s.cur = arg; if (!listed(rec)) delete s.checks[rec.id];
+        s = withRec(store, rec); s.cur = arg; if (!listed(rec)) Reflect.deleteProperty(s.checks, rec.id);
         var ro = copy(s.checks[arg]); ro.step = placeStep(ro.step, ctxOf(ro, env)); s.checks[arg] = ro;
         return { store: s, ok: true };
       }
       case 'remove': {
         if (!own(store.checks, arg)) return no;
         s = { v: V, cur: store.cur, checks: Object.assign({}, store.checks) }; if (store.notice) s.notice = store.notice;
-        delete s.checks[arg];
+        Reflect.deleteProperty(s.checks, arg);
         if (arg === store.cur) { var nb = blank(); nb.hotel = Object.assign({}, rec.hotel); s.checks[nb.id] = nb; s.cur = nb.id; }
         return { store: s, ok: true };
       }
@@ -363,7 +363,7 @@
            replacing a check whose copy is shared keeps that copy known (shareStale() marks it out of date when the answers differ). */
         keepShare(ri, own(store.checks, ri.id) ? store.checks[ri.id] : null);
         if (!own(store.checks, ri.id) && listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
-        s = withRec(store, ri); s.cur = ri.id; if (rec.id !== ri.id && !listed(rec)) delete s.checks[rec.id];
+        s = withRec(store, ri); s.cur = ri.id; if (rec.id !== ri.id && !listed(rec)) Reflect.deleteProperty(s.checks, rec.id);
         return { store: s, ok: true };
       }
       default: {

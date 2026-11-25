@@ -157,30 +157,63 @@
     var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
     return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u), draft: '', draftText: '',
       does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u),
-      srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
-      foot: 'From the project team’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+      srcs: srcList(dt), thin: !!dt.thin, srcNote: dt.note || '', nV2: dt.nV2 || 0,
+      foot: 'From the project team’s Use-Case Catalogue and the source audit of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+  }
+  /* v2.8.0: one use case's examples and sources (build.mjs sourcesModel), as plain objects for the page and the PDF:
+     { kind: 'cat' | 'v2', type, name, note, text (v2: the audited text without its " | URL" tail), url, score (or null), fit } */
+  function srcList(dt) {
+    return ((dt && dt.srcs) || []).map(function (e) {
+      if (Array.isArray(e)) { var o = sourceItem(e); return { kind: 'cat', type: o.type, name: o.name, note: o.note, text: '', url: o.url, score: null, fit: '' }; }
+      var url = HTTP.test(String(e.u || '').trim()) ? String(e.u).trim() : '';
+      return { kind: e.k, type: e.t, name: String(e.n || ''), note: String(e.o || ''), text: String(e.x || ''), url: url, score: typeof e.s === 'number' ? e.s : null, fit: e.f || '' };
+    });
+  }
+  /* The credibility labels (Part 2 §4): "Credible (7+)" or "Below 7" ("Not scored" where the review gave no score), and "Partial". */
+  function srcBadges(x) { var b = x.score == null ? ['none', 'Not scored'] : x.score >= 7 ? ['cred', 'Credible (7+)'] : ['low', 'Below 7']; return [b].concat(x.fit === 'partial' ? [['part', 'Partial']] : []); }
+  var THIN = 'Evidence that this exact use case is used in hotels is still thin.', NO_SOURCE = 'No working source yet.';
+  /* The whole box (page): every entry, then the thin line and the use case's note. Container [data-sources] (the banned-word scan
+     leaves it out: owner decision 2, sources are shown as given). */
+  function sourcesBox(d, useId) {
+    var L2 = d.srcs || [];
+    return '<div class="srcbox" data-sources="' + escH(useId) + '" data-count="' + L2.length + '" data-v2="' + (d.nV2 || 0) + '">' +
+      (L2.length ? '<ul class="dsrcs">' + L2.map(sourceRowItem).join('') + '</ul>' : '<p class="meta nosrc">' + NO_SOURCE + '</p>') +
+      (d.thin ? '<p class="thin" data-thin="1">' + THIN + '</p>' : '') + (d.srcNote ? '<p class="meta srcnote">' + escH(d.srcNote) + '</p>' : '') + '</div>';
+  }
+  /* The same, as plain lines for the PDF: [{ badges, text, url }]. */
+  function sourceLines(d) {
+    return (d.srcs || []).map(function (x) {
+      var t = x.kind === 'v2' ? x.text : (x.type === 'h' ? 'Hotel: ' : '') + x.name + (x.note ? ': ' + x.note : '');
+      return { badges: srcBadges(x).map(function (b) { return b[1]; }).join(' · '), text: t, url: x.url };
+    });
   }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
      (no frame interception); a "Hotel" tag for 'h'; the note; then the address, selectable, with "Copy address". */
   function sourceRow(s, refs) { return sourceRowItem(sourceItem(s, refs)); }
   /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). */
-  function sourceRowItem(x) {
-    x = x || {}; x = { type: x.type, name: String(x.name || ''), note: String(x.note || ''), url: HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '' };
+  function sourceRowItem(x0) {
+    var x = x0 || {}; x = { type: x.type, name: String(x.name || ''), note: String(x.note || ''), text: String(x.text || ''), kind: x.kind || '', score: x.score, fit: x.fit || '', url: HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '' };
     var nm = x.url ? '<a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.name) + '</a>' : escH(x.name);
+    /* v2.8.0: the credibility labels first (entries from build.mjs sourcesModel carry kind); a sources_v2 entry is its audited text, word
+       for word, with its address as the link ("Org: summary (type, date; caveats) | URL") */
+    var badges = x.kind ? '<span class="badges">' + srcBadges(x).map(function (b) { return '<span class="badge b-' + b[0] + '">' + b[1] + '</span>'; }).join('') + '</span> ' : '';
+    var meta = x.kind ? ' data-kind="' + escH(x.kind) + '" data-score="' + (x.score == null ? '' : x.score) + '" data-fit="' + escH(x.fit) + '"' : '';
+    if (x.kind === 'v2') return '<li data-src="v"' + meta + '>' + badges + '<span class="srctext">' + escH(x.text) + '</span>' + (x.url ? ' | <a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.url) + '</a>' +
+      '<span class="srcaddr"><button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button><span class="srcurl" hidden>' + escH(x.url) + '</span></span>' : '') + '</li>';
     /* a plain link ('l') is a sentence, not a name: not set in bold */
-    return '<li data-src="' + escH(x.type) + '">' + (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
+    return '<li data-src="' + escH(x.type) + '"' + meta + '>' + badges + (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
       (x.url ? '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
-  function realDate(iso) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof iso === 'string' ? iso : ''); if (!m) return null;
+  function realDate(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof ymd === 'string' ? ymd : ''); if (!m) return null;
     var y = +m[1], mo = +m[2], d = +m[3], t = new Date(Date.UTC(y, mo - 1, d));
     return y >= 2000 && y <= 2100 && t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d ? { y: y, m: mo, d: d } : null;
   }
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  function fmtDate(iso) { var r = realDate(String(iso || '').slice(0, 10)); return r ? r.d + ' ' + MONTHS[r.m - 1] + ' ' + r.y : ''; }
+  function fmtDate(ymd) { var r = realDate(String(ymd || '').slice(0, 10)); return r ? r.d + ' ' + MONTHS[r.m - 1] + ' ' + r.y : ''; }
   function localIso(dt) {
     dt = dt || new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; };
     return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate());
@@ -562,7 +595,7 @@
   }
   var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, sensitiveOf: sensitiveOf, vendorQs: vendorQs, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, srcList: srcList, srcBadges: srcBadges, sourcesBox: sourcesBox, sourceLines: sourceLines, THIN: THIN, NO_SOURCE: NO_SOURCE, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, actText: actText, firstLabel: firstLabel,
     pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,

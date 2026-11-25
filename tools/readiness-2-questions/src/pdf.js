@@ -1,5 +1,5 @@
 /* Do you need AI? v2: the two PDFs of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
-   v2.7 (owner, 25 Nov 2026): TWO documents, neither with sources. kind 'result': Result, Start with these three, Action plan by
+   v2.7 (owner, 25 Nov 2026): TWO documents. v2.8.0 (owner decision 4): the Result PDF ends with the use case's examples and sources. kind 'result': Result, Start with these three, Action plan by
    person, Questions for the vendor. kind 'answers': a short summary, then every question with the answer given
    (step 2, step 3, step 5). The stop screen keeps its one-page PDF (kind 'result').
    jsPDF and the "Register Sans" font subset (tools/register/fonts, SIL OFL 1.1) are inlined by build.mjs: nothing is loaded.
@@ -48,11 +48,13 @@
       return { stop: true, kind: 'result', run: run, blocks: head(m, true, '').concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
         { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m)) };
     }
-    return kind === 'answers' ? answersModel(m, run, use) : resultModel(m, run, use);
+    return kind === 'answers' ? answersModel(m, run, use) : resultModel(m, run, use, srcData(rec, env));
   }
 
   /* Document 1: Result, Start with these three, Action plan by person, Questions for the vendor (v2.7.0: one section fewer). */
-  function resultModel(m, run, use) {
+  /* v2.8.0 (owner decision 4): the use case's examples and sources go into the Result PDF, as on the page (labels, text, address). */
+  function srcData(rec, env) { var d = env && env.detail && rec.use && rec.use !== 'none' ? env.detail[rec.use] : null; return d ? { srcs: L.srcList(d), thin: !!d.thin, srcNote: d.note || '' } : null; }
+  function resultModel(m, run, use, sd) {
     var b = head(m, false, use);
     /* the box (verdict, score, the short reason line, the must-haves line), then the notes, then "Start with" */
     /* v2.8.0: the must-haves line first (B3), the box line once (B4), the step-2 "Also" line (B2) */
@@ -78,6 +80,13 @@
     m.people.forEach(function (p) { b.push({ k: 'label', t: p.name, person: true }); p.items.forEach(function (a) { b.push({ k: 'todo', t: a.text, sub: a.tag }); }); });
 
     if (m.vendor.length) { b.push({ k: 'h', t: 'Questions for the vendor' }); m.vendor.forEach(function (q, i) { b.push({ k: 'num', n: i + 1, t: q, body: q, sub: '' }); }); }
+    if (sd) {
+      b.push({ k: 'h', t: 'Examples and sources (' + sd.srcs.length + ')', srcHead: true });
+      if (!sd.srcs.length) b.push({ k: 'p', t: L.NO_SOURCE });
+      L.sourceLines(sd).forEach(function (x) { b.push({ k: 'src', t: x.text, badges: x.badges, url: x.url }); });
+      if (sd.thin) b.push({ k: 'p', t: L.THIN, id: 'thin' });
+      if (sd.srcNote) b.push({ k: 'p', t: sd.srcNote, small: true, id: 'src-note' });
+    }
 
     return { stop: false, kind: 'result', run: run, blocks: b };
   }
@@ -224,6 +233,12 @@
           if (!DRY) { fill('line2'); doc.rect(M + 60, top + 1.6, 32, 2.4, 'F'); if (b.share) { fill(b.tone); doc.rect(M + 60, top + 1.6, 32 * b.share / 100, 2.4, 'F'); } }
           y = top; para(b.rest, M + 98, TW - 98, SZ.small, 'normal', 'ink2');
           y = Math.max(y, y1, top + rowH - 2.6) + 1.3; rule(M, W - M, 'line2', 0.25); y += g(1.3); break;
+        }
+        case 'src': { /* v2.8.0: one source: its labels, its text, its address */
+          para(b.badges, M, TW, SZ.small, 'bold', 'ink3'); y += 0.4;
+          para(b.t, M, TW, SZ.small, 'normal', 'ink');
+          if (b.url) { y += 0.3; para(b.url, M, TW, SZ.small, 'normal', 'accent'); }
+          y += g(2.2); break;
         }
         case 'item': {
           top = y + 1.8; y = top;

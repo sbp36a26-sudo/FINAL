@@ -76,7 +76,7 @@ ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
 ok(t.includes('Finish by 15 Jan 2027: Agree the KPI this tool must improve') && !/Partly|Doesn’t apply|does not apply/.test(t), 'planned dates are shown in the result; no Partly or Doesn\'t apply anywhere (v2.3)');
 { const a = answersDoc(r, 'gx-2 planned'); ok(a.t.includes('Your answer: Planned (planned by 15 Jan 2027)') && a.t.includes('Your answer: No') && a.t.includes('Your answer: Not answered yet') && a.items.filter(b => b.val === 'Yes').length > 5, 'the answers document shows the planned date and every answer word'); }
 ok(!/\b(m\d+|pe1|x-auto)\b/.test(t) && !/\b(P1|F1|T1|D5a|G2s)\b/.test(t), 'no internal ids or codes in the PDF');
-ok(!SRC_RE.test(t) && !t.includes('90 catalogue use cases coded') && !t.includes('{N}') && !C.SOURCES.q.some(x => t.includes(x)), 'no source line of any step in the result PDF');
+ok(!SRC_RE.test(t) && !t.includes('90 catalogue use cases coded') && !t.includes('{N}') && !C.SOURCES.q.some(x => t.includes(x[0])), 'no source line of any step in the result PDF');
 // ---------- the other two walks, and the special cases ----------
 sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', 'k'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n']), 'hr-2 mixed');
 let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8'); ok(!x.t.includes('Draft questions'), 'v2.7.0: no draft note (the questions-only data replaces the draft rows)');

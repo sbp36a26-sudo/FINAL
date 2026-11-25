@@ -111,18 +111,21 @@ ok(all.level === 'ready', 'all Yes is still Ready');
 {
   const catHtml = readFileSync(join(root, '../use-case-catalogue/index.html'), 'utf8');
   const X = JSON.parse(catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
-  const ids = []; let nSrc = 0;
+  const ids = []; let nSrc = 0; const FIX = JSON.parse(rd('data/sources_fixes.json')), EDITS = JSON.parse(rd('data/sources_edits.json'));
   X.depts.forEach(d => d.uses.forEach((u, i) => {
     const id = d.id + '-' + (i + 1), b = D.detail[id]; if (id === 'lg-2') return; ids.push(id); // v2.8.0: lg-2 removed
-    const want = (u.srcs || []).map(s => s[0] === 'r' ? ['r', X.src[s[1]][0], s[2] || '', X.src[s[1]][1] || ''] : s[0] === 'c' || s[0] === 'h' ? [s[0], s[1], s[2] || '', s[3] || ''] : ['l', s[1], '', s[2] || ''])
-      .filter(s => !BANNED.test(s.join(' '))); // v2.7.0: a source carrying a banned word is left out
+    /* v2.8.0: every catalogue source is still there (by its address), unless the review removed it (sources_fixes / sources_edits) or
+       an audited sources_v2 entry replaces it; nothing is left out for a banned word any more (owner decision 2) */
+    const urlOf = s => s[0] === 'r' ? X.src[s[1]][1] || '' : s[0] === 'l' ? s[2] || '' : s[3] || '';
+    const gone = new Set(FIX.filter(f => f.use_case === id && ['remove', 'replace'].includes(f.action)).map(f => f.url).concat(EDITS.edits.filter(e => e.use === id && (e.remove || (e.set && e.set.url))).map(e => e.url)).concat(id === 'fa-7' ? ['https://justt.ai/hospitality'] : []));
+    const want = (u.srcs || []).map(urlOf).filter(x => x && !gone.has(x));
     nSrc += want.length;
-    ok(b && !('ai' in b) && eq(b.srcs, want), id + ': bundled detail equals the catalogue entry (' + want.length + ' sources, in its order; v2.5: no technique notes, council BUILD NOW 8)');
+    ok(b && !('ai' in b) && want.every(x => b.srcs.some(e => e.u === x)), id + ': every catalogue source not removed by the review is bundled (' + want.length + '; v2.5: no technique notes, council BUILD NOW 8)');
     const cu = D.cat.depts.find(x => x.id === d.id).uses.find(y => y.id === id); ok(cu.alias === nameHash(u.n) && !('task' in cu) && (cu.use || '') === (u.use || ''), id + ': rating from the catalogue, its name kept as a hash (v2.7.0: the data file\'s name is shown, no task text)');
   }));
   ok(ids.length === 98 && eq(Object.keys(D.detail).sort(), ids.slice().sort()), 'detail for all 98 listed use cases, none left over (v2.8.0: lg-2 removed)');
-  ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['srcs'])), 'only the fields the layer needs are bundled (v2.5: srcs only; the technique notes were dropped, council BUILD NOW 8)');
-  ok(Object.values(D.detail).every(x => x.srcs.every(s => ['c', 'h', 'r', 'l'].includes(s[0]) && s[1] && (!s[3] || /^https?:\/\//.test(s[3])))), 'every source has a type, a name and, where given, an http(s) link (' + nSrc + ' sources)');
+  ok(Object.values(D.detail).every(x => eq(Object.keys(x), ['srcs', 'thin', 'note', 'nV2'])), 'only the fields the layer needs are bundled (v2.8.0: srcs, thin, note, nV2; no technique notes, council BUILD NOW 8)');
+  ok(Object.values(D.detail).every(x => x.srcs.every(s => ['c', 'h', 'r', 'l', 'v'].includes(s.t) && (s.n || s.x) && /^https:\/\//.test(s.u))), 'every source has a type, a name or text, and an https link (' + nSrc + ' catalogue sources checked)');
   ok(!/data-act="catalogue"|use-case-catalogue\/index\.html/.test(app), 'app.js: no link or hub message to the catalogue tab is left');
   ok((app.match(/data-act="detail"/g) || []).length === 2 && /Details and sources/.test(app) && (app.match(/>More detail</g) || []).length === 1 && !/data-act="explain"/.test(app), 'two buttons open the layer: step 4 row and the result (owner 24 Nov 2026: no "What does this do?" button)');
   ok(/showModal\(\)/.test(app) && /dialog id="detail"/.test(rd('src/page.html')) && /@media print\{ dialog\.detail\{display:none!important\} \}/.test(rd('src/style.css')), 'a native dialog, opened modal, never printed');

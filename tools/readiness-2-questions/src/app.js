@@ -47,7 +47,7 @@
   /* v2.8.0 (B7): where checks are kept, in this order: window.storage (the artifact viewer's own store) when the page has it, then
      localStorage (inside try/catch), then only this page's memory, with the "Use Save as file" line on every screen (storage 'blocked').
      window.storage is not promised by the viewer, so it is only used when present (async get/set); localStorage is read first because
-     it answers at once, and window.storage fills in when localStorage holds nothing. A check is never deleted automatically. */
+     it answers at once, and window.storage fills in when localStorage holds nothing. A check is never removed automatically. */
   var WS = (function () { try { var w = window.storage; return w && typeof w.get === 'function' && typeof w.set === 'function' ? w : null; } catch (e) { return null; } })();
   var storage = 'ok', loadInfo = {}, corrupt = false;
   /* TABS (audit M3): which check is open belongs to the tab (sessionStorage), not to the shared store, so two tabs can hold two checks. */
@@ -64,7 +64,7 @@
   function load() {
     var x = readStore(tabCur());
     /* v2.7.0: the first visit reads a store kept by v2.6.1 / v2.7 under its own key (same browser, same address), once; it is never
-       written back there or deleted. Its open check's step-5 answers are carried by carry_answer_from (R2Flow.cleanRec). */
+       written back there or removed. Its open check's step-5 answers are carried by carry_answer_from (R2Flow.cleanRec). */
     if (!x) { x = readStore(tabCur(), F.OLD_KEY); if (x && x.store) x.info.fromOldKey = true; }
     if (!x) return null;
     if (x.blocked) { storage = 'blocked'; return null; }
@@ -108,7 +108,7 @@
   function clearProfile(k) {
     if (storage !== 'ok') return;
     var p = readProfile(); if (!p || !Object.prototype.hasOwnProperty.call(p, k)) return;
-    delete p[k]; p.updatedAt = new Date().toISOString(); p.from = 'readiness';
+    Reflect.deleteProperty(p, k); p.updatedAt = new Date().toISOString(); p.from = 'readiness';
     try { localStorage.setItem(PROFILE, JSON.stringify(p)); } catch (e) { /* blocked */ }
   }
 
@@ -133,7 +133,7 @@
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
   var ui = { older: olderOf(loadInfo), olderShown: false, gone: !!loadInfo.removedUse, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
-  function env() { return { cat: CAT, TQ: TQ, ex: D.ex, today: L.localIso() }; }
+  function env() { return { cat: CAT, TQ: TQ, ex: D.ex, detail: D.detail, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
   function uName(u) { return L.useLabel(TQ, u); }
   function recOf(id) { return Object.prototype.hasOwnProperty.call(store.checks, id) ? store.checks[id] : null; }
@@ -297,7 +297,7 @@
       (rec.step === 'stop' || rec.step === 'result' ? '' : '<button type="button" class="linkbtn" data-act="new" id="new-top">Start a new check</button>') + '</div>' + bar + storeLine();
   }
   function fold(key, label, body) {
-    return '<details class="more" data-fold="' + key + '"' + (ui.open[key] || (ui.print && /^(earlier|src-)/.test(key)) ? ' open' : '') + '><summary>' + esc(label) + '</summary><div class="morebody">' + body + '</div></details>';
+    return '<details class="more" data-fold="' + key + '"' + (ui.open[key] || (ui.print && /^(earlier|src-|srcs-)/.test(key)) ? ' open' : '') + '><summary>' + esc(label) + '</summary><div class="morebody">' + body + '</div></details>';
   }
   function row(key, title, body, attrs) {
     return '<details class="panel fold" data-fold="' + key + '"' + (attrs || '') + (ui.open[key] || ui.print ? ' open' : '') + '><summary><span>' + title + '</span></summary><div class="foldbody">' + body + '</div></details>';
@@ -306,13 +306,16 @@
   function sources(step) {
     var list = C.SOURCES[step] || [], note = C.SOURCES[step + 'Note'] || '';
     var body = (note ? '<p>' + esc(srcText(note)) + (step === 'where' ? ' ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments; page built ' + D.builtOn + '.') : '') + '</p>' : '') +
-      (list.length ? '<ul>' + list.map(function (s) { return '<li>' + esc(srcText(s)) + '</li>'; }).join('') + '</ul>' : '');
+      (list.length ? '<ul>' + list.map(function (s) { return '<li>' + citeHtml(s) + '</li>'; }).join('') + '</ul>' : '');
     return '<section class="sources">' + fold('src-' + step, 'Where this comes from', body) + '</section>';
   }
+  /* v2.8.0: a citation of steps 1 to 3 ([text, url]) is a link that opens in a new tab, with "Copy address" */
+  function linkHtml(url) { return /^https:\/\//.test(url || '') ? ' <a class="citelink" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a> <span class="srcaddr"><button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + esc(url) + '">Copy address</button><span class="srcurl" hidden>' + esc(url) + '</span></span>' : ''; }
+  function citeHtml(s) { return Array.isArray(s) ? esc(srcText(s[0])) + linkHtml(s[1]) : esc(srcText(s)); }
   function evidence(ev, share) {
     var h = '';
     if (share && share.length) h += '<div class="ev" data-ev="share"><b>In the team’s own analysis</b>' + share.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>';
-    if (ev && ev.length) h += '<div class="ev" data-ev="sources"><b>Evidence</b>' + ev.map(function (e) { return '<p>' + esc(e[0]) + '<span class="src">Source: ' + esc(e[1]) + '</span></p>'; }).join('') + '</div>';
+    if (ev && ev.length) h += '<div class="ev" data-ev="sources"><b>Evidence</b>' + ev.map(function (e) { return '<p>' + esc(e[0]) + '<span class="src">Source: ' + esc(e[1]) + linkHtml(e[2]) + '</span></p>'; }).join('') + '</div>';
     return h;
   }
   function radios(name, opts, cur) {
@@ -405,7 +408,7 @@
     return (pre ? '<p class="pathline" id="preselected">You came here for: <b>' + esc(uName(pre)) + '</b>. It is already chosen in step 4.</p>' : '') +
       '<section class="panel intro" id="intro-why"><h2>Why this tool</h2>' +
       '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, are the basics in place, and what does this particular use need?</p>' +
-      '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (70%) and systems that do not fit together (46%). Source: Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2).</p></section>' +
+      '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (70%) and systems that do not fit together (46%). Source: Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2).' + linkHtml(C.EUROSTAT_URL) + '</p></section>' +
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
@@ -534,6 +537,9 @@
       '<p class="sub"><b id="tail-use">' + nameHtml(uName(u)) + '</b>' + esc(plural(qs.length, 'question')) + ' on what this use needs. The must-haves are not asked again.</p>' +
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
+    /* v2.8.0 (owner decision 4): this use case's examples and sources, inside the use case */
+    var dx = detailData(rec.use);
+    h += '<section class="panel srcpanel" id="tail-sources">' + fold('srcs-tail', 'Examples and sources (' + dx.srcs.length + ')', L.sourcesBox(dx, rec.use)) + '</section>';
     /* v2.7.0: each question exactly as in data/usecase_questions_only.json: text, "why it matters", area, who answers. */
     h += unansweredNote('unanswered-tail', qs.filter(function (q) { return !L.A_OK[rec.T[q.id]]; }).length, qs.length, 'questions for this use case') + '<section class="panel">' + qs.map(function (q, i) {
       var v = rec.T[q.id], why = L.tailWhy(TQ, rec.use, q);
@@ -578,7 +584,8 @@
       (m.nothingElse ? '<p id="nothing-else">' + esc(m.nothingElse) + '</p>' : '') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>' + esc(C.STEP2_HEAD) + '</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
-        '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
+        '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' +
+        fold('srcs-result', 'Examples and sources (' + detailData(rec.use).srcs.length + ')', L.sourcesBox(detailData(rec.use), rec.use)) : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
       return '<div class="brow" data-area="' + a.k + '"><span class="lbl">' + esc(a.name) + '</span><span class="track" aria-hidden="true"><i class="w-' + a.cls + '" style="width:' + (a.yes ? Math.max(3, a.share) : 0) + '%"></i></span><span class="pct">' + esc(a.count) + '</span><span class="word w-' + a.cls + '">' + esc([a.word, a.unknown ? a.unknown + ' not answered yet' : ''].filter(Boolean).join(' · ')) + '</span></div>';
     }).join('') + '</div><p class="meta">“In place” counts the questions you answered Yes, out of those asked in the area. A word (Strong, Gaps to close, Weak) is given only where an area has two or more answers.</p></section>';
@@ -789,7 +796,7 @@
       (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +
       '<p id="detail-level"><b>' + esc(x.level) + '</b></p>' +
       /* v2.5 (council BUILD NOW 8): no research or fact-check notes; v2.7.0: no catalogue description either ("What it does" replaces it). */
-      '<h3>Examples and sources (' + x.srcs.length + ')</h3>' + (x.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + x.srcs.map(L.sourceRowItem).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
+      '<h3>Examples and sources (' + x.srcs.length + ')</h3>' + L.sourcesBox(x, id).replace('<ul class="dsrcs">', '<ul class="dsrcs" id="detail-srcs">') +
       '<p class="meta">' + esc(x.foot) + '</p></div>';
   }
   function syncDetail() {
@@ -916,7 +923,7 @@
     store: function () { return JSON.parse(JSON.stringify(store)); },
     send: send,
     events: function () { return F.events(rec.step, ctx()); },
-    resultModel: function () { var m = model(); delete m.ev; return m; },
+    resultModel: function () { var m = model(); Reflect.deleteProperty(m, 'ev'); return m; },
     pdfModel: function (kind) { return P.model(rec, env(), kind || 'result'); },
     pdfName: pdfName,
     fileDoc: fileDoc,
