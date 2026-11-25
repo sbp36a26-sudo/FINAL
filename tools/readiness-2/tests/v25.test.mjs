@@ -69,7 +69,7 @@ const mG = L.resultModel(PAT.G[0], env);
 ok(mG.levelLine === 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.' && /^Settle this first:/.test(mG.first[0]?.text), 'O4: G line and first item');
 // O3: Q4 No is a condition, not a hold
 const mI = L.resultModel(PAT.I[0], env);
-ok(!('assist' in mI) && mI.level === 'almost' && /“Some mistakes are acceptable”/.test(mI.reason), 'v2.6 (replaces O3): I is held back by the No on question 4, and the reason names it');
+ok(!('assist' in mI) && mI.level === 'almost' && /“Safety net”/.test(mI.reason), 'v2.6 (replaces O3): I is held back by the No on question 4, and the reason names it');
 // O5: the box line only for Not ready yet and held verdicts
 ok(['C', 'F'].every(k => !L.resultModel(PAT[k][0], env).boxLine), 'O5: no box line for Ready and an unheld Almost ready');
 ok(C.LEVELS.ready.name === 'Ready to start a pilot', 'O5: the top verdict keeps its name');

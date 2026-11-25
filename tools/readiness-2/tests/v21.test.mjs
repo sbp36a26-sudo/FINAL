@@ -141,7 +141,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, LEGAL_HOLDS_TOP: true, CARRIED_N
   ok(L.evaluate(mk('hr-2', ['n'], []), TQ).level === 'notready' && L.evaluate(mk('hr-2', ['n'], []), TQ).held.length === 0, 'B5: only the top verdict is held; a must-have No is still "Not ready yet"');
   // B6
   // v2.6 (owner): a No on any of questions 2 to 5 holds (v2.5 had left question 4 out); the new question 3 and 4 titles and outcomes
-  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information to learn from', 'Too few examples to learn from'], ['q4', 'Some mistakes are acceptable', 'A rule-based tool or a person is the better choice'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
+  [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information to learn from', 'Too few examples to learn from'], ['q4', 'Safety net', 'A rule-based tool or a person is the better choice'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
     const r6 = mk('gx-2', [], []); r6.Q[q] = 'n'; const e6 = L.evaluate(r6, TQ);
     ok(e6.level === 'almost' && eq(e6.held, ['carried']) && e6.pct === 100, 'B6: a No on ' + q + ' blocks the top verdict');
     ok(e6.reason === 'Because you answered No in step 2 to “' + title + '” (' + out + '). The top verdict is held back until that is settled.', 'B6: the reason is shown: ' + e6.reason);

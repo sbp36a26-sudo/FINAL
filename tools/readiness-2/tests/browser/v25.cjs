@@ -210,7 +210,7 @@ async function shot(p, name, dir, view) { await p.screenshot({ path: path.join(d
       ok(bx ? !!(await p.$('#result #box-reason')) : !(await p.$('#box-reason')), wt + ' ' + k + ': the box line sits in the verdict box only when it is due (O5)');
       ok(fl !== 'Nothing open' || level === 'Ready to start a pilot', wt + ' ' + k + ': no "Nothing open" under a held verdict');
       ok(level === 'Ready to start a pilot' ? /^A pilot: a trial with one team or one outlet/.test((await txt(p, '#pilot-gloss')) || '') : !(await p.$('#pilot-gloss')), wt + ' ' + k + ': pilot gloss only under the top verdict');
-      if (k === 'I') ok(!(await p.$('#assist')) && /Some mistakes are acceptable/.test((await txt(p, '#first ol li')) || ''), wt + ' I (v2.6): no assistant-only line; the No on question 4 is item 1');
+      if (k === 'I') ok(!(await p.$('#assist')) && /Safety net/.test((await txt(p, '#first ol li')) || ''), wt + ' I (v2.6): no assistant-only line; the No on question 4 is item 1');
       if (k === 'D') ok(/^Settle this first: in step 2 you answered No to “Proof”/.test((await txt(p, '#first ol li')) || ''), wt + ' D: the hold is item 1');
       if (k === 'F' || k === 'B') { const plan = (await txt(p, '#plan')) || ''; ok(/Finish: |Find out: /.test(plan) && !/Agree in writing: hand-off rules|Train or brief the people involved:/.test(plan), wt + ' ' + k + ': the action plan shows the team-worded question, not the workbook action'); }
       ok(await noHScroll(p), wt + ' ' + k + ': no horizontal scroll');

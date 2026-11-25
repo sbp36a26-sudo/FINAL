@@ -117,7 +117,7 @@ ok(typeof C.Q_CHANGED === 'string' && /questions 3 and 4/.test(C.Q_CHANGED) && /
 const q3 = Q('q3'), q4 = Q('q4');
 ok(q3.title === 'Information to learn from' && q3.q === 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?', 'B: Q3 title and question');
 ok(q3.yesIf === 'You have hundreds of past cases stored digitally.' && q3.noIf === 'It happens rarely, or nothing was ever recorded.' && q3.whyShort === 'AI learns from examples; without many past cases it has nothing to learn from.', 'B: Q3 Yes-if, No-if, why');
-ok(q4.title === 'Some mistakes are acceptable' && q4.q === 'Is it acceptable if the result is right most of the time, but not every time?', 'B: Q4 title and question');
+ok(q4.title === 'Safety net' && q4.q === 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?', 'B: Q4 title and question');
 ok(q4.yesIf === 'A wrong answer now and then can be caught or does little harm.' && q4.noIf === 'Every single result must be exactly right, for example a legal or safety decision.' && q4.whyShort === 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.', 'B: Q4 Yes-if, No-if, why');
 ok(C.QUESTIONS.map(q => q.title.charAt(0)).join('') === 'CRISP', 'B: the C-R-I-S-P letters stay');
 for (const k of ['q3.title', 'q3.q', 'q3.yesIf', 'q3.noIf', 'q3.whyShort', 'q4.title', 'q4.q', 'q4.yesIf', 'q4.noIf', 'q4.whyShort']) { const [id, f] = k.split('.'); ok(W.core[k] === Q(id)[f], 'B: wording.json core ' + k); }

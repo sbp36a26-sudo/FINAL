@@ -47,10 +47,10 @@ ok(eq(C.QUESTIONS.map(q => q.q), [
   'Can each case be fixed with an “if this, then that” rule?',
   'Is this task frequent or costly enough to be worth improving?',
   'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
-  'Is it acceptable if the result is right most of the time, but not every time?',
+  'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?',
   'Have you chosen what result should improve, and do you know where it stands today?']), 'the five questions (v2.6: Q1, Q3 and Q4 are the owner\'s new texts; Q2 is the owner\'s own; Q5 the team\'s plain wording)');
-ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information to learn from', 'Some mistakes are acceptable', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
-C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 16 }[q.id] || 15) && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
+ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information to learn from', 'Safety net', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
+C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 17 }[q.id] || 15) && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');
 ok(C.STOP.head === 'This is not suitable for AI.', 'stop heading');
 ok(C.HONEST === 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.', 'honesty line');

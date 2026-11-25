@@ -71,7 +71,7 @@ const cases = {
 };
 for (const [tag, Q] of Object.entries(cases)) {
   const r = finished(F, D, 'gx-2', { Q }), m = L.resultModel(r, env);
-  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Complex judgement|Return|Information to learn from|Some mistakes are acceptable|Proof', tag + ': five rows with the five titles');
+  ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Complex judgement|Return|Information to learn from|Safety net|Proof', tag + ': five rows with the five titles');
   m.answers.forEach(a => {
     const q = C.QUESTIONS.find(x => x.id === a.id), ans = Q[a.id];
     ok(a.a === { y: 'Yes', n: 'No', u: 'Not sure' }[ans] && a.state === ans, tag + ' ' + a.id + ': the answer word');

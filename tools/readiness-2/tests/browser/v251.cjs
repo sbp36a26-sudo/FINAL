@@ -126,7 +126,7 @@ const hubFrame = async (p, tool) => {
       await fill(p, { Q, use: 'gx-2' });
       ok((await p.evaluate(() => window.Readiness2.state().step)) === 'result', tag + ' ' + name + ': on the result');
       const rows = await p.$$eval('#ai-rows li', l => l.map(x => ({ q: x.getAttribute('data-q'), a: x.getAttribute('data-a'), t: x.textContent.replace(/\s+/g, ' ').trim() })));
-      ok(rows.length === 5 && rows.map(r => r.t.split(/Yes|No|Not sure/)[0].trim()).join('|') === 'Complex judgement|Return|Information to learn from|Some mistakes are acceptable|Proof', tag + ' ' + name + ': five rows with titles ' + JSON.stringify(rows.map(r => r.t.slice(0, 24))));
+      ok(rows.length === 5 && rows.map(r => r.t.split(/Yes|No|Not sure/)[0].trim()).join('|') === 'Complex judgement|Return|Information to learn from|Safety net|Proof', tag + ' ' + name + ': five rows with titles ' + JSON.stringify(rows.map(r => r.t.slice(0, 24))));
       ok((await p.$eval('#ai-head', e => e.textContent)) === head, tag + ' ' + name + ': the verdict word ' + head);
       if (name === 'notsure') ok(/To find out: yes if/.test(rows[0].t) && /Ask the vendor or IT\./.test(rows[0].t) && /Ask the department head\./.test(rows[3].t) && /^Return ?Yes ?Met:/.test(rows[1].t), tag + ': Not sure rows say what to find out and whom to ask');
       else ok(/A rule-based tool or a person is the better choice\./.test(rows[3].t) && /Define success first\./.test(rows[4].t), tag + ': No rows give the consequence (v2.6: Q4 No = a rule-based tool or a person)');

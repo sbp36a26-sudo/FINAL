@@ -1200,8 +1200,8 @@ details.fold[open] > summary{margin-bottom:12px}
       outcome: 'Too few examples to learn from.', add: 'Start keeping these cases digitally, or ask the vendor what examples its tool learned from. Then ask again.',
       who: 'IT or the department head' },
     /* v2.6 (owner): new question 4. Brynjolfsson & Mitchell 2017, criterion 6 ("a tolerance for error"). Checking results is must-have 6. */
-    { id: 'q4', short: 'Some mistakes are acceptable', title: 'Some mistakes are acceptable', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a legal or safety decision.',
-      q: 'Is it acceptable if the result is right most of the time, but not every time?',
+    { id: 'q4', short: 'Mistakes can be caught', title: 'Safety net', yesIf: 'A wrong answer now and then can be caught or does little harm.', noIf: 'Every single result must be exactly right, for example a legal or safety decision.',
+      q: 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?',
       hint: '',
       whyShort: 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.',
       why: 'AI works on probabilities, so it is never right every time. It suits a task where an occasional wrong result can be caught or does little harm.',
@@ -1467,7 +1467,7 @@ details.fold[open] > summary{margin-bottom:12px}
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers. Use Download (PDF) or Save as file before you close the page.';
+  var NOT_SAVED = 'This browser is not keeping your answers. Use Download result (PDF), Download answers (PDF) or Save as file before you close the page.';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 

@@ -61,8 +61,8 @@ async function hubOpen(p) {
       const { ctx, p } = await mk(b, w, touch); await p.goto(BASE + 'readiness-2/index.html'); await p.waitForFunction(() => window.Readiness2);
       await toQ(p);
       const qs = await p.$$eval('.qa .qtext', e => e.map(x => x.textContent));
-      ok(qs[0] === 'Can each case be fixed with an “if this, then that” rule?' && qs[2] === 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?' && qs[3] === 'Is it acceptable if the result is right most of the time, but not every time?', wt + ': step 2 shows the owner\'s questions 1, 3 and 4');
-      ok(/Complex judgement · Return · Information to learn from · Some mistakes are acceptable · Proof/.test((await txt(p, '.crisp-key')).replace(/\s+/g, ' ')), wt + ': the C-R-I-S-P key');
+      ok(qs[0] === 'Can each case be fixed with an “if this, then that” rule?' && qs[2] === 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?' && qs[3] === 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?', wt + ': step 2 shows the owner\'s questions 1, 3 and 4');
+      ok(/Complex judgement · Return · Information to learn from · Safety net · Proof/.test((await txt(p, '.crisp-key')).replace(/\s+/g, ' ')), wt + ': the C-R-I-S-P key');
       ok(/a No to question 1 and a Yes to the others point towards AI/.test(await txt(p, '.stephead .sub')), wt + ': the step says which answers point towards AI');
       await p.click('details[data-fold="why-q1"] > summary'); await p.click('details[data-fold="why-q3"] > summary'); await p.click('details[data-fold="why-q4"] > summary');
       ok((await txt(p, '#yes-q1')).includes('You could write it down as fixed rules') && (await txt(p, '#no-q1')).includes('Every case is different'), wt + ': Q1 Yes-if / No-if in the new meaning');
@@ -91,7 +91,7 @@ async function hubOpen(p) {
       const rows = await p.$$eval('#ai-rows li', l => l.map(x => ({ q: x.getAttribute('data-q'), chip: x.querySelector('.chip').className, t: x.textContent.replace(/\s+/g, ' ').trim() })));
       ok(rows.length === 5 && /a-yes/.test(rows[0].chip) && /^Complex judgement ?No ?Met: every case is different/.test(rows[0].t), wt + ': card: Q1 No reads as met, in the good colour');
       ok(/^Information to learn from ?No ?Too few examples to learn from\./.test(rows[2].t) && /a-no/.test(rows[2].chip), wt + ': card: Q3 No gives its consequence');
-      ok(/^Some mistakes are acceptable ?Not sure ?To find out: yes if a wrong answer now and then/.test(rows[3].t) && /Ask the department head\./.test(rows[3].t), wt + ': card: Q4 Not sure says what to find out');
+      ok(/^Safety net ?Not sure ?To find out: yes if a wrong answer now and then/.test(rows[3].t) && /Ask the department head\./.test(rows[3].t), wt + ': card: Q4 Not sure says what to find out');
       ok((await txt(p, '#ai-head')) === 'Too few examples to learn from.', wt + ': card: the verdict word');
       const card = await p.$('#sum-ai'); await card.scrollIntoViewIfNeeded(); await card.screenshot({ path: path.join(OUT, wt + '-result-five-answers.png') });
       if (!touch) {
@@ -101,7 +101,7 @@ async function hubOpen(p) {
           execFileSync('pdftoppm', ['-f', '1', '-l', '1', '-r', '150', '-png', '-singlefile', pdf, path.join(OUT, 'pdf-page-2')]);
           ok(fs.existsSync(path.join(OUT, 'pdf-page-2.png')), 'PDF page 2 rendered');
           const t = execFileSync('pdftotext', ['-f', '1', '-l', '1', '-layout', pdf, '-']).toString().replace(/\s+/g, ' ');
-          ok(/Information to learn from/.test(t) && /Some mistakes are acceptable/.test(t) && /Can each case be fixed/.test(t) && /Are there past examples of this task/.test(t) && /Is it acceptable if the result is right most of the time/.test(t) && !/Too few examples to learn from/.test(t), 'Answers PDF page 1: the five answers with the new questions (v2.7)');
+          ok(/Information to learn from/.test(t) && /Safety net/.test(t) && /Can each case be fixed/.test(t) && /Are there past examples of this task/.test(t) && /If the tool makes an occasional mistake, can it be caught/.test(t) && !/Too few examples to learn from/.test(t), 'Answers PDF page 1: the five answers with the new questions (v2.7)');
         } catch (e) { ok(false, 'PDF page 2: ' + e.message); }
         fs.unlinkSync(pdf);
       }
