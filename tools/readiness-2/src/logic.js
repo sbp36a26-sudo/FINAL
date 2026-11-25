@@ -498,8 +498,8 @@
      planned and missing questions are already the open items. */
   function holdItems(ev, v) {
     var out = [], h = ev.held;
-    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Is this an AI problem?', hold: 'carried' }); });
-    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Is this an AI problem?', hold: 'notsure' });
+    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'carried' }); });
+    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'notsure' });
     if (h.indexOf('legal') >= 0) out.push({ who: '', text: C.HOLD.legal, sub: 'EU AI Act', hold: 'legal' });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;

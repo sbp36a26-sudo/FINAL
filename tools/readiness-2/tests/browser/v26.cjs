@@ -61,7 +61,7 @@ async function hubOpen(p) {
       const { ctx, p } = await mk(b, w, touch); await p.goto(BASE + 'readiness-2/index.html'); await p.waitForFunction(() => window.Readiness2);
       await toQ(p);
       const qs = await p.$$eval('.qa .qtext', e => e.map(x => x.textContent));
-      ok(qs[0] === 'Can each case be fixed with an “if this, then that” rule?' && qs[2] === 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?' && qs[3] === 'Is it acceptable if the result is right most of the time, but not every time?', wt + ': step 2 shows the owner\'s questions 1, 3 and 4');
+      ok(qs[0] === 'Can each case be fixed with an “if this, then that” rule?' && qs[2] === 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?' && qs[3] === 'Is it acceptable if the result is right most of the time, but not every time?', wt + ': step 2 shows the owner\'s questions 1, 3 and 4');
       ok(/Complex judgement · Return · Information to learn from · Some mistakes are acceptable · Proof/.test((await txt(p, '.crisp-key')).replace(/\s+/g, ' ')), wt + ': the C-R-I-S-P key');
       ok(/a No to question 1 and a Yes to the others point towards AI/.test(await txt(p, '.stephead .sub')), wt + ': the step says which answers point towards AI');
       await p.click('details[data-fold="why-q1"] > summary'); await p.click('details[data-fold="why-q3"] > summary'); await p.click('details[data-fold="why-q4"] > summary');

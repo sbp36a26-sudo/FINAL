@@ -46,9 +46,9 @@ ok(combos === 243 && stops === 81, 'all 243 combinations checked, 81 of them sto
 ok(eq(C.QUESTIONS.map(q => q.q), [
   'Can each case be fixed with an “if this, then that” rule?',
   'Is this task frequent or costly enough to be worth improving?',
-  'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
+  'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
   'Is it acceptable if the result is right most of the time, but not every time?',
-  'Do you know which KPI should improve, and what it is today?']), 'the five questions (v2.6: Q1, Q3 and Q4 are the owner\'s new texts; Q2 is the owner\'s own; Q5 the team\'s plain wording)');
+  'Have you chosen what result should improve, and do you know where it stands today?']), 'the five questions (v2.6: Q1, Q3 and Q4 are the owner\'s new texts; Q2 is the owner\'s own; Q5 the team\'s plain wording)');
 ok(eq(C.QUESTIONS.map(q => q.title), ['Complex judgement', 'Return', 'Information to learn from', 'Some mistakes are acceptable', 'Proof']) && C.QUESTIONS.map(q => q.title[0]).join('') === 'CRISP', 'titles spell C-R-I-S-P');
 C.QUESTIONS.forEach(q => { ok(q.q.split(/\s+/).length <= ({ q3: 22, q4: 16 }[q.id] || 15) && /\?$/.test(q.q) && !/\?./.test(q.q), q.id + ': one short sentence'); ok(q.whyShort && q.yesIf && q.noIf && q.yes && q.no && q.why, q.id + ': the "Why this matters" parts are all there'); });
 ok(C.QUESTIONS[0].guard && !C.QUESTIONS.slice(1).some(q => q.guard), '"Not sure?" box on Q1 only');

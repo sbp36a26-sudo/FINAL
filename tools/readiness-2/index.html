@@ -1488,8 +1488,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
     /* v2.6 (owner): new question 3. Brynjolfsson & Mitchell 2017, criterion 2 ("large (digital) data sets ... containing input-output pairs"). */
-    { id: 'q3', short: 'Many past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
-      q: 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
+    { id: 'q3', short: 'Past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
+      q: 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
       hint: '',
       whyShort: 'AI learns from examples; without many past cases it has nothing to learn from.',
       why: 'Machine learning works best where many past cases are stored digitally, each with the result that was right for it. A tool bought from a vendor may have learned from other hotels’ cases: ask the vendor what it learned from.',
@@ -1509,7 +1509,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
-      q: 'Do you know which KPI should improve, and what it is today?',
+      q: 'Have you chosen what result should improve, and do you know where it stands today?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Without a starting figure nobody can tell whether the tool worked, and the decision to keep or stop it turns into opinion.',
@@ -2280,8 +2280,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      planned and missing questions are already the open items. */
   function holdItems(ev, v) {
     var out = [], h = ev.held;
-    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Is this an AI problem?', hold: 'carried' }); });
-    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Is this an AI problem?', hold: 'notsure' });
+    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'carried' }); });
+    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'notsure' });
     if (h.indexOf('legal') >= 0) out.push({ who: '', text: C.HOLD.legal, sub: 'EU AI Act', hold: 'legal' });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
@@ -2831,7 +2831,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: L.aiMeaningText(a) }; }); }
   function sources(TQ, stop) {
     var S = C.SOURCES, b = [{ k: 'h', t: 'Sources' }], N = function (t) { return String(t).replace(/\{N\}/g, TQ ? TQ.matrixTotal : '').replace(/\{U\}/g, TQ ? TQ.nFromWorkbook + TQ.nDraft : '').replace(/\{D\}/g, TQ ? TQ.nDraft : ''); };
-    (stop ? [['q', 'Is this an AI problem?']] : [['q', 'Is this an AI problem?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
+    (stop ? [['q', 'Can this problem be solved with AI?']] : [['q', 'Can this problem be solved with AI?'], ['must', 'Must-haves'], ['where', 'Where in the hotel?'], ['tailored', 'Questions for this use case'], ['result', 'Result']]).forEach(function (s) {
       b.push({ k: 'label', t: s[1] });
       if (S[s[0] + 'Note']) b.push({ k: 'p', t: N(S[s[0] + 'Note']), small: true });
       (S[s[0]] || []).forEach(function (t) { b.push({ k: 'src', t: N(t) }); });
@@ -2866,7 +2866,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: (f.who ? f.who + ': ' : '') + f.text, who: f.who || '', body: f.text, sub: f.sub }); }); // v2.5: a hold (BUILD NOW 3) has no person
     b.push({ k: 'page' });
 
-    b.push({ k: 'h', t: 'Is this an AI problem?' }, { k: 'lead', t: m.ai.head });
+    b.push({ k: 'h', t: 'Can this problem be solved with AI?' }, { k: 'lead', t: m.ai.head });
     if (m.ai.second) b.push({ k: 'lead', t: m.ai.second });
     /* v2.5.1: the conditions, the "to find out" list and the Q1 note now stand under each answer (answers(m)), as on the card. */
     b.push({ k: 'label', t: 'Your five answers and what each means' }); b = b.concat(answers(m));
@@ -3323,7 +3323,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
 
   // ---------- pieces ----------
-  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', 'Is this an AI problem?'], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
+  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', 'Can this problem be solved with AI?'], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
     where: ['Step 4 of 5', 'Where in the hotel?'], tailored: ['Step 5 of 5', 'Questions for this use case'], result: ['Result', ''] };
   function storeLine() {
     var h = '';
@@ -3467,7 +3467,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
-      '<li><b>Is this an AI problem?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
+      '<li><b>Can this problem be solved with AI?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
@@ -3496,7 +3496,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 2 of 5</p>' +
       '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
       '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
-      '<h2>Is this an AI problem?</h2>' +
+      '<h2>Can this problem be solved with AI?</h2>' +
       '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
@@ -3656,7 +3656,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
-    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
+    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Can this problem be solved with AI?</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {

@@ -36,8 +36,8 @@
       outcome: 'Probably not worth it.', add: 'Look again if the volume grows, or if a tool you already pay for adds it.',
       who: 'the GM or finance' },
     /* v2.6 (owner): new question 3. Brynjolfsson & Mitchell 2017, criterion 2 ("large (digital) data sets ... containing input-output pairs"). */
-    { id: 'q3', short: 'Many past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
-      q: 'Are there many past examples of this task, such as emails, bookings or photos, that show what a good result looks like?',
+    { id: 'q3', short: 'Past examples to learn from', title: 'Information to learn from', yesIf: 'You have hundreds of past cases stored digitally.', noIf: 'It happens rarely, or nothing was ever recorded.',
+      q: 'Are there past examples of this task, such as emails, bookings, or past photos, that show what a good result looks like?',
       hint: '',
       whyShort: 'AI learns from examples; without many past cases it has nothing to learn from.',
       why: 'Machine learning works best where many past cases are stored digitally, each with the result that was right for it. A tool bought from a vendor may have learned from other hotels’ cases: ask the vendor what it learned from.',
@@ -57,7 +57,7 @@
       add: 'If the use touches safety, health or people’s rights (hiring, staff evaluation), check the AI Act guide tab: it may be high-risk.',
       who: 'the department head' },
     { id: 'q5', short: 'Success has a number', title: 'Proof', yesIf: 'You can name one number and know today’s figure, such as reply time, hours spent or revenue per room.', noIf: 'You only have a general aim, like “be more innovative”.',
-      q: 'Do you know which KPI should improve, and what it is today?',
+      q: 'Have you chosen what result should improve, and do you know where it stands today?',
       hint: 'Examples: reply time, hours spent, revenue per room, kilos of food thrown away.',
       whyShort: 'Without today’s figure you cannot tell later whether the tool worked, so keeping it becomes guesswork.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Without a starting figure nobody can tell whether the tool worked, and the decision to keep or stop it turns into opinion.',

@@ -258,7 +258,7 @@
   }
 
   // ---------- pieces ----------
-  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', 'Is this an AI problem?'], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
+  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', 'Can this problem be solved with AI?'], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
     where: ['Step 4 of 5', 'Where in the hotel?'], tailored: ['Step 5 of 5', 'Questions for this use case'], result: ['Result', ''] };
   function storeLine() {
     var h = '';
@@ -402,7 +402,7 @@
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
-      '<li><b>Is this an AI problem?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
+      '<li><b>Can this problem be solved with AI?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
@@ -431,7 +431,7 @@
     var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 2 of 5</p>' +
       '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
       '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
-      '<h2>Is this an AI problem?</h2>' +
+      '<h2>Can this problem be solved with AI?</h2>' +
       '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
@@ -591,7 +591,7 @@
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
       (m.law ? '<p id="law">' + esc(m.law) + '</p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
-    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Is this an AI problem?</h3>' + aiCard(m) + '</section>' +
+    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Can this problem be solved with AI?</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
