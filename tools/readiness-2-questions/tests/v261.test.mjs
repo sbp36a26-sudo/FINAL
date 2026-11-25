@@ -68,7 +68,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
   ok(!/hub link bridge/.test(readme), 'D1: README: no link bridge in the test list');
   ok(!/\(`ping`, `download`, `db`, `open`, `link`\)/.test(contracts) && !/`link` since v2\.5\.1\)|\(`ping`, `link`, 24 Nov 2026\)|register \(`link` too\)/.test(contracts), 'D2: CONTRACTS: the bridge row lists no link message');
   ok(/detail-close/.test(contracts.slice(contracts.indexOf('| postMessage bridge'), contracts.indexOf('| Hub tabs'))), 'D2: CONTRACTS: the bridge row lists the detail messages');
-  ok(/localStorage\['hftp-readiness2-v1'\], version 3\)/.test(app) && !/only then do links become hub messages/.test(app) && !/Q1 No always goes on to the stop screen/.test(app) && !/\{ kind: 'hftp-do-you-need-ai', v: 2,/.test(app), 'D3: app.js comments: store version 3, no link bridge, Q1 Yes stops, file version 3');
+  ok(/localStorage\['hftp-readiness2q-v1'\], version 3\)/.test(app) && !/only then do links become hub messages/.test(app) && !/Q1 No always goes on to the stop screen/.test(app) && !/\{ kind: 'hftp-do-you-need-ai', v: 2,/.test(app), 'D3: app.js comments: store version 3, no link bridge, Q1 Yes stops, file version 3');
   ok(!/\{ m3\?, m7\? \}/.test(logic), 'D4: logic.js: consistLines returns m3 only');
   ok(/## v2\.6\.1/.test(cleanup) && /`\{ v: 3, cur, checks, notice \}`/.test(cleanup), 'D5: CLEANUP.md: v2.6.1 section, store version 3');
   const reg = readFileSync(join(root, '../register/src/app.js'), 'utf8');

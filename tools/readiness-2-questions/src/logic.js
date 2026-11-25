@@ -76,7 +76,7 @@
      build.mjs from the register's label file); sens: the team's sheet flags sensitive personal data (the add-on question). */
   function legalFlags(TQ, useId) {
     var u = TQ && TQ.uses && useId ? TQ.uses[useId] : null;
-    var high = !!(u && TQ.highRisk && TQ.highRisk.indexOf(useId) >= 0), sens = !!(u && (u.add || []).indexOf('sens') >= 0);
+    var high = !!(u && TQ.highRisk && TQ.highRisk.indexOf(useId) >= 0), sens = !!(u && u.sensitive);
     return { high: high, sens: sens, any: high || sens };
   }
 
@@ -159,8 +159,7 @@
      D: the page's data block (ex, detail); u: the catalogue use; d: its department. Strings only, except srcs. */
   function detailData(D, u, d, TQ) {
     var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
-    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u),
-      draft: tu && tu.draft ? C.DRAFT + '.' : '', draftText: tu && tu.draft ? 'This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.' : '',
+    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u), draft: '', draftText: '',
       does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u), task: String(u.task || ''),
       srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
       foot: 'From the hub’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
@@ -214,7 +213,7 @@
     });
     useQs(TQ, rec.use).forEach(function (t) {
       var raw = (rec.T || {})[t.id], v = A_OK[raw] ? raw : '';
-      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, who: t.who, act: t.act, v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw), kind: t.kind });
+      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, why: t.why, who: t.who, whoLabel: t.whoLabel, act: '', v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw) });
     });
     return out;
   }
@@ -352,7 +351,7 @@
   /* ---------- where it sits ---------- */
   /* v2.2: the name this tool shows for a use case: the team's plain name (TQ.uses[id].plain, data/wording.json) or the catalogue's.
      Records, links and the hub keep the id and the catalogue name (u.n); only what a person reads changes. */
-  function useLabel(TQ, u) { var t = u && TQ && TQ.uses && TQ.uses[u.id]; return (t && t.plain) || (u ? u.n : ''); }
+  function useLabel(TQ, u) { var t = u && TQ && TQ.uses && TQ.uses[u.id]; return (t && t.name) || (u ? u.n : ''); }
   /* "Catalogue name: …" in small text where the plain name differs (result, PDF, the explainer), so the catalogue entry is easy to find. */
   function catalogueName(TQ, u) { return u && useLabel(TQ, u) !== u.n ? 'Catalogue name: ' + u.n : ''; }
   function useLevelLine(u) { return 'How common in hotels: ' + useLevel(u) + ' (Use-Case Catalogue rating).'; }
@@ -378,27 +377,8 @@
       return '“' + b.name + '”: needed for ' + b.n + ' of ' + TQ.matrixTotal + ' use cases in the team’s resource analysis, Nov 2026 (' + b.layer.replace(/^(\w+):.*$/, '$1').toLowerCase() + ' layer; team judgement, not a survey).';
     }).filter(Boolean);
   }
-  /* The fold under a tailored question: area, type of tool, resource intensity, evidence. */
-  function tailWhy(TQ, useId, t) {
-    var u = TQ.uses[useId], a = u.arch && TQ.arch[u.arch], out = [];
-    out.push('Area: ' + TQ.areas[t.a] + '.');
-    if (t.kind === 'addon') out.push(TQ.addonWhy[t.addon]);
-    else if (t.kind === 'arch') out.push('The team’s sheet lists no organisation need for this use case, so this is the question for its type of tool.');
-    else if (t.from) out.push('From the team’s resource sheet for this use case: “' + t.from + '”.');
-    if (t.a === 'pe' && t.kind !== 'addon') out.push('The must-haves asked for a named owner. This asks who that is for this use case.');
-    if (t.a === 'fi' && t.kind !== 'addon') out.push('The must-haves asked for a 12-month budget. This is the kind of cost the team expects for this use case.');
-    if (a) out.push('Type of tool (the team’s grouping): ' + a.n + '. ' + a.what);
-    out.push('Resource intensity (team judgement, not evidence-based): ' + u.int + ': ' + lc(TQ.intensity[u.int] || ''));
-    out.push(evidenceLine(u));
-    return out;
-  }
-  /* Council item 8: no bare ids of the team's research record on a hotel-facing screen (they stay on the Team tab). */
-  function evidenceLine(u) {
-    var n = u && u.ev ? String(u.ev).split(/[,;]\s*/).filter(Boolean).length : 0;
-    return u && u.draft ? 'Evidence: ' + lc(String(u.draftNote).replace(/\s*\(not from the D6 evidence pack\)/, '')) + '; not yet in the team’s research record.'
-      : n ? 'Based on ' + n_(n, 'entry', 'entries') + ' in the team’s research record (not yet published).'
-      : 'The team’s judgement from the catalogue description; no source entry.';
-  }
+  /* v2.7.0: the fold under a step-5 question: the data file's "why" line, its area and who answers (all verbatim from the data). */
+  function tailWhy(TQ, useId, t) { return [t.why, 'Area: ' + TQ.areas[t.a] + '.', 'Who answers: ' + t.whoLabel + '.']; }
   /* The smallest and the largest number of tailored questions over all use cases (the cover's "six to nine questions"). */
   function tailRange(TQ) { var n = Object.keys(TQ.uses).map(function (k) { return TQ.uses[k].qs.length; }); return [Math.min.apply(null, n), Math.max.apply(null, n)]; }
   function lc(s) { s = String(s || ''); return s.charAt(0).toLowerCase() + s.slice(1); }
@@ -530,7 +510,7 @@
       boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
       cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
-      mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: tu && tu.draft ? C.DRAFT + '. These questions come from a draft row the team has not reviewed yet.' : '',
+      mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: '',
       areasHead: C.AREAS_HEAD,
       areas: ev.areas.map(function (g) { return { k: g.k, name: g.name, yes: g.yes, n: g.n, unknown: g.unknown, count: g.yes + ' of ' + g.n, share: g.n ? Math.round(100 * g.yes / g.n) : 0, word: g.word ? C.AREA_WORD[g.word] : '', cls: g.word || 'none', line: areaLine(g) }; }),
       method: method(ev), since: since(rec.snaps) };
@@ -560,7 +540,7 @@
     return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
-  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, evidenceLine: evidenceLine, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
+  var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, legalFlags: legalFlags, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,

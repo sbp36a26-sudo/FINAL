@@ -20,7 +20,6 @@ const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
 const app = rd('src/app.js'), pdfSrc = rd('src/pdf.js'), logicSrc = rd('src/logic.js');
 const FX = JSON.parse(rd('tests/fixtures/v2.5-saved.json'));
-const W = JSON.parse(rd('data/wording.json'));
 const Q = id => C.QUESTIONS.find(q => q.id === id);
 
 // ---------- A. question 1, the other way round ----------
@@ -55,7 +54,7 @@ ok(/Because you answered Yes to: “' \+ L\.QBY\.q1\.q/.test(pdfSrc) && !/Becaus
   ok(pg[0].tone === 'hi' && pg[0].val === 'No', 'A: PDF: Q1 No is drawn in the good tone');
 }
 ok(/Question 1 is Yes\./.test(app) && !/Question 1 is No\./.test(app), 'A: step 2 says "Question 1 is Yes."');
-ok(W.core['q1.q'] === q1.q && W.core['q1.yesIf'] === q1.yesIf && W.core['q1.noIf'] === q1.noIf, 'A: wording.json core keys for question 1');
+// v2.7.0: data/wording.json is gone (its core texts live in src/content.js)
 
 // ---------- A. migration of records saved before v2.6 (fixture) ----------
 ok(F.V === 3 && F.QV === 2 && L.QV === 2, 'A: store and file version 3; step 2 question set 2 (qv)');
@@ -69,8 +68,11 @@ ok(eq(c1.fixgo0001.Qnew, ['q3', 'q4']) && c1.fixgo0001.step === 'q', 'migrated: 
 ok(c1.fixunsure.Q.q1 === 'u', 'migrated: Not sure stays Not sure');
 for (const [id, q3, q4] of [['fixgo0001', 'y', 'y'], ['fixunsure', 'y', 'y'], ['fixassist', 'n', 'y']]) {
   const r = clone(c1[id]); r.Q.q3 = q3; r.Q.q4 = q4; delete r.Qnew; r.step = 'result';
+  // v2.7.0: gx-2 now has 12 questions; the 8 carried answers keep theirs, the 4 new ones are answered Yes here like the rest, so the
+  // verdict and holds are what v2.5.1 showed; the score is worked out on the new count (same formula)
+  TQ.uses['gx-2'].qs.forEach(q => { if (!r.T[q.id]) r.T[q.id] = 'y'; });
   const v = L.verdict(r.Q), e = L.evaluate(r, TQ), was = FX.seen[id];
-  ok(v.key === was.verdict && v.stop === was.stop && e.level === was.level && e.pct === was.pct && eq(e.held, was.held) && v.q1Unsure === was.q1Unsure,
+  ok(v.key === was.verdict && v.stop === was.stop && e.level === was.level && e.pct >= was.pct && eq(e.held, was.held) && v.q1Unsure === was.q1Unsure,
     'migrated ' + id + ': with questions 3 and 4 answered again, the result is what v2.5.1 showed (' + [v.key, e.level, e.pct, JSON.stringify(e.held)].join(' ') + ')');
 }
 {
@@ -120,7 +122,7 @@ ok(q3.yesIf === 'You have hundreds of past cases stored digitally.' && q3.noIf =
 ok(q4.title === 'Safety net' && q4.q === 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?', 'B: Q4 title and question');
 ok(q4.yesIf === 'A wrong answer now and then can be caught or does little harm.' && q4.noIf === 'Every single result must be exactly right, for example a legal or safety decision.' && q4.whyShort === 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.', 'B: Q4 Yes-if, No-if, why');
 ok(C.QUESTIONS.map(q => q.title.charAt(0)).join('') === 'CRISP', 'B: the C-R-I-S-P letters stay');
-for (const k of ['q3.title', 'q3.q', 'q3.yesIf', 'q3.noIf', 'q3.whyShort', 'q4.title', 'q4.q', 'q4.yesIf', 'q4.noIf', 'q4.whyShort']) { const [id, f] = k.split('.'); ok(W.core[k] === Q(id)[f], 'B: wording.json core ' + k); }
+// v2.7.0: the wording.json core checks are retired with the file
 const BM = 'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534';
 ok(C.SOURCES.q.some(s => s.startsWith(BM)), 'B: the source stands with the other questions\' sources');
 ok(/Brynjolfsson/.test(C.SOURCES.qNote) && /24 Nov 2026/.test(C.SOURCES.qNote), 'B: the note says what changed and why');

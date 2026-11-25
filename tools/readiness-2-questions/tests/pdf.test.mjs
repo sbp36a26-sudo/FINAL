@@ -61,10 +61,10 @@ function answersDoc(rec, tag) {
 }
 
 // ---------- a guest chatbot, mixed answers ----------
-let r = mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → No
-let { m, pdf, t } = sameWords(r, 'gx-2');
+let r = mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']); r.By.m3 = '2027-01-15'; // v2.3: Partly → Planned, Doesn't apply → No
+let { m, pdf, t } = sameWords(r, 'fo-4');
 ok(eq(heads(pdf), ['Result', 'Start with these three', 'Action plan by person', 'Questions for the vendor', 'EU AI Act: provisional label']), 'sections exactly as the owner listed them, in this order');
-answersDoc(r, 'gx-2');
+answersDoc(r, 'fo-4');
 ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && t.includes('Not legal advice.') && t.includes('as of 24 Nov 2026'), 'title, hotel, role, date, prototype line');
 /* PDF redesign: page 1: the box (verdict, score, the short reason line, the must-haves line), the reason and the points under it,
    then "Start with"; a page break before "Is this an AI problem?". */
@@ -79,16 +79,16 @@ ok(!/\b(m\d+|pe1|x-auto)\b/.test(t) && !/\b(P1|F1|T1|D5a|G2s)\b/.test(t), 'no in
 ok(!SRC_RE.test(t) && !t.includes('90 catalogue use cases coded') && !t.includes('{N}') && !C.SOURCES.q.some(x => t.includes(x)), 'no source line of any step in the result PDF');
 // ---------- the other two walks, and the special cases ----------
 sameWords(mk('hr-2', [], []), 'hr-2 all Yes'); sameWords(mk('hr-2', ['n', 'k', 'k'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n']), 'hr-2 mixed');
-let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8 draft'); ok(x.t.includes('Draft questions: team to review'), 'a draft use case says so in the PDF');
+let x = sameWords(mk('fo-8', ['pl'], []), 'fo-8'); ok(!x.t.includes('Draft questions'), 'v2.7.0: no draft note (the questions-only data replaces the draft rows)');
 answersDoc(mk('fo-8', ['pl'], []), 'fo-8 draft');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label'), '"None of these fits": must-haves only, said so; no vendor or label section');
 { const a = answersDoc(mk('none', ['y', 'pl'], []), 'none'); ok(a.items.length === 15 && !a.pdf.blocks.some(b => b.k === 'label' && /^Step 5/.test(b.t)) && a.t.includes('Use case: None of these fits'), '"None of these fits": 5 + 10 answers, no step 5 group'); }
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
-x = sameWords(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('gx-2', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Not sure', 'No', 'No', 'No', 'No']), 'the five step 2 answers as given (Not sure, No x4)'); }
+x = sameWords(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Not sure', 'No', 'No', 'No', 'No']), 'the five step 2 answers as given (Not sure, No x4)'); }
 { /* answers saved before v2.3 (Partly, Doesn't apply) are no longer offered: "Not answered" */
-  const o = mk('gx-2', [], []); o.A.m2 = 'p'; o.T[TQ.uses['gx-2'].qs[0].id] = 'na'; const a = answersDoc(o, 'retired answers'), im = a.m.ev.items;
+  const o = mk('fo-4', [], []); o.A.m2 = 'p'; o.T[TQ.uses['fo-4'].qs[0].id] = 'na'; const a = answersDoc(o, 'retired answers'), im = a.m.ev.items;
   ok(im.filter(i => i.old).length === 2 && a.items.filter(b => b.val === 'Not answered').length >= 2 && !/earlier answer/.test(a.t), 'retired answers (Partly, Doesn\'t apply) read "Not answered"'); }
-r = mk('gx-2', [], []); r.snaps = [L.snapshot(L.evaluate(mk('gx-2', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z', 'gx-2'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z', 'gx-2')];
+r = mk('fo-4', [], []); r.snaps = [L.snapshot(L.evaluate(mk('fo-4', ['k', 'n'], []), TQ), '2026-11-20T09:00:00.000Z', 'fo-4'), L.snapshot(L.evaluate(r, TQ), '2026-11-24T09:00:00.000Z', 'fo-4')];
 x = sameWords(r, 'since last time'); ok(x.t.includes('Since last time (20 Nov 2026)') && x.t.includes('Verdict: Not ready yet → Ready to start a pilot.'), 'the return-visit lines');
 x = sameWords(mk('rm-1', [], [], { hotel: { name: '', role: '', type: 'managed', country: 'Other' } }), 'no name'); ok(x.t.includes('Hotel: Managed or franchised · Other (outside the EU)') && !x.t.includes('Filled in by'), 'no hotel name, no role');
 // random sets over every use case: the words always match
@@ -121,7 +121,7 @@ function layout(mdl, d, tag) {
   ok(orphans.length === 0, tag + ': no heading as the last line of a page ' + JSON.stringify(orphans));
   ok(mdl.stop ? N === 1 : mdl.kind === 'answers' ? byPage(1).some(l => l.line === 'Do you need AI? Your answers') && byPage(1).some(l => l.line === 'Result:') : byPage(1).some(l => l.line.startsWith(mdl.blocks.find(b => b.k === 'verdict').name)), tag + ': page 1 is the summary (verdict, or the answers\' summary)');
 }
-for (const [tag0, rec] of [['gx-2', mk('gx-2', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'pl'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
+for (const [tag0, rec] of [['fo-4', mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'pl'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
   for (const kind of ['result', 'answers']) {
   const mdl = P.model(rec, env, kind), tag = tag0 + ' ' + kind; d = drawn(mdl);
   ok(d.r.pages >= 1 && d.r.pages <= (kind === 'result' ? 4 : 6) && d.r.footers.length === d.r.pages && d.r.footers.every((f, i) => f === P.footer(i + 1, d.r.pages)), tag + ': ' + d.r.pages + ' pages, a footer with "page n of N" on each');

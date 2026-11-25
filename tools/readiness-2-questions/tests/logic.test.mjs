@@ -93,14 +93,13 @@ function mk(use, musts, tail) {
 const rep = (v, n) => Array(n).fill(v);
 // independent arithmetic (rules v2.1: "Don't know yet" counts as 0 points; no score under "Not enough information yet";
 // no top verdict for a use labelled high-risk or flagged for sensitive data, or with a No carried from questions 2 to 5)
-const LABELS = JSON.parse(readFileSync(join(root, '../register/data/uc-labels.json'), 'utf8')).uses;
 function expect(rec) {
   // v2.3: Partly (p) and Doesn't apply (na) are no longer offered; a saved one counts as not answered
   const P = { y: 2, pl: 1, n: 0, k: 0 }, gone = v => v === 'p' || v === 'na' ? '' : v; let pts = 0, max = 0, total = 0, unk = 0;
   const mv = F.MUST_IDS.map(id => gone(rec.A[id])), tv = rec.use && rec.use !== 'none' ? TQ.uses[rec.use].qs.map(q => gone(rec.T[q.id])) : [];
   mv.concat(tv).forEach(v => { total++; if (v === 'k' || !v) unk++; pts += P[v || 'k']; max += 2; });
   const allYes = mv.every(v => v === 'y'), anyNo = mv.some(v => v === 'n'), ratio = max ? pts / max : null;
-  const lab = LABELS.find(u => u.id === rec.use), legal = !!(lab && lab.base === 'high') || !!(rec.use && rec.use !== 'none' && TQ.uses[rec.use].add.includes('sens'));
+  const legal = !!(rec.use && rec.use !== 'none' && TQ.uses[rec.use].sensitive); // v2.7.0: the data's sensitive flag only
   // v2.6: a No on Q2 to Q5 holds (v2.5 left Q4 out, O3); any Not sure holds (O2); "Almost ready" needs half the must-haves at Yes and the top verdict
   // half the answered tailored questions at Yes (O1); "None of these fits" is "Almost ready" at best (O4)
   const carriedNo = ['q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'n'), notSure = ['q1', 'q2', 'q3', 'q4', 'q5'].some(q => rec.Q[q] === 'u');
@@ -113,8 +112,8 @@ function expect(rec) {
   return { level, pct: level === 'noinfo' ? null : Math.floor(100 * pts / max), known: total - unk, total, pts, max };
 }
 function same(rec, tag) { const e = L.evaluate(rec, TQ), x = expect(rec); ok(e.level === x.level && e.pct === x.pct && e.counts.known === x.known && e.counts.total === x.total, tag + ': ' + JSON.stringify(x) + ' got ' + e.level + ' ' + e.pct); return e; }
-const U = 'gx-2', NQ = TQ.uses[U].qs.length; // 8 tailored questions
-ok(NQ === 8, 'gx-2 has 8 tailored questions (fixture for the edges)');
+const U = 'fo-4', NQ = TQ.uses[U].qs.length; // v2.7.0: fo-4 has 8 questions, as gx-2 had in v2.6.1, so every edge keeps its numbers
+ok(NQ === 8 && !TQ.uses[U].sensitive, 'fo-4 has 8 questions and no sensitive flag (fixture for the edges; gx-2 now has 12)');
 let e = same(mk(U, [], []), 'all Yes'); ok(e.level === 'ready' && e.pct === 100 && !e.cap, 'all Yes → Ready to start a pilot, 100%');
 // 75% edge with every must-have Yes: 18 questions, 36 points possible; 27 = 75%, 26 = 72%
 // (v2.5: the top verdict also needs half the answered tailored questions at Yes, so the 75% set has 3 Yes of 4 answered)
@@ -123,7 +122,7 @@ e = same(mk(U, [], ['n', 'n', 'n', 'n', 'pl', 'y', 'y', 'y']), '27 of 36, 3 of 8
 e = same(mk(U, [], ['n', 'n', 'n', 'n', 'n', 'y', 'y', 'y']), '26 of 36'); ok(e.pct === 72 && e.level === 'almost', '72% → Almost ready');
 // display never rounds up over a cut-off: 74.x% shows 74
 e = L.evaluate(mk('rm-3', [], ['n', 'n', 'n', 'n', 'y', 'y']), TQ); ok(e.pts === 24 && e.max === 32 && e.pct === 75, 'rm-3 24/32 = 75%');
-e = same(mk('rm-1', ['y','y','y','y','y','y','y','y','y','y'], ['n','n','n','n','pl','pl']), 'rm-1 22/32'); ok(e.pct === 68 && e.level === 'almost', '68.75% is shown as 68%, Almost ready');
+e = same(mk('rm-3', ['y','y','y','y','y','y','y','y','y','y'], ['n','n','n','n','pl','pl']), 'rm-3 22/32'); ok(e.pct === 68 && e.level === 'almost', '68.75% is shown as 68%, Almost ready (v2.7.0: rm-3, 6 questions; rm-1 now has 7)');
 // 50% edge (no must-have at No; v2.5: half the must-haves at Yes): 5 Yes + 5 Planned = 15 of 20; tailored 3 Planned = 3 of 16 → 18/36 = 50%
 e = same(mk(U, rep('y', 5).concat(rep('pl', 5)), rep('pl', 3).concat(rep('n', 5))), '50%'); ok(e.pct === 50 && e.level === 'almost', 'exactly 50% → Almost ready');
 e = same(mk(U, rep('y', 5).concat(rep('pl', 5)), rep('pl', 2).concat(rep('n', 6))), '47%'); ok(e.pct === 47 && e.level === 'notready', 'below 50% → Not ready yet');
@@ -186,15 +185,11 @@ ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technol
 const pb = P.model(r, env).blocks, pi = pb.findIndex(b => b.t === m.levelName + ' · ' + m.scoreHead);
 ok(pi > 0 && pb[pi + 1].t === m.reason && pb[pi + 2].t === m.scoreSub && pb.some(b => b.k === 'h' && b.t === 'Action plan by person') && pb.some(b => /as of 24 Nov 2026/.test(b.t || '')), 'the PDF carries the verdict with the score beside it, the reason, the points, and the plan');
 ok(L.personText(m, m.people[0], '').startsWith('Do you need AI? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
-// draft use cases and evidence lines
-const drafts = Object.keys(TQ.uses).filter(k => TQ.uses[k].draft).sort();
-ok(eq(drafts, ['fo-6', 'fo-7', 'fo-8', 'gm-7', 'hk-7', 'hr-6', 'kc-6', 'rm-9']) && TQ.nDraft === 8 && TQ.nFromWorkbook === 91, 'the 8 use cases without a workbook row are marked draft');
-ok(L.resultModel(mk('fo-8', [], []), env).draft.startsWith('Draft questions: team to review') && !L.resultModel(mk(U, [], []), env).draft, 'draft note on the result for a draft use case only');
+// v2.7.0: no draft marks (the questions-only data replaces the draft rows); the why-fold is the data's own "why", area and who answers
+ok(!Object.values(TQ.uses).some(u => 'draft' in u) && !L.resultModel(mk('fo-8', [], []), env).draft, 'no draft marks');
 Object.keys(TQ.uses).forEach(id => TQ.uses[id].qs.forEach(q => {
-  const w = L.tailWhy(TQ, id, q), u = TQ.uses[id];
-  ok(w[0] === 'Area: ' + TQ.areas[q.a] + '.' && w.some(t => t.startsWith('Resource intensity (team judgement, not evidence-based): ' + u.int + ': ')) &&
-    w.some(t => u.draft ? /^Evidence: team draft/.test(t) : u.ev ? t === 'Based on ' + u.ev.split(', ').length + (u.ev.split(', ').length === 1 ? ' entry' : ' entries') + ' in the team’s research record (not yet published).' : t === 'The team’s judgement from the catalogue description; no source entry.') && !w.some(t => /[A-Z]{3}-\d{3}-\d{2}/.test(t)) &&
-    (!u.arch || w.some(t => t.startsWith('Type of tool (the team’s grouping): ' + TQ.arch[u.arch].n))), id + '.' + q.id + ': why-fold has area, type of tool, intensity and the evidence line');
+  const w = L.tailWhy(TQ, id, q);
+  ok(eq(w, [q.why, 'Area: ' + TQ.areas[q.a] + '.', 'Who answers: ' + q.whoLabel + '.']), q.id + ': why-fold is the data\'s why line, area and who answers');
 }));
 // return visits
 const s1 = L.snapshot(L.evaluate(mk(U, ['k', 'k'], []), TQ), '2026-11-20T09:00:00.000Z', U), s2 = L.snapshot(L.evaluate(mk(U, [], []), TQ), '2026-11-24T09:00:00.000Z', U);

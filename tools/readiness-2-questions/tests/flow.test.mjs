@@ -12,7 +12,7 @@ function drive(store, evs) { let ok2 = true; for (const [ev, arg] of evs) { cons
 const sendAll = (s, ev, ids, v) => ids.reduce((st, id) => F.reduce(st, ev, { id, value: v }, env).store, s);
 
 // ---------- table ----------
-ok(eq(F.STEPS, ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result']) && F.V === 3 && F.KEY === 'hftp-readiness2-v1', 'states, version 3 (v2.6: was 2), same storage key');
+ok(eq(F.STEPS, ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result']) && F.V === 3 && F.KEY === 'hftp-readiness2q-v1', 'states, version 3; v2.7.0: own storage key hftp-readiness2q-v1');
 ok(eq(Object.keys(F.FLOW), F.STEPS) && eq(F.FLOW.start, { begin: 'hotel' }) && eq(F.FLOW.stop, { change: 'q' }), 'one row per state; the stop screen only goes back to the questions');
 const full = { hotelDone: true, q1Stop: false, qDone: true, mustDone: true, whereDone: true, none: false, hasTail: true, tailDone: true };
 const EXPECT = { 'start.begin': 'hotel', 'hotel.back': 'start', 'hotel.next': 'q', 'q.back': 'hotel', 'q.next': 'must', 'must.back': 'q', 'must.next': 'where', 'where.back': 'must', 'where.next': 'tailored', 'tailored.back': 'where', 'tailored.next': 'result', 'result.back': 'tailored', 'result.edit': 'q', 'stop.change': 'q' };

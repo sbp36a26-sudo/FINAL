@@ -1,0 +1,223 @@
+{
+ "note": "Must-have share lines: the team resource analysis (AI Use Cases: Resources Needed per Use Case, D4 x D6, Nov 2026), copied once from readiness-2 data/usecase-questions.json (generator output) on 25 Nov 2026. Step-5 questions no longer come from it.",
+ "areas": {
+  "pe": "People",
+  "sk": "Skills",
+  "fi": "Financial investment",
+  "te": "Technology infrastructure",
+  "da": "Data",
+  "or": "Organisation & governance"
+ },
+ "matrixTotal": 90,
+ "nFromWorkbook": 91,
+ "nDraft": 8,
+ "blocks": [
+  {
+   "area": "People",
+   "name": "Named owner with time set aside",
+   "codes": [
+    "P1"
+   ],
+   "n": 90,
+   "share": 1,
+   "layer": "Foundation: every tool"
+  },
+  {
+   "area": "People",
+   "name": "Human reviewer who checks or overrides AI output",
+   "codes": [
+    "P5",
+    "G3"
+   ],
+   "n": 59,
+   "share": 0.6556,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "People",
+   "name": "Frontline adoption and change support",
+   "codes": [
+    "P4",
+    "O6"
+   ],
+   "n": 35,
+   "share": 0.3889,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Skills",
+   "name": "AI literacy: use the tool and check its output",
+   "codes": [
+    "P2",
+    "P3"
+   ],
+   "n": 30,
+   "share": 0.3333,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Skills",
+   "name": "Specialist domain or technical skills",
+   "codes": [],
+   "n": 70,
+   "share": 0.7778,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Skills",
+   "name": "Vendor evaluation and integration know-how",
+   "codes": [
+    "O4"
+   ],
+   "n": 64,
+   "share": 0.7111,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Financial investment",
+   "name": "Recurring subscription or usage budget",
+   "codes": [
+    "F1"
+   ],
+   "n": 77,
+   "share": 0.8556,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Financial investment",
+   "name": "Capital spending on hardware or sensors",
+   "codes": [
+    "F1"
+   ],
+   "n": 13,
+   "share": 0.1444,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Financial investment",
+   "name": "KPI baseline and scale/stop rule",
+   "codes": [
+    "F2",
+    "F3"
+   ],
+   "n": 58,
+   "share": 0.6444,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Technology infrastructure",
+   "name": "Two-way link to core systems (PMS, CRS, POS, accounting)",
+   "codes": [
+    "T1",
+    "T2"
+   ],
+   "n": 58,
+   "share": 0.6444,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Technology infrastructure",
+   "name": "Connectivity, telephony and on-site devices",
+   "codes": [
+    "T3"
+   ],
+   "n": 20,
+   "share": 0.2222,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Technology infrastructure",
+   "name": "Fallback if the tool or vendor fails",
+   "codes": [
+    "T5"
+   ],
+   "n": 30,
+   "share": 0.3333,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Data",
+   "name": "Historical operational data",
+   "codes": [
+    "D1",
+    "D3"
+   ],
+   "n": 48,
+   "share": 0.5333,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Data",
+   "name": "Unified guest or customer profile",
+   "codes": [
+    "D2"
+   ],
+   "n": 5,
+   "share": 0.0556,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Data",
+   "name": "Curated knowledge and hotel content (FAQ, SOPs, menus, policies)",
+   "codes": [
+    "D4"
+   ],
+   "n": 40,
+   "share": 0.4444,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Data",
+   "name": "Lawful basis and vendor data agreement",
+   "codes": [
+    "D5"
+   ],
+   "n": 22,
+   "share": 0.2444,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Organisation & governance",
+   "name": "Approved goal and clear approval path",
+   "codes": [
+    "O1",
+    "O3"
+   ],
+   "n": 53,
+   "share": 0.5889,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Organisation & governance",
+   "name": "Process redesign and operating rules (limits, hand-offs)",
+   "codes": [
+    "O2",
+    "G3"
+   ],
+   "n": 72,
+   "share": 0.8,
+   "layer": "Common: most tools"
+  },
+  {
+   "area": "Organisation & governance",
+   "name": "AI-use policy and use-case risk review",
+   "codes": [
+    "G1",
+    "G2"
+   ],
+   "n": 30,
+   "share": 0.3333,
+   "layer": "Specific to some archetypes"
+  },
+  {
+   "area": "Organisation & governance",
+   "name": "Security and payment-data controls",
+   "codes": [
+    "G4"
+   ],
+   "n": 10,
+   "share": 0.1111,
+   "layer": "Specific to some archetypes"
+  }
+ ]
+}

@@ -15,7 +15,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
 const app = rd('src/app.js'), css = rd('src/style.css'), logicSrc = rd('src/logic.js'), contentSrc = rd('src/content.js');
 const team = readFileSync(join(root, '../readiness-check/src/team.js'), 'utf8');
-const GX = TQ.uses['gx-2'].qs;
+const GX = TQ.uses['fo-4'].qs; // v2.7.0: fo-4 has 8 questions as gx-2 had in v2.6.1 (gx-2 now has 12), so the patterns keep their numbers
 const pdfText = r => P.model(r, env).blocks.map(b => [b.t, b.sub, b.check, b.answer].filter(Boolean).join(' ')).join('\n');
 
 // ---------- rules v2.5 and the JUDGEMENT constants (O1 to O4) ----------
@@ -31,15 +31,15 @@ ok(J.UNKNOWN_SCORES_ZERO === true && J.LEGAL_HOLDS_TOP === true && J.CARRIED_NO_
 // ---------- the council's nine answer patterns on gx-2 (and the legal hold on hr-2) ----------
 const mk = (use, o) => { const r = finished(F, D, use); if (o.Q) Object.assign(r.Q, o.Q); if (o.A) F.MUST_IDS.forEach(id => { r.A[id] = o.A; }); if (o.A1) Object.assign(r.A, o.A1); if (o.T && use !== 'none') TQ.uses[use].qs.forEach(q => { r.T[q.id] = o.T; }); return r; };
 const PAT = {
-  A: [mk('gx-2', { A: 'pl' }), 'notready', 72, [], /^Because none of the 10 must-haves is Yes\.$/],
-  B: [mk('gx-2', { T: 'pl' }), 'almost', 77, ['tail'], /^Held back: fewer than half the questions for this use case are Yes\.$/],
-  C: [mk('gx-2', {}), 'ready', 100, [], /^$/],
-  D: [mk('gx-2', { Q: { q5: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/],
-  E: [mk('gx-2', { Q: { q1: 'u' } }), 'almost', 100, ['notsure'], /^Held back: Not sure in step 2\.$/],
-  F: [mk('gx-2', { T: 'k' }), 'almost', 55, [], /^$/],
+  A: [mk('fo-4', { A: 'pl' }), 'notready', 72, [], /^Because none of the 10 must-haves is Yes\.$/],
+  B: [mk('fo-4', { T: 'pl' }), 'almost', 77, ['tail'], /^Held back: fewer than half the questions for this use case are Yes\.$/],
+  C: [mk('fo-4', {}), 'ready', 100, [], /^$/],
+  D: [mk('fo-4', { Q: { q5: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/],
+  E: [mk('fo-4', { Q: { q1: 'u' } }), 'almost', 100, ['notsure'], /^Held back: Not sure in step 2\.$/],
+  F: [mk('fo-4', { T: 'k' }), 'almost', 55, [], /^$/],
   G: [mk('none', {}), 'almost', 100, ['none'], /^Held back: no use case chosen\.$/],
-  H: [mk('gx-2', { A1: { m4: 'n' } }), 'notready', 94, [], /^Because 1 must-have is No\.$/],
-  I: [mk('gx-2', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/], // v2.6: was ready with the assistant-only condition
+  H: [mk('fo-4', { A1: { m4: 'n' } }), 'notready', 94, [], /^Because 1 must-have is No\.$/],
+  I: [mk('fo-4', { Q: { q4: 'n' } }), 'almost', 100, ['carried'], /^Held back: a No in step 2\.$/], // v2.6: was ready with the assistant-only condition
   legal: [mk('hr-2', {}), 'almost', 100, ['legal'], /^Held back: legal items to check\.$/]
 };
 const heads = {};
@@ -79,15 +79,14 @@ ok(/at least half the must-haves at Yes/.test(meth) && /at least half the questi
 ok(/v2\.5/.test(meth), 'method names rules v2.5');
 
 // ---------- BUILD NOW 5 / O6: tailored tasks read as the team-worded question ----------
-const r5 = finished(F, D, 'gx-2'); r5.T.pe1 = 'n'; r5.T.sk1 = 'pl'; r5.TBy.sk1 = '2027-02-01'; r5.T.fi1 = 'k'; r5.T.or2 = 'pl';
+const r5 = finished(F, D, 'fo-4'); r5.T[GX[0].id] = 'n'; r5.T[GX[1].id] = 'pl'; r5.TBy[GX[1].id] = '2027-02-01'; r5.T[GX[2].id] = 'k'; r5.T[GX[7].id] = 'pl';
 const o5 = L.open(L.evaluate(r5, TQ)), t5 = k => o5.find(x => x.key === k)?.text;
-ok(t5('pe1') === 'Make this a Yes: ' + GX[0].q, 'O6: No → "Make this a Yes: {question}"');
-ok(t5('sk1') === 'Finish: ' + GX[1].q + ' (planned by 1 Feb 2027)', 'O6: Planned with a date → "Finish: {question} (planned by …)": ' + t5('sk1'));
-ok(t5('or2') === 'Finish: ' + GX.find(q => q.id === 'or2').q, 'O6: Planned → "Finish: {question}"');
-ok(t5('fi1') === 'Find out: “' + GX[2].q + '”', 'O6: Don\'t know yet unchanged');
-ok(!o5.some(x => !x.must && GX.some(q => x.text.includes(q.act))), 'O6: no workbook action text in a tailored task');
-ok(GX.every(q => typeof q.act === 'string' && q.act), 'O6: act kept in the data');
-const r5m = finished(F, D, 'gx-2'); r5m.A.m1 = 'n'; ok(L.open(L.evaluate(r5m, TQ))[0]?.text === C.MUSTS[0].act, 'O6: must-have actions stay as they are');
+ok(t5(GX[0].id) === 'Make this a Yes: ' + GX[0].q, 'O6: No → "Make this a Yes: {question}"');
+ok(t5(GX[1].id) === 'Finish: ' + GX[1].q + ' (planned by 1 Feb 2027)', 'O6: Planned with a date → "Finish: {question} (planned by …)": ' + t5(GX[1].id));
+ok(t5(GX[7].id) === 'Finish: ' + GX[7].q, 'O6: Planned → "Finish: {question}"');
+ok(t5(GX[2].id) === 'Find out: “' + GX[2].q + '”', 'O6: Don\'t know yet unchanged');
+ok(!GX.some(q => 'act' in q), 'O6 (v2.7.0): the questions-only data carries no action text; a step-5 task is the question itself');
+const r5m = finished(F, D, 'fo-4'); r5m.A.m1 = 'n'; ok(L.open(L.evaluate(r5m, TQ))[0]?.text === C.MUSTS[0].act, 'O6: must-have actions stay as they are');
 ok(!/Agree in writing: hand-off rules|Train or brief the people involved/.test(pdfText(r5)), 'O6: the PDF carries no workbook shorthand');
 
 // ---------- BUILD NOW 6: Copy for IT ----------
@@ -167,7 +166,7 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   ok(st && c1 && c2 && !info.newer && !info.questionsChanged && !info.useChanged, 'v2.4 store opens with both checks and no notice');
   ok(c1.step === 'q' && c2.step === 'q' && c1.sharedAt && c1.sharedMode === 'local' && eq(c1.Qnew, ['q3', 'q4']), 'v2.4 store: both wait on step 2 (v2.6: questions 3 and 4 are new; was: on their result); check 1 still knows its copy');
   const m1 = L.resultModel(c1, env), m2 = L.resultModel(c2, env);
-  ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 69, 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready, 69%');
+  ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 56 && eq(Object.keys(c1.T).length, 8), 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready; v2.7.0: its 8 gx-2 answers carry to 8 of the 12 new questions (pe1 to pe1a and pe1b, x-auto to both limits questions), 4 new ones start unanswered, so 25 of 44 points = 56% (was 69%)');
   ok(FX.seen.check2.levelName === 'Ready to start a pilot' && m2.level === 'almost' && m2.held.join() === 'none', 'v2.4 check 2 (None of these fits) was Ready, is Almost ready under rules v2.5 (O4)');
   ok(m1.since && /worked out with earlier rules/.test(m1.since.lines.concat(m1.since.earlier).join(' ') + ' ' + JSON.stringify(m1.since)) || (c1.snaps.length === 1 && c1.snaps[0].rules === 'v2.3 (24 Nov 2026)'), 'v2.4 snapshot kept with rules v2.3');
   const withNew = clone(c1); withNew.snaps.push(L.snapshot(L.evaluate(c1, TQ), '2026-11-25T10:00:00Z', c1.use, TQ.uses[c1.use].sig));

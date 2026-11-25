@@ -18,7 +18,7 @@ export function data() {
 export function envOf(D, F) {
   const env = { cat: D.cat, tq: {} };
   env.sig = {};
-  Object.keys(D.tq.uses).forEach(k => { env.tq[k] = D.tq.uses[k].qs.map(q => ({ id: q.id })); env.sig[k] = D.tq.uses[k].sig; });
+  Object.keys(D.tq.uses).forEach(k => { env.tq[k] = D.tq.uses[k].qs.map(q => ({ id: q.id, carry: q.carry || null })); env.sig[k] = D.tq.uses[k].sig; });
   return env;
 }
 export function tester(name) {

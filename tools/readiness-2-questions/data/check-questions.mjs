@@ -1,48 +1,46 @@
-// Checks data/usecase-questions.json. Flags: fewer than 6 or more than 10 questions, a question over 30 words (35 in the team's plain wording), no question mark
-// at the end (or one in the middle), a leftover semicolon, a duplicate within a use case, a legal reference that must not reach
-// a hotel (article numbers, "see D7"), an empty area the workbook has content for, and a file that differs from what the generator makes now.
-// Run:   node tools/readiness-2/data/check-questions.mjs         (exit code 1 when anything is flagged)
+// Checks data/usecase_questions_only.json, the step-5 questions (v2.7.0, the owner's questions-only data, used verbatim).
+// Flags: fewer than 6 or more than 12 questions in a use case, a question over 20 words, not exactly one question mark (at the end),
+// a duplicate within a use case, a question text that appears in two use cases, an unknown area or "who answers", an empty "why".
+// Run:   node tools/readiness-2-questions/data/check-questions.mjs        (exit code 1 when anything is flagged)
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generate, inputs, words, MAX_WORDS, MAX_WORDS_WORDED, MIN_Q, MAX_Q, AREAS, items } from './build-questions.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-export function check(J, src) {
-  const flags = [], f = (id, m) => flags.push(id + ': ' + m);
-  Object.entries(J.uses).forEach(([id, u]) => {
-    if (u.qs.length < MIN_Q) f(id, 'only ' + u.qs.length + ' questions');
-    if (u.qs.length > MAX_Q) f(id, u.qs.length + ' questions');
+export const MIN_Q = 6, MAX_Q = 12, MAX_WORDS = 20;
+export const AREAS = [['pe', 'People'], ['sk', 'Skills'], ['fi', 'Financial investment'], ['te', 'Technology infrastructure'], ['da', 'Data'], ['or', 'Organisation & governance']];
+/* "who answers" (the data's labels) → the tool's role keys (R2Content.WHO). */
+export const WHO = { GM: 'gm', 'Department head': 'dept', Finance: 'fin', IT: 'it', Owner: 'owner' };
+export const words = s => String(s).trim().split(/\s+/).filter(Boolean).length;
+const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+export function check(D) {
+  const flags = [], f = (id, m) => flags.push(id + ': ' + m), where = new Map();
+  D.use_cases.forEach(u => {
+    const n = u.questions.length;
+    if (n < MIN_Q) f(u.id, 'only ' + n + ' questions');
+    if (n > MAX_Q) f(u.id, n + ' questions');
     const seen = new Set(), ids = new Set();
-    u.qs.forEach(x => {
-      const tag = id + '.' + x.id;
-      if (ids.has(x.id)) f(tag, 'duplicate question id'); ids.add(x.id);
-      if (words(x.q) > (x.worded ? MAX_WORDS_WORDED : MAX_WORDS)) f(tag, words(x.q) + ' words: ' + x.q);
-      if (!/\?$/.test(x.q)) f(tag, 'no question mark at the end: ' + x.q);
-      if (/\?./.test(x.q)) f(tag, 'question mark in the middle: ' + x.q);
-      if (/;/.test(x.q)) f(tag, 'leftover semicolon: ' + x.q);
-      if (/see D7|\bArt\.|\bAnnex\b/i.test(x.q + ' ' + x.act)) f(tag, 'legal reference in hotel-facing text: ' + x.q);
-      if (/\s{2,}|\(\s*\)|,\s*,|: ?\?/.test(x.q)) f(tag, 'untidy text: ' + x.q);
-      if (!/^[A-Z]/.test(x.q)) f(tag, 'does not start with a capital: ' + x.q);
-      const key = x.q.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-      if (seen.has(key)) f(tag, 'duplicate question: ' + x.q); seen.add(key);
-      if (!x.act || !/\.$/.test(x.act)) f(tag, 'action missing or without a full stop: ' + x.act);
-      if (!AREAS.some(a => a[0] === x.a)) f(tag, 'unknown area ' + x.a);
+    u.questions.forEach(q => {
+      if (ids.has(q.id)) f(q.id, 'duplicate question id'); ids.add(q.id);
+      if (!q.id.startsWith(u.id + '.')) f(q.id, 'id does not start with the use case id');
+      if (words(q.text) > MAX_WORDS) f(q.id, words(q.text) + ' words: ' + q.text);
+      if ((q.text.match(/\?/g) || []).length !== 1 || !/\?$/.test(q.text)) f(q.id, 'not exactly one question mark, at the end: ' + q.text);
+      const k = norm(q.text);
+      if (seen.has(k)) f(q.id, 'duplicate question in the use case: ' + q.text); seen.add(k);
+      if (where.has(k) && where.get(k) !== u.id) f(q.id, 'also asked in ' + where.get(k) + ': ' + q.text); where.set(k, u.id);
+      if (!AREAS.some(a => a[1] === q.area)) f(q.id, 'unknown area ' + q.area);
+      if (!WHO[q.who_answers]) f(q.id, 'unknown who answers ' + q.who_answers);
+      if (!String(q.why || '').trim()) f(q.id, 'no why line');
     });
   });
-  if (src) {
-    /* every workbook cell with content has at least one question in its area */
-    const byName = new Map(src.X.rows.map(r => [r.name, r]));
-    Object.entries(J.uses).forEach(([id, u]) => { const r = byName.get(u.name); if (!r) return; AREAS.forEach(([k]) => { if (items(r.r[k]).length && !(k === 'te' && !u.arch && /^None$/i.test(r.r[k])) && !u.qs.some(x => x.a === k && x.kind !== 'addon')) f(id, 'workbook cell without a question: ' + k); }); });
-    if (JSON.stringify(generate(src)) !== JSON.stringify(J)) flags.push('usecase-questions.json is not what the generator makes now: run build-questions.mjs');
-  }
   return flags;
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const J = JSON.parse(readFileSync(join(here, 'usecase-questions.json'), 'utf8'));
-  const flags = check(J, inputs());
+  const D = JSON.parse(readFileSync(join(here, 'usecase_questions_only.json'), 'utf8'));
+  const flags = check(D);
   flags.forEach(x => console.log('FLAG  ' + x));
-  const n = Object.values(J.uses).reduce((a, u) => a + u.qs.length, 0), per = Object.values(J.uses).map(u => u.qs.length);
-  console.log(Object.keys(J.uses).length + ' use cases, ' + n + ' questions (' + Math.min(...per) + ' to ' + Math.max(...per) + ' each), ' + flags.length + ' flagged');
+  const per = D.use_cases.map(u => u.questions.length), n = per.reduce((a, b) => a + b, 0);
+  console.log(D.use_cases.length + ' use cases, ' + n + ' questions (' + Math.min(...per) + ' to ' + Math.max(...per) + ' each), ' + flags.length + ' flagged');
   if (flags.length) process.exit(1);
 }

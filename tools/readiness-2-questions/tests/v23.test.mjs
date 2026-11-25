@@ -37,8 +37,8 @@ ok(!go('answer', { id: 'm1', value: 'p' }) && !go('answer', { id: 'm1', value: '
 ['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'm1', value: v }) && F.cur(s).A.m1 === v, 'step 3: ' + v + ' is accepted'));
 F.MUST_IDS.forEach(id => go('answer', { id, value: 'y' })); go('next'); go('cat', 'Commercial'); go('dept', 'rm'); go('use', 'rm-1'); go('next');
 ok(F.cur(s).step === 'tailored', 'walked to step 5');
-ok(!go('answer', { id: 'pe1', value: 'p' }) && !go('answer', { id: 'pe1', value: 'na' }), 'step 5: Partly and Doesn\'t apply are refused');
-['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'pe1', value: v }) && F.cur(s).T.pe1 === v, 'step 5: ' + v + ' is accepted'));
+ok(!go('answer', { id: 'rm-1.pe1', value: 'p' }) && !go('answer', { id: 'rm-1.pe1', value: 'na' }), 'step 5: Partly and Doesn\'t apply are refused');
+['y', 'pl', 'n', 'k'].forEach(v => ok(go('answer', { id: 'rm-1.pe1', value: v }) && F.cur(s).T['rm-1.pe1'] === v, 'step 5: ' + v + ' is accepted'));
 ok(F.cur(s).id === id0, 'same check throughout');
 
 // ---------- 3. the old saved store (localStorage) ----------
@@ -50,8 +50,8 @@ const FXS = clone(FX.store); Object.values(FXS.checks).forEach(asV26);
 const st = F.migrate(FXS, ENV, info);
 ok(st && Object.keys(st.checks).length === 2 && st.cur === 'dynoldmust01' && !info.newer && !info.questionsChanged && !info.useChanged, 'old store: opens, both checks kept, no notice');
 const a = st.checks.dynoldmust01, b = st.checks.dynoldtail02;
-ok(a.A.m5 === 'p' && a.T.sk1 === 'p' && a.T.te1 === 'na' && b.T.te1 === 'na', 'old answers are kept as they were (not turned into another answer)');
-ok(a.A.m3 === 'pl' && a.By.m3 === '2027-03-01' && a.T.or1 === 'n' && a.T.fi1 === 'k', 'the other answers and the Planned date are kept');
+ok(a.A.m5 === 'p' && a.T['rm-1.sk1'] === 'p' && a.T['rm-1.te1'] === 'na' && b.T['rm-1.te1'] === 'na', 'old answers are kept as they were (not turned into another answer)');
+ok(a.A.m3 === 'pl' && a.By.m3 === '2027-03-01' && a.T['rm-1.or1'] === 'n' && a.T['rm-1.fi1'] === 'k', 'the other answers and the Planned date are kept');
 ok(a.step === 'must', 'a check with an old must-have answer opens on step 3 (it was on its result): ' + a.step);
 ok(b.step === 'tailored', 'a check with an old tailored answer only opens on step 5: ' + b.step);
 let ca = F.ctxOf(a, ENV), cb = F.ctxOf(b, ENV);
@@ -68,15 +68,15 @@ for (const [tag, r] of [['must + tailored', a], ['tailored only', b]]) {
   ok(e1.items.every(it => it.state !== 'partly' && it.state !== 'na'), tag + ': no Partly or Doesn\'t apply state is left');
 }
 const ia = L.evaluate(a, TQ).items;
-ok(ia.find(it => it.key === 'm5').v === '' && ia.find(it => it.key === 'm5').old === 'p' && ia.find(it => it.key === 'te1').old === 'na' && ia.find(it => it.key === 'm1').old === '', 'items carry the old answer separately (v empty, old p / na)');
-ok(L.evaluate(a, TQ).counts.total === 16, 'every question asked is counted (10 must-haves + 6 tailored), none left out as "Doesn\'t apply"');
+ok(ia.find(it => it.key === 'm5').v === '' && ia.find(it => it.key === 'm5').old === 'p' && ia.find(it => it.key === 'rm-1.te1').old === 'na' && ia.find(it => it.key === 'm1').old === '', 'items carry the old answer separately (v empty, old p / na)');
+ok(L.evaluate(a, TQ).counts.total === 17, 'every question asked is counted (10 must-haves + 7 for rm-1 since v2.7.0), none left out as "Doesn\'t apply"');
 // picking again
 s = { v: 2, cur: a.id, checks: { [a.id]: a } };
 ok(!go('answer', { id: 'm5', value: 'p' }), 'Partly cannot be chosen again');
 ok(go('answer', { id: 'm5', value: 'pl' }) && F.cur(s).A.m5 === 'pl', 'choosing Planned replaces the old Partly');
 ok(F.ctxOf(F.cur(s), ENV).mustDone && go('next') && F.cur(s).step === 'where' && go('next') && F.cur(s).step === 'tailored', 'then step 3 is done and step 5 is next');
 ok(!F.ctxOf(F.cur(s), ENV).tailDone, 'step 5 still holds two old answers');
-ok(go('answer', { id: 'sk1', value: 'n' }) && go('answer', { id: 'te1', value: 'y' }) && F.ctxOf(F.cur(s), ENV).tailDone && go('next') && F.cur(s).step === 'result', 'after picking again the result is reached');
+ok(go('answer', { id: 'rm-1.sk1', value: 'n' }) && go('answer', { id: 'rm-1.te1', value: 'y' }) && go('answer', { id: 'rm-1.n1', value: 'y' }) && F.ctxOf(F.cur(s), ENV).tailDone && go('next') && F.cur(s).step === 'result', 'after picking again the result is reached');
 // results computed under earlier rules
 const ev3 = L.evaluate(F.cur(s), TQ), snaps = F.cur(s).snaps.concat([L.snapshot(ev3, '2026-11-24T12:00:00.000Z', 'rm-1')]);
 const sn = L.since(snaps);
@@ -86,28 +86,15 @@ ok(sn.earlier.length === 1 && sn.earlier[0].endsWith('(' + L.EARLIER_RULES + ')'
 // ---------- 4. a saved file ----------
 info = {};
 const fr = F.cleanRec(asV26(clone(FX.file.check)), ENV, info, { file: true });
-ok(fr && fr.A.m1 === 'p' && fr.T.pe1 === 'na' && fr.step === 'must' && !info.questionsChanged, 'old file: opens on step 3, old answers kept as they were');
+ok(fr && fr.A.m1 === 'p' && fr.T['rm-1.pe1'] === 'na' && fr.step === 'must' && !info.questionsChanged, 'old file: opens on step 3, old answers kept as they were');
 const imp = F.reduce(F.blankStore(), 'import', asV26(clone(FX.file.check)), ENV);
 ok(imp.ok && F.cur(imp.store).id === 'dynoldfile03' && F.cur(imp.store).step === 'must', 'old file: the import event takes it');
 const ef = L.evaluate(fr, TQ);
-ok(ef.items.find(it => it.key === 'm1').old === 'p' && ef.items.find(it => it.key === 'pe1').old === 'na' && ef.counts.total === 16, 'old file: both old answers count as not answered');
+ok(ef.items.find(it => it.key === 'm1').old === 'p' && ef.items.find(it => it.key === 'rm-1.pe1').old === 'na' && ef.counts.total === 17, 'old file: both old answers count as not answered');
 
-// ---------- 5. a shared team copy (the Team tab recomputes it with the current rules) ----------
-const sh = FX.shared;
-const dynRec = x => ({ Q: x.Q || {}, A: x.answers || {}, By: x.by || {}, use: x.useId || 'none', dept: x.dept || '', cat: x.cat || '', T: x.tailored || {}, TBy: x.tby || {}, hotel: { type: x.type, country: x.country, role: x.role, name: '' }, snaps: [] });
-let threw = false, es; try { es = L.evaluate(dynRec(sh), TQ); L.method(es); L.open(es); L.mustLine(es); L.scoreSub(es); } catch (e) { threw = true; console.log(e); }
-ok(!threw && es && es.items.filter(it => it.old).length === 3, 'shared copy: recomputed without error; three old answers marked');
-ok(eq([es.pts, es.max, es.level], (() => { const e = L.evaluate(strip(dynRec(sh)), TQ); return [e.pts, e.max, e.level]; })()), 'shared copy: old answers count as not answered');
-ok(L.answerWord(es.items.find(it => it.key === 'm5')) === 'Not answered (earlier answer: Partly, no longer offered)' && L.answerWord(es.items.find(it => it.key === 'te1')) === 'Not answered (earlier answer: Doesn’t apply, no longer offered)', 'shared copy: the Team tab words an old answer as not answered, naming the earlier one');
-ok(L.answerWord(es.items.find(it => it.key === 'fi1')) === 'Don’t know yet' && L.answerWord(es.items.find(it => it.key === 'm1')) === 'Yes', 'other answers keep their words');
-const team = readFileSync(join(root, '../readiness-check/src/team.js'), 'utf8');
-ok(/DL\.answerWord\(it\)/.test(team) && !/Partly 1/.test(team.slice(team.indexOf('function dynCard'), team.indexOf('function flowCard'))), 'team.js: rows use the answer word; the v2 rules card no longer lists Partly');
-ok(!/Doesn\\'t apply/.test(team.slice(team.indexOf('function dynCard'), team.indexOf('function flowCard'))), 'team.js: the v2 rules card no longer lists Doesn\'t apply');
-// v2.5 (audit v3 L2): the gone-use copy names an old answer with answerWord, as the hotel's page does, so ANSWER_WORD needs no p / na
-ok(/goneWord\(A\[m\.id\]\)/.test(team) && L.answerWord({ old: 'p', state: 'unknown' }) === 'Not answered (earlier answer: Partly, no longer offered)', 'team.js: a copy whose use case is gone still names an old must-have answer');
-
+// ---------- 5. (v2.7.0) the Team tab section is gone: the standalone tool has no hub, no sharing and no Team tab ----------
 // ---------- 6. the wording that explains the score ----------
-const fin = finished(F, D, 'rm-1'); fin.A.m2 = 'pl'; fin.T.sk1 = 'n'; fin.T.fi1 = 'k';
+const fin = finished(F, D, 'rm-1'); fin.A.m2 = 'pl'; fin.T['rm-1.sk1'] = 'n'; fin.T['rm-1.fi1'] = 'k';
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 const m = L.resultModel(fin, env), meth = m.method.join('\n'), pdfT = P.model(fin, env).blocks.map(x => x.t).join('\n');
 ok(m.method[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Don’t know yet 0.', 'how this was worked out: the four answers and their points: ' + m.method[0]);

@@ -1,7 +1,7 @@
 /* Do you need AI? v2 (folder, tool id and storage key keep the name readiness-2): the page.
    State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content).
    This file only draws the current state and turns clicks into send(event).
-   store = everything saved (localStorage['hftp-readiness2-v1'], version 3): the checks of this browser and which one is open.
+   store = everything saved (localStorage['hftp-readiness2q-v1'], version 3): the checks of this browser and which one is open.
    rec   = the open check (F.cur(store)).
    ui    = what is on screen now, never saved:
      confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
@@ -48,7 +48,7 @@
   var USE = {}, DEPT = {};
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
   var ENV = { cat: CAT, tq: {}, sig: {}, countries: C.COUNTRIES };
-  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
+  Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id, carry: q.carry || null }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
   var IN_FRAME = window.parent !== window;
   var FOREIGN_PARENT = IN_FRAME && (function () { try { var a = location.ancestorOrigins; return !!(a && a.length && a[0] !== location.origin); } catch (e) { return false; } })();
   var PROFILE = 'hftp-hotel-profile-v1';
@@ -524,16 +524,15 @@
   function vTailored() {
     var u = USE[rec.use], tu = TQ.uses[rec.use], qs = tu.qs;
     var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2>Questions for this use case</h2>' +
-      '<p class="sub"><b id="tail-use">' + esc(uName(u)) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. They come from the team’s resource analysis of this use case; the must-haves are not asked again.</p>' +
+      '<p class="sub"><b id="tail-use">' + esc(uName(u)) + '</b>: ' + esc(plural(qs.length, 'question')) + ' on what this use needs. The must-haves are not asked again.</p>' +
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
-      (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') +
-      (tu.draft ? '<p class="savewarn" id="draft-note" role="note"><strong>' + esc(C.DRAFT) + '.</strong> This use case was added to the catalogue after the resource analysis, so its questions come from a draft row.</p>' : '') + '</div>';
+      (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
+    /* v2.7.0: each question exactly as in data/usecase_questions_only.json: text, "why it matters", area, who answers. */
     h += '<section class="panel">' + qs.map(function (q, i) {
-      var v = rec.T[q.id];
-      var why = L.tailWhy(TQ, rec.use, q);
-      var more = (q.help ? '<p class="gloss">' + esc(q.help) + '</p>' : '') + why.map(function (t, j) { return '<p' + (j === 0 ? ' class="whyarea"' : '') + '>' + esc(t) + '</p>'; }).join('');
-      return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + q.id + '" aria-labelledby="t-' + q.id + '" data-area="' + q.a + '" data-kind="' + esc(q.kind) + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
-        '<p class="itemname">' + esc(TQ.areas[q.a]) + '</p><p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' +
+      var v = rec.T[q.id], why = L.tailWhy(TQ, rec.use, q);
+      var more = '<p class="whyshort" data-why="' + esc(q.id) + '"><strong>' + esc(why[0]) + '</strong></p><p class="meta whyarea">' + esc(why[1]) + ' ' + esc(why[2]) + '</p>';
+      return '<fieldset class="qa' + (ui.missing === q.id ? ' missing' : '') + '" id="f-' + esc(q.id) + '" aria-labelledby="t-' + esc(q.id) + '" data-q="' + esc(q.id) + '" data-area="' + q.a + '" data-who="' + esc(q.whoLabel) + '"><div class="qrow"><span class="qno" aria-hidden="true">' + (i + 1) + '</span><div class="qbody">' +
+        '<p class="itemname">' + esc(TQ.areas[q.a]) + ' · ' + esc(q.whoLabel) + '</p><p class="qtext" id="t-' + esc(q.id) + '">' + esc(q.q) + '</p>' +
         radios(q.id, C.ANSWERS, v) + oldLine(q.id, v) + byField(q.id, v, rec.TBy[q.id]) + needLine(q.id) +
         fold('why-' + q.id, 'Why this matters', more) + '</div></div></fieldset>';
     }).join('') + '</section>';

@@ -14,7 +14,7 @@ const labels = JSON.parse(rd('../register/data/uc-labels.json')), ref = JSON.par
 ok(eq(D.cat, catalogueModel(rd('../use-case-catalogue/index.html'), labels)), 'the inlined catalogue equals the catalogue now (rebuild after it changes)');
 ok(D.cat.nUses === 99 && D.cat.nDepts === 15 && D.cat.cats.length === 4 && D.cat.depts.reduce((a, d) => a + d.uses.length, 0) === D.cat.nUses, '4 areas, 15 departments, 99 use cases, counted');
 D.cat.depts.forEach(d => d.uses.forEach((u, i) => ok(u.id === d.id + '-' + (i + 1), 'use-case id is <dept>-<n>: ' + u.id)));
-ok(eq(D.tq, tqModel(JSON.parse(rd('data/usecase-questions.json')), labels)), 'the inlined tailored questions equal data/usecase-questions.json (with the register\'s high-risk list, v2.1)');
+ok(eq(D.tq, tqModel(JSON.parse(rd('data/usecase_questions_only.json')), JSON.parse(rd('data/must-meta.json')))), 'v2.7.0: the inlined step-5 questions equal data/usecase_questions_only.json');
 ok(eq(Object.keys(D.tq.uses), D.cat.depts.flatMap(d => d.uses.map(u => u.id))), 'every catalogue use case has tailored questions (all 99 selectable)');
 ok(D.cat.depts.flatMap(d => d.uses).filter(u => u.notTool).map(u => u.id).join() === 'lg-4', 'lg-4 is flagged as a document, not a tool (from the register labels)');
 // the same build inputs as the readiness check for vendor questions and the provisional label

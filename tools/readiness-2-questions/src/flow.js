@@ -13,7 +13,7 @@
         must --next--> where only with every must-have answered ("Don't know yet" counts).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
         tailored --next--> result only with every tailored question answered.
-   2. STORE (persisted in localStorage['hftp-readiness2-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
+   2. STORE (persisted in localStorage['hftp-readiness2q-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
       v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
       it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
       read once through R2Logic.legacyQ (question 1 turned round; the old questions 3 and 4 dropped and listed in Qnew).
@@ -30,7 +30,7 @@
    5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list. */
 (function (root) {
   'use strict';
-  var V = 3, KEY = 'hftp-readiness2-v1';
+  var V = 3, KEY = 'hftp-readiness2q-v1';
   var LG = root.R2Logic, QV = LG.QV; // v2.6: the step 2 question set and legacyQ live with the rules
   var STEPS = ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result'];
   var ORDER = ['start', 'hotel', 'q', 'must', 'where', 'tailored', 'result']; // the main line ('stop' is a side end)
@@ -89,6 +89,7 @@
   function useName(env, deptId, useId) { var d = deptOf(env, deptId), u = d && d.uses.filter(function (x) { return x.id === useId; })[0]; return u ? u.n : ''; }
   function deptOfUse(env, useId) { return (env && env.cat && env.cat.depts || []).filter(function (d) { return d.uses.some(function (u) { return u.id === useId; }); })[0] || null; }
   function tailIds(env, useId) { return ((env && env.tq && env.tq[useId]) || []).map(function (q) { return q.id; }); }
+  /* env.tq: { <use id>: [{ id, carry }] } (carry: the v2.6.1 question id whose answer this question takes over, v2.7.0) */
   /* env.sig: { <use id>: signature of its tailored questions } (build.mjs); '' when the page carries none. */
   function tailSig(env, useId) { return (env && env.sig && useId && useId !== 'none' && env.sig[useId]) || ''; }
 
@@ -169,7 +170,17 @@
     if (o.use && o.use !== 'none') {
       var sigNow = tailSig(env, o.use), sigThen = typeof r.tqSig === 'string' ? r.tqSig : '';
       o.tqSig = sigNow; o.from = r.from === 'link' ? 'link' : '';
-      if (sigThen && sigNow && sigThen !== sigNow) { if (Object.keys(Tt).length && info) info.questionsChanged = true; } // answered against other questions: step 5 again
+      /* v2.7.0 (questions-only): step-5 answers saved against the v2.6.1 question list are keyed by the old local ids (pe1, te1b,
+         x-auto: no dot); the new ids are '<use id>.<id>'. Such answers are carried once by the data's carry_answer_from (the answer and
+         its "By when?" date); a new question without one starts unanswered; answers to old ids that no longer exist are dropped.
+         info.olderList = { kept, fresh }: what the page says after opening (kept: answers carried, fresh: questions still unanswered). */
+      var olderList = Object.keys(Tt).some(function (k) { return k.indexOf('.') < 0; });
+      if (olderList) {
+        var kept = 0, qs = (env && env.tq && env.tq[o.use]) || [];
+        qs.forEach(function (q) { var a = q.carry ? Tt[q.carry] : null; if (T_OK[a] || OLD_T[a]) { o.T[q.id] = a; if (a === 'pl' && validDate(TBy[q.carry])) o.TBy[q.id] = TBy[q.carry]; if (T_OK[a]) kept++; } });
+        if (info) info.olderList = { kept: kept, fresh: qs.length - kept };
+      }
+      else if (sigThen && sigNow && sigThen !== sigNow) { if (Object.keys(Tt).length && info) info.questionsChanged = true; } // answered against other questions: step 5 again
       else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]] || OLD_T[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
     }
     o.snaps = (Array.isArray(r.snaps) ? r.snaps : []).map(cleanSnap).filter(Boolean).slice(-MAX_SNAPS);
@@ -433,7 +444,7 @@
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2-cur', CORRUPT_KEY: 'hftp-readiness2-v1-corrupt',
+  var api = { QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2q-cur', CORRUPT_KEY: 'hftp-readiness2q-v1-corrupt',
     V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
     cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,

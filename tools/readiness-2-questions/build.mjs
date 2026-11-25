@@ -2,9 +2,9 @@
 // AI Register's label files (the same build inputs as the readiness check, whose rules and store scripts are inlined too).
 // It also inlines jsPDF (tools/assessment/lib) and the register's "Register Sans" PDF font (tools/register/fonts, OFL) for the PDF download.
 // The catalogue's <script id="data"> is read here at build time, never copied by hand: rebuild after the catalogue changes.
-// Run after editing anything in src/ or the catalogue:   node tools/readiness-2/build.mjs
+// Run after editing anything in src/ or the catalogue:   node tools/readiness-2-questions/build.mjs
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { tqSig } from './data/build-questions.mjs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,17 +53,27 @@ export function rcModel(rdyHtml, labels, ref) {
     uc: rdy.uc.map(u => ({ id: u.id, int: u.int, arch: u.arch, add: u.add, r: { te: u.r.te, fi: u.r.fi }, chk: u.chk })), addons: rdy.addons };
   return { rdy: rdyUsed, reg };
 }
-/* The signature of one use case's tailored questions (v2.1, audit M5): since v2.2 computed by the generator before the team's plain
-   wording is applied, and stored per use case in data/usecase-questions.json (sig), so a wording-only change keeps saved answers. */
-export { tqSig };
-/* The tailored questions as the page needs them (the generator's notes and the per-question "edited" marks stay in the JSON file).
-   labels (the AI Register's label file): the use cases whose provisional label is High-risk, for the "legal items first" rule (v2.1). */
-export function tqModel(J, labels) {
+/* v2.7.0 (questions-only, owner 25 Nov 2026): step 5 reads data/usecase_questions_only.json, used verbatim (text, why, area,
+   who answers). The signature of one use case's questions (ids and texts) marks which question list a saved answer belongs to. */
+export const AREA_KEY = { People: 'pe', Skills: 'sk', 'Financial investment': 'fi', 'Technology infrastructure': 'te', Data: 'da', 'Organisation & governance': 'or' };
+export const WHO_KEY = { GM: 'gm', 'Department head': 'dept', Finance: 'fin', IT: 'it', Owner: 'owner' };
+export function tqSig(qs) { return createHash('sha1').update(JSON.stringify(qs.map(q => [q.id, q.text]))).digest('hex').slice(0, 10); }
+/* The step-5 questions as the page needs them. Only runtime fields are shipped: original_questions, old_name and counts are review
+   records (some quote old wording) and stay out of the page; carry_answer_from is kept for opening older saves.
+   meta: data/must-meta.json (the team's resource analysis: blocks and counts for the must-have share lines). */
+export function tqModel(Q, meta) {
   const uses = {};
-  Object.entries(J.uses).forEach(([id, u]) => { uses[id] = { int: u.int, arch: u.arch, add: u.add, ev: u.ev, draft: u.draft, ...(u.draft ? { draftNote: u.draftNote } : {}), sig: u.sig || tqSig(u.qs), ...(u.plain ? { plain: u.plain } : {}),
-    qs: u.qs.map(q => { const o = { id: q.id, a: q.a, q: q.q, kind: q.kind, who: q.who, act: q.act, from: q.from }; if (q.addon) o.addon = q.addon; if (q.help) o.help = q.help; if (q.na) o.na = q.na; return o; }) }; });
-  const highRisk = ((labels && labels.uses) || []).filter(u => u.base === 'high' && uses[u.id]).map(u => u.id);
-  return { uses, highRisk, intensity: J.intensity, arch: J.arch, areas: J.areas, addonWhy: J.addonWhy, blocks: J.blocks, matrixTotal: J.matrixTotal, nFromWorkbook: J.nFromWorkbook, nDraft: J.nDraft };
+  Q.use_cases.forEach(u => {
+    uses[u.id] = { name: u.name, sensitive: !!u.sensitive, sig: tqSig(u.questions),
+      qs: u.questions.map(q => {
+        const a = AREA_KEY[q.area], who = WHO_KEY[q.who_answers];
+        if (!a || !who) throw new Error('usecase_questions_only.json: unknown area or who answers at ' + q.id);
+        const o = { id: q.id, a, q: q.text, why: q.why, who, whoLabel: q.who_answers };
+        if (q.carry_answer_from) o.carry = q.carry_answer_from;
+        return o;
+      }) };
+  });
+  return { uses, areas: meta.areas, blocks: meta.blocks, matrixTotal: meta.matrixTotal, nFromWorkbook: meta.nFromWorkbook, nDraft: meta.nDraft };
 }
 
 /* v2.4 (owner, 24 Nov 2026): the detail layer. Each use case's catalogue entry, read from the catalogue page's <script id="data">
@@ -96,14 +106,15 @@ export function explainModel(E, ids) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const labels = JSON.parse(read('../register/data/uc-labels.json'));
   const catHtml = read('../use-case-catalogue/index.html'), cat = catalogueModel(catHtml, labels), detail = detailModel(catHtml);
-  const J = JSON.parse(read('data/usecase-questions.json'));
+  const Q = JSON.parse(read('data/usecase_questions_only.json')), meta = JSON.parse(read('data/must-meta.json'));
   /* Every catalogue use case must have its tailored questions, and no question may be left over: run data/build-questions.mjs after the catalogue changes. */
   const ids = cat.depts.flatMap(d => d.uses.map(u => u.id));
-  const missing = ids.filter(id => !J.uses[id] || J.uses[id].name !== cat.depts.flatMap(d => d.uses).find(u => u.id === id).n), extra = Object.keys(J.uses).filter(id => !ids.includes(id));
-  if (missing.length || extra.length) throw new Error('data/usecase-questions.json is out of step with the catalogue (missing or renamed: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + '). Run: node tools/readiness-2/data/build-questions.mjs');
+  const qIds = Q.use_cases.map(u => u.id), missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
+  if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
+  const TQ = tqModel(Q, meta);
   const rc = rcModel(read('../readiness/index.html'), labels, JSON.parse(read('../register/data/reference.json')));
   const ex = explainModel(JSON.parse(read('data/explain.json')), ids);
-  const data = { cat, tq: tqModel(J, labels), rc, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
+  const data = { cat, tq: TQ, rc, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   /* PDF: jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it. */
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
@@ -120,5 +131,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   /* 25 Nov 2026: the shareable single file. Same page, with the flag that hides the links to the other hub tools. */
   mkdirSync(join(here, 'standalone'), { recursive: true });
   writeFileSync(join(here, 'standalone', 'index.html'), html.replace('<title>', '<script>window.R2_STANDALONE = true;</script>\n<title>'));
-  console.log('wrote tools/readiness-2/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(J.uses).reduce((a, u) => a + u.qs.length, 0), 'tailored questions');
+  console.log('wrote tools/readiness-2-questions/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(TQ.uses).reduce((a, u) => a + u.qs.length, 0), 'questions for the use cases');
 }
