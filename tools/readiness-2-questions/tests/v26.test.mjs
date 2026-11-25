@@ -108,7 +108,7 @@ for (const [id, q3, q4] of [['fixgo0001', 'y', 'y'], ['fixunsure', 'y', 'y'], ['
 {
   const team = readFileSync(join(root, '../readiness-check/src/team.js'), 'utf8');
   ok(/s\.qv === DL\.QV \? s\.Q \|\| \{\} : DL\.legacyQ\(s\.Q \|\| \{\}\)\.Q/.test(team), 'team: a copy without qv is turned round with R2Logic.legacyQ');
-  ok(/qv: F\.QV/.test(app.slice(app.indexOf('function shareDoc'))), 'team: a new copy carries qv');
+  ok(!/function shareDoc/.test(app), 'team (v2.7.0): no team copies any more');
   const t = FX.team, Qt = L.legacyQ(t.Q).Q;
   ok(Qt.q1 === 'n' && !('q3' in Qt) && !('q4' in Qt) && Qt.q2 === 'y', 'team: an old copy reads Q1 No, old Q3/Q4 not answered');
   ok(eq(L.legacyQ({ q1: 'y', q2: 'n', q3: 'u', q4: 'n', q5: 'u' }), { Q: { q1: 'n', q2: 'n', q5: 'u' }, dropped: ['q3', 'q4'] }) && eq(L.legacyQ({ q1: 'u' }), { Q: { q1: 'u' }, dropped: [] }) && eq(L.legacyQ({}), { Q: {}, dropped: [] }), 'legacyQ: y↔n on Q1, u stays; Q3/Q4 dropped');
@@ -164,11 +164,11 @@ ok(!/hub: 'link'|id="hublink"/.test(readFileSync(join(root, '../use-case-catalog
     const x = clone(L.detailData(D, u, d, TQ)); n++; // clone: what postMessage delivers
     const h = hubDetail(u.id, x); if (!h) bad.push(u.id); else { urls += h.srcs.filter(s => s.url).length; if (!eq(h.srcs.map(s => s.name), x.srcs.map(s => s.name))) bad.push(u.id + ' names'); }
   }));
-  ok(n === 99 && !bad.length && urls > 0, 'C: the layer of all ' + n + ' use cases passes the hub\'s check (' + urls + ' source links)' + (bad.length ? ': ' + bad.join(' ') : ''));
+  ok(n === 99, 'C (v2.7.0): the layer data of all 99 use cases is built (the hub\'s own check is retired with the hub)');
   ok(/function detailData\(id\) \{ return L\.detailData\(/.test(app) && /x\.srcs\.map\(L\.sourceRowItem\)/.test(app), 'C: the page\'s own dialog is drawn from the same data');
-  ok(/var inHub = !!host\.pong;/.test(app) && /if \(inHub\) hubPost\(\{ hub: 'detail', id: id, data: detailData\(id\) \}\);/.test(app), 'C: inside the hub (after the pong) the layer goes to the hub');
-  ok(/m\.hub === 'detail-closed' && ui\.layer && ui\.layer\.hub && m\.id === ui\.layer\.use\) closeDetail\(false, m\.focus === false, true\)/.test(app), 'C: the hub\'s close comes back to the opener (v2.6.1: marked as the hub\'s own, so it is not echoed back)');
-  ok(/if \(L2 && L2\.hub\) hubPost\(\{ hub: 'detail-close' \}\)/.test(app), 'C: when the page drops the layer it tells the hub');
+  ok(!/hubPost|host\.pong/.test(app) && /dlg\.showModal\(\)/.test(app), 'C (v2.7.0): no hub: the layer is always this page\'s own dialog');
+  ok(/target="_blank" rel="noopener"/.test(rd('src/logic.js')), 'C (v2.7.0): source names are plain links that open in a new tab');
+  ok(!/detail-close' \}\)/.test(app.replace("data-act=\"detail-close\"", '')), 'C (v2.7.0): no message when the layer closes');
 }
 {
   const hub = readFileSync(join(root, '../hub/hub-bar.html'), 'utf8'), contracts = readFileSync(join(root, '../hub/CONTRACTS.md'), 'utf8');

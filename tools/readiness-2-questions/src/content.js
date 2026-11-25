@@ -316,6 +316,8 @@
     resultNote: 'The score and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The score is the share of points from your answers; it does not measure readiness and is not meant for comparing hotels. The cut-offs are the team’s judgement and have not been tested with hotels.'
   };
 
+  /* v2.7.0 (owner, 25 Nov 2026): the heading of step 2, everywhere it appears (step title, cover, result card, PDF) */
+  var STEP2_HEAD = 'Should this problem be solved by AI?';
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
   var AS_OF = '25 Nov 2026';
   /* v2.7.0: after opening a check answered against the v2.6.1 question list ({n} answers kept, {m} questions new; singular forms in app.js) */
@@ -335,7 +337,7 @@
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
-    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
+    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
     ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };

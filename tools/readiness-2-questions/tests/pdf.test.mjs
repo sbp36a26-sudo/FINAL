@@ -127,7 +127,7 @@ for (const [tag0, rec] of [['fo-4', mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', '
   ok(d.r.pages >= 1 && d.r.pages <= (kind === 'result' ? 4 : 6) && d.r.footers.length === d.r.pages && d.r.footers.every((f, i) => f === P.footer(i + 1, d.r.pages)), tag + ': ' + d.r.pages + ' pages, a footer with "page n of N" on each');
   noOverflow(d.log, tag); layout(mdl, d, tag);
   const printed = d.log.map(l => l.line).join(' ').replace(/\s+/g, ' ');
-  ok((kind === 'result' ? ['Result', 'Action plan by person'] : ['Every question and your answer', 'Step 2: Can this problem be solved with AI?', 'Step 3: Must-haves']).every(hh => printed.includes(hh)) && printed.includes(L.resultModel(rec, env).scoreHead) && !SRC_RE.test(printed) && !/Where this comes from/.test(printed), tag + ': the headings and the score are drawn; no source or link text');
+  ok((kind === 'result' ? ['Result', 'Action plan by person'] : ['Every question and your answer', 'Step 2: ' + C.STEP2_HEAD, 'Step 3: Must-haves']).every(hh => printed.includes(hh)) && printed.includes(L.resultModel(rec, env).scoreHead) && !SRC_RE.test(printed) && !/Where this comes from/.test(printed), tag + ': the headings and the score are drawn; no source or link text');
   if (kind === 'answers') { const p1 = d.log.filter(l => l.page === 1).map(l => l.line).join(' '); ok(/Points per answer/.test(p1) && /Your points|No score is shown/.test(p1), tag + ': the scoring method (three plain lines) is on page 1'); }
   ok(!/\?{2,}/.test(printed.replace(/\?”/g, '')), tag + ': no run of unprintable characters');
   ok(d.r.doc.output('arraybuffer').byteLength > 8000, tag + ': a real PDF comes out');

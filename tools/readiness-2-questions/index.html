@@ -1121,6 +1121,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     resultNote: 'The score and the verdict are worked out from your own answers with the rules shown under “How this was worked out”. The score is the share of points from your answers; it does not measure readiness and is not meant for comparing hotels. The cut-offs are the team’s judgement and have not been tested with hotels.'
   };
 
+  /* v2.7.0 (owner, 25 Nov 2026): the heading of step 2, everywhere it appears (step title, cover, result card, PDF) */
+  var STEP2_HEAD = 'Should this problem be solved by AI?';
   var HONEST = 'Nobody checks your answers. An answer that isn’t true only hides a problem you will meet later.';
   var AS_OF = '25 Nov 2026';
   /* v2.7.0: after opening a check answered against the v2.6.1 question list ({n} answers kept, {m} questions new; singular forms in app.js) */
@@ -1140,7 +1142,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
-    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
+    QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
     SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
     ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
@@ -1306,7 +1308,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u), draft: '', draftText: '',
       does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u),
       srcs: dt.srcs.map(function (s) { var o = sourceItem(s); return { type: o.type, name: o.name, note: o.note, url: o.url }; }),
-      task: '', foot: 'From the project team’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
+      foot: 'From the project team’s Use-Case Catalogue, as of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
   }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
@@ -1622,8 +1624,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      planned and missing questions are already the open items. */
   function holdItems(ev, v) {
     var out = [], h = ev.held;
-    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'carried' }); });
-    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: Can this problem be solved with AI?', hold: 'notsure' });
+    if (h.indexOf('carried') >= 0) ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: '', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
+    if (h.indexOf('notsure') >= 0) out.push({ who: '', text: C.HOLD.notsure.replace('{titles}', notSureTitles(v)).replace('{find}', v.find.map(function (f) { return f.text + ': ask ' + f.who + '.'; }).join(' ')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'notsure' });
     if (h.indexOf('sensitive') >= 0) out.push({ who: '', text: C.HOLD.sensitive, sub: 'Step 4: Where in the hotel?', hold: 'sensitive' });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
@@ -2245,7 +2247,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (m.flag) b.push({ k: 'lead', t: m.flag, id: 'flag', tone: 'md' }); // v2.7.0
     b.push({ k: 'label', t: 'How the score was worked out' }); m.method.slice(0, 3).forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
     b.push({ k: 'h', t: 'Every question and your answer' });
-    b.push({ k: 'label', t: 'Step 2: Can this problem be solved with AI?', group: true });
+    b.push({ k: 'label', t: 'Step 2: ' + C.STEP2_HEAD, group: true });
     m.answers.forEach(function (a) { b.push({ k: 'item', id: a.id, name: a.title, check: a.q, ex: '', answer: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', action: '' }); });
     var grp = '';
     m.itemList.forEach(function (it, i) {
@@ -2418,50 +2420,35 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 
 </script>
 <script>
-/* Do you need AI? v2 (folder, tool id and storage key keep the name readiness-2): the page.
+/* Do you need AI? v2.7.0 (questions-only, standalone; folder, tool id and storage key: readiness-2-questions, hftp-readiness2q-v1): the page.
    State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content).
    This file only draws the current state and turns clicks into send(event).
-   store = everything saved (localStorage['hftp-readiness2q-v1'], version 3): the checks of this browser and which one is open.
+   store = everything saved (localStorage['hftp-readiness2q-v1'], version 4): the checks of this browser and which one is open.
    rec   = the open check (F.cur(store)).
    ui    = what is on screen now, never saved:
      confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
      missing  after a refused "Next": the id of the first unanswered question ('type' on step 1, 'where' on step 4), outlined; else null
-     copy     COPY BOX (clipboard fallback, audit v3 M5): null | { from: 'who:<role key>' | 'vendor', text }; drawn next to the button
+     copy     COPY BOX (clipboard fallback): null | { from: 'who:<role key>' | 'vendor' | 'dl' | 'file', text }; drawn next to the button
               that opened it; cleared by the next copy or any step change
-     layer    DETAIL layer (v2.4; made explicit in v2.5, audit v3 M1 to M3): null | { use, from (opener id), step, check }.
-              Closed by Close, Esc, a click outside the drawer, and by any step or check change (afterMove), so it never
-              stays open over a screen it does not belong to. #app[data-layer] holds the open use id.
+     layer    DETAIL layer: null | { use, from (opener id), step, check }, drawn in this page's own dialog. Closed by Close, Esc, a click
+              outside the drawer, and by any step or check change. #app[data-layer] holds the open use id.
      open     which folded explanations are open (kept across re-renders)
-     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'waiting' | 'saving'; dlKind: 'pdf' | 'answers' | 'file' | null (which one)
-     share    SHARE machine (F.shareNext) while a copy is being sent or withdrawn: { phase, id }; else null (settled from the record).
-              v2.1: id is the check the copy belongs to, open or not; the outcome is written to that check (F.reduce 'shared' / 'unshared' { id }),
-              so a copy can be withdrawn from any step, from the stop screen and from "Your checks".
-     file     a check read from a file that is waiting for the "replace?" answer; else null. fileInfo: what that file's check lost on
-              the way in ('useChanged' | 'questionsChanged' | null), said once it opens; cleared by "Keep the one here" and any move
-     notice   'useChanged' after a restore whose use case moved in or left the catalogue (shown on step 4);
-              'questionsChanged' when its tailored questions changed since it was answered (shown on step 5); else null
+     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'saving'; dlKind: 'pdf' | 'answers' | 'file' | null (which one)
+     file     a check read from a file that is waiting for the "replace?" answer; else null. fileInfo / fileOlder: what that file's
+              check lost or carried on the way in, said once it opens
+     notice   'useChanged' (shown on step 4) | 'questionsChanged' (shown on step 5) | null
+     older    { kept, fresh } after opening a check made with the older (v2.6.1) question list; said in the header until step 5 is left
      elsewhere  TABS (F.mergeTabs): null | 'changed' | 'removed': another tab of this browser changed or removed the open check
      fileNote 'old' after a file from the earlier Readiness check was chosen; else null
      corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
-   host.state = BRIDGE machine (F.bridgeNext): 'none' | 'pending' | 'yes' | 'no' (does the hub bar save files for us?)
-   host.pong  true once the hub bar has answered our ping; only then does the detail layer become a hub message
    storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
-   hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry */
+   hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry
+   Downloads: in the claude.ai viewer through the artifact downloads capability (claude.use('downloads').save); with no capability
+   a Copy fallback (plan text, or the saved check as JSON); in a plain browser tab a blob link. No hub, no sharing (v2.7.0). */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf, S = null; // v2.7.0: no shared store (no hub, no Team tab)
-  /* Sharing a copy with the project team (opt-in, to the hub's "Team: readiness results" tab). One switch: false switches
-     sharing off (withdrawing a copy that was already shared still works, from every place it did before).
-     v2.5 (owner O7, 24 Nov 2026): off for the timed sessions with hotel managers, because the controller, a deletion date and a
-     contact for shared copies are not named yet. To switch sharing back on, set SHARING_DEFAULT to true and rebuild
-     (node tools/readiness-2/build.mjs, then node tools/build-hub.mjs). The browser tests that prove the sharing paths set
-     window.R2_TEST_SHARING before the page loads; nothing on the page or in the hub sets it. */
-  /* 25 Nov 2026: the shareable single-file build (node build.mjs writes standalone/index.html with window.R2_STANDALONE = true): no links to the
-     other hub tools, which are not there when the file is opened on its own. */
-  var STANDALONE = window.R2_STANDALONE === true;
-  var SHARING_DEFAULT = false;
-  var SHARING_ON = SHARING_DEFAULT || window.R2_TEST_SHARING === true;
+  var C = window.R2Content, L = window.R2Logic, F = window.R2Flow, P = window.R2Pdf;
   var D, CAT, TQ;
   try { D = JSON.parse($('r2-data').textContent); CAT = D.cat; TQ = D.tq; }
   catch (e) { $('app').setAttribute('data-state', 'error'); $('view').innerHTML = '<p class="panel" role="alert">The data in this page could not be read. Reload the page; if this stays, tell the project team the page needs rebuilding.</p>'; throw e; }
@@ -2469,8 +2456,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   CAT.depts.forEach(function (d) { DEPT[d.id] = d; d.uses.forEach(function (u) { USE[u.id] = Object.assign({ dept: d }, u); }); });
   var ENV = { cat: CAT, tq: {}, sig: {}, countries: C.COUNTRIES };
   Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id, carry: q.carry || null }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
-  var IN_FRAME = window.parent !== window;
-  var FOREIGN_PARENT = IN_FRAME && (function () { try { var a = location.ancestorOrigins; return !!(a && a.length && a[0] !== location.origin); } catch (e) { return false; } })();
   var PROFILE = 'hftp-hotel-profile-v1';
   var NAME = 'Do you need AI?';
 
@@ -2549,7 +2534,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function olderOf(info) { return info && info.olderList ? { kept: info.olderList.kept, fresh: info.olderList.fresh } : null; }
   function olderText(o) { return C.OLDER_LIST.replace('{n}', o.kept === 1 ? '1 answer was' : o.kept + ' answers were').replace('{m}', o.fresh === 1 ? '1 question is' : o.fresh + ' questions are'); }
   function noticeOf(info) { return info && info.useChanged ? 'useChanged' : info && info.questionsChanged ? 'questionsChanged' : null; }
-  var ui = { older: olderOf(loadInfo), olderShown: false, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, share: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
+  var ui = { older: olderOf(loadInfo), olderShown: false, confirm: null, missing: null, copy: null, open: {}, layer: null, dl: 'idle', dlKind: null, file: null, fileInfo: null, notice: noticeOf(loadInfo), elsewhere: null, fileNote: null, corrupt: corrupt };
   function ctx() { return F.ctxOf(rec, ENV); }
   function env() { return { cat: CAT, TQ: TQ, ex: D.ex, today: L.localIso() }; }
   /* v2.2: the name shown for a use case (the team's plain name; ids and the catalogue name stay in the record). */
@@ -2595,21 +2580,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
-    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-withdraw') || $('rm-yes'); if (y) y.focus(); return true; }
+    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-yes'); if (y) y.focus(); return true; }
     if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; render(); return true; }
     if (ev === 'remove-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
       return removeNow(arg, 'Check removed from this browser.');
-    }
-    if (ev === 'remove-withdraw') {
-      /* Audit H1: a real button instead of a sentence that sent the person to a page they could not reach. The copy goes first; the check only if that worked. */
-      c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
-      if (!c.fire || !recOf(arg) || !S || ui.share) { render(); return false; }
-      ui.share = { phase: 'withdrawing', id: arg }; render();
-      withdrawCopy(arg).then(function () { ui.share = null; sharePatch('unshared', { id: arg }); removeNow(arg, 'Shared copy withdrawn and check removed from this browser.'); },
-        function (e) { ui.share = null; render(); toast(e && e.code === 'mode' ? 'This copy was shared from the project hub: open the check there to withdraw it. The check was kept.' : 'The shared copy could not be withdrawn, so the check was kept.'); });
-      return true;
     }
     if (ev === 'adopt') {
       /* TABS: take the other tab's version of the open check. */
@@ -2687,7 +2663,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
 
   // ---------- pieces ----------
-  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', 'Can this problem be solved with AI?'], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
+  var STEP_LINE = { hotel: ['Step 1 of 5', 'About your hotel'], q: ['Step 2 of 5', C.STEP2_HEAD], stop: ['Result', 'Not suitable for AI'], must: ['Step 3 of 5', 'Must-haves'],
     where: ['Step 4 of 5', 'Where in the hotel?'], tailored: ['Step 5 of 5', 'Questions for this use case'], result: ['Result', ''] };
   function storeLine() {
     var h = '';
@@ -2697,16 +2673,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (ui.older) h += '<p class="savewarn" id="older-list" role="status" data-kept="' + ui.older.kept + '" data-fresh="' + ui.older.fresh + '">' + esc(olderText(ui.older)) + ' <button type="button" class="linkbtn" data-act="older-ok" id="older-ok">OK</button></p>';
     if (ui.corrupt) h += '<p class="savewarn" id="corrupt" role="status">' + esc(C.CORRUPT) + ' <button type="button" class="linkbtn" data-act="seen" id="corrupt-ok">OK</button></p>';
     if (ui.elsewhere) h += '<p class="savewarn" id="elsewhere" data-elsewhere="' + ui.elsewhere + '" role="status">' + esc(C.ELSEWHERE[ui.elsewhere]) + (ui.elsewhere === 'changed' ? ' Going on here keeps this tab’s answers. <button type="button" class="linkbtn" data-act="adopt" id="adopt">Load the other tab’s version</button>' : '') + '</p>';
-    return h + sharedLine();
-  }
-  /* Audit H1: a shared copy can be withdrawn from any step. The result has its own panel and the cover its list of checks. */
-  function sharedLine() {
-    if (!S || !rec.sharedAt || rec.step === 'result' || rec.step === 'start') return '';
-    var ph = sharePhase(), d = L.fmtDate(rec.sharedAt);
-    var text = rec.step === 'stop' ? 'The team still has your earlier result (shared ' + d + '). Withdraw it, or change your answers and send an updated copy from the result.'
-      : 'A copy of this check is with the project team (shared ' + d + '). It shows your answers as they were then.';
-    return '<p class="savewarn" id="shared-line" data-share-state="' + ph + '" role="status">' + esc(text) + ' ' +
-      (ph === 'withdrawing' ? '<span class="meta">Withdrawing…</span>' : '<button type="button" class="linkbtn" data-act="unshare" id="unshare">Withdraw shared copy</button>') + '</p>';
+    return h;
   }
   function listedIds() { return Object.keys(store.checks).filter(function (k) { return F.listed(store.checks[k]); }).sort(function (a, b) { return String(store.checks[b].updated).localeCompare(String(store.checks[a].updated)); }); }
   function header() {
@@ -2787,13 +2754,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var status;
     if (v.stop) status = 'Not suitable for AI';
     else if (F.reachable('result', F.ctxOf(r, ENV))) { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
-    else status = 'Not finished: ' + (STEP_LINE[r.step] ? STEP_LINE[r.step][1].toLowerCase() : 'not started');
+    else status = 'Not finished: ' + (STEP_LINE[r.step] ? STEP_LINE[r.step][1] : 'not started');
     return { name: name, status: status };
   }
   function fileConfirm() {
     if (!ui.confirm || ui.confirm.kind !== 'file' || !ui.file) return '';
     return '<div class="confirmline" data-confirm="file" role="group" aria-label="Replace this check?"><p><strong>This check is already in this browser.</strong> Replace it with the one from the file?</p>' +
-      (recOf(ui.file.id) && recOf(ui.file.id).sharedAt && S ? '<p class="meta" id="file-keeps-share">' + esc(C.FILE_KEEPS_SHARE) + '</p>' : '') + // audit v3 H1
       '<div class="btnrow"><button type="button" class="btn warn" data-act="import-yes" id="import-yes">Replace with the file</button><button type="button" class="btn" data-act="confirm-no" id="import-no">Keep the one here</button></div></div>';
   }
   function myChecks() {
@@ -2803,20 +2769,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     else if (!ids.length) h += '<p class="meta">None yet. Each check you start is kept here until you remove it.</p>';
     if (ids.length) h += '<div class="mylist">' + ids.map(function (k) {
       var r = store.checks[k], l = checkLine(r), isCur = k === store.cur, cRm = ui.confirm && ui.confirm.kind === 'remove' && ui.confirm.id === k;
-      var ph = sharePhaseOf(k), shared = !!r.sharedAt && !!S, ownControl = isCur && rec.step === 'result'; // the result's own panel has the button for the open check
-      var sharedTxt = r.sharedAt ? 'shared with the team ' + L.fmtDate(r.sharedAt) + (F.shareStale(r) ? ', out of date' : '') : '';
-      return '<div class="mycheck" data-check="' + esc(k) + '"' + (r.sharedAt ? ' data-shared="1"' : '') + '><div class="g1"><strong>' + esc(l.name) + '</strong><span class="meta">' + esc([r.hotel.name, l.status, r.updated ? 'last changed ' + L.fmtDate(r.updated) : '', sharedTxt].filter(Boolean).join(' · ')) + (isCur ? ' · open now' : '') + '</span></div>' +
+      return '<div class="mycheck" data-check="' + esc(k) + '"><div class="g1"><strong>' + esc(l.name) + '</strong><span class="meta">' + esc([r.hotel.name, l.status, r.updated ? 'last changed ' + L.fmtDate(r.updated) : ''].filter(Boolean).join(' · ')) + (isCur ? ' · open now' : '') + '</span></div>' +
         '<div class="btnrow">' + (isCur ? '' : '<button type="button" class="btn" data-act="open" data-id="' + esc(k) + '">Open</button>') +
-        (cRm ? (shared ? '<button type="button" class="btn warn" data-act="remove-withdraw" data-id="' + esc(k) + '" id="rm-withdraw">Withdraw the shared copy and remove</button>' : '') +
-            '<button type="button" class="btn' + (shared ? '' : ' warn') + '" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">' + (shared ? 'Remove from this browser only' : 'Remove for good') + '</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
-          : (ph === 'withdrawing' ? '<span class="meta" role="status">Withdrawing…</span>' : (shared && !ownControl ? '<button type="button" class="linkbtn" data-act="unshare" data-id="' + esc(k) + '" id="unshare-' + esc(k) + '">Withdraw shared copy</button>' : '') +
-            '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>')) + '</div>' +
-        (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.' + (shared ? ' The project team has a copy of it: “Remove from this browser only” leaves that copy with the team.' : '') + '</p>' : '') + '</div>';
+        (cRm ? '<button type="button" class="btn warn" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
+          : '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>') + '</div>' +
+        (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.</p>' : '') + '</div>';
     }).join('') + '</div>';
-    h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + (STANDALONE ? '' : ' <a href="../readiness-check/index.html" target="_blank" rel="noopener">Open the earlier Readiness check</a> and use “Open a saved file” there.') + '</p>' : '') +
+    h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + '</p>' : '') +
       '<div class="btnrow"><label class="btn filebtn" for="file-open">Open a saved file<input type="file" id="file-open" accept="application/json,.json" class="sr"></label>' +
-      (rec.step === 'result' ? '<button type="button" class="btn" data-act="save-file" id="save-file"' + (ui.dl !== 'idle' ? ' disabled' : '') + '>Save as file</button>' : '') + // owner: moved here from the top row
-      (storage === 'ok' ? '<span class="meta">Checks stay in this browser only. Save a file to keep one elsewhere.</span>' : '') + '</div></section>';
+      (rec.step === 'result' ? '<button type="button" class="btn" data-act="save-file" id="save-file"' + (ui.dl !== 'idle' ? ' disabled' : '') + '>Save as file</button>' : '') + // owner: Save as file sits here, not in the download row
+      (storage === 'ok' ? '<span class="meta">Checks stay in this browser only. Save a file to keep one elsewhere.</span>' : '') + '</div>' + copyBox('file') + '</section>';
     return h;
   }
 
@@ -2832,7 +2794,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
       '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
-      '<li><b>Can this problem be solved with AI?</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
+      '<li><b>' + esc(C.STEP2_HEAD) + '</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
@@ -2862,7 +2824,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 2 of 5</p>' +
       '<p class="crisp" id="crisp" aria-label="C R I S P: ' + esc(C.QUESTIONS.map(function (q) { return q.title; }).join(', ')) + '">C-R-I-S-P</p>' +
       '<p class="crisp-key" aria-hidden="true">' + C.QUESTIONS.map(function (q) { return '<span><b>' + esc(q.title.charAt(0)) + '</b>' + esc(q.title.slice(1)) + '</span>'; }).join(' · ') + '</p>' +
-      '<h2>Can this problem be solved with AI?</h2>' +
+      '<h2 id="q-head">' + esc(C.STEP2_HEAD) + '</h2>' +
       '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
     h += '<section class="panel">' + C.QUESTIONS.map(function (q, i) {
@@ -2920,7 +2882,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function vWhere() {
     var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h2>Where in the hotel?</h2>' +
       '<p class="sub">Pick the area, then the department. If one of its use cases matches your problem, choose it: the next step asks what that use needs. If none does, say so: the result then rests on the must-haves only.</p>' +
-      '<p class="meta">' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments, from the hub’s Use-Case Catalogue.') + '</p></div>' +
+      '<p class="meta">' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments, from the project team’s Use-Case Catalogue.') + '</p></div>' +
       (ui.notice === 'useChanged' ? '<p class="savewarn" id="use-changed" role="status">' + esc(C.USE_CHANGED) + '</p>' : '');
     h += '<section class="panel' + (ui.missing === 'where' ? ' missing' : '') + '" id="where"><h3>1. Area</h3><div class="tiles" role="group" aria-label="Area">' + CAT.cats.map(function (c) {
       var ds = CAT.depts.filter(function (d) { return d.cat === c.name; }), n = ds.reduce(function (a, d) { return a + d.uses.length; }, 0);
@@ -2972,31 +2934,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   }
 
   // ---------- result ----------
-  function sharePhaseOf(id) { return ui.share && ui.share.id === id ? ui.share.phase : F.shareSettled(recOf(id)); }
-  function sharePhase() { return sharePhaseOf(rec.id); }
-  function sharePanel() {
-    if (!S) return '';
-    var mode = S.state(), ph = sharePhase(), busy = ph === 'sending' || ph === 'withdrawing', stale = F.shareStale(rec), where = rec.sharedMode || mode;
-    if (rec.sharedAt && ui.open.share === undefined) ui.open.share = true; // a shared check shows its withdraw button without a click (audit H1)
-    var status = ph === 'sending' ? (mode === 'probing' || mode === 'idle' ? 'Checking whether the project hub is reachable…' : 'Sending…')
-      : ph === 'withdrawing' ? 'Withdrawing…'
-      : rec.sharedAt ? 'Last shared ' + L.fmtDate(rec.sharedAt) + (where === 'local' ? ' (test copy in this browser)' : '') + '.' + (stale ? ' Your answers have changed since then: send an updated copy so the team sees the current ones.' : '')
-      : mode === 'local' && storage === 'ok' ? 'Outside the project hub this keeps a test copy in this browser only.' : ''; // audit L6: not while this browser keeps nothing
-    var withdraw = rec.sharedAt && !busy ? '<button type="button" class="linkbtn" data-act="unshare" id="unshare">Withdraw shared copy</button>' : '';
-    var body = !SHARING_ON
-      ? '<p>Sharing with the project team is switched off.</p><div class="btnrow"><span class="meta" role="status">' + esc(rec.sharedAt || busy ? status : '') + '</span>' + withdraw + '</div>'
-      : '<p>Student prototype: a shared copy goes to the project team (EHL SBP Group 36). A deletion date and a contact address are not set yet; you can withdraw your copy at any time with the button below.</p>' +
-        '<p class="meta">Helps the student team test this tool. Sent: the use case, your role, how the hotel is run, the country, every answer, the “by when” dates, the score and verdict, and the dated history of your results. Not sent: ' + (rec.share.named ? 'nothing else' : 'the hotel name') + '. The copy is linked to the account you opened the hub with.</p>' +
-        '<label class="chk"><input type="checkbox" data-share="named" id="share-named"' + (rec.share.named ? ' checked' : '') + (busy ? ' disabled' : '') + '><span>Also send our hotel name so the team can discuss the result with us</span></label>' +
-        '<div class="btnrow"><button type="button" class="btn" data-act="share" id="share-btn"' + (busy ? ' disabled' : '') + '>' + (rec.sharedAt ? 'Send updated copy' : 'Share a copy') + '</button><span class="meta" role="status" id="share-status">' + esc(status) + '</span>' + withdraw + '</div>';
-    return row('share', 'Share with the project team (optional)' + (rec.sharedAt ? ' · shared ' + esc(L.fmtDate(rec.sharedAt)) + (stale ? ', out of date' : '') : ''), body, ' id="share" data-share-state="' + ph + (stale ? ' stale' : '') + '"');
-  }
   function vResult() {
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
     /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser"; Copy summary and Print are gone. */
-    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 25 Nov 2026: two PDFs, then Start a new check
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' + copyBox('dl'); // owner 25 Nov 2026: two PDFs, then Start a new check; the Copy fallback box under them
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
@@ -3014,7 +2957,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reason) + '</strong></p>' +
       (m.flag ? '<p class="flagline" id="sensitive-flag" role="note"><strong>' + esc(m.flag) + '</strong></p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
       (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') + '</section>';
-    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>Can this problem be solved with AI?</h3>' + aiCard(m) + '</section>' +
+    h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>' + esc(C.STEP2_HEAD) + '</h3>' + aiCard(m) + '</section>' +
       '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
@@ -3031,7 +2974,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       return head + '<div class="arow"><span class="chip a-' + itm.state + '">' + esc(itm.answer) + '</span><span><b>' + esc(itm.name) + ':</b> ' + esc(itm.q) + '</span></div>';
     }).join(''), ' id="answers"');
     h += row('method', 'How this was worked out', '<p id="score-sub">' + esc(m.scoreSub) + '</p><p class="meta" id="level-line">' + esc(m.levelLine) + '</p><ol class="tight" id="method">' + m.method.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ol>', ' id="how"');
-    if (SHARING_ON || rec.sharedAt) h += sharePanel();
     h += '<div class="noprint">' + myChecks() + '</div>';
     h += sources('result');
     h += '<div class="navrow noprint"><button type="button" class="btn back" data-act="back" id="back">Back</button><span class="spacer"></span><button type="button" class="linkbtn" data-act="edit" id="edit">Change answers from the start</button></div>';
@@ -3053,7 +2995,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var toastT;
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3800); }
 
-  // ---------- downloads (PDF and file): the readiness check's way, hub bridge with a plain link outside the hub ----------
+  // ---------- downloads (PDF and file) ----------
   var DL_LABEL = { making: 'Preparing the PDF…', waiting: 'Preparing the PDF…', saving: 'Saving the PDF…' };
   /* v2.7 (owner, 25 Nov 2026): two PDFs on the result page, "Download result (PDF)" (#pdf, primary) and "Download answers (PDF)"
      (#pdf-answers); the stop screen keeps one "Download (PDF)" (#pdf). One download at a time: while one runs both are disabled and
@@ -3063,7 +3005,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return '<button type="button" class="btn' + (!ans && rec.step === 'result' ? ' primary' : '') + '" data-act="' + (ans ? 'pdf-answers' : 'pdf') + '" id="' + (ans ? 'pdf-answers' : 'pdf') + '"' + (busy ? ' disabled' + (mine ? ' aria-busy="true"' : '') : '') + '>' + esc(busy && mine ? DL_LABEL[ui.dl] : label) + '</button>';
   }
   function dlSend(ev) {
-    var to = F.dlNext(ui.dl, ev, host.state); if (to === null) return false;
+    var to = F.dlNext(ui.dl, ev, 'none'); if (to === null) return false;
     ui.dl = to; $('app').setAttribute('data-dl', to);
     var sf = $('save-file'); if (sf) sf.disabled = to !== 'idle';
     var bs = [['pdf', 'pdf'], ['pdf-answers', 'answers']].map(function (x) { return [$(x[0]), x[1]]; }).filter(function (x) { return x[0]; });
@@ -3071,44 +3013,51 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (to === 'idle' && bs.length) render();
     return true;
   }
-  var host = { state: IN_FRAME && !FOREIGN_PARENT ? 'pending' : 'none', pong: false, waiters: [], seq: 0, calls: {} };
-  function hostSend(ev) {
-    var to = F.bridgeNext(host.state, ev); if (to === host.state) return;
-    host.state = to; $('app').setAttribute('data-bridge', to); host.waiters.splice(0).forEach(function (f) { f(); });
-  }
-  $('app').setAttribute('data-bridge', host.state); $('app').setAttribute('data-dl', ui.dl);
-  if (host.state === 'pending') {
-    window.addEventListener('message', function (e) {
-      if (e.source !== window.parent || !e.data) return;
-      var m = e.data;
-      if (m.hub === 'pong') { var first = !host.pong; host.pong = true; hostSend(m.downloads ? 'yes' : 'no'); if (first) render(); }
-      else if (m.hub === 'download-result' && host.calls[m.id]) { var cb = host.calls[m.id]; delete host.calls[m.id]; cb(m); }
-      /* v2.6: the hub closed its detail layer (Close, Esc, backdrop: focus back to the opener; another hub tab: focus stays). */
-      else if (m.hub === 'detail-closed' && ui.layer && ui.layer.hub && m.id === ui.layer.use) closeDetail(false, m.focus === false, true);
-    });
-    try { window.parent.postMessage({ hub: 'ping' }, location.origin); } catch (e) { hostSend('error'); }
-    setTimeout(function () { hostSend('timeout'); }, 12000);
-  }
-  /* v2.6 (owner, 24 Nov 2026): source links are plain hyperlinks the browser opens itself; the v2.5.1 click interception
-     (a message to the hub) and the hub's link panel are gone. */
-  function saveFile(name, blob) {
+  $('app').setAttribute('data-dl', ui.dl);
+  /* v2.7.0 (standalone artifact): where the file goes.
+     'capability'  the claude.ai viewer: window.claude.use exists; the downloads capability (claude.use('downloads')) saves the file,
+                   the viewer confirms. When it resolves null (not served or not granted) the Copy fallback is used instead.
+     'link'        any other browser tab (a local file, a test server): a plain blob link. */
+  function dlRoute() { return window.claude && typeof window.claude.use === 'function' ? 'capability' : 'link'; }
+  function saveFile(name, blob, fallback) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
       catch (e) { toast('This browser could not save the file.'); dlSend('fail'); }
     }
-    function go2() {
-      dlSend('bridge');
-      if (host.state !== 'yes') { viaLink(); return; }
-      var id = 'r2d' + (++host.seq), t = setTimeout(function () { if (host.calls[id]) host.calls[id]({ ok: false, code: 'timeout' }); delete host.calls[id]; }, 120000);
-      host.calls[id] = function (m) {
-        clearTimeout(t);
-        toast(m.ok ? 'Saved ' + name : m.code === 'declined' ? 'Download cancelled.' : m.code === 'timeout' ? 'No answer about the download. Try again.' : 'The file could not be saved here.');
-        dlSend(m.ok ? 'done' : 'fail');
-      };
-      try { window.parent.postMessage({ hub: 'download', id: id, filename: name, data: blob }, location.origin); }
-      catch (e) { var cb = host.calls[id]; delete host.calls[id]; cb({ ok: false, code: 'unavailable' }); }
-    }
-    if (host.state === 'pending') { toast('Preparing the download…'); host.waiters.push(go2); } else go2();
+    if (dlRoute() === 'link') { viaLink(); return; }
+    var copyInstead = function (why) { dlSend('fail'); fallback(why); };
+    Promise.resolve().then(function () { return window.claude.use('downloads'); }).then(function (dl) {
+      if (!dl || typeof dl.save !== 'function') { copyInstead('unavailable'); return; }
+      return dl.save({ filename: name, data: blob }).then(function () { toast('Saved ' + name); dlSend('done'); }, function (e) {
+        var code = e && e.code;
+        if (code === 'declined') { toast('Download cancelled.'); dlSend('fail'); }
+        else if (code === 'rate_limited') { toast('Another download is waiting for your answer. Try again in a moment.'); dlSend('fail'); }
+        else copyInstead(code || 'unavailable');
+      });
+    }, function () { copyInstead('unavailable'); });
+  }
+  /* The Copy fallback (no downloads here): the result PDF gives the action plan and the vendor questions as text, the answers PDF
+     every question with its answer, Save as file the saved check as JSON. */
+  function planText() {
+    var m = model(), u = USE[rec.use], name = u ? uName(u) : '';
+    var out = [NAME + (name ? ' · ' + name : '') + (m.hotel ? ' (' + m.hotel + ')' : ''), m.levelName + ' · ' + m.scoreHead, m.reason, C.DISCLAIMER, ''];
+    if (m.flag) out.splice(3, 0, m.flag);
+    m.people.forEach(function (p) { out.push(p.name + ':'); p.items.forEach(function (a, i) { out.push((i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : '')); }); out.push(''); });
+    if (m.vendor.length) { out.push('Questions for the vendor:'); m.vendor.forEach(function (q, i) { out.push((i + 1) + '. ' + q); }); }
+    return out.join('\n');
+  }
+  function answersText() {
+    var m = model(), out = [NAME + ': your answers' + (m.hotel ? ' (' + m.hotel + ')' : ''), m.levelName + ' · ' + m.scoreHead, C.DISCLAIMER, '', C.STEP2_HEAD];
+    m.answers.forEach(function (a) { out.push(a.n + '. ' + a.q + ' ' + a.a); });
+    var grp = ''; m.itemList.forEach(function (it) { var g = it.grp === 'must' ? 'Must-haves' : 'Questions for this use case'; if (g !== grp) { grp = g; out.push('', g); } out.push('- ' + it.q + ' ' + it.answer); });
+    return out.join('\n');
+  }
+  function copyFallback(kind) {
+    return function () {
+      var t = kind === 'file' ? JSON.stringify(fileDoc(), null, 1) : kind === 'answers' ? answersText() : planText();
+      toast('Downloads are not available here, so the text is ready to copy instead.');
+      copyText(t, kind === 'file' ? 'The saved check' : kind === 'answers' ? 'Your answers' : 'The action plan', kind === 'file' ? 'file' : 'dl');
+    };
   }
   var PDF_FONT = null;
   function pdfFont() { return PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('r2-font').textContent); } catch (e) { return null; } })()); }
@@ -3126,7 +3075,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         if (!window.jspdf) throw new Error('jsPDF not bundled');
         blob = P.draw(mdl, window.jspdf, pdfFont()).doc.output('blob');
       } catch (e) { dlSend('fail'); toast('The PDF could not be made here. Use “Save as file” in “Your checks in this browser” instead.'); return; }
-      dlSend('made'); saveFile(name, blob);
+      dlSend('made'); saveFile(name, blob, copyFallback(kind === 'answers' ? 'answers' : 'result'));
     }, 30);
     return true;
   }
@@ -3141,7 +3090,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     if (!dlSend('start')) { toast('A download is still being prepared.'); return false; }
     var name = pdfName('file').replace(/\.pdf$/, '.json'), blob = new Blob([JSON.stringify(fileDoc(), null, 1)], { type: 'application/json' });
     /* Audit L1: 'made' in a later tick, as the PDF does, so the button stays disabled across a double-click. */
-    setTimeout(function () { dlSend('made'); saveFile(name, blob); }, 30);
+    setTimeout(function () { dlSend('made'); saveFile(name, blob, copyFallback('file')); }, 30);
     return true;
   }
   function loadRecord(file) {
@@ -3165,56 +3114,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     ui.fileNote = null; r.tqSig = r.tqSig || ''; ui.fileInfo = noticeOf(info); ui.fileOlder = olderOf(info); // what the file's check lost on the way in (audit M5): said after it opens
     if (store.checks[r.id] && F.listed(store.checks[r.id])) { ui.file = r; ui.confirm = F.confirmNext(ui.confirm, 'ask', 'file').c; render(); var y = $('import-yes'); if (y) { y.scrollIntoView({ block: 'center' }); y.focus(); } return true; }
     return send('import', r, { notice: ui.fileInfo, older: ui.fileOlder });
-  }
-
-  // ---------- sharing (opt-in): the readiness check's store and paths (readiness/<viewer id>/checks/<check id>) ----------
-  function shareDoc() {
-    var m = model(), ev = m.ev, named = rec.share.named, u = USE[rec.use];
-    var d = { kind: 'dyn', v: 2, qv: F.QV, rules: L.RULES, useId: rec.use, useName: u ? uName(u) : '', dept: rec.dept, cat: rec.cat, role: rec.hotel.role, type: rec.hotel.type, country: rec.hotel.country,
-      Q: Object.assign({}, rec.Q), answers: Object.assign({}, rec.A), tailored: Object.assign({}, rec.T), by: Object.assign({}, rec.By), tby: Object.assign({}, rec.TBy),
-      level: ev.level, pct: ev.pct, known: ev.counts.known, total: ev.counts.total, met: ev.must.yes, gates: ev.must.n, open: L.open(ev).length,
-      reason: ev.reason, held: ev.held.slice(),
-      /* Audit M1: only the history of this use case goes to the team, each entry with the rules it was worked out with. */
-      snaps: L.snapsOf(rec.snaps).map(function (s) { return { at: s.at, level: s.level, pct: s.pct, met: s.mustYes, rules: s.rules }; }), sharedAt: new Date().toISOString(), named: named };
-    if (named) d.hotelName = rec.hotel.name;
-    return d;
-  }
-  /* The outcome of a share or a withdrawal is written to the check it belongs to, open or not (audit M2). */
-  function sharePatch(e2, arg) {
-    var r = F.reduce(store, e2, arg, ENV); if (!r.ok) return false;
-    apply(r); save(); return true;
-  }
-  /* Take a copy back from wherever it went. A test copy made outside the hub never reached the team: it is cleared from this
-     browser's test list. A copy sent from the hub can only be withdrawn there (rejects { code: 'mode' }). */
-  function withdrawCopy(id) {
-    var r = recOf(id);
-    return S.ready().then(function (mode) {
-      if (r && r.sharedMode === 'shared' && mode !== 'shared') throw { code: 'mode' };
-      if (r && r.sharedMode === 'local' && mode === 'shared') { try { var o = JSON.parse(localStorage.getItem('hftp-readiness-checks-v1') || '{}') || {}; delete o[id]; localStorage.setItem('hftp-readiness-checks-v1', JSON.stringify(o)); } catch (e) { /* blocked */ } return; }
-      return S.remove(id);
-    });
-  }
-  /* SHARE machine. id: the check (default: the open one). 'share' makes a copy of the open result; 'withdraw' works for any check, on any step (audit H1). */
-  function shareSend(ev, id) {
-    id = id || rec.id; var r0 = recOf(id);
-    if (!S || !r0 || ui.share) return;
-    if (ev === 'share' && (!SHARING_ON || id !== rec.id || rec.step !== 'result')) return;
-    var to = F.shareNext(sharePhaseOf(id), ev); if (!to) return;
-    var doc = ev === 'share' ? shareDoc() : null, sig = F.shareSig(r0);
-    ui.share = { phase: to, id: id }; if (id === rec.id) ui.open.share = true; render();
-    var done = function () { if (ui.share && ui.share.id === id) ui.share = null; };
-    var unsaved = function () { return storage === 'ok' ? '' : ' This browser is not keeping changes, so the page will not remember this after you close it.'; };
-    if (ev === 'share') {
-      S.save(id, doc).then(function (mode) {
-        done();
-        if (!recOf(id)) { S.remove(id).then(function () {}, function () {}); render(); toast('The check was removed while its copy was being sent, so the copy was withdrawn again.'); return; }
-        sharePatch('shared', { id: id, at: new Date().toISOString(), mode: mode, sig: sig }); if (id === rec.id) ui.open.share = true; render();
-        toast((mode === 'shared' ? 'Copy shared with the project team.' : 'Saved as a test copy in this browser only (outside the project hub).') + unsaved());
-      }, function () { done(); render(); toast('Sharing is not available here. Save the file and send it instead.'); });
-    } else {
-      withdrawCopy(id).then(function () { done(); sharePatch('unshared', { id: id }); render(); toast('Shared copy withdrawn.'); },
-        function (e) { done(); render(); toast(e && e.code === 'mode' ? 'This copy was shared from the project hub: open the check there to withdraw it.' : 'Could not withdraw here. Ask the team to delete it.'); });
-    }
   }
 
   // ---------- render ----------
@@ -3245,9 +3144,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
      a phone. ui.layer = { use, from, step, check } (v2.5, audit v3 M1 to M3: one field instead of two, and it remembers the step and
      the check it was opened on), so the layer survives render() and focus goes back to the opener when it closes (Close, Esc, a
      click outside the drawer). The page behind keeps its step, its state and its scroll. Any step or check change closes it. */
-  /* v2.6 (owner, 24 Nov 2026): the layer's content as plain JSON, one source for both places it is drawn: this page's own dialog
-     (standalone) and, inside the hub, the hub's layer on the main page ({ hub: 'detail', id, data }, tools/hub/CONTRACTS.md), where
-     a source link can open (links inside a tool frame never open in the claude.ai viewer). Every field is a string except srcs. */
+  /* v2.7.0 (standalone): the layer is always drawn in this page's own dialog; its source names are plain links (target _blank). */
   function detailData(id) { return L.detailData(D, USE[id], DEPT[(F.deptOfUse(ENV, id) || {}).id], TQ); }
   function detailHtml(id) {
     var x = detailData(id);
@@ -3256,40 +3153,28 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       (x.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(x.draft) + '</strong> ' + esc(x.draftText) + '</p>' : '') +
       (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +
       '<p id="detail-level"><b>' + esc(x.level) + '</b></p>' +
-      /* v2.5 (council BUILD NOW 8): no research or fact-check notes; the catalogue's text is labelled as research wording. */
-      '<h3>For the detail-minded</h3><p><b>The catalogue’s own description (research wording):</b> ' + esc(x.task) + '</p>' +
+      /* v2.5 (council BUILD NOW 8): no research or fact-check notes; v2.7.0: no catalogue description either ("What it does" replaces it). */
       '<h3>Examples and sources (' + x.srcs.length + ')</h3>' + (x.srcs.length ? '<ul class="dsrcs" id="detail-srcs">' + x.srcs.map(L.sourceRowItem).join('') + '</ul>' : '<p class="meta">The catalogue lists no source for this use case.</p>') +
       '<p class="meta">' + esc(x.foot) + '</p></div>';
   }
-  /* ui.layer.hub: the layer is drawn by the hub on its main page; this page only keeps the state (and the opener, for focus). */
-  function hubPost(m) { try { window.parent.postMessage(m, location.origin); } catch (e) { /* the hub is gone */ } }
   function syncDetail() {
     var dlg = $('detail'), L2 = ui.layer, id = L2 && USE[L2.use] && L2.step === rec.step && L2.check === rec.id ? L2.use : null;
-    if (!id) { if (L2 && L2.hub) hubPost({ hub: 'detail-close' }); ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg && dlg.open) dlg.close(); return; }
+    if (!id) { ui.layer = null; $('app').removeAttribute('data-layer'); if (dlg && dlg.open) dlg.close(); return; }
     $('app').setAttribute('data-layer', id);
-    if (L2.hub) { $('app').setAttribute('data-layer-host', 'hub'); return; }
-    $('app').removeAttribute('data-layer-host');
     if (!dlg || typeof dlg.showModal !== 'function') return;
     if (dlg.getAttribute('data-use') !== id) { dlg.innerHTML = detailHtml(id); dlg.setAttribute('data-use', id); }
     if (!dlg.open) { dlg.showModal(); var c = $('detail-close'); if (c) c.focus(); }
   }
   function openDetail(id, from) {
     if (!USE[id]) return;
-    var inHub = !!host.pong; // only once the hub has answered: then it draws the layer (v2.6)
-    ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id, hub: inHub };
-    if (inHub) hubPost({ hub: 'detail', id: id, data: detailData(id) });
+    ui.layer = { use: id, from: from || null, step: rec.step, check: rec.id };
     syncDetail();
   }
   /* Every way out (Close, Esc, a click on the backdrop) runs this at once, so the state never waits for the dialog's own
      asynchronous close event (a render() in between would open it again). */
-  /* moved: true when the step or the check changed (afterMove then puts focus on #view). noFocus: the hub closed it because
-     the person went to another tab. */
-  /* fromHub: the hub closed it ({ hub: 'detail-closed' }). Any other close of a layer the hub drew (a step or check change: browser
-     or phone Back, a #use= link, another tab removing the check) tells the hub, which takes its layer down (v2.6.1, inventory v4 B1:
-     before, the hub's layer stayed over the new step and Esc no longer reached it). */
-  function closeDetail(moved, noFocus, fromHub) {
-    var dlg = $('detail'), from = ui.layer && ui.layer.from, hubDrawn = !!(ui.layer && ui.layer.hub); ui.layer = null; $('app').removeAttribute('data-layer'); $('app').removeAttribute('data-layer-host');
-    if (hubDrawn && !fromHub) hubPost({ hub: 'detail-close' });
+  /* moved: true when the step or the check changed (afterMove then puts focus on #view). */
+  function closeDetail(moved, noFocus) {
+    var dlg = $('detail'), from = ui.layer && ui.layer.from; ui.layer = null; $('app').removeAttribute('data-layer');
     if (dlg) { dlg.removeAttribute('data-use'); if (dlg.open) dlg.close(); }
     var b = !moved && !noFocus && from && $(from); if (b) b.focus({ preventScroll: true });
   }
@@ -3317,9 +3202,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     else if (act === 'pdf') { if (!t.disabled) downloadPdf('result'); }
     else if (act === 'pdf-answers') { if (!t.disabled) downloadPdf('answers'); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
-    else if (act === 'share') shareSend('share');
-    else if (act === 'unshare') shareSend('withdraw', t.getAttribute('data-id') || rec.id);
-    else if (act === 'open' || act === 'remove' || act === 'remove-yes' || act === 'remove-withdraw') send(act, t.getAttribute('data-id'));
+    else if (act === 'open' || act === 'remove' || act === 'remove-yes') send(act, t.getAttribute('data-id'));
     else send(act);
   });
   document.addEventListener('change', function (e) {
@@ -3328,7 +3211,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     else if (t.matches('input[data-use]')) send('use', t.value);
     else if (t.matches('input[data-by]')) send('by', { id: t.getAttribute('data-by'), date: t.value || '' });
     else if (t.matches('select[data-h]')) send('hotel', { k: t.getAttribute('data-h'), v: t.value });
-    else if (t.matches('input[data-share]')) send('share', { named: t.checked });
     else if (t.id === 'file-open') { if (t.files && t.files[0]) loadRecord(t.files[0]); t.value = ''; }
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches && t.matches('input[data-h="name"]')) send('hotel', { k: 'name', v: t.value }, { quiet: true }); });
@@ -3371,10 +3253,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var m = /(?:^|[#&])use=([a-z]+-\d+)/.exec(location.hash || ''); if (!m || !USE[m[1]]) return false;
     return send('preselect', m[1]);
   }
-  if (S) S.ready().then(function () { $('app').setAttribute('data-store', S.state()); if (rec.step === 'result') render(); });
   adoptProfile();
   setTabCur();
-  if (!fromHash()) { histAssert(); takeSnap(); if (rec.step === 'result') save(); render(); }
+  if (!fromHash()) { histAssert(); takeSnap(); if (rec.step === 'result' || loadInfo.fromOldKey) save(); render(); } // v2.7.0: a store read from the old key is saved under the new one at once
   window.addEventListener('hashchange', function () { fromHash(); });
 
   /* AX: read the state without scraping the page; drive it with the same events the buttons send. */
@@ -3387,8 +3268,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         reason: ev ? ev.reason : null, held: ev ? ev.held.slice() : null, score: ev ? L.scoreHead(ev) : null,
         ctx: c, events: F.events(rec.step, c), level: ev ? ev.level : null, pct: ev ? ev.pct : null, counts: ev ? ev.counts : null, must: ev ? ev.must : null,
         confirm: ui.confirm, missing: ui.missing, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
+        questions: tailQs().map(function (q) { return { id: q.id, text: q.q, why: q.why, area: TQ.areas[q.a], who: q.whoLabel }; }),
         dlKind: ui.dlKind, fileInfo: ui.fileInfo, older: ui.older ? Object.assign({}, ui.older) : null, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
-        inHub: host.pong, inFrame: IN_FRAME, download: ui.dl, bridge: host.state, share: sharePhase(), sharedAt: rec.sharedAt, shareStore: S ? S.state() : null, sharingOn: SHARING_ON,
+        download: ui.dl, downloadRoute: dlRoute(),
         history: { d: hist.d, prev: hist.prev } };
     },
     record: function () { return JSON.parse(JSON.stringify(rec)); },
@@ -3400,7 +3282,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     pdfName: pdfName,
     fileDoc: fileDoc,
     openFileText: openFileText,
-    shareDoc: shareDoc,
     catalogue: { uses: CAT.nUses, depts: CAT.nDepts }
   };
 })();

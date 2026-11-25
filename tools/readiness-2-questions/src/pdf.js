@@ -86,7 +86,7 @@
     if (m.flag) b.push({ k: 'lead', t: m.flag, id: 'flag', tone: 'md' }); // v2.7.0
     b.push({ k: 'label', t: 'How the score was worked out' }); m.method.slice(0, 3).forEach(function (t) { b.push({ k: 'li', t: t, small: true }); });
     b.push({ k: 'h', t: 'Every question and your answer' });
-    b.push({ k: 'label', t: 'Step 2: Can this problem be solved with AI?', group: true });
+    b.push({ k: 'label', t: 'Step 2: ' + C.STEP2_HEAD, group: true });
     m.answers.forEach(function (a) { b.push({ k: 'item', id: a.id, name: a.title, check: a.q, ex: '', answer: 'Your answer: ' + a.a, val: a.a, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', action: '' }); });
     var grp = '';
     m.itemList.forEach(function (it, i) {

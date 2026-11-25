@@ -1,3 +1,21 @@
+# Do you need AI? (questions-only, v2.7.0, standalone)
+
+**This folder (`tools/readiness-2-questions/`) is the standalone "Do you need AI?" artifact with use-case-specific questions and no legal
+content.** It started as a copy of `tools/readiness-2/` (see `NOTES.md` and `CHANGELOG.md`); everything below the line is the base
+tool's README and is kept for history: where it mentions the hub, sharing, the Team tab, the AI Register, the AI Act label or the
+generator, that no longer applies here.
+
+Build and test (from the repo root; browser tests from `tools/` with `python3 -m http.server 8891 --bind 127.0.0.1` running):
+
+```
+node tools/readiness-2-questions/build.mjs
+node tools/readiness-2-questions/data/check-questions.mjs
+for t in tools/readiness-2-questions/tests/*.test.mjs; do node $t; done
+node readiness-2-questions/tests/browser/questions.cjs     # from tools/; screenshots to reports/readiness-2-questions-screens/
+```
+
+---
+
 # Do you need AI? (v2.6.1, rules v2.6, prototype)
 
 Hub tab **Do you need AI?** (tooltip "Is AI the answer, and is your hotel ready for it?"). Since 24 Nov 2026 it **replaces the Readiness check tab** in the hub: one tool that asks whether the job needs AI at all, checks the must-haves, asks tailored questions for the chosen use case and ends with a **verdict and a score in %** (v2.1: worded "Score: n%", never "% ready") (owner's decision of 24 Nov 2026, overriding the earlier "no score" rule for this tool). The folder `tools/readiness-2/`, the tool id `readiness-2` and the storage key `hftp-readiness2-v1` are unchanged. `tools/readiness-check/` stays in the repo and stays published as a file, so old bookmarks open.

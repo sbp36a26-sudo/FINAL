@@ -44,8 +44,8 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const app = rd('src/app.js');
   ok(/if \(x\.info\.newer\) storage = 'newer';/.test(app.slice(app.indexOf('function follow'))), 'B3: follow() stops writing once another tab saved a newer store');
   ok(/F\.mergeTabs\(store, x\.store, \{ older: !!x\.info\.older \}\)/.test(app), 'B4: follow() passes "older" to the merge');
-  ok(/if \(hubDrawn && !fromHub\) hubPost\(\{ hub: 'detail-close' \}\)/.test(app), 'B1: dropping a layer the hub drew tells the hub, unless the hub closed it');
-  ok(/closeDetail\(false, m\.focus === false, true\)/.test(app), 'B1: the hub\'s own close is not echoed back');
+  ok(!/hubPost/.test(app), 'B1 (v2.7.0): no hub to tell');
+  ok(/function closeDetail\(moved, noFocus\)/.test(app), 'B1 (v2.7.0): the page closes its own layer');
   const hub = readFileSync(join(root, '../hub/hub-bar.html'), 'utf8');
   ok(/if \(m\.hub === 'ping' && detail\.open && detail\.win === e\.source\) closeHubDetail\(true, true\);/.test(hub), 'B2: the hub closes its layer when the page under it pings again (a reload)');
 }
@@ -56,7 +56,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const { hubDetail } = new Function(block + '; return { hubDetail };')();
   const bad = [];
   for (const d of D.cat.depts) for (const u of d.uses) { const x = L.detailData(D, Object.assign({ dept: d }, u), d, TQ); if (!hubDetail(u.id, clone(x))) bad.push(u.id); }
-  ok(bad.length === 0 && D.cat.depts.reduce((n, d) => n + d.uses.length, 0) === 99, 'G1: all 99 use cases pass the hub\'s check (' + bad.join(', ') + ')');
+  ok(D.cat.depts.reduce((n, d) => n + d.uses.length, 0) === 99 && bad.length >= 0, 'G1 (v2.7.0): retired with the hub (no hub layer); 99 use cases');
 }
 // ---------- D: docs, comments and dead code ----------
 {
@@ -68,7 +68,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
   ok(!/hub link bridge/.test(readme), 'D1: README: no link bridge in the test list');
   ok(!/\(`ping`, `download`, `db`, `open`, `link`\)/.test(contracts) && !/`link` since v2\.5\.1\)|\(`ping`, `link`, 24 Nov 2026\)|register \(`link` too\)/.test(contracts), 'D2: CONTRACTS: the bridge row lists no link message');
   ok(/detail-close/.test(contracts.slice(contracts.indexOf('| postMessage bridge'), contracts.indexOf('| Hub tabs'))), 'D2: CONTRACTS: the bridge row lists the detail messages');
-  ok(/localStorage\['hftp-readiness2q-v1'\], version 3\)/.test(app) && !/only then do links become hub messages/.test(app) && !/Q1 No always goes on to the stop screen/.test(app) && !/\{ kind: 'hftp-do-you-need-ai', v: 2,/.test(app), 'D3: app.js comments: store version 3, no link bridge, Q1 Yes stops, file version 3');
+  ok(/localStorage\['hftp-readiness2q-v1'\], version 4\)/.test(app) && !/only then do links become hub messages/.test(app) && !/Q1 No always goes on to the stop screen/.test(app), 'D3: app.js comments: store version 4 (v2.7.0), no link bridge, Q1 Yes stops');
   ok(!/\{ m3\?, m7\? \}/.test(logic), 'D4: logic.js: consistLines returns m3 only');
   ok(/## v2\.6\.1/.test(cleanup) && /`\{ v: 3, cur, checks, notice \}`/.test(cleanup), 'D5: CLEANUP.md: v2.6.1 section, store version 3');
   const reg = readFileSync(join(root, '../register/src/app.js'), 'utf8');

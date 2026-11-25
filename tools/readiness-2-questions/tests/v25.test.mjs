@@ -100,7 +100,7 @@ ok(/id="consist-' \+/.test(app) || /consist-/.test(app), 'BUILD NOW 7: drawn und
 
 // ---------- BUILD NOW 8: the detail layer ----------
 ok(Object.values(D.detail).every(x => !('ai' in x)) && Object.keys(D.detail).length === 99, 'BUILD NOW 8: no "AI technique" notes bundled (99 entries)');
-ok(!/AI technique/.test(app) && /The catalogue’s own description \(research wording\)/.test(app), 'BUILD NOW 8: the line is gone, the description retitled');
+ok(!/AI technique/.test(app) && !/research wording/.test(app), 'BUILD NOW 8 (v2.7.0): the technique line and the catalogue\'s research-wording description are both gone from the layer');
 
 // ---------- BUILD NOW 9: sources ----------
 const evText = C.MUSTS.flatMap(m => m.ev.map(e => e.join(' '))).join('\n');
@@ -110,7 +110,7 @@ ok((evText.match(/State of Hotel AI/g) || []).length === 4 && evText.split('\n')
 ok(/\b70%/.test(app) && /\b46%/.test(app) && !/69\.89|45\.91/.test(app), 'BUILD NOW 9: the cover rounds too');
 
 // ---------- O7: sharing off ----------
-ok(/var SHARING_DEFAULT = false;/.test(app), 'O7: SHARING_DEFAULT = false');
+ok(!/SHARING_DEFAULT|SHARING_ON/.test(app), 'O7 (v2.7.0): sharing is gone, not only switched off');
 
 // ---------- cleanup inventory v3: H1 (U3) ----------
 {

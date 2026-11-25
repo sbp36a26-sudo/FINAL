@@ -1,3 +1,21 @@
+# Changelog: Do you need AI? (questions-only, readiness-2-questions)
+
+## v2.7.0 (25 Nov 2026), standalone artifact, copied from tools/readiness-2 at 74385fe (v2.7 with rules v2.6)
+- Step 5 reads `data/usecase_questions_only.json` verbatim (99 use cases, 723 questions, 6 to 12 each, no text in two use cases):
+  text, why (in "Why this matters"), area, who answers. The generator, overrides, wording and workbook extract are removed;
+  `data/check-questions.mjs` checks 6 to 12 questions, 20 words, one question mark, no duplicates in or across use cases.
+- No legal content: no AI Act section, label, register link, legal vendor questions, legal sources, "not legal advice" lines.
+  The data file's disclaimer (cover, result, page footer, every PDF footer), sensitive-area flag and hold reason; must-have 5
+  "Personal data known"; `SENSITIVE_HOLDS_TOP` (the data file's sensitive flag) replaces `LEGAL_HOLDS_TOP`. 21 catalogue sources
+  whose name, note or address carries a banned word are left out (the build prints them). `tests/no-legal.test.mjs`: 0 hits.
+- Step 2 heading: "Should this problem be solved by AI?" (owner).
+- Standalone: no hub bridge, no hub-drawn layer, no sharing or Team tab, no register or readiness-check code inlined, no external
+  fonts. Downloads through the artifact downloads capability; Copy fallback when it is not available; a blob link in a plain tab.
+- Saves: storage key `hftp-readiness2q-v1`, store and file version 4; v2.6.1's key is read once; v2.6.1 files and store records open,
+  step-5 answers (and dates) carry by `carry_answer_from`, with the notice "This check was made with an older question list. N answers
+  were kept, M questions are new." and focus on the first unanswered step-5 question.
+- Scoring, verdicts, cut-offs and the other holds unchanged.
+
 # Do you need AI? (formerly "AI starting point", "Readiness 2.0"): changelog
 
 ## v2.7 (25 Nov 2026): two PDFs on the result page, no sources in either. Rules v2.6 unchanged. Not committed, not published.

@@ -180,7 +180,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(s && s.compared && s.head === 'Since last time (20 Nov 2026)' && s.lines.includes('Must-haves at Yes: 10 → 9 of 10.') && s.earlier.length === 1, 'M1: back on rm-1 with one answer changed: the two rm-1 results are compared, rm-2 is left out');
   ok(!L.sameSnap(a, Object.assign({}, a, { use: 'rm-2' })) && !L.sameSnap(a, Object.assign({}, a, { rules: 'v2 (24 Nov 2026)' })) && L.sameSnap(a, Object.assign({}, a)), 'M1: the same numbers for another use case or other rules are a new snapshot');
   ok(eq(L.snapsOf([a, b, c]).map(x => x.at), [a.at, c.at]), 'M1: only this use case\'s history goes into a shared copy (shareDoc uses snapsOf)');
-  ok(rd('src/app.js').includes('snaps: L.snapsOf(rec.snaps).map('), 'M1: shareDoc sends snapsOf(rec.snaps)');
+  ok(!/shareDoc/.test(rd('src/app.js')), 'M1 (v2.7.0): no share document: the standalone tool shares nothing');
   // results kept under rules v2.0: listed, marked, never compared line by line
   const old = { at: '2026-11-24T08:00:00.000Z', level: 'almost', pct: 83, pts: 25, max: 30, known: 15, total: 17, mustYes: 7, mustN: 10, rules: 'v2 (24 Nov 2026)' };
   const now = L.snapshot(L.evaluate(mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'p'], []), TQ), '2026-11-24T12:00:00.000Z', 'fo-4');
@@ -212,7 +212,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(F.reduce(storeWith(st), 'unshared', { id: 'chkS' }, ENV).store.checks.chkS.sharedAt === null && F.shareNext(F.shareSettled(st), 'withdraw') === 'withdrawing', 'H1: withdraw on the stop screen (SHARE: shared --withdraw--> withdrawing, whatever the step)');
   ok(F.reduce(storeWith(mk('fo-4', [], [], { id: 'chkD' })), 'shared', { at: '2026-11-24T10:00:00.000Z', mode: 'local', sig: 'x' }, ENV).store.checks.chkD.sharedAt, 'without an id the open check is meant (as before)');
   const app = rd('src/app.js');
-  ok(!/withdraw that copy first from its result page/.test(app) && /id="rm-withdraw">Withdraw the shared copy and remove</.test(app) && /The team still has your earlier result/.test(app) && !/rec\.step !== 'result'\) return;\s*var to = F\.shareNext/.test(app), 'H1: the dead-end sentence is gone; the real button and the stop-screen line are in the page');
+  ok(!/withdraw that copy first from its result page/.test(app) && !/rm-withdraw|data-act="unshare"/.test(app), 'H1 (v2.7.0): no sharing, so no withdraw buttons and no dead-end sentence');
 }
 
 // ====================================================================================================================
@@ -317,7 +317,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 {
   const app = rd('src/app.js');
   // L1
-  ok(/setTimeout\(function \(\) \{ dlSend\('made'\); saveFile\(name, blob\); \}, 30\);/.test(app) && F.dlNext('making', 'start', 'none') === null, 'L1: "Save as file" goes through the same later tick as the PDF, so the second click meets a busy machine');
+  ok(/setTimeout\(function \(\) \{ dlSend\('made'\); saveFile\(name, blob, copyFallback\('file'\)\); \}, 30\);/.test(app) && F.dlNext('making', 'start', 'none') === null, 'L1: "Save as file" goes through the same later tick as the PDF, so the second click meets a busy machine');
   // L2
   ok(/function clearProfile\(k\)/.test(app) && /if \(ev === 'hotel' && arg\.v === '' && arg\.k !== 'role'\) clearProfile\(arg\.k\);/.test(app), 'L2: an emptied field is taken out of the shared profile (browser test: clear, reload, still empty)');
   let s = storeWith(F.blank('h1')); s = F.reduce(s, 'begin', null, ENV).store; s = F.reduce(s, 'hotel', { k: 'name', v: 'Hotel Secret' }, ENV).store; s = F.reduce(s, 'hotel', { k: 'name', v: '' }, ENV).store;
@@ -354,12 +354,12 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(om.first[0].text.endsWith('(was planned by 1 Jan 2001, overdue).') && om.itemList[0].answer === 'Planned (was planned by 1 Jan 2001, overdue)' && !/\(planned by 1 Jan 2001\)/.test(P.model(od, env).blocks.map(b => [b.t, b.sub].join(' ')).join('\n')), 'L5: and shown as "was planned by 1 Jan 2001, overdue" (screen and PDF)');
   ok(/min="' \+ L\.localIso\(\) \+ '"/.test(app), 'L5: the date field has min = today');
   // L6
-  ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && /mode === 'local' && storage === 'ok' \? 'Outside the project hub/.test(app), 'L6: with storage not ok, neither "kept here until you remove it" nor "a test copy in this browser"');
+  ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && !/test copy in this browser/.test(app), 'L6: with storage not ok, no "kept here until you remove it" (v2.7.0: no test copies at all)');
   // L7
   const stopRec = finished(F, D, '', { Q: { q1: 'y' }, A: {}, step: 'stop' }); // v2.6: Q1 Yes stops
   ok(P.model(stopRec, env).blocks[0].t === 'Do you need AI? Not suitable for AI' && !/score/i.test(P.model(stopRec, env).blocks[0].t) && P.model(mk('fo-4', [], []), env).blocks[0].t === 'Do you need AI? Result' && L.resultModel(mk('fo-4', [], []), env).title === 'Do you need AI? Result', 'L7: one title on the screen and in the PDF; the stop PDF has no "score" in its title');
   // L8
-  ok(C.OLD_FILE === 'This file is from the earlier Readiness check. It cannot be opened here.' && /o\.kind === OLD_KIND\) old = true/.test(app) && /var OLD_KIND = 'hftp-readiness-check'/.test(app) && /href="\.\.\/readiness-check\/index\.html"/.test(app), 'L8: a file of the earlier Readiness check gets its own message and a link to the page that opens it');
+  ok(C.OLD_FILE === 'This file is from the earlier Readiness check. It cannot be opened here.' && /o\.kind === OLD_KIND\) old = true/.test(app) && /var OLD_KIND = 'hftp-readiness-check'/.test(app) && !/readiness-check\/index\.html/.test(app), 'L8: a file of the earlier Readiness check gets its own message (v2.7.0: no link to another tool)');
   ok(/kind: 'hftp-readiness-check'/.test(rd('../readiness-check/src/check.js')) && /This check was replaced by “Do you need AI\?” on 24 Nov 2026/.test(rd('../readiness-check/src/check.js')) && rd('../readiness-check/index.html').includes('This check was replaced by “Do you need AI?” on 24 Nov 2026'), 'L8: the old page says it was replaced, and still saves files of that kind');
   ok(C.SOURCES.mustNote.includes('The wording follows the team’s earlier readiness check.') && !/the hub’s earlier readiness check/.test(rd('src/content.js')), 'L8: the sources note says "the team\'s earlier readiness check"');
   // L11
@@ -417,9 +417,9 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   // the copy v2.0 shared with the team still reads
   const copy = JSON.parse(JSON.parse(rd('tests/fixtures/v2.0-other-keys.json'))['hftp-readiness-checks-v1'])[rm1.id];
   ok(copy.kind === 'dyn' && copy.v === 2 && copy.rules === 'v2 (24 Nov 2026)' && copy.useId === 'rm-1' && typeof copy.pct === 'number', 'fixture: the team copy v2.0 made (message shape unchanged: kind dyn, v 2)');
-  ok(/kind: 'dyn', v: 2, qv: F\.QV, rules: L\.RULES, useId: rec\.use/.test(rd('src/app.js')), 'the share document keeps its shape (kind, v, rules, useId …; v2.6 adds qv); reason, held and rules per snapshot are added');
+  ok(!/kind: 'dyn'/.test(rd('src/app.js')), 'v2.7.0: no share document (no hub, no Team tab)');
 }
 // storage keys and hub messages unchanged
-ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 4 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: 'open'/.test(rd('src/app.js')) && /\{ hub: 'download', id: id, filename: name, data: blob \}/.test(rd('src/app.js')) && /\{ hub: 'ping' \}/.test(rd('src/app.js')), 'v2.7.0: own storage key; no message opens another hub tab; store version 4');
+ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 4 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: '|postMessage/.test(rd('src/app.js')) && /window\.claude\.use\('downloads'\)/.test(rd('src/app.js')), 'v2.7.0: own storage key, store version 4; no hub messages at all; downloads through the artifact capability');
 ok(!/AIHA|AI Hospitality Alliance/i.test(rd('index.html').replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
 done();
