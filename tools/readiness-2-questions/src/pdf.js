@@ -18,7 +18,7 @@
 (function (root) {
   'use strict';
   var C = root.R2Content, L = root.R2Logic;
-  var TITLE = 'Do you need AI? Result', TITLE_ANSWERS = 'Do you need AI? Your answers', TITLE_STOP = 'Do you need AI? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
+  var TITLE = 'Can AI solve your problems? Result', TITLE_ANSWERS = 'Can AI solve your problems? Your answers', TITLE_STOP = 'Can AI solve your problems? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Questions, rules and content as of ' + C.AS_OF + '.';
   /* v2.7.0 (owner): the footer of every page is the disclaimer (the data file's fixed text), then the page number */
   var FOOT_L = C.DISCLAIMER, FOOT = FOOT_L + ' · page ';
@@ -239,7 +239,7 @@
       render(b);
     }
 
-    var n = doc.getNumberOfPages(), footers = [], hd = safe(['Do you need AI?', m.run && m.run.hotel, m.run && m.run.date].filter(Boolean).join(' · '));
+    var n = doc.getNumberOfPages(), footers = [], hd = safe(['Can AI solve your problems?', m.run && m.run.hotel, m.run && m.run.date].filter(Boolean).join(' · '));
     for (var p = 1; p <= n; p++) {
       doc.setPage(p); var ft = footer(p, n); footers.push(ft);
       stroke('line', 0.2); doc.line(M, H - 15, W - M, H - 15);

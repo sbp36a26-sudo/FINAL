@@ -35,7 +35,7 @@
   var ENV = { cat: CAT, tq: {}, sig: {}, countries: C.COUNTRIES };
   Object.keys(TQ.uses).forEach(function (k) { ENV.tq[k] = TQ.uses[k].qs.map(function (q) { return { id: q.id, carry: q.carry || null }; }); ENV.sig[k] = TQ.uses[k].sig || ''; });
   var PROFILE = 'hftp-hotel-profile-v1';
-  var NAME = 'Do you need AI?';
+  var NAME = 'Can AI solve your problems?';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function plural(n, a, b) { return n + ' ' + (n === 1 ? a : (b || a + 's')); }

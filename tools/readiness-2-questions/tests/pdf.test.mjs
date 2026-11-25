@@ -55,7 +55,7 @@ function answersDoc(rec, tag) {
   ok(items.length === 5 + 10 + nTail && new Set(items.map(b => b.id)).size === items.length, tag + ': every question once: ' + items.length + ' = 5 + 10 + ' + nTail);
   ok(items.slice(0, 5).every((b, i) => b.name === C.QUESTIONS[i].title && b.check === C.QUESTIONS[i].q) && items.slice(5, 15).every((b, i) => b.id === F.MUST_IDS[i]) && items.slice(15).every((b, i) => b.name === TQ.uses[rec.use].qs[i].q), tag + ': in the order of the steps');
   ok(items.slice(5, 15).every(b => b.check) && m.itemList.every((it, i) => { const b = items[5 + i]; return b.val === (m.ev.items[i].old ? 'Not answered' : it.answer) && b.answer === 'Your answer: ' + b.val; }) && m.answers.every((a, i) => items[i].val === a.a), tag + ': each answer is the one given');
-  ok(!SRC_RE.test(t) && !heads(pdf).some(h => /Sources|How this was worked out/.test(h)) && pdf.blocks.every(b => b.k !== 'src') && pdf.blocks[0].t === 'Do you need AI? Your answers' && pdf.blocks.some(b => b.t === 'Result: ' + m.levelName + ' · ' + m.scoreHead) && t.includes('Date: ' + m.date) && (!m.useName || t.includes('Use case: ' + m.useName)), tag + ': a summary (hotel, use case, date, verdict and score), no sources');
+  ok(!SRC_RE.test(t) && !heads(pdf).some(h => /Sources|How this was worked out/.test(h)) && pdf.blocks.every(b => b.k !== 'src') && pdf.blocks[0].t === 'Can AI solve your problems? Your answers' && pdf.blocks.some(b => b.t === 'Result: ' + m.levelName + ' · ' + m.scoreHead) && t.includes('Date: ' + m.date) && (!m.useName || t.includes('Use case: ' + m.useName)), tag + ': a summary (hotel, use case, date, verdict and score), no sources');
   ok(!/Partly|Doesn’t apply/.test(t) && !/no longer offered/.test(t), tag + ': no retired answer words');
   return { m, pdf, t, items };
 }
@@ -65,7 +65,7 @@ let r = mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', '
 let { m, pdf, t } = sameWords(r, 'fo-4');
 ok(eq(heads(pdf), ['Result', 'Start with these three', 'Action plan by person', 'Questions for the vendor']), 'sections as the owner listed them, in this order (v2.7.0: without the AI Act section)');
 answersDoc(r, 'fo-4');
-ok(pdf.blocks[0].t === 'Do you need AI? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && !/legal advice/i.test(t) && t.includes('as of 25 Nov 2026'), 'title, hotel, role, date, prototype line');
+ok(pdf.blocks[0].t === 'Can AI solve your problems? Result' && t.includes('Hotel: Hotel Test · Independent hotel · France') && t.includes('Filled in by: General manager') && t.includes('Date: 24 Nov 2026') && !/legal advice/i.test(t) && t.includes('as of 25 Nov 2026'), 'title, hotel, role, date, prototype line');
 /* PDF redesign: page 1: the box (verdict, score, the short reason line, the must-haves line), the reason and the points under it,
    then "Start with"; a page break before "Is this an AI problem?". */
 const lv = pdf.blocks.find(b => b.id === 'level'), why = pdf.blocks[pdf.blocks.indexOf(lv) + 1], sub = pdf.blocks[pdf.blocks.indexOf(lv) + 2];
@@ -100,7 +100,7 @@ ok(n === 220, '220 answer sets (every use case at least once, both documents) ch
 // ---------- the stop version ----------
 r = finished(F, D, '', { Q: { q1: 'y', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf); // v2.6: Q1 Yes stops
 ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.']) && !SRC_RE.test(t) && pdf.blocks.every(b => b.k !== 'src') && eq(P.model(r, env, 'answers').blocks, pdf.blocks) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered Yes to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Can each case be fixed with an “if this, then that” rule?', 'stop PDF (no sources; the same for either kind): the heading, why, instead, the "Not sure" line, the because line');
-ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Do you need AI? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
+ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Can AI solve your problems? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
 let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === C.DISCLAIMER + ' · page 1 of 1', 'stop PDF: one page, the disclaimer in the footer (v2.7.0)');
 
 // ---------- drawing ----------
@@ -111,7 +111,7 @@ function layout(mdl, d, tag) {
   const N = d.r.pages, byPage = p => d.log.filter(l => l.page === p);
   ok(d.log.filter(body).every(l => l.y <= PG.BOT + 0.5), tag + ': no body line below the bottom margin');
   let feet = 0, heads = 0;
-  for (let p = 1; p <= N; p++) { const ls = byPage(p).map(l => l.line); if (ls.includes(P.FOOT_L) && ls.includes('page ' + p + ' of ' + N)) feet++; if (p > 1 && ls.some(l => l.startsWith('Do you need AI? · ') && byPage(p).find(x => x.line === l).y < 15)) heads++; }
+  for (let p = 1; p <= N; p++) { const ls = byPage(p).map(l => l.line); if (ls.includes(P.FOOT_L) && ls.includes('page ' + p + ' of ' + N)) feet++; if (p > 1 && ls.some(l => l.startsWith('Can AI solve your problems? · ') && byPage(p).find(x => x.line === l).y < 15)) heads++; }
   ok(feet === N, tag + ': the footer (prototype line, "page n of N") on every page (' + feet + ' of ' + N + ')');
   ok(heads === N - 1, tag + ': the running header (tool, hotel, date) on every page after the first');
   /* no heading, sub-heading or table head as the last line of a page */
@@ -119,7 +119,7 @@ function layout(mdl, d, tag) {
   const orphans = [];
   for (let p = 1; p <= N; p++) { const ls = byPage(p).filter(body); if (!ls.length) continue; const last = ls.reduce((a, l) => l.y >= a.y ? l : a); if (last.x <= PG.M + 2.5 && hd.some(h => h === last.line || h.length > 70 && h.startsWith(last.line))) orphans.push(p + ': ' + last.line); }
   ok(orphans.length === 0, tag + ': no heading as the last line of a page ' + JSON.stringify(orphans));
-  ok(mdl.stop ? N === 1 : mdl.kind === 'answers' ? byPage(1).some(l => l.line === 'Do you need AI? Your answers') && byPage(1).some(l => l.line === 'Result:') : byPage(1).some(l => l.line.startsWith(mdl.blocks.find(b => b.k === 'verdict').name)), tag + ': page 1 is the summary (verdict, or the answers\' summary)');
+  ok(mdl.stop ? N === 1 : mdl.kind === 'answers' ? byPage(1).some(l => l.line === 'Can AI solve your problems? Your answers') && byPage(1).some(l => l.line === 'Result:') : byPage(1).some(l => l.line.startsWith(mdl.blocks.find(b => b.k === 'verdict').name)), tag + ': page 1 is the summary (verdict, or the answers\' summary)');
 }
 for (const [tag0, rec] of [['fo-4', mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y'])], ['hr-2', mk('hr-2', ['n', 'k', 'pl'], ['k', 'pl', 'pl', 'n', 'y', 'k', 'n'])], ['fo-8', mk('fo-8', [], [])], ['none', mk('none', ['k'], [])], ['long name', mk('it-4', [], [], { hotel: { name: 'Grand Hôtel & Résidence de la Paix – Łódź Ørestad Straße '.repeat(2).slice(0, 118), role: 'owner', type: 'group', country: 'Poland' } })]]) {
   for (const kind of ['result', 'answers']) {
