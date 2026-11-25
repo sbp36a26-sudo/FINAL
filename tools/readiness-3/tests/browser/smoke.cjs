@@ -19,6 +19,7 @@ let pass = 0, fail = 0; const ok = (c, n) => { if (c) pass++; else { fail++; con
     await p.goto(BASE + 'readiness-3/index.html');
     await p.waitForFunction(() => window.Readiness3 && window.Readiness3.state);
     ok(await p.title() === 'Do you need AI? v3.0', tag + ': title');
+    ok(await p.evaluate(() => window.R3Data.index(JSON.parse(document.getElementById('r3-data').textContent)).D.use_cases.length === 99), tag + ': the v3 data is inlined and readable');
     const st = await p.evaluate(() => {
       const R = window.Readiness3;
       R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('hotel', { k: 'name', v: 'Hotel Smoke' }); R.send('next');

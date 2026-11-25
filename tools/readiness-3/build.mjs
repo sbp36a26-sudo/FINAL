@@ -5,6 +5,7 @@
 // Run after editing anything in src/ or the catalogue:   node tools/readiness-3/build.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tqSig } from './data/build-questions.mjs';
+import { loadV3 } from './lib/data3.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -104,14 +105,18 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const rc = rcModel(read('../readiness/index.html'), labels, JSON.parse(read('../register/data/reference.json')));
   const ex = explainModel(JSON.parse(read('data/explain.json')), ids);
   const data = { cat, tq: tqModel(J, labels), rc, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
+  /* v3 question data: spec/usecase_questions_v3.json and its runtime copy, both validated against the schema (lib/schema.mjs);
+     any error throws here, so the build fails. Only the runtime copy is inlined. */
+  const v3 = loadV3();
+  const block3 = `<script type="application/json" id="r3-data">${JSON.stringify(v3.runtime).replace(/</g, '\\u003c')}</script>`;
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   /* PDF: jsPDF and the "Register Sans" OFL font subset, inlined the way the AI Register and the AI Act guide do it. */
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
   const fontBlock = `<script type="application/json" id="r2-font">${JSON.stringify(font)}</script>`;
   const safe = s => s.replace(/<\/script/gi, '<\\/script');
   let html = read('src/page.html');
-  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))],
-    ['/*__RCLOGIC__*/', safe(read('../readiness-check/src/logic.js'))], ['/*__RCSTORE__*/', safe(read('../readiness-check/src/store.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))],
+  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + block3 + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))],
+    ['/*__RCLOGIC__*/', safe(read('../readiness-check/src/logic.js'))], ['/*__RCSTORE__*/', safe(read('../readiness-check/src/store.js'))], ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__DATA3__*/', safe(read('src/data3.js'))],
     ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
     if (!html.includes(mark)) throw new Error('src/page.html: missing ' + mark);
     html = html.replace(mark, () => text);
@@ -121,5 +126,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const ext = html.match(/<(?:script|link|img|iframe)\b[^>]*\b(?:src|href)\s*=\s*["']?(?:https?:)?\/\//gi);
   if (ext) throw new Error('index.html must be self-contained: external reference ' + ext[0]);
   writeFileSync(join(here, 'index.html'), html);
-  console.log('wrote tools/readiness-3/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(J.uses).reduce((a, u) => a + u.qs.length, 0), 'tailored questions');
+  console.log('wrote tools/readiness-3/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(J.uses).reduce((a, u) => a + u.qs.length, 0), 'tailored questions (v2 UI) · v3 data', v3.runtime.use_cases.length, 'use cases,', v3.runtime.use_cases.reduce((a, u) => a + u.questions.length, 0), 'questions, schema valid');
 }
