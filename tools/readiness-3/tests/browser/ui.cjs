@@ -223,6 +223,23 @@ async function walk(p, g, n, tag) {
       await ctx2.close();
     }
 
+    /* Copy the result and Copy for a person through the clipboard: the same text and top 3 as the model (and so the PDF) */
+    {
+      const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] }, permissions: ['clipboard-read', 'clipboard-write'] });
+      const p = await ctx.newPage(); await p.goto(URL); await p.waitForFunction(() => window.Readiness3 && window.Readiness3.ready());
+      await walk(p, G[1], 2, tag + '-copy'); // golden 2
+      await p.click('#copy'); await p.waitForTimeout(150);
+      const clip = await p.evaluate(() => navigator.clipboard.readText()), want = await p.evaluate(() => window.Readiness3.summaryText());
+      const top = await p.evaluate(() => window.Readiness3.model().top3.map(a => a.text)), pdfTop = await p.evaluate(() => JSON.stringify(window.Readiness3.pdfModel()));
+      ok(clip === want && top.length >= 1 && top.every(t => clip.includes(t) && pdfTop.includes(JSON.stringify(t).slice(1, -1))), tag + ' Copy the result: clipboard = summary text, the same top 3 as the PDF');
+      ok((await p.textContent('#toast')).trim() === 'Copied the result.', tag + ' Copy says it copied');
+      const owner = await p.getAttribute('[data-act="copy-person"]', 'data-id');
+      await p.click('[data-act="copy-person"]'); await p.waitForTimeout(150);
+      const pc = await p.evaluate(() => navigator.clipboard.readText()), pw = await p.evaluate(o => window.Readiness3.model().people.find(x => x.key === o).items, owner);
+      ok(pw.every(t => pc.includes(t)), tag + ' Copy for a person holds that person\'s actions');
+      await ctx.close();
+    }
+
     /* 7: no downloads capability → Copy fallback; PDF failure; 8: storage blocked */
     {
       const { ctx, p } = await mk(b, size);

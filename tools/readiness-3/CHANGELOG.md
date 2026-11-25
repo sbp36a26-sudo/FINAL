@@ -21,3 +21,12 @@ removed, so the banned-term grep skips it (spec §5, "excluding the change-log f
   migration with real v2.7 store and file fixtures and readiness-2's v2.5 fixture) and `result3.test.mjs` (33 golden cases: §9
   usefulness rules, Copy = PDF top 3, PDF page 1, footer, section order), browser test `tests/browser/ui.cjs` (358 checks at
   1280×800 and 360×740), screenshots in `reports/readiness-3-screens/`.
+- **P5** `readiness-3: tests and self-review` — new browser tests `tests/browser/questions.cjs` (1,636 use case × How it works
+  combinations at 1280 and 360 px: the cards shown = `R3Rules.visible` = `sim_v3.visible_questions`, ids and order; every card verbatim
+  with "Who answers", weight label, Planned help and a collapsed "Why we ask"; no horizontal scroll; all 99 use cases reachable in the
+  picker) and `tests/browser/a11y.cjs` (manual accessibility checks, axe-core not in the repo); `ui.cjs` adds Copy through the
+  clipboard. Defects fixed: step 5 grouped questions by area, which reordered them against the data in 668 of 1,636 combinations, and
+  hid them until every How it works question was answered (unanswered ones still counted): now always shown, in the data's order, an
+  area name above each run; the use-case picker's list items sat in a list whose role was changed (now plain labels in the radio
+  group); the confirm dialog's label pointed at a missing element when closed; printing to PDF fired beforeprint twice and left the
+  folds open after; a code comment said "unknown".

@@ -30,7 +30,7 @@ Cover → 1 About your hotel → 2 Is this an AI problem? (five questions, not s
 Change my answers, Continue anyway, Download (PDF)) → 3 Must-haves (11, all "Must be Yes"; m2 and m4 also offer "Doesn't apply"
 with their help line) → 4 Where in the hotel? (department, then one of 99 use cases, or None of these fits; no choice = None of
 these fits) → 5 Questions for this use case ("First, how will this tool work in your hotel?": the 1–2 How it works questions, then
-the questions they unlock, grouped by area) → Result (verdict, reason, sensitive-area note, notes, top 3 actions, Copy / Download
+the questions they unlock, in the data's order, with the area name above each run of one area) → Result (verdict, reason, sensitive-area note, notes, top 3 actions, Copy / Download
 (PDF) / Save as file, details by area, action plan by person, questions for the vendor, every question and answer, how this was
 worked out, readiness score, disclaimer). Back keeps every answer. Next with unanswered questions says how many and that they
 count as Don't know yet; a second Next goes on.
@@ -58,7 +58,9 @@ for t in tools/readiness-3/tests/*.test.mjs; do node $t; done
 #   data3 (schema, counts), rules3 (golden 33/33, visibility, sweep 26,935 runs, invariants), store3 (flow, files, migration),
 #   result3 (33 golden results, Copy and PDF), banned (page, sources, exports, PDF text), build (the page, migration table)
 # browser (serve tools/ first: python3 -m http.server 8861 --bind 127.0.0.1), from tools/:
-node readiness-3/tests/browser/ui.cjs
+node readiness-3/tests/browser/ui.cjs          # the journey, files, migration, downloads, Copy (clipboard)
+node readiness-3/tests/browser/questions.cjs   # every use case × How it works combination (1,636): shown = R3Rules.visible = sim_v3, verbatim cards; 99 use cases in the picker
+node readiness-3/tests/browser/a11y.cjs        # contrast (tokens and rendered, light and dark), focus, names, aria-live, reduced motion, print, 44 px targets
 ```
 
 `ui.cjs` walks golden cases 1, 2, 9, 10, 14, 15, 19 and 28 by clicking, golden 1 by keyboard only, Back, reload, Start a new check,

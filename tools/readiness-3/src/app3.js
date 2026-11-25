@@ -214,10 +214,10 @@
     h += '<section class="panel"><label class="fld" for="dept"><span>Department</span><select id="dept"><option value="">Choose a department</option>' +
       IX.DEPTS.map(function (d) { return '<option value="' + esc(d.name) + '"' + (d.name === dept ? ' selected' : '') + '>' + esc(d.name) + ' (' + d.uses.length + ')</option>'; }).join('') + '</select></label>';
     if (deptObj) {
-      h += '<fieldset class="card" style="border:0;padding:0"><legend id="lg-uc" class="qtitle">Use cases in ' + esc(deptObj.name) + '</legend><ul class="uclist" role="radiogroup" aria-labelledby="lg-uc">' + deptObj.uses.map(function (x) {
+      h += '<fieldset class="card" style="border:0;padding:0"><legend id="lg-uc" class="qtitle">Use cases in ' + esc(deptObj.name) + '</legend><div class="uclist" role="radiogroup" aria-labelledby="lg-uc">' + deptObj.uses.map(function (x) {
         var iid = 'r-use-' + uid(x.id);
-        return '<li><label class="opt" for="' + iid + '"><input type="radio" name="n-use" id="' + iid + '" value="' + esc(x.id) + '" data-kind="use"' + (rec.use === x.id ? ' checked' : '') + '>' + esc(x.title) + '</label></li>';
-      }).join('') + '</ul></fieldset>';
+        return '<label class="opt" for="' + iid + '"><input type="radio" name="n-use" id="' + iid + '" value="' + esc(x.id) + '" data-kind="use"' + (rec.use === x.id ? ' checked' : '') + '>' + esc(x.title) + '</label>';
+      }).join('') + '</div></fieldset>';
     }
     if (deptObj) h += gloss(deptObj.uses.map(function (x) { return x.title; }));
     h += '<div class="uclist"><label class="opt" for="r-use-none"><input type="radio" name="n-use-none" id="r-use-none" value="none" data-kind="use"' + (rec.use === 'none' ? ' checked' : '') + '>None of these fits</label></div></section>';
@@ -249,16 +249,18 @@
   function vUse() {
     var a = A(), u = S.useOf(D, a.use), gates = R.askedGates(D, a.use), G = a.gates, allG = gates.every(function (g) { return !!G[g.id]; });
     var qs = R.visible(D, a.use, G), texts = [u ? u.title : ''].concat(gates.map(function (g) { return g.text + ' ' + g.options.map(function (o) { return o.label; }).join(' '); }));
-    if (allG) texts = texts.concat(qs.map(function (q) { return q.text + ' ' + (q.why || ''); }));
+    texts = texts.concat(qs.map(function (q) { return q.text + ' ' + (q.why || ''); }));
     var h = '<div class="stephead"><h2 tabindex="-1" id="h">Questions for this use case</h2><p class="sub" id="use-line">Use case: <b>' + esc(u ? u.title : D.none_fits.title) + '</b></p>' +
       (!rec.use ? '<p class="note info" id="no-use">You did not choose a use case, so these are the general questions for None of these fits.</p>' : '') + gloss(texts) + '</div>';
     h += '<section aria-labelledby="hiw-h" class="stephead" id="hiw"><h3 id="hiw-h" class="areahead">First, how will this tool work in your hotel?</h3><p class="sub">Your answers here decide which questions follow.</p></section>' + gates.map(function (g) { return gateCard(g, G); }).join('');
-    if (!allG) h += '<p class="note info" id="gates-first">Answer ' + (gates.length === 1 ? 'the question above' : 'the questions above') + ' to see the questions for this use case.</p>';
-    else {
-      var order = Object.keys(D.labels.areas), groups = {};
-      qs.forEach(function (q) { (groups[q.area] = groups[q.area] || []).push(q); });
-      order.forEach(function (k) { if (!groups[k]) return; h += '<h3 class="areahead" id="area-' + k + '">' + esc(D.labels.areas[k]) + '</h3>' + groups[k].map(qCard).join(''); });
-    }
+    if (!allG) h += '<p class="note info" id="gates-first">Answer ' + (gates.length === 1 ? 'the question above' : 'the questions above') + ' first: ' + (gates.length === 1 ? 'your answer decides' : 'your answers decide') + ' which of the questions below apply.</p>';
+    /* the visible questions in the data's order (R3Rules.visible = sim_v3.visible_questions; never reordered), under a plain area
+       name each time the area changes */
+    var last = '', seenA = {};
+    qs.forEach(function (q) {
+      if (q.area !== last) { h += '<h3 class="areahead"' + (seenA[q.area] ? '' : ' id="area-' + q.area + '"') + '>' + esc(D.labels.areas[q.area] || q.area) + '</h3>'; seenA[q.area] = 1; last = q.area; }
+      h += qCard(q);
+    });
     return h + openNote('use') + nav('Back', 'See the result');
   }
   function vStop() {
@@ -472,8 +474,9 @@
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches('input[type=text][data-h]')) { rec.hotel[t.getAttribute('data-h')] = t.value.slice(0, 120); save(); } });
   $('confirm').addEventListener('cancel', function () { setTimeout(function () { var nb = $('new-check'); if (nb) nb.focus(); }, 0); });
-  window.addEventListener('beforeprint', function () { document.querySelectorAll('details.fold').forEach(function (d) { d.setAttribute('data-was', d.open ? '1' : ''); d.open = true; }); });
-  window.addEventListener('afterprint', function () { document.querySelectorAll('details.fold').forEach(function (d) { d.open = d.getAttribute('data-was') === '1'; }); });
+  /* print opens the folds and closes them again after; a second beforeprint before afterprint (seen when printing to PDF) keeps the first state */
+  window.addEventListener('beforeprint', function () { document.querySelectorAll('details.fold').forEach(function (d) { if (!d.hasAttribute('data-was')) d.setAttribute('data-was', d.open ? '1' : ''); d.open = true; }); });
+  window.addEventListener('afterprint', function () { document.querySelectorAll('details.fold[data-was]').forEach(function (d) { d.open = d.getAttribute('data-was') === '1'; d.removeAttribute('data-was'); }); });
 
   /* ---------- start ---------- */
   function boot() {

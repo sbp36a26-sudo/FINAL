@@ -7,7 +7,7 @@
      { use: '<use-case id>' | 'none' | null (no use case chosen: the "None of these fits" fallback),
        step2: { s1..s5: 'yes'|'no'|'dk' }, gates: { <gate id>: <option key> }, mh: { m1..m11: 'yes'|'planned'|'no'|'dk'|'na' },
        qa: { <question id>: 'yes'|'planned'|'no'|'dk' }, continued: true once "Continue anyway" was pressed after a soft stop }
-   Anything unanswered (or an unknown value) counts as Don't know yet. Doesn't apply counts only on m2 and m4 (§4); a stored
+   Anything unanswered (or a value the rules do not know) counts as Don't know yet. Doesn't apply counts only on m2 and m4 (§4); a stored
    Doesn't apply anywhere else counts as Don't know yet. Answers to questions that are not visible are kept by the page but never count.
 
    Main functions:
