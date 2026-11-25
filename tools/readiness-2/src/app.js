@@ -37,6 +37,9 @@
      contact for shared copies are not named yet. To switch sharing back on, set SHARING_DEFAULT to true and rebuild
      (node tools/readiness-2/build.mjs, then node tools/build-hub.mjs). The browser tests that prove the sharing paths set
      window.R2_TEST_SHARING before the page loads; nothing on the page or in the hub sets it. */
+  /* 25 Nov 2026: the shareable single-file build (node build.mjs writes standalone/index.html with window.R2_STANDALONE = true): no links to the
+     other hub tools, which are not there when the file is opened on its own. */
+  var STANDALONE = window.R2_STANDALONE === true;
   var SHARING_DEFAULT = false;
   var SHARING_ON = SHARING_DEFAULT || window.R2_TEST_SHARING === true;
   var D, CAT, TQ, M = null;
@@ -380,7 +383,7 @@
             '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>')) + '</div>' +
         (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.' + (shared ? ' The project team has a copy of it: “Remove from this browser only” leaves that copy with the team.' : '') + '</p>' : '') + '</div>';
     }).join('') + '</div>';
-    h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + ' <a href="../readiness-check/index.html" target="_blank" rel="noopener">Open the earlier Readiness check</a> and use “Open a saved file” there.</p>' : '') +
+    h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + (STANDALONE ? '' : ' <a href="../readiness-check/index.html" target="_blank" rel="noopener">Open the earlier Readiness check</a> and use “Open a saved file” there.') + '</p>' : '') +
       '<div class="btnrow"><label class="btn filebtn" for="file-open">Open a saved file<input type="file" id="file-open" accept="application/json,.json" class="sr"></label>' +
       (rec.step === 'result' ? '<button type="button" class="btn" data-act="save-file" id="save-file"' + (ui.dl !== 'idle' ? ' disabled' : '') + '>Save as file</button>' : '') + // owner: moved here from the top row
       (storage === 'ok' ? '<span class="meta">Checks stay in this browser only. Save a file to keep one elsewhere.</span>' : '') + '</div></section>';
@@ -570,7 +573,7 @@
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
     /* Owner, 24 Nov 2026: the top row holds "Download (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser", "Add to the AI Register" in the EU AI Act fold; Copy summary and Print are gone. */
-    var toReg = u && !u.notTool ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
+    var toReg = u && !u.notTool && !STANDALONE ? '<p class="btnrow"><a class="btn" id="to-register" data-act="to-register" href="' + esc(regHref) + '">Add to the AI Register</a></p>' : '';
     var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download (PDF)') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>'; // owner 24 Nov 2026: next to Download (PDF)
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';

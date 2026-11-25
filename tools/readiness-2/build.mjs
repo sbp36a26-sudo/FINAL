@@ -3,7 +3,7 @@
 // It also inlines jsPDF (tools/assessment/lib) and the register's "Register Sans" PDF font (tools/register/fonts, OFL) for the PDF download.
 // The catalogue's <script id="data"> is read here at build time, never copied by hand: rebuild after the catalogue changes.
 // Run after editing anything in src/ or the catalogue:   node tools/readiness-2/build.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tqSig } from './data/build-questions.mjs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -117,5 +117,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     html = html.replace(mark, () => text);
   }
   writeFileSync(join(here, 'index.html'), html);
+  /* 25 Nov 2026: the shareable single file. Same page, with the flag that hides the links to the other hub tools. */
+  mkdirSync(join(here, 'standalone'), { recursive: true });
+  writeFileSync(join(here, 'standalone', 'index.html'), html.replace('<title>', '<script>window.R2_STANDALONE = true;</script>\n<title>'));
   console.log('wrote tools/readiness-2/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(J.uses).reduce((a, u) => a + u.qs.length, 0), 'tailored questions');
 }
