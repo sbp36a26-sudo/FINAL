@@ -388,7 +388,7 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .printbar{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 14px;margin:0 0 14px}
 .printview .noprint, .printview #hdr .hdrtop button, .printview .navrow{display:none !important}
 .printview .printbar{display:block !important}
-@media print{.printbar{display:none !important}}
+@media print{.printbar, .printview .printbar{display:none !important}}
 /* v2.8.0 (B7): a check's name and status */
 .mycheck .checkname{overflow-wrap:anywhere}
 /* v2.8.0: examples and sources inside each use case, with credibility labels */
@@ -402,3 +402,6 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .srcbox .thin{font-weight:600;color:var(--ink2);margin:8px 0 0}
 .citelink{overflow-wrap:anywhere;font-size:.85em}
 .srcpanel{padding-top:6px;padding-bottom:6px}
+.score{white-space:normal}
+.score .scoreof{font-family:var(--body, inherit);font-size:1rem;font-weight:600;color:var(--ink2)}
+.score{line-height:1.15}

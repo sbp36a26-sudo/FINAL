@@ -1,9 +1,16 @@
-# Do you need AI? (questions-only, v2.7.0, standalone)
+# Do you need AI? (questions-only, v2.8.0, standalone)
 
 **This folder (`tools/readiness-2-questions/`) is the standalone "Do you need AI?" artifact with use-case-specific questions and no legal
 content.** It started as a copy of `tools/readiness-2/` (see `NOTES.md` and `CHANGELOG.md`); everything below the line is the base
 tool's README and is kept for history: where it mentions the hub, sharing, the Team tab, the AI Register, the AI Act label or the
 generator, that no longer applies here.
+
+**v2.8.0 (25 Nov 2026, live review):** questions from `spec/review/usecase_questions_fixed.json` (98 use cases, 743 questions; lg-2
+removed), one action per question (`data/actions_questions_only.json`), result fixes B2 to B7 and B9 to B12 (B8 skipped by the owner:
+no "Don't know yet"; step 2 keeps Yes / No / Not sure), sources inside each use case (`data/sources_fixes.json`, `data/sources_edits.json`,
+`data/use_case_sources_v2.json`, `data/source_scores_v27.json`, built by `build.mjs` `sourcesModel`). Shown version: "v2.8 (rules
+unchanged since v2.6)". The artifact must be published with the `downloads` capability (`{downloads: true}`) for the PDF and file
+buttons; Copy plan, Copy saved check and Open printable page work without it. See `CHANGELOG.md`.
 
 Build and test (from the repo root; browser tests from `tools/` with `python3 -m http.server 8891 --bind 127.0.0.1` running):
 
@@ -11,7 +18,8 @@ Build and test (from the repo root; browser tests from `tools/` with `python3 -m
 node tools/readiness-2-questions/build.mjs
 node tools/readiness-2-questions/data/check-questions.mjs
 for t in tools/readiness-2-questions/tests/*.test.mjs; do node $t; done
-node readiness-2-questions/tests/browser/questions.cjs     # from tools/; screenshots to reports/readiness-2-questions-screens/
+node readiness-2-questions/tests/browser/questions.cjs     # from tools/; screenshots to reports/readiness-2-questions-screens/v28/ (q-*)
+node readiness-2-questions/tests/browser/v28.cjs           # from tools/; v2.8.0 §6.7 runs at 1280×800 and 360×740; screenshots to v28/
 ```
 
 ---

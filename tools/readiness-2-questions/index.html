@@ -396,7 +396,7 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .printbar{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 14px;margin:0 0 14px}
 .printview .noprint, .printview #hdr .hdrtop button, .printview .navrow{display:none !important}
 .printview .printbar{display:block !important}
-@media print{.printbar{display:none !important}}
+@media print{.printbar, .printview .printbar{display:none !important}}
 /* v2.8.0 (B7): a check's name and status */
 .mycheck .checkname{overflow-wrap:anywhere}
 /* v2.8.0: examples and sources inside each use case, with credibility labels */
@@ -410,6 +410,9 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .srcbox .thin{font-weight:600;color:var(--ink2);margin:8px 0 0}
 .citelink{overflow-wrap:anywhere;font-size:.85em}
 .srcpanel{padding-top:6px;padding-bottom:6px}
+.score{white-space:normal}
+.score .scoreof{font-family:var(--body, inherit);font-size:1rem;font-weight:600;color:var(--ink2)}
+.score{line-height:1.15}
 
 </style>
 </head>
@@ -3133,7 +3136,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
          the step-2 "Also" line (B2) */
       '<h1 id="level-name">' + esc(m.levelName) + '</h1>' +
       '<p class="countline mustfirst" id="must-line"><strong>' + esc(m.mustLine) + '</strong></p>' +
-      '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + esc(m.scoreHead) + '</span></div>' +
+      '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + scoreHtml(m.scoreHead) + '</span></div>' +
       (m.boxLine ? '<p class="boxline" id="box-reason">' + esc(m.boxLine) + '</p>' : '') +
       (m.alsoLine ? '<p class="boxline also" id="also-step2">' + esc(m.alsoLine) + '</p>' : '') + '</section>';
     if (m.pilot) h += '<p class="meta pilotgloss" id="pilot-gloss">' + esc(m.pilot) + '</p>'; // v2.5, council BUILD NOW 11
@@ -3180,6 +3183,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   function printBar() {
     return ui.print ? '<div class="printbar noprint" id="printbar" role="status"><p><strong>' + esc(C.PRINT_BAR) + '</strong></p><div class="btnrow"><button type="button" class="btn primary" data-act="print-now" id="print-now">Print</button><button type="button" class="btn" data-act="print-off" id="print-off">Back to the page</button></div></div>' : '';
   }
+  /* v2.8.0 (B3): "Score: 73%" large, "of points from all questions" smaller after it (one text, so it wraps on a phone) */
+  function scoreHtml(t) { var i = t.indexOf(' ' + C.SCORE_OF); return i < 0 ? esc(t) : esc(t.slice(0, i)) + '<span class="scoreof"> ' + esc(C.SCORE_OF) + '</span>'; }
   /* v2.5 (council BUILD NOW 6): the role's display name, never lower-cased ("Copy for IT"); only a leading "The" reads "the". */
   function copyLabel(name) { return 'Copy for ' + String(name).replace(/^The /, 'the '); }
   /* Audit v3 M5: the copy box (clipboard refused) is drawn next to the button that asked for it. */

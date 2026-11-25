@@ -72,3 +72,14 @@ action plan and vendor questions. `window.Readiness2` exposes state/record/send/
   catalogue `task` (fo-6, it-4, lg-2), names (lg-2 "GDPR ... AI Act", lg-3 "legal", pr-5 "compliance"), department "Legal, Compliance &
   ESG", 21 catalogue sources whose name, note or URL carries a banned word; `wording.json` and `usecase-questions.json` (DPIA, GDPR,
   PCI DSS, works council, consent, law).
+
+## v2.8.0 (25 Nov 2026)
+- Data: `usecase_questions_only.json` = the review's fixed file (lg-2 `removed`, no questions). `v27-sigs.json`: the v2.7 signatures; a
+  save answered against v2.7 carries answers by question id unless the question was rewritten (`k27` in the page data). v2.6.1 saves
+  still carry by `carry_answer_from`. A save of lg-2 opens as "None of these fits" (`info.removedUse`).
+- `actions_questions_only.json`: one action per question; `R2Logic.task` shows it (person prefix left out, the plan names the person).
+- Sources per use case: `D.detail[id] = { srcs: [{ k, t, n, o, x, u, s, f }], thin, note, nV2 }` (`build.mjs sourcesModel`), drawn by
+  `R2Logic.sourcesBox` inside `[data-sources]` (detail layer, step 5, result) and as `src` blocks in the Result PDF. The banned-word scan
+  leaves out exactly these (owner decision 2) and the vendored jsPDF.
+- Storage: `window.storage` (if present) and localStorage, else memory; checks are never dropped on load. "Start a new check" asks same
+  or different hotel (`new` with `{ same }`).

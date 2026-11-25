@@ -100,4 +100,13 @@ ok(C.NEW_ASK === 'Start a new check: same hotel ({name}) or a different hotel?' 
 ok(C.STOPPED === 'Stopped at step 2: not suitable for AI' && /'Not finished: step ' \+ STEP_NO\[r\.step\]/.test(app) && /\[r\.hotel\.name \|\| 'Hotel not named', what, date\]\.join\(' · '\)/.test(app), 'B7: names "<hotel> · <use case> · <date>", stops and unfinished checks');
 ok(/var WS = \(function \(\) \{ try \{ var w = window\.storage;/.test(app) && /try \{ localStorage\.setItem\(F\.KEY, json\); lsOk = true; \} catch/.test(app) && /storage = lsOk \|\| WS \? 'ok' : 'blocked'/.test(app) && /Use Save as file/.test(C.NOT_SAVED), 'B7: window.storage, then localStorage in try/catch, then memory with the "Use Save as file" line');
 ok(/version: C\.VERSION, rules: L\.RULES/.test(app), 'the saved file carries version 2.8.0');
+// ---------- owner decision 1: no "Don't know" in the tool's text (page, PDFs, exports); the vendored jsPDF error text excepted ----------
+{ const DK = /don[’']t know/i, LIB = rd('../assessment/lib/jspdf.umd.min.js').replace(/<\/script/gi, '<\\/script');
+  const libHits = (LIB.match(/don[’']t know[^"]{0,40}/gi) || []);
+  ok(!DK.test(html.split(LIB).join(' ')) && html.includes(LIB), 'index.html: 0 "Don\'t know" outside the vendored jsPDF (jsPDF itself: ' + libHits.length + ', "' + (libHits[0] || '') + '")');
+  const envD = { cat: D.cat, TQ, ex: D.ex, detail: D.detail, today: '2026-11-25' }; let n = 0, bad = [];
+  Object.keys(TQ.uses).forEach((use, i) => { const r = finished(F, D, use); r.Q.q3 = 'u'; F.MUST_IDS.forEach((id, j) => { if ((i + j) % 4 === 0) Reflect.deleteProperty(r.A, id); }); TQ.uses[use].qs.forEach((q, j) => { if (j % 3 === 0) Reflect.deleteProperty(r.T, q.id); });
+    for (const k of ['result', 'answers']) { n++; if (DK.test(pdfText(r, k))) bad.push(use + ' ' + k); }
+    const m = L.resultModel(r, envD); if (DK.test(JSON.stringify(m.people) + JSON.stringify(m.first) + JSON.stringify({ kind: 'hftp-do-you-need-ai', check: F.forFile(r) }))) bad.push(use + ' export'); });
+  ok(!bad.length, 'PDF texts (' + n + ') and exports: 0 "Don\'t know": ' + bad.slice(0, 3).join(' | ')); }
 done();

@@ -1,5 +1,28 @@
 # Changelog: Do you need AI? (questions-only, readiness-2-questions)
 
+## v2.8.0 (25 Nov 2026): live review fixes and sources inside each use case. Shown as "v2.8 (rules unchanged since v2.6)". Committed; not published (the main session updates the existing artifact).
+
+Prompt `spec/review/CLAUDE_PROMPT_v2.8.md` (Part 1 and Part 2), with the owner's decisions of 25 Nov 2026 overriding it: no "Don't know yet" anywhere (B8 skipped; step 2 keeps Yes / No / Not sure); the banned-word check covers only text the tool writes (sources shown as given, listed for review); one artifact, not published here; sources inside each use case; version 2.8.0.
+
+**Questions** (`data/usecase_questions_only.json` = `spec/review/usecase_questions_fixed.json`): 98 listed use cases, 743 questions (19×6, 36×7, 27×8, 7×9, 3×10, 4×11, 2×12). lg-2 removed from the list; a saved lg-2 check opens as "None of these fits" with "This use case is no longer in the list". Checker: "that person/team/manager" and the six areas (lg-4 may lack Technology). fb-6 and it-3: short name plus subtitle.
+**Saves**: v2.6.1 answers carry by `carry_answer_from`; v2.7 answers by question id except rewritten questions (`data/v27-sigs.json`, `k27`); removed ids dropped; notice "N answers were kept, M questions are new". Fixtures `tests/fixtures/v2.7-*.json` written by the v2.7.1 code.
+**Actions** (B11): `data/actions_questions_only.json`, 743 texts; "Finish by <date>: <action>"; "Answer this: …" for a blank; no "Make this a Yes:".
+**Result** (B2 to B5, B9, B10): "Also: the first questions suggest this may not be worth doing with AI (<name>: No)" plus first action; "Score: X% of points from all questions" with the must-haves line first in bold; the sensitive hold once ("Almost ready: everything is in place, but this area needs an adviser's view first."), action 1 "Ask an adviser before a pilot" (GM), "Nothing else to fix."; step-2 card shows Met / Not met / To find out with "Your answer: …"; each step-2 Not sure becomes "Find out: …"; counts from the data; no C-R-I-S-P (Q1 "Needs judgement"); one version string.
+**Saving and export** (B1, B6, B7): Copy plan, Copy saved check, Open printable page always offered; "Your browser blocked the download. Use Copy or Print instead."; "Start a new check" asks same or different hotel; checks named "<hotel> · <use case> · <date>", "Stopped at step 2: not suitable for AI", "Not finished: step N"; nothing dropped on load; window.storage, then localStorage, then memory with "Use Save as file". Files carry `version: "2.8.0"`.
+**Sources** (Part 1 §5, Part 2): see `data/sources_edits.json` and the build log (`SHOW_SOURCES=1 node build.mjs`). 495 entries (192 from sources_v2), labels Credible (7+) / Below 7 / Not scored and Partial, sorted, thin line on 63 use cases; detail layer, step 5, result page, Result PDF. Step 1–3 citations are links.
+**Banned words**: the 8 added words; the scan leaves out exactly the source entries (data `detail`, PDF `src` blocks, `[data-sources]`) and the vendored jsPDF; the tool's own code no longer uses the words (`Reflect.deleteProperty`, `ymd`).
+
+**Judgement calls** (owner to confirm)
+1. v2.7 saves keep answers to Fix questions (same id, small wording change); only Rewrite and Add questions start blank.
+2. The 21 catalogue sources v2.7 hid for a banned word are shown again (owner decision 2), except an off-topic Minut privacy blog on hk-4 (removed with the smoking-sensor items).
+3. "Check, else remove" (Amadeus sm-5, sm-6; Lighthouse gm-3): the pages block automated checks, so they are removed. Zenchef and hotelkit got their current addresses (checked); hotelkit's unverifiable "1,200+ hotels" is dropped.
+4. Credibility labels for catalogue sources come from the live review's scores (`live_review.xlsx`, sheet Sources); sources it did not score read "Not scored"; "Supports: partial" reads Partial. The thin line counts every entry with a score of 7+ and a direct fit (63 use cases; the sources_v2 gap field alone would give 69).
+5. Where sources_fixes adds an address that sources_v2 also has (fa-6 Stayflexi, lg-3 Legora, it-5 HPE), only the audited sources_v2 entry is shown.
+6. The action texts start with the person ("Finance: …") in the data; on screen the prefix is left out because the plan names the person.
+7. MH8 loses the Eurostat 70% line; no must-have is about skills, so it is not moved.
+8. "Start a new check" with the same hotel opens the cover (step 1 kept); the printable page is an in-page print view (no new window, which the frame may block).
+9. `window.storage` is used only when present (not part of the viewer contract); localStorage stays the first read.
+
 ## v2.7.1 (25 Nov 2026): "Don't know yet" removed as an answer option (owner). Committed; not published.
 
 Owner request: remove "Don't know yet" as an answer option on the must-haves (step 3) and the use-case questions (step 5). Step 2 "Not sure" and its wording are unchanged. Scoring, cut-offs, verdict rules and the two downloads are unchanged.

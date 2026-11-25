@@ -1,4 +1,6 @@
-// Browser proof for "Do you need AI?" v2.7.0 (questions-only, standalone, no legal content). Prompt §7 tests 1 and 7, the owner's
+// Browser proof for "Do you need AI?" v2.7.0, updated for v2.8.0 (98 use cases, 743 questions; the Copy fallback is now the always-
+// offered Copy buttons with the "blocked" line; sources are left out of the banned-word scan by their [data-sources] container).
+// (questions-only, standalone, no legal content). Prompt §7 tests 1 and 7, the owner's
 // additions A to D (25 Nov 2026), the migration in a real page, and the screenshots.
 //   1. exact questions: for all 99 use cases, step 5 shows exactly the data file's questions (state and DOM: text, why, area, who answers)
 //   7. smoke at 1280×800 and 360×740: full runs for rm-1, gx-2 and hr-1 by clicks (all Yes, then one No); Back keeps answers; a reload
@@ -16,13 +18,15 @@ const fs = require('fs'), path = require('path'), os = require('os'), { execFile
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8891/';
 const URL0 = BASE + 'readiness-2-questions/index.html';
 const ROOT = path.join(__dirname, '..', '..');
-const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens');
+const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens', 'v28'); // v2.8.0: this run's screenshots, prefix q-
 fs.mkdirSync(SHOTS, { recursive: true });
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'r2q-'));
 const Q = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'usecase_questions_only.json'), 'utf8'));
-const QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u]));
+const QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u])), LQ = Q.use_cases.filter(u => !u.removed);
 const DISCLAIMER = Q.fixed_texts.disclaimer, FLAG = Q.fixed_texts.sensitive_flag, HEAD2 = 'Should this problem be solved by AI?';
-const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'transparency obligation', 'prohibited', 'DPIA', 'GDPR', 'FADP', 'CE mark', 'works council', 'PCI', 'consent', 'legal basis', 'law', 'laws', 'regulation', 'compliance', 'legal', 'not legal advice'];
+const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'transparency obligation', 'prohibited', 'DPIA', 'GDPR', 'FADP', 'CE mark', 'works council', 'PCI', 'consent', 'legal basis', 'law', 'laws', 'regulation', 'compliance', 'legal', 'not legal advice', 'delete', 'deleted', 'kept for', 'retention', 'regulator', 'ISO', 'regulatory'];
+/* v2.8.0 (owner decision 2): the page's text without the source entries ([data-sources] containers) */
+const toolText = (p, sel) => p.evaluate(s => { const n = document.querySelector(s || 'body').cloneNode(true); n.querySelectorAll('[data-sources], script, style').forEach(x => x.remove()); n.querySelectorAll('details').forEach(d => { if (!d.open) d.querySelectorAll(':scope > :not(summary)').forEach(x => x.remove()); }); return n.textContent; }, sel);
 const bannedHits = t => { t = String(t).split(DISCLAIMER).join(' ').split(FLAG).join(' '); const re = new RegExp('(?<![A-Za-z0-9_])(' + BANNED.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![A-Za-z0-9_])', 'gi'); return t.match(re) || []; };
 let pass = 0, fail = 0; const ok = (c, n) => { if (c) pass++; else { fail++; console.log('FAIL  ' + n); } };
 const tally = {};
@@ -40,7 +44,7 @@ async function mk(b, vp, init) {
 }
 const st = p => p.evaluate(() => window.Readiness2.state());
 const noHScroll = p => p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
-const shot = async (p, name) => { await p.waitForTimeout(600); return p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: false }); };
+const shot = async (p, name) => { await p.waitForTimeout(600); return p.screenshot({ path: path.join(SHOTS, 'q-' + name + '.png'), fullPage: false }); };
 const pdftext = f => execFileSync('pdftotext', ['-layout', f, '-']).toString();
 async function click(p, sel) { await p.locator(sel).first().scrollIntoViewIfNeeded(); await p.locator(sel).first().click(); }
 async function answer(p, id, v) { await click(p, 'label[for="a-' + id + '-' + v + '"]'); }
@@ -68,10 +72,10 @@ async function run(p, use, tailFn, tag) {
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 });
     let exact = 0;
-    for (const u of Q.use_cases) {
+    for (const u of LQ) {
       const s = await p.evaluate(use => {
         const R = window.Readiness2, D = JSON.parse(document.getElementById('r2-data').textContent), d = D.cat.depts.find(x => x.uses.some(y => y.id === use));
-        R.send('new'); R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('next');
+        R.send('new', { same: false }); R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('next');
         R.send('answer', { id: 'q1', value: 'n' }); ['q2', 'q3', 'q4', 'q5'].forEach(id => R.send('answer', { id, value: 'y' })); R.send('next');
         for (let i = 1; i <= 10; i++) R.send('answer', { id: 'm' + i, value: 'y' }); R.send('next');
         R.send('cat', d.cat); R.send('dept', d.id); R.send('use', use); R.send('next');
@@ -84,11 +88,12 @@ async function run(p, use, tailFn, tag) {
       const sOk = s.state.step === 'tailored' && JSON.stringify(s.state.questions) === JSON.stringify(want);
       const dOk = s.dom.length === want.length && s.dom.every((d, i) => d.id === want[i].id && d.text === want[i].text && d.why === want[i].why && d.item === want[i].area + ' · ' + want[i].who && d.who === want[i].who && d.whyLine === 'Area: ' + want[i].area + '. Who answers: ' + want[i].who + '.');
       ok(sOk, u.id + ': state shows exactly its questions'); ok(dOk, u.id + ': the DOM shows exactly its questions (text, why, area, who answers)');
-      ok(s.name === u.name, u.id + ': the use case is named as in the data file');
+      const i0 = u.name.indexOf(': '), nm = i0 > 0 ? u.name.slice(0, i0) + u.name.charAt(i0 + 2).toUpperCase() + u.name.slice(i0 + 3) : u.name;
+      ok(s.name === nm, u.id + ': the use case is named as in the data file (v2.8.0 B12: a long name as short name + subtitle)');
       if (sOk && dOk) exact++;
     }
-    ok(exact === 99, 'exact questions ' + exact + '/99'); count('exact', exact === 99);
-    ok(!p._errs.length, 'no page errors (99 use cases): ' + p._errs.slice(0, 2).join(' | '));
+    ok(exact === 98, 'exact questions ' + exact + '/98'); count('exact', exact === 98);
+    ok(!p._errs.length, 'no page errors (98 use cases): ' + p._errs.slice(0, 2).join(' | '));
     await ctx.close();
   }
   // ===================== 7. smoke, desktop and mobile =====================
@@ -101,14 +106,14 @@ async function run(p, use, tailFn, tag) {
       ok(c1, tag + ': all Yes → ' + wantLevel + ' at 100% (got ' + s.level + ' ' + s.pct + ')');
       const flag = await p.locator('#sensitive-flag').count();
       ok((flag === 1) === !!QU[use].sensitive, tag + ': sensitive flag only for a sensitive use case');
-      if (QU[use].sensitive) ok((await p.textContent('#reason')).trim() === Q.fixed_texts.sensitive_hold_reason, tag + ': the hold reason, verbatim');
+      if (QU[use].sensitive) ok((await p.textContent('#box-reason')).trim() === 'Almost ready: everything is in place, but this area needs an adviser’s view first.' && !(await p.locator('#reason').count()), tag + ': the hold is said once, in the verdict box (v2.8.0 B4)');
       // the result page: exactly two downloads (plus Start a new check), disclaimer, no AI Act fold
       const btns = await p.$$eval('#actions button', bs => bs.map(x => x.id));
       ok(JSON.stringify(btns) === JSON.stringify(['pdf', 'pdf-answers', 'new-check']) && !(await p.locator('#actions #save-file').count()), tag + ': result row: Download result (PDF), Download answers (PDF), Start a new check; Save as file is in Your checks');
       ok(await p.locator('#result-disclaimer').isVisible() && (await p.textContent('#result-disclaimer')).trim() === DISCLAIMER, tag + ': the disclaimer on the result');
       ok(!(await p.locator('#legal, #to-register, #share').count()), tag + ': no AI Act fold, register link or share panel');
       ok((await p.textContent('#sum-ai h3')).trim() === HEAD2, tag + ': result card heading (owner B)');
-      ok(bannedHits(await p.evaluate(() => document.body.innerText)).length === 0, tag + ': result page text: 0 banned terms');
+      { const bh = bannedHits(await toolText(p)); ok(bh.length === 0, tag + ': result page text (sources excluded): 0 banned terms ' + bh.join(',')); }
       // Back keeps answers; one No; result again
       await click(p, '#back'); s = await st(p);
       const allY = QU[use].questions.every(q => s.T[q.id] === 'y');
@@ -126,7 +131,8 @@ async function run(p, use, tailFn, tag) {
         const [dl] = await Promise.all([p.waitForEvent('download'), click(p, btn)]);
         const f = path.join(TMP, vpName + '-' + use + suffix); await dl.saveAs(f);
         const t = pdftext(f), pages = (t.match(/\f/g) || []).length;
-        const okPdf = dl.suggestedFilename().endsWith(suffix) && t.includes(DISCLAIMER.slice(0, 40)) && !/EU AI Act|provisional label/i.test(t) && bannedHits(t.replace(/\s+/g, ' ')).length === 0;
+        const tNoSrc = t.split(/Examples and sources \(\d+\)/)[0]; // v2.8.0: the sources section closes the Result PDF and is left out of the scan
+        const okPdf = dl.suggestedFilename().endsWith(suffix) && t.includes(DISCLAIMER.slice(0, 40)) && !/EU AI Act|provisional label/i.test(t) && bannedHits(tNoSrc.replace(/\s+/g, ' ')).length === 0;
         ok(okPdf, tag + ': ' + kind + ' PDF generated (' + dl.suggestedFilename() + '), disclaimer in it, no AI Act, 0 banned terms');
         if (kind === 'answers') ok(t.includes(HEAD2), tag + ': the answers PDF carries the new step 2 heading');
         if (QU[use].sensitive && kind === 'result') ok(t.replace(/\s+/g, ' ').includes('This area involves people'), tag + ': the sensitive flag in the result PDF');
@@ -136,9 +142,9 @@ async function run(p, use, tailFn, tag) {
       const [dlf] = await Promise.all([p.waitForEvent('download'), click(p, '#save-file')]);
       const ff = path.join(TMP, vpName + '-' + use + '.json'); await dlf.saveAs(ff);
       const doc = JSON.parse(fs.readFileSync(ff, 'utf8'));
-      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
+      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.version === '2.8.0' && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
       const before = await st(p);
-      await click(p, '#new-check'); await p.locator('#file-open').setInputFiles(ff);
+      await click(p, '#new-check'); await click(p, '#new-same'); await p.locator('#file-open').setInputFiles(ff);
       await p.waitForSelector('#import-yes'); await click(p, '#import-yes');
       await p.waitForFunction(id => window.Readiness2.state().id === id, before.id);
       const after = await st(p);
@@ -165,7 +171,7 @@ async function run(p, use, tailFn, tag) {
     await click(p, '#dt-gx-2'); await p.waitForSelector('dialog#detail[open]');
     const links = await p.$$eval('#detail-srcs a', as => as.map(a => ({ href: a.getAttribute('href'), t: a.target, rel: a.rel })));
     ok(links.length > 0 && links.every(l => /^https?:\/\//.test(l.href) && l.t === '_blank' && l.rel === 'noopener'), vpName + ': detail layer: ' + links.length + ' source links, each <a target="_blank" rel="noopener">');
-    ok(bannedHits(await p.textContent('#detail')).length === 0, vpName + ': detail layer text: 0 banned terms');
+    ok(bannedHits(await toolText(p, '#detail')).length === 0, vpName + ': detail layer text (sources excluded): 0 banned terms');
     await shot(p, 'detail-layer-' + vpName);
     await click(p, '#detail-close');
     await p.locator('#u-gx-2').check({ force: true }); await click(p, '#next');
@@ -180,7 +186,7 @@ async function run(p, use, tailFn, tag) {
     await ctx.close();
   }
   // ===================== C. the downloads capability (stubbed window.claude) and the Copy fallback =====================
-  const toResult = p => p.evaluate(() => { const R = window.Readiness2; R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('next'); R.send('answer', { id: 'q1', value: 'n' }); ['q2', 'q3', 'q4', 'q5'].forEach(id => R.send('answer', { id, value: 'y' })); R.send('next'); for (let i = 1; i <= 10; i++) R.send('answer', { id: 'm' + i, value: i === 5 ? 'k' : 'y' }); R.send('next'); R.send('cat', 'Commercial'); R.send('dept', 'rm'); R.send('use', 'rm-1'); R.send('next'); R.state().tailored.forEach(id => R.send('answer', { id, value: 'y' })); R.send('next'); });
+  const toResult = p => p.evaluate(() => { const R = window.Readiness2; R.send('begin'); R.send('hotel', { k: 'type', v: 'independent' }); R.send('next'); R.send('answer', { id: 'q1', value: 'n' }); ['q2', 'q3', 'q4', 'q5'].forEach(id => R.send('answer', { id, value: 'y' })); R.send('next'); for (let i = 1; i <= 10; i++) if (i !== 5) R.send('answer', { id: 'm' + i, value: 'y' }); R.send('next'); R.send('cat', 'Commercial'); R.send('dept', 'rm'); R.send('use', 'rm-1'); R.send('next'); R.state().tailored.forEach(id => R.send('answer', { id, value: 'y' })); R.send('next'); });
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: () => { window.__saved = []; window.claude = { use: name => Promise.resolve(name === 'downloads' ? { save: req => { window.__saved.push({ filename: req.filename, size: req.data && req.data.size, type: Object.prototype.toString.call(req.data) }); return Promise.resolve({ status: 'saved' }); } } : null) }; } });
     await toResult(p);
@@ -199,13 +205,15 @@ async function run(p, use, tailFn, tag) {
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: () => { window.claude = { use: () => Promise.resolve(null) }; try { Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('blocked')) } }); } catch (e) {} } });
     await toResult(p);
-    await click(p, '#pdf'); await p.waitForSelector('#copybox[data-from="dl"]');
-    const t = await p.inputValue('#copytext');
-    ok(/Head of the department using it:|General manager:|Finance:|IT:/.test(t) && t.includes('Questions for the vendor:') && t.includes(DISCLAIMER) && bannedHits(t).length === 0, 'null capability: Download result (PDF) opens the Copy fallback with the plan text');
+    await click(p, '#pdf'); await p.waitForSelector('#dl-blocked');
+    ok((await p.textContent('#dl-blocked')).trim() === 'Your browser blocked the download. Use Copy or Print instead.', 'null capability: the blocked line (v2.8.0 B1)');
     await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
-    await click(p, '#save-file'); await p.waitForSelector('#copybox[data-from="file"]');
+    await click(p, '#copy-plan'); await p.waitForSelector('#copybox[data-from="plan"]');
+    const t = await p.inputValue('#copytext');
+    ok(/Head of the department using it:|General manager:|Finance:|IT:/.test(t) && t.includes('Questions for the vendor:') && t.includes(DISCLAIMER) && bannedHits(t).length === 0, 'clipboard refused: Copy plan opens the copy box with the plan text');
+    await click(p, '#copy-saved'); await p.waitForSelector('#copybox[data-from="saved"]');
     const j = JSON.parse(await p.inputValue('#copytext'));
-    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1', 'null capability: Save as file opens the Copy fallback with the check as JSON');
+    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1' && j.version === '2.8.0', 'clipboard refused: Copy saved check opens the copy box with the check as JSON');
     count('copy fallback', true);
     ok(!p._errs.length, 'copy fallback: no page errors: ' + p._errs.join(' | '));
     await ctx.close();
@@ -228,8 +236,7 @@ async function run(p, use, tailFn, tag) {
     // the v2.6.1 file
     const FF = path.join(ROOT, 'tests', 'fixtures', 'v2.6.1-file.json'), file = JSON.parse(fs.readFileSync(FF, 'utf8')).file, ftmp = path.join(TMP, 'v261-file.json');
     fs.writeFileSync(ftmp, JSON.stringify(file));
-    await click(p, '#new-top'); await click(p, '#begin').catch(() => {});
-    await p.evaluate(() => window.Readiness2.send('new'));
+    await p.evaluate(() => window.Readiness2.send('new', { same: false })); await p.waitForSelector('#mychecks'); // v2.8.0: files open from "Your checks" (the cover)
     await p.evaluate(t => window.Readiness2.openFileText(t), JSON.stringify(file));
     if (await p.locator('#import-yes').count()) await click(p, '#import-yes'); // the store above holds the same check: replace it with the file
     await p.waitForFunction(id => window.Readiness2.state().id === id, file.check.id);

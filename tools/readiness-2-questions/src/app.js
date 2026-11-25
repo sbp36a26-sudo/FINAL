@@ -571,7 +571,7 @@
          the step-2 "Also" line (B2) */
       '<h1 id="level-name">' + esc(m.levelName) + '</h1>' +
       '<p class="countline mustfirst" id="must-line"><strong>' + esc(m.mustLine) + '</strong></p>' +
-      '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + esc(m.scoreHead) + '</span></div>' +
+      '<div class="scorerow"><span class="score' + (ev.pct == null ? ' noscore' : '') + '" id="score">' + scoreHtml(m.scoreHead) + '</span></div>' +
       (m.boxLine ? '<p class="boxline" id="box-reason">' + esc(m.boxLine) + '</p>' : '') +
       (m.alsoLine ? '<p class="boxline also" id="also-step2">' + esc(m.alsoLine) + '</p>' : '') + '</section>';
     if (m.pilot) h += '<p class="meta pilotgloss" id="pilot-gloss">' + esc(m.pilot) + '</p>'; // v2.5, council BUILD NOW 11
@@ -618,6 +618,8 @@
   function printBar() {
     return ui.print ? '<div class="printbar noprint" id="printbar" role="status"><p><strong>' + esc(C.PRINT_BAR) + '</strong></p><div class="btnrow"><button type="button" class="btn primary" data-act="print-now" id="print-now">Print</button><button type="button" class="btn" data-act="print-off" id="print-off">Back to the page</button></div></div>' : '';
   }
+  /* v2.8.0 (B3): "Score: 73%" large, "of points from all questions" smaller after it (one text, so it wraps on a phone) */
+  function scoreHtml(t) { var i = t.indexOf(' ' + C.SCORE_OF); return i < 0 ? esc(t) : esc(t.slice(0, i)) + '<span class="scoreof"> ' + esc(C.SCORE_OF) + '</span>'; }
   /* v2.5 (council BUILD NOW 6): the role's display name, never lower-cased ("Copy for IT"); only a leading "The" reads "the". */
   function copyLabel(name) { return 'Copy for ' + String(name).replace(/^The /, 'the '); }
   /* Audit v3 M5: the copy box (clipboard refused) is drawn next to the button that asked for it. */
