@@ -81,11 +81,11 @@ ok(/v2\.5/.test(meth), 'method names rules v2.5');
 // ---------- BUILD NOW 5 / O6: tailored tasks read as the team-worded question ----------
 const r5 = finished(F, D, 'fo-4'); r5.T[GX[0].id] = 'n'; r5.T[GX[1].id] = 'pl'; r5.TBy[GX[1].id] = '2027-02-01'; r5.T[GX[2].id] = 'k'; r5.T[GX[7].id] = 'pl';
 const o5 = L.open(L.evaluate(r5, TQ)), t5 = k => o5.find(x => x.key === k)?.text;
-ok(t5(GX[0].id) === 'Make this a Yes: ' + GX[0].q, 'O6: No → "Make this a Yes: {question}"');
-ok(t5(GX[1].id) === 'Finish: ' + GX[1].q + ' (planned by 1 Feb 2027)', 'O6: Planned with a date → "Finish: {question} (planned by …)": ' + t5(GX[1].id));
-ok(t5(GX[7].id) === 'Finish: ' + GX[7].q, 'O6: Planned → "Finish: {question}"');
+ok(t5(GX[0].id) === L.actText(GX[0].act) && !/Make this a Yes/.test(t5(GX[0].id)), 'v2.8.0 (B11): No → the action text, no "Make this a Yes:" prefix');
+ok(t5(GX[1].id) === 'Finish by 1 Feb 2027: ' + L.actText(GX[1].act), 'v2.8.0 (B11): Planned with a date → "Finish by <date>: <action>": ' + t5(GX[1].id));
+ok(t5(GX[7].id) === 'Finish: ' + L.actText(GX[7].act), 'v2.8.0 (B11): Planned without a date → "Finish: <action>"');
 ok(t5(GX[2].id) === 'Answer this: “' + GX[2].q + '”', 'O6: a blank question reads "Answer this: {question}" (v2.7.1; was "Find out")');
-ok(!GX.some(q => 'act' in q), 'O6 (v2.7.0): the questions-only data carries no action text; a step-5 task is the question itself');
+ok(GX.every(q => typeof q.act === 'string' && q.act && !/\?/.test(q.act)), 'O6 (v2.8.0, B11): every step-5 question carries its action text (data/actions_questions_only.json); the task is the action, not the question');
 const r5m = finished(F, D, 'fo-4'); r5m.A.m1 = 'n'; ok(L.open(L.evaluate(r5m, TQ))[0]?.text === C.MUSTS[0].act, 'O6: must-have actions stay as they are');
 ok(!/Agree in writing: hand-off rules|Train or brief the people involved/.test(pdfText(r5)), 'O6: the PDF carries no workbook shorthand');
 

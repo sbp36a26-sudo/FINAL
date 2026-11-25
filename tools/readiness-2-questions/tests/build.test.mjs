@@ -20,7 +20,7 @@ D.cat.depts.forEach(d => d.uses.forEach(u => ok(new RegExp('^' + d.id + '-\\d+$'
 ok(D.cat.depts.every(d => d.uses.every(u => !('task' in u) && !('kw' in u) && !('notTool' in u))), 'no catalogue description, search words or register flags are shipped');
 ok(D.cat.depts.find(d => d.id === 'lg').name === 'Sustainability & Governance', 'the lg department carries the data file\'s name');
 ok(X.depts.every(d => d.uses.every((u, i) => { const id = d.id + '-' + (i + 1), mine = D.cat.depts.find(x => x.id === d.id).uses.find(y => y.id === id); return id === 'lg-2' ? !mine : mine.alias === nameHash(u.n); })), 'every listed use case keeps the hash of its catalogue name (alias), so older saves still match');
-ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs)), 'the inlined step-5 questions equal tqModel(data file, v2.7 signatures)');
+ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs, JSON.parse(rd('data/actions_questions_only.json')).actions)), 'the inlined step-5 questions equal tqModel(data file, v2.7 signatures)');
 ok(eq(Object.keys(D.tq.uses).sort(), D.cat.depts.flatMap(d => d.uses.map(u => u.id)).sort()), 'every listed use case has its questions (all 98 selectable)');
 const det = detailModel(catHtml, D.cat.removed);
 ok(eq(D.detail, JSON.parse(JSON.stringify(det))), 'the inlined detail sources equal the catalogue\'s, minus the left-out ones');

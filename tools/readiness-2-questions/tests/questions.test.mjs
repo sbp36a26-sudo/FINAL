@@ -39,7 +39,7 @@ ok(check(bad3).some(f => / words: /.test(f)), 'the checker flags more than 20 wo
 // the page carries exactly these, in order, with text, why, area and who answers
 const ids = D.cat.depts.flatMap(d => d.uses.map(u => u.id));
 ok(eq(Object.keys(D.tq.uses).sort(), ids.slice().sort()), 'one entry per listed use case (98)');
-ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs)), 'the inlined questions equal tqModel(data file)');
+ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs, JSON.parse(rd('data/actions_questions_only.json')).actions)), 'the inlined questions equal tqModel(data file)');
 let exact = 0;
 LQ.forEach(u => {
   const t = D.tq.uses[u.id];

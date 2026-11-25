@@ -60,8 +60,14 @@ export function tqSig(qs) { return createHash('sha1').update(JSON.stringify(qs.m
 /* v2.8.0: prev, the v2.7 signature of each use case (data/v27-sigs.json). A check saved against v2.7 carries its answers by question
    id, except for questions the review rewrote (review "Rewrite": k27 false, they start unanswered); an id the v2.8 data no longer has
    (removed_question_ids) is dropped. Removed use cases (lg-2) ship no questions. */
-export function tqModel(Q, meta, prev) {
+/* v2.8.0 (B11): acts, data/actions_questions_only.json { actions: { <question id>: text } }: one action per question, shown in the action
+   plan and the PDF instead of the question. Every listed question needs one; none may end with a question mark. */
+export function tqModel(Q, meta, prev, acts) {
   const uses = {};
+  if (acts) {
+    const ids = Q.use_cases.filter(u => !u.removed).flatMap(u => u.questions.map(q => q.id)), missing = ids.filter(id => !acts[id]), extra = Object.keys(acts).filter(id => !ids.includes(id)), asks = ids.filter(id => /\?\s*$/.test(acts[id] || ''));
+    if (missing.length || extra.length || asks.length) throw new Error('data/actions_questions_only.json is out of step (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + '; ending with "?": ' + asks.join(' ') + ')');
+  }
   Q.use_cases.forEach(u => {
     if (u.removed) return;
     uses[u.id] = { name: u.name, sensitive: !!u.sensitive, sig: tqSig(u.questions), prev: (prev && prev[u.id]) || '',
@@ -69,6 +75,7 @@ export function tqModel(Q, meta, prev) {
         const a = AREA_KEY[q.area], who = WHO_KEY[q.who_answers];
         if (!a || !who) throw new Error('usecase_questions_only.json: unknown area or who answers at ' + q.id);
         const o = { id: q.id, a, q: q.text, why: q.why, who, whoLabel: q.who_answers };
+        if (acts) o.act = acts[q.id];
         if (q.carry_answer_from) o.carry = q.carry_answer_from;
         if (q.review !== 'Rewrite' && q.review !== 'Add') o.k27 = 1; // the v2.7 answer under the same id carries (the review field itself is not shipped)
         return o;
@@ -111,7 +118,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const ids = cat.depts.flatMap(d => d.uses.map(u => u.id)), qIds = Q.use_cases.filter(u => !u.removed).map(u => u.id);
   const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
-  const TQ = tqModel(Q, meta, JSON.parse(read('data/v27-sigs.json')).sigs), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
+  const TQ = tqModel(Q, meta, JSON.parse(read('data/v27-sigs.json')).sigs, JSON.parse(read('data/actions_questions_only.json')).actions), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
   const data = { cat, tq: TQ, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };

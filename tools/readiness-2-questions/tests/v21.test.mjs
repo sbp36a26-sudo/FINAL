@@ -220,7 +220,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 // M5: the questions a check was answered against
 // ====================================================================================================================
 {
-  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(QBY[k].questions)) && eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs)), 'M5: every use case carries the signature of its questions, built by build.mjs');
+  ok(Object.keys(TQ.uses).every(k => /^[0-9a-f]{10}$/.test(TQ.uses[k].sig) && TQ.uses[k].sig === tqSig(QBY[k].questions)) && eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs, JSON.parse(rd('data/actions_questions_only.json')).actions)), 'M5: every use case carries the signature of its questions, built by build.mjs');
   const qs = JSON.parse(JSON.stringify(QBY['rm-1'].questions)); const before = tqSig(qs); qs[0].text = qs[0].text.replace('?', ' today?');
   ok(tqSig(qs) !== before && tqSig(qs.slice(0, -1)) !== before && tqSig(JSON.parse(JSON.stringify(QBY['rm-1'].questions))) === before, 'M5: the signature changes when a text changes or a question is dropped, and only then');
   let s = storeWith(mk('rm-1', [], [], { step: 'where' }));
@@ -352,7 +352,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   const od = mk('fo-4', ['pl'], []); od.By.m1 = '2001-01-01';
   ok(F.cleanRec(JSON.parse(JSON.stringify(od)), ENV, {}).By.m1 === '2001-01-01', 'L5: a past date saved earlier is kept');
   const om = L.resultModel(od, env);
-  ok(om.first[0].text.endsWith('(was planned by 1 Jan 2001, overdue).') && om.itemList[0].answer === 'Planned (was planned by 1 Jan 2001, overdue)' && !/\(planned by 1 Jan 2001\)/.test(P.model(od, env).blocks.map(b => [b.t, b.sub].join(' ')).join('\n')), 'L5: and shown as "was planned by 1 Jan 2001, overdue" (screen and PDF)');
+  ok(om.first[0].text.startsWith('Finish by 1 Jan 2001 (overdue): ') && om.itemList[0].answer === 'Planned (was planned by 1 Jan 2001, overdue)' && !/\(planned by 1 Jan 2001\)/.test(P.model(od, env).blocks.map(b => [b.t, b.sub].join(' ')).join('\n')), 'L5: and shown as overdue: "Finish by 1 Jan 2001 (overdue): …" (v2.8.0) and "was planned by 1 Jan 2001, overdue" (screen and PDF)');
   ok(/min="' \+ L\.localIso\(\) \+ '"/.test(app), 'L5: the date field has min = today');
   // L6
   ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && !/test copy in this browser/.test(app), 'L6: with storage not ok, no "kept here until you remove it" (v2.7.0: no test copies at all)');

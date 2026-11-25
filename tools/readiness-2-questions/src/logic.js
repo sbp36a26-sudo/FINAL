@@ -208,7 +208,7 @@
     });
     useQs(TQ, rec.use).forEach(function (t) {
       var raw = (rec.T || {})[t.id], v = A_OK[raw] ? raw : '';
-      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, why: t.why, who: t.who, whoLabel: t.whoLabel, act: '', v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw) });
+      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, why: t.why, who: t.who, whoLabel: t.whoLabel, act: actText(t.act), v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw) });
     });
     return out;
   }
@@ -306,15 +306,21 @@
 
   /* ---------- to-do: one plain task per open item ---------- */
   var RANK = { no: 0, unknown: 2, planned: 3 };
-  /* v2.5 (council BUILD NOW 5, owner O6 a): a tailored question's task is the team-worded question itself, not the workbook's
-     action shorthand (it.act stays in the data for a later wording pass). Must-have actions are hand-written and stay.
-     Audit v3 L1: an answer that is no longer offered reads "Answer again", never "Find out". */
+  /* v2.8.0 (B11, live review 25 Nov 2026): a step-5 question's task is its own action text (data/actions_questions_only.json: imperative,
+     at most 15 words, naming who does it), not the question with a prefix. The data names the person first ("Finance: get ..."); the
+     plan already shows that person, so the prefix is left out on screen and in the PDF. Must-haves keep their hand-written actions.
+       No                → the action
+       Planned           → "Finish by <date>: <action>" ("Finish: <action>" without a date; an overdue date says so)
+       not answered yet  → "Answer this: “<question>”"
+       an answer that is no longer offered → "Answer again: …" (audit v3 L1) */
+  var WHO_PREFIX = /^(GM|Department head|Finance|IT|Owner): /;
+  function actText(a) { a = String(a || ''); var m = WHO_PREFIX.exec(a); if (m) a = a.slice(m[0].length); return a.charAt(0).toUpperCase() + a.slice(1); }
   function task(it) {
-    var d = fmtDate(it.by), tail = it.grp === 'tail';
+    var d = fmtDate(it.by);
     if (it.old) return 'Answer again: “' + it.q + '” (the earlier answer “' + OLD[it.old] + '” is no longer offered)';
     if (it.state === 'unknown') return 'Answer this: “' + it.q + '”';
-    if (it.state === 'planned') return tail ? 'Finish: ' + it.q + (d ? ' (' + plannedBy(it) + ')' : '') : 'Finish: ' + (d ? it.act.replace(/\.$/, '') + ' (' + plannedBy(it) + ').' : it.act);
-    return tail ? 'Make this a Yes: ' + it.q : it.act;
+    if (it.state === 'planned') return (d ? 'Finish by ' + d + (it.overdue ? ' (overdue)' : '') : 'Finish') + ': ' + it.act;
+    return it.act;
   }
   /* Open items, weakest first: must-haves before tailored questions; within each No, not answered yet, Planned; then the order asked. */
   function open(ev) {
@@ -542,7 +548,7 @@
   var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, sensitiveOf: sensitiveOf, vendorQs: vendorQs, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
-    useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, firstLabel: firstLabel,
+    useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, actText: actText, firstLabel: firstLabel,
     pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
     resultModel: resultModel, personText: personText, answerState: answerState, consistLines: consistLines, levelLine: levelLine, holdItems: holdItems, OTHER_QS: OTHER_QS };
