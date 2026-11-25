@@ -44,7 +44,7 @@ goldenCases().forEach(g => {
   if (doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.rules === '3.0' && back && back.info.v3 && eq(R3.evaluate(D, S.answers(D, back.rec)).score, R3.evaluate(D, S.answers(D, rec)).score) && eq(back.rec.qa, rec.qa)) rt++;
 });
 ok(rt === 33, 'save as file → open restores all 33 golden checks (' + rt + ')');
-ok(S.APP === '3.0.1' && S.fileDoc(S.blank()).app === '3.0.1', 'the saved file names the tool version 3.0.1');
+ok(S.APP === '3.0.2' && S.fileDoc(S.blank()).app === '3.0.2', 'the saved file names the tool version 3.0.2');
 /* updated in 3.0.1 (clean-up L7): a newer file version was "not a saved check"; it now says it is newer */
 ok(S.readFile(D, MIG, { kind: 'other', v: 4, check: {} }) === null && S.readFile(D, MIG, {}) === null, 'wrong kind, empty → not a saved check');
 ok(eq(S.readFile(D, MIG, { kind: 'hftp-do-you-need-ai', v: 5, check: { id: 'abcdef' } }), { newer: true }) && eq(S.readFile(D, MIG, { kind: 'hftp-do-you-need-ai', v: 9, check: { id: 'abcd' } }), { newer: true }), 'L7 (cleanup3 U2): a file of a newer version → { newer: true }');
@@ -130,5 +130,42 @@ ok(S.fromV2Store(D, MIG, { v: 4, checks: {} }).length === 0 && S.fromV2Store(D, 
   ok(eq(c.timing, { hotel: ['2026-11-25T10:00:00.000Z', '2026-11-25T10:01:00.000Z', 60000], must: ['2026-11-25T10:02:00.000Z', '', 0] }), 'timing kept, junk dropped ' + JSON.stringify(c.timing));
   const c2 = S.clean(D, { id: 'tim00002' }); ok(!('timing' in c2), 'no timing unless recorded');
   ok(!('V' in S), 'clean-up D7: the unused R3Store.V is gone');
+}
+
+/* ---------- v3.0.2 clean-up v2 (reports/audit-readiness-3/cleanup_inventory_v2.md; reproductions cleanup31/unit_repro.mjs) ---------- */
+{ // N1 (High): re-opening the same readiness-2 file over the v3 check made from it opens as a copy; the migrated stamp is the old one
+  const file = fx('v2.7-file.json');
+  const first = S.readFile(D, MIG, file).rec;
+  const stored = JSON.parse(JSON.stringify(first)); stored.mh.m11 = 'yes'; stored.updated = new Date().toISOString(); // answered in v3 since
+  const t0 = Date.now(); while (Date.now() - t0 < 20) {}
+  const again = S.readFile(D, MIG, file);
+  ok(again.rec.id === stored.id, 'N1 precondition: the migrated check keeps the old id');
+  ok(S.openMode(again.rec, stored, again.info) === 'copy', 'N1: the same v2.7 file over a newer v3 check opens as a copy');
+  ok(String(again.rec.updated) <= String(file.check.updated || file.savedAt) && again.rec.updated === first.updated, 'N1: a migrated record keeps the old file\'s time stamp (' + again.rec.updated + ')');
+  const noStamp = JSON.parse(JSON.stringify(file)); delete noStamp.check.updated;
+  ok(S.readFile(D, MIG, noStamp).rec.updated === String(file.savedAt).slice(0, 40), 'N1: without its own stamp the record takes the file\'s savedAt');
+  const emptyOld = Object.assign(S.blank(stored.id), { updated: '2000-01-01T00:00:00.000Z' });
+  ok(S.openMode(again.rec, null, again.info) === 'replace' && S.openMode(again.rec, emptyOld, again.info) === 'replace', 'N1: nothing stored, or an older stored check without answers → replace');
+}
+{ // N8: an answer the rules do not know is open and is not an answer (as in clean())
+  const r = S.blank('nvalid1'); r.mh.m1 = 'maybe'; r.step2.s1 = 'perhaps';
+  ok(S.open(D, r, 'must').includes('m1'), 'N8: an invalid must-have answer still counts as open');
+  ok(S.open(D, r, 's2').includes('s1'), 'N8: an invalid step-2 answer still counts as open');
+  ok(!S.hasAnswers(r), 'N8: invalid answers alone do not list the check under Your checks');
+  const c = S.clean(D, JSON.parse(JSON.stringify(r))); ok(!c.mh.m1 && !c.step2.s1, 'N8 control: clean() drops them');
+  const g = S.blank('nvalid2'); g.use = 'rm-1'; g.step = 'use'; g.gates = { 'rm-1': { G_ACT: 'bogus' } };
+  ok(S.open(D, g, 'use')[0] === 'gate:G_ACT', 'N8: an unknown How it works value is open');
+  const na = S.blank('nvalid3'); na.mh.m1 = 'na'; na.mh.m2 = 'na';
+  ok(S.open(D, na, 'must').includes('m1') && !S.open(D, na, 'must').includes('m2'), 'N8: Doesn\'t apply is an answer only on m2 and m4');
+  ok(S.mhOk(D.must_haves[1], 'na') && !S.mhOk(D.must_haves[0], 'na') && S.gateOk(R3.askedGates(D, 'rm-1')[0], 'suggests') && !S.gateOk(R3.askedGates(D, 'rm-1')[0], 'constructor'), 'N8: the answer sets the page\'s guard uses');
+}
+{ // council v3.0.1 BUILD NOW 8: zero-hit searches (session mode) survive clean(); junk is dropped; at most 50
+  const many = Array.from({ length: 60 }, (_, i) => ({ q: 'word' + i, at: '2026-11-25T10:00:00.000Z' }));
+  const c = S.clean(D, { id: 'srch0001', searches: [{ q: 'chatbot', at: '2026-11-25T10:00:00.000Z' }, { q: '' }, 'x', { q: 5 }] });
+  ok(eq(c.searches, [{ q: 'chatbot', at: '2026-11-25T10:00:00.000Z' }]), 'searches kept, junk dropped ' + JSON.stringify(c.searches));
+  ok(S.clean(D, { id: 'srch0002', searches: many }).searches.length === 50 && !('searches' in S.clean(D, { id: 'srch0003' })), 'at most 50; none unless recorded');
+}
+{ // D12: only what the page or the tests use is exported
+  ok(['FILE_KIND', 'FILE_V', 'RULES', 'gatesOf', 'continued'].every(k => !(k in S)) && S.STEPS.length === 8 && S.TYPES.length === 3 && S.ROLES.length === 6, 'D12: unused R3Store exports are gone; STEPS, TYPES and ROLES serve the page\'s guard');
 }
 done();

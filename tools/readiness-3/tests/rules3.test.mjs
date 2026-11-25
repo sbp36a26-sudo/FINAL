@@ -165,11 +165,13 @@ const Y = (use, ga) => Object.fromEntries(R3.visible(D, use, ga).map(q => [q.id,
   const un = ev('gx-2', S2_YES, {}, MH_YES, Y('gx-2', {}));
   ok(un.verdict === 'Almost ready' && un.top3.some(a => a.text === D.gate_library.G_ACT.options[2].effects.action), 'an unanswered gate caps and adds the Don\'t know yet action');
 }
+const q_n1 = UC => UC['hr-1'].questions.find(x => x.id === 'hr-1.n1').text.replace(/\?\s*$/, '');
 { // sensitive flag, actions order, de-duplication, owners
   const r = ev('hr-1', S2_YES, { G_LINK: 'yes', 'hr1-person': 'yes' }, Object.assign({}, MH_YES, { m3: 'no' }), Object.assign(Y('hr-1', { G_LINK: 'yes', 'hr1-person': 'yes' }), { 'hr-1.n1': 'no' }));
   ok(r.sensitive && r.flag === D.texts.sensitive_flag && r.top3[0].text === 'Ask an adviser before a pilot.' && r.top3[0].ownerLabel === 'General manager', 'sensitive flag: the fixed text, and action #1 for the General manager');
   ok(r.top3[1].from === 'm3' && r.top3[2].from === 'hr-1.n1' && r.top3[1].text === 'Make sure: ' + D.must_haves[2].text.replace(/\?$/, ''), 'then blockers answered No, in question order, as "Make sure:" tasks');
-  ok(r.reason.startsWith('2 Must be Yes questions are No: ' + D.must_haves[2].title + '; '), 'reason names the blockers answered No');
+  /* v3.0.2 (owner decision, 25 Nov 2026): was "2 Must be Yes questions are No: …" */
+  ok(r.reason === 'Needed before a pilot: ' + D.must_haves[2].title + '; ' + q_n1(UC) + ' (answered No).', 'reason names the blockers answered No: ' + r.reason);
   const q = UC['hr-1'].questions.find(x => x.id === 'hr-1.n1');
   ok(r.top3[2].owner === q.owner && r.top3[2].ownerLabel === D.labels.owners[q.owner], 'a question\'s action carries its own owner');
   ok(new Set(r.actions.map(a => a.text)).size === r.actions.length, 'actions are de-duplicated');
@@ -187,10 +189,17 @@ const Y = (use, ga) => Object.fromEntries(R3.visible(D, use, ga).map(q => [q.id,
 { // council v3.0 BUILD NOW 2: the reason names at most two items
   const qa = Y('res-1', {}), no = Object.assign({}, MH_YES, { m1: 'no', m3: 'no', m5: 'no', m6: 'no' });
   const r = ev('res-1', S2_YES, {}, no, qa);
-  ok(r.verdict === 'Not ready' && r.reason === '4 Must be Yes questions are No: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + ' and 2 more (see the plan below).', 'BUILD NOW 2: 4 blockers No → two named, "and 2 more (see the plan below)": ' + r.reason);
+  /* v3.0.2: council v3.0.1 BUILD NOW 4 ("; and N more") and the owner decision ("Needed before a pilot: …") */
+  ok(r.verdict === 'Not ready' && r.reason === 'Needed before a pilot: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + '; and 2 more (answered No; see the plan below).', 'BUILD NOW 2/4: 4 blockers No → two named, "; and 2 more (answered No; see the plan below)": ' + r.reason);
   const two = ev('res-1', S2_YES, {}, Object.assign({}, MH_YES, { m1: 'no', m3: 'no' }), qa);
-  ok(two.reason === '2 Must be Yes questions are No: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + '.', 'two blockers No: both named, no "more"');
+  ok(two.reason === 'Needed before a pilot: ' + D.must_haves[0].title + '; ' + D.must_haves[2].title + ' (answered No).', 'two blockers No: both named, no "more": ' + two.reason);
   const held = ev('rm-1', Object.assign({}, S2_YES, { s3: 'dk', s4: 'no', s5: 'dk' }), { G_ACT: 'suggests' }, MH_YES, Y('rm-1', { G_ACT: 'suggests' }));
-  ok(held.reason === 'In step 2 you did not answer Yes to: ' + D.step2[2].title + '; ' + D.step2[3].title + ' and 1 more (see the plan below).', 'step-2 list capped at two: ' + held.reason);
+  ok(held.reason === 'In step 2 you did not answer Yes to: ' + D.step2[2].title + '; ' + D.step2[3].title + '; and 1 more (see the plan below).', 'step-2 list capped at two, "; and 1 more": ' + held.reason);
+  const nine = ev('res-1', S2_YES, {}, Object.fromEntries(D.must_haves.map((m, i) => [m.id, i < 9 ? 'no' : 'yes'])), qa);
+  ok(/^Needed before a pilot: [^;]+; [^;]+; and \d+ more \(answered No; see the plan below\)\.$/.test(nine.reason) && nine.reason.includes(D.must_haves[1].title + '; and'), 'BUILD NOW 4: a title with its own comma stays one item ("…approved; and 7 more"): ' + nine.reason);
+  const soft = ev('rm-1', S2_YES, { G_ACT: 'suggests' }, Object.assign({}, MH_YES, { m5: 'planned' }), Y('rm-1', { G_ACT: 'suggests' }));
+  ok(soft.verdict === 'Almost ready' && soft.reason === 'Needed before a pilot: ' + D.must_haves[4].title + ' (not Yes yet).', 'owner decision: a blocker Planned is named as Needed before a pilot: ' + soft.reason);
+  const ready = ev('rm-1', S2_YES, { G_ACT: 'suggests' }, MH_YES, Y('rm-1', { G_ACT: 'suggests' }));
+  ok(ready.verdict === 'Ready' && !/Must be Yes/.test(JSON.stringify(ready)) && ready.top3.every(a => a.need === false || a.need === true), 'no "Must be Yes" left in the rules\' texts');
 }
 done();

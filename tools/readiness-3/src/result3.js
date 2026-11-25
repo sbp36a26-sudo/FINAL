@@ -9,7 +9,8 @@
   'use strict';
   var R = root.R3Rules, S = root.R3Store;
   var TONE = { ready: 'hi', almost: 'md', not: 'lo', info: 'na', stop: 'accent' };
-  var WEIGHT = { B: 'Must be Yes', I: 'Important', N: 'Nice to have' };
+  /* Owner decision, 25 Nov 2026: a blocker is named "Needed before a pilot" on the result (the cards show no weight label). */
+  var WEIGHT = { B: 'Needed before a pilot', I: 'Important', N: 'Nice to have' };
   function ansLabel(D, kind, a) {
     if (!a) return 'No answer (counts as Don\'t know yet)';
     var list = kind === 'step2' ? D.answers.step2 : D.answers.check_da;
@@ -25,7 +26,7 @@
       hotel: rec.hotel.name || '', hotelLine: rec.hotel.name || 'Not named', useTitle: u ? u.title : D.none_fits.title, department: u ? u.department : '',
       date: today, disclaimer: D.texts.disclaimer, flag: res.flag || '', notFit: res.notFit || '', none: !u };
     m.notes = (res.contradictions || []).map(function (c) { return { id: c.id, note: c.note }; });
-    m.top3 = res.top3.map(function (a) { return { text: a.text, owner: a.ownerLabel }; });
+    m.top3 = res.top3.map(function (a) { return { text: a.text, owner: a.ownerLabel, need: !!a.need }; });
 
     if (m.stop) {
       m.stopTitles = res.stop.ids.map(function (id) { return D.step2.filter(function (s) { return s.id === id; })[0].title; });
@@ -83,10 +84,10 @@
   function method(D, res) {
     var W = D.scoring.weights;
     return [
-      'Every must-have and every question shown for this use case counts. Points: Must be Yes ' + W.B + ', Important ' + W.I + ', Nice to have ' + W.N + '.',
+      'Every must-have and every question shown for this use case counts. Points: needed before a pilot ' + W.B + ', Important ' + W.I + ', Nice to have ' + W.N + '. Every must-have is needed before a pilot.',
       'Yes earns all the points, Planned half, No and Don\'t know yet none. Doesn\'t apply is left out. A question with no answer counts as Don\'t know yet. Step 2 and the How it works questions earn no points.',
       'Readiness score = points earned divided by points possible, as a percentage, rounded down.',
-      'The verdict is checked in this order. Soft stop: question 1 or 2 of step 2 is No and you did not continue. Not enough info: more than half of the answers are Don\'t know yet. Not ready: a Must be Yes question is No, or the score is under 50%, or fewer than half of the Must be Yes questions are Yes. Ready: every Must be Yes question is Yes or Doesn\'t apply, the score is 75% or more, fewer than a quarter of the answers are Don\'t know yet, and nothing below holds it back. Almost ready: everything else.',
+      'The verdict is checked in this order. Soft stop: question 1 or 2 of step 2 is No and you did not continue. Not enough info: more than half of the answers are Don\'t know yet. Not ready: a question needed before a pilot is No, or the score is under 50%, or fewer than half of the questions needed before a pilot are Yes. Ready: every question needed before a pilot is Yes or Doesn\'t apply, the score is 75% or more, fewer than a quarter of the answers are Don\'t know yet, and nothing below holds it back. Almost ready: everything else.',
       'These hold a result at Almost ready at best: the note about personal data or jobs, a How it works answer of Don\'t know yet or one that limits the use case, Continue anyway after a soft stop, an answer other than Yes to questions 3 to 5 of step 2, and None of these fits.',
       'The cut-offs are the project team\'s judgement and are not yet tested with hotels. Your answers are your own; nobody checks them.'
     ];
@@ -101,10 +102,12 @@
     if (m.simpler) { L.push('', 'Simpler options to try first:'); m.simpler.forEach(function (t) { L.push('- ' + t); }); }
     L.push('', 'Top 3 actions:');
     if (!m.top3.length) L.push('Nothing open.');
-    m.top3.forEach(function (a, i) { L.push((i + 1) + '. ' + a.text + ' (' + a.owner + ')'); });
+    m.top3.forEach(function (a, i) { L.push((i + 1) + '. ' + topLine(a)); });
     L.push('', m.scoreLine, '', m.disclaimer);
     return L.join('\n');
   }
+  /* One top action as a line: "<text> (<owner>; needed before a pilot)" for a blocker that is not Yes (owner decision, 25 Nov 2026). */
+  function topLine(a) { return a.text + ' (' + a.owner + (a.need ? '; needed before a pilot' : '') + ')'; }
   function personText(m, key) {
     var p = m.people.filter(function (x) { return x.key === key; })[0]; if (!p) return '';
     return ['Do you need AI? Actions for ' + p.owner, 'Hotel: ' + m.hotelLine, 'Use case: ' + m.useTitle, 'Date: ' + m.date, ''].concat(p.items.map(function (t) { return '- ' + t; })).concat(['', m.disclaimer]).join('\n');
@@ -117,5 +120,5 @@
     return L.join('\n');
   }
 
-  root.R3Result = { TONE: TONE, WEIGHT: WEIGHT, model: model, summaryText: summaryText, personText: personText, planText: planText };
+  root.R3Result = { TONE: TONE, WEIGHT: WEIGHT, topLine: topLine, model: model, summaryText: summaryText, personText: personText, planText: planText };
 })(typeof self !== 'undefined' ? self : this);

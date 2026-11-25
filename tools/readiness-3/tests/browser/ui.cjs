@@ -8,6 +8,8 @@
 //  7. downloads: without the capability → Copy fallback; with a fake window.claude.use('downloads') → save({filename, data}) called
 //  8. storage unavailable → banner; PDF failure → its message
 //  9. v3.0.1 (R3_ONLY=cleanup runs only this part): every bug of the clean-up inventory (H1–H3, M1–M4, L1–L12) and the council's BUILD NOW items 1, 3, 4, 6, 8 (cleanup())
+// 10. v3.0.2 (R3_ONLY=cleanup2 runs only this part): clean-up inventory v2 (N1–N16, controls C1–C8), the council v3.0.1 BUILD NOW items
+//     1, 5, 6, 7, 8, and the owner decisions of 25 Nov 2026 (no "Must be Yes" label; step 4 areas → departments → use cases with sources) (cleanup2())
 // Serve tools/ first:  python3 -m http.server 8861 --bind 127.0.0.1   (R3_BASE for another address)
 // Run from tools/:  node readiness-3/tests/browser/ui.cjs        (R3_SHOTS=0 to skip screenshots)
 const { chromium } = require('playwright');
@@ -40,6 +42,15 @@ async function noHScroll(p, tag) { const w = await p.evaluate(() => [document.do
 async function shot(p, name) { if (DO_SHOTS && p._shots) await p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: true }); }
 async function next(p) { await p.click('[data-act="next"]'); }
 async function pick(p, kind, id, key) { await p.check('#r-' + kind + '-' + uid(id) + '-' + key); }
+/* v3.0.2 (owner decision, 25 Nov 2026): step 4 is area tiles → department tiles → use cases. Click down to one use case. */
+const AREA = { 'Revenue Management': 'Commercial', 'Reservations & Distribution': 'Commercial', 'Sales & Marketing': 'Commercial', 'Front Office': 'Guest-facing', 'Guest Experience & Customer Service': 'Guest-facing', 'Food & Beverage service': 'Guest-facing',
+  'Housekeeping': 'Operational', 'Maintenance & Engineering': 'Operational', 'Kitchen & Culinary Operations': 'Operational', 'Procurement & Purchasing': 'Operational', 'Finance & Accounting': 'Administrative', 'Human Resources': 'Administrative',
+  'General Management & Administration': 'Administrative', 'IT & Security': 'Administrative', 'Sustainability & Governance': 'Administrative' };
+async function pickUse(p, id) {
+  const u = D.use_cases.find(x => x.id === id);
+  if (await p.$('#crumb-areas')) await p.click('#crumb-areas');
+  await p.click('#area-' + uid(AREA[u.department])); await p.click('#dept-' + uid(u.department)); await p.check('#r-use-' + uid(id));
+}
 
 /* Walk one golden case through the page by clicking. Answers every question (no unanswered note). */
 async function walk(p, g, n, tag) {
@@ -60,7 +71,7 @@ async function walk(p, g, n, tag) {
   for (const m of D.must_haves) await pick(p, 'mh', m.id, mh[m.id]);
   await shot(p, pre + '3-musthaves'); await noHScroll(p, pre + 'must'); await next(p);
   if (g.use_case === 'none') await p.check('#r-use-none');
-  else { const u = D.use_cases.find(x => x.id === g.use_case); await p.selectOption('#dept', u.department); await p.check('#r-use-' + uid(u.id)); }
+  else await pickUse(p, g.use_case);
   await shot(p, pre + '4-where'); await noHScroll(p, pre + 'where'); await next(p);
   for (const [gid, key] of Object.entries(g.gates)) await pick(p, 'gate', gid, key);
   const vis = (await st(p)).visible;
@@ -122,8 +133,8 @@ async function cleanup(b, size, tag) {
       const R = window.Readiness3, s = R.send; s('begin'); s('use', 'hr-1');
       const d = R.fileDoc(); d.check.id = 'otheridhr1'; d.check.step = 'where';
       s('use', 'rm-1'); R.openText(JSON.stringify(d));
-      const sel = document.getElementById('dept'), chosen = document.querySelector('input[name="n-use"]:checked');
-      return { use: R.record().use, dept: sel && sel.value, chosen: chosen && chosen.value };
+      const chosen = document.querySelector('input[name="n-use"]:checked');
+      return { use: R.record().use, dept: R.state().where.dept, chosen: chosen && chosen.value };
     });
     ok(out.use === 'hr-1' && out.chosen === 'hr-1' && out.dept === D.use_cases.find(u => u.id === 'hr-1').department, tag + ' M4: the opened check shows its own department with its use case chosen ' + JSON.stringify(out));
     await ctx.close();
@@ -305,7 +316,8 @@ async function cleanup(b, size, tag) {
     await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('goto', 'must'); });
     ok((await p.textContent('#must-help')).trim() === 'Answer for the job you thought of in step 2. ‘The tool’ means the AI tool you have in mind; you pick the exact use case in step 4.', tag + ' BUILD NOW 3: the must-haves line');
     await p.evaluate(() => { const s = window.Readiness3.send; s('use', 'rm-1'); s('goto', 'use'); });
-    ok((await p.textContent('#hiw-help')).trim() === 'No tool chosen yet? Answer Don\'t know yet, or ask the vendor. You can change it later.', tag + ' BUILD NOW 4: the How it works line');
+    /* v3.0.2: council v3.0.1 BUILD NOW 2 adds the consequence (was "… You can change it later.") */
+    ok((await p.textContent('#hiw-help')).trim() === 'No tool chosen yet? Answer Don\'t know yet, or ask the vendor. You can change it on this screen later. With Don\'t know yet here, the result stays at Almost ready at best until you know.', tag + ' BUILD NOW 4: the How it works line');
     const n = (await st(p)).visible.length;
     ok((await p.$$('fieldset.card [data-kind="q"]')).length === 0 && (await p.textContent('#gates-first')).includes('count as Don\'t know yet'), tag + ' BUILD NOW 1: no question cards before the How it works answer, and the line says they count as Don\'t know yet');
     await pick(p, 'gate', 'G_ACT', 'suggests');
@@ -329,11 +341,387 @@ async function cleanup(b, size, tag) {
   });
 }
 
+/* ---------- v3.0.2 (R3_ONLY=cleanup2 runs only this part): clean-up inventory v2 (reports/audit-readiness-3/cleanup_inventory_v2.md,
+   N1–N16; reproductions cleanup31/browser_repro.cjs, moved here), the code-only BUILD NOW items of the council on v3.0.1, and the two
+   owner decisions of 25 Nov 2026 (no "Must be Yes" label on the cards; step 4 areas → departments → use cases with sources).
+   Every N check failed on v3.0.1 and passes now; the C checks are controls that held on v3.0.1 and must keep holding. ---------- */
+const send3 = (p, ev, arg) => p.evaluate(([e, a]) => window.Readiness3.send(e, a), [ev, arg]);
+const ans3 = (p, kind, id, value) => send3(p, 'answer', { kind, id, value });
+const rec3 = p => p.evaluate(() => window.Readiness3.record());
+const stored3 = (p, id) => p.evaluate(([k, i]) => JSON.parse(localStorage.getItem(k + '_c_' + i) || 'null'), [KEY3, id]);
+const noH = p => p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+/* a synthetic storage event, as another tab's write raises it (a deterministic stand-in for a second tab) */
+async function otherTab(p, mutate, stamp) {
+  return p.evaluate(([k, m, t]) => {
+    const r = window.Readiness3.record(), key = k + '_c_' + r.id, cur = JSON.parse(localStorage.getItem(key));
+    Object.assign(cur.step2, m); cur.updated = t; const v = JSON.stringify(cur);
+    localStorage.setItem(key, v);
+    window.dispatchEvent(new StorageEvent('storage', { key, newValue: v, storageArea: localStorage }));
+  }, [KEY3, mutate, stamp]);
+}
+async function cleanup2(b, size, tag) {
+  const guard = async (name, fn) => { try { await fn(); } catch (e) { ok(false, tag + ' ' + name + ' threw: ' + String(e && e.message || e).split('\n')[0]); } };
+  const T = tag + ' v3.0.2';
+  await guard('N1', async () => {
+    const { ctx, p } = await mk(b, size);
+    const file = FIX('v2.7-file.json');
+    await p.evaluate(t => window.Readiness3.openText(t), file);
+    await ans3(p, 'mh', 'm11', 'yes'); await p.evaluate(() => window.Readiness3.flush());
+    const id = (await rec3(p)).id;
+    await pause(30); await send3(p, 'goto', 'start');
+    await p.evaluate(t => window.Readiness3.openText(t), file); await pause(200);
+    const r = await rec3(p), s = await stored3(p, id), toast = await p.textContent('#toast');
+    ok(s && s.mh.m11 === 'yes' && r.id !== id && toast === 'Opened as a copy: this browser has a newer version of this check.', T + ' N1: the same readiness-2 file opened again keeps the v3 answers (stored m11 = ' + (s && s.mh.m11) + ', "' + toast + '")');
+    await ctx.close();
+  });
+  await guard('N2', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'next'); await ans3(p, 's2', 's1', 'yes'); await p.evaluate(() => window.Readiness3.flush());
+    await ans3(p, 's2', 's3', 'no');
+    await otherTab(p, { s2: 'dk' }, '2999-01-01T00:00:00.000Z');
+    const c1 = (await st(p)).conflict;
+    await pause(300);
+    await otherTab(p, { s4: 'dk' }, '2999-01-02T00:00:00.000Z'); await pause(50);
+    const r = await rec3(p), s = await st(p);
+    ok(c1 && r.step2.s3 === 'no' && s.conflict, T + ' N2: a second change elsewhere keeps the conflict held and the answer here (s3 = ' + r.step2.s3 + ', conflict = ' + s.conflict + ')');
+    await p.click('#conflict-theirs');
+    ok((await rec3(p)).step2.s4 === 'dk', T + ' N2: Use the other version takes the latest other version (s4 = dk)');
+    await ctx.close();
+  });
+  await guard('N3', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'next'); await ans3(p, 's2', 's1', 'yes'); await p.evaluate(() => window.Readiness3.flush());
+    await ans3(p, 's2', 's3', 'no');
+    await otherTab(p, { s2: 'dk' }, '2999-01-01T00:00:00.000Z'); await pause(300);
+    await p.click('#new-check');
+    const o = await p.evaluate(() => ({ dialog: document.getElementById('confirm').open, focus: document.activeElement.id, s3: window.Readiness3.record().step2.s3, toast: document.getElementById('toast').textContent }));
+    ok(!o.dialog && o.focus === 'conflict' && o.s3 === 'no' && o.toast === 'Choose Keep my answers or Use the other version first.', T + ' N3: Start a new check is held while the conflict banner is up ' + JSON.stringify(o));
+    const opened = await p.evaluate(() => window.Readiness3.openText(JSON.stringify(window.Readiness3.fileDoc())));
+    const sent = await send3(p, 'new');
+    ok(opened === false && sent === false && (await rec3(p)).step2.s3 === 'no', T + ' N3: opening a file and send("new") are held too');
+    await ctx.close();
+  });
+  await guard('N4', async () => {
+    const { ctx, p } = await mk(b, size, BLOCK_LS);
+    await send3(p, 'begin'); await send3(p, 'next'); await ans3(p, 's2', 's1', 'yes');
+    await p.click('#save-file-banner'); await p.waitForSelector('#copybox');
+    await ans3(p, 's2', 's2', 'yes');
+    const box = !!(await p.$('#copybox')), txt = box ? await p.inputValue('#copy-text') : '';
+    let doc = null; try { doc = JSON.parse(txt); } catch (e) {}
+    ok(box && doc && doc.check.step2.s2 === 'yes', T + ' N4: the open Saved check box holds the latest answers (s2 = ' + (doc && doc.check.step2.s2) + ')');
+    await ctx.close();
+  });
+  await guard('N5 + BUILD NOW 1', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'use', 'rm-1'); await send3(p, 'goto', 'use'); await send3(p, 'next');
+    const o = await p.evaluate(() => { const g = document.getElementById('gates-first'), n = document.getElementById('open-note'); return { min: g && g.getAttribute('data-min'), max: g && g.getAttribute('data-max'), note: n && n.querySelector('p').textContent, btn: document.querySelector('[data-act="next"]').textContent, open: document.querySelectorAll('fieldset.card input[data-kind="gate"]').length / 3 }; });
+    const want = 'The How it works question has no answer yet. If you go on, it and ' + (o.min === o.max ? 'the ' + o.min + ' questions' : 'the ' + o.min + ' to ' + o.max + ' questions') + ' after it count as Don\'t know yet. Press See the result again to go on.';
+    ok(o.note === want && o.note.includes('Press ' + o.btn + ' again'), T + ' N5 / BUILD NOW 1: the held note counts what is on screen, the range follows and names the real button: ' + o.note);
+    await send3(p, 'use', 'rm-2'); await send3(p, 'goto', 'use'); await send3(p, 'next');
+    const two = await p.textContent('#open-note p');
+    ok(/^The 2 How it works questions have no answer yet\. If you go on, they and the \d+( to \d+)? questions after them count as Don't know yet\. Press See the result again to go on\.$/.test(two), T + ' BUILD NOW 1: two open: ' + two);
+    await send3(p, 'goto', 's2'); await send3(p, 'next');
+    ok(/Press Next again to go on\.$/.test(await p.textContent('#open-note p')), T + ' BUILD NOW 1: step 2 names Next');
+    await send3(p, 'use', 'rm-1'); await send3(p, 'goto', 'use'); await ans3(p, 'gate', 'G_ACT', 'suggests'); await send3(p, 'next');
+    ok(/^\d+ questions have no answer yet\. They count as Don't know yet\. Press See the result again to go on\.$/.test(await p.textContent('#open-note p')), T + ' BUILD NOW 1: step 5 with questions open names See the result');
+    await ctx.close();
+  });
+  await guard('N6', async () => {
+    const { ctx, p } = await mk(b, size, BLOCK_LS);
+    await p.click('[data-act="begin"]');
+    await p.fill('#h-name', 'Hotel Stork');
+    ok(!!(await p.$('#save-file-banner')) && (await p.evaluate(() => document.activeElement.id)) === 'h-name', T + ' N6: typing the hotel name offers Save as file at once; the field keeps focus');
+    await ctx.close();
+  });
+  await guard('N7', async () => {
+    const { ctx, p } = await mk(b, size);
+    await p.evaluate(() => window.Readiness3.openText('not json'));
+    const e1 = !!(await p.$('#file-err'));
+    await p.click('[data-act="begin"]'); await send3(p, 'back');
+    ok(e1 && !(await p.$('#file-err')), T + ' N7: the file error is cleared once the cover is left');
+    await ctx.close();
+  });
+  await guard('N8', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin');
+    const r0 = JSON.stringify(await rec3(p));
+    const a = await send3(p, 'goto', 'bogus');
+    ok(a === false && (await p.evaluate(() => document.getElementById('app').getAttribute('data-state'))) === 'hotel' && p._errs.length === 0 && JSON.stringify(await rec3(p)) === r0, T + ' N8a: send("goto", "bogus") is refused, no error, nothing changes');
+    await send3(p, 'goto', 'must');
+    const r1 = JSON.stringify(await rec3(p));
+    const bads = await p.evaluate(() => { const s = window.Readiness3.send; return [s('answer', { kind: 'mh', id: 'm1', value: 'maybe' }), s('answer', { kind: 'mh', id: 'm1', value: 'na' }), s('answer', { kind: 's2', id: 's9', value: 'yes' }), s('answer', { kind: 'q', id: 'rm-1.nope', value: 'yes' }), s('use', 'zz-9'), s('hotel', { k: 'type', v: 'castle' }), s('hotel', { k: 'evil', v: 'x' }), s('area', 'Moon'), s('dept', 'Spa'), s('fly')]; });
+    ok(bads.every(x => x === false) && JSON.stringify(await rec3(p)) === r1 && !(await st(p)).open.every(x => x !== 'm1'), T + ' N8b: unknown values, ids, keys and events are refused ' + JSON.stringify(bads));
+    ok(await send3(p, 'answer', { kind: 'mh', id: 'm2', value: 'na' }) === true && (await rec3(p)).mh.m2 === 'na', T + ' N8: a valid answer is taken (send returns true)');
+    await send3(p, 'use', 'rm-1'); await send3(p, 'goto', 'use');
+    const g = await send3(p, 'answer', { kind: 'gate', id: 'G_ACT', value: 'bogus' });
+    const cards = await p.$$eval('input[data-kind="q"]', x => x.length);
+    ok(g === false && cards === 0 && !!(await p.$('#gates-first')), T + ' N8c: an unknown How it works value does not unlock the questions');
+    await ctx.close();
+  });
+  await guard('N15', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'next'); await ans3(p, 's2', 's1', 'yes'); await p.evaluate(() => window.Readiness3.flush());
+    const doc = await p.evaluate(() => JSON.stringify(window.Readiness3.fileDoc()));
+    const u0 = (await rec3(p)).updated;
+    await pause(20); await send3(p, 'back'); await send3(p, 'next'); await p.evaluate(() => window.Readiness3.flush());
+    const u1 = (await rec3(p)).updated;
+    ok(u0 === u1, T + ' N15a: Back and Next leave "updated" as it was (' + u0 + ' → ' + u1 + ')');
+    await send3(p, 'goto', 'start');
+    await p.evaluate(d => window.Readiness3.openText(d), doc); await pause(100);
+    const r = await rec3(p), toast = await p.textContent('#toast');
+    ok(r.id === JSON.parse(doc).check.id && toast === 'Opened the saved check.', T + ' N15b: the file just saved reopens as the same check ("' + toast + '")');
+    await ans3(p, 's2', 's2', 'yes');
+    ok((await rec3(p)).updated > u0, T + ' N15: an answer still stamps "updated"');
+    await ctx.close();
+  });
+  await guard('N9', async () => {
+    const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] } });
+    const p = await ctx.newPage(); p._errs = []; await p.goto(URL + '?session=1'); await ready3(p);
+    await send3(p, 'begin'); await send3(p, 'next'); await ans3(p, 's2', 's1', 'yes');
+    const id = (await rec3(p)).id;
+    await pause(400);
+    await send3(p, 'new'); await pause(200);
+    const old = await stored3(p, id);
+    ok(old && old.timing && old.timing.s2 && old.timing.s2[2] >= 350 && old.timing.s2[1], T + ' N9a: the previous check\'s last step keeps its time (s2 = ' + JSON.stringify(old && old.timing && old.timing.s2) + ')');
+    await p.evaluate(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' }); document.dispatchEvent(new Event('visibilitychange')); });
+    await pause(600);
+    await p.evaluate(() => { Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' }); document.dispatchEvent(new Event('visibilitychange')); });
+    await send3(p, 'next');
+    const t = (await rec3(p)).timing.hotel;
+    ok(t[2] < 500, T + ' N9b / BUILD NOW 7: time with the page hidden is not counted (hotel ms = ' + t[2] + ' with 600 ms hidden)');
+    await ctx.close();
+  });
+  await guard('BUILD NOW 7', async () => {
+    const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] } });
+    const p = await ctx.newPage(); await p.goto(URL + '#session'); await ready3(p);
+    await send3(p, 'begin'); await send3(p, 'goto', 'result'); await pause(30);
+    await p.evaluate(() => window.dispatchEvent(new Event('pagehide'))); await pause(50);
+    const r = await rec3(p);
+    ok((await st(p)).session === true && r.timing && r.timing.result && /^\d{4}-/.test(r.timing.result[1]), T + ' BUILD NOW 7: #session in the address turns timing on; the result gets a leave time on pagehide ' + JSON.stringify(r.timing && r.timing.result));
+    await ctx.close();
+  });
+  await guard('BUILD NOW 8', async () => {
+    const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] } });
+    const p = await ctx.newPage(); const out = []; p.on('request', r => { if (!r.url().startsWith(BASE)) out.push(r.url()); });
+    await p.goto(URL + '?session=1'); await ready3(p);
+    await send3(p, 'begin'); await send3(p, 'goto', 'where');
+    await p.fill('#uc-search', 'chatbot'); await pause(1700);
+    await p.fill('#uc-search', 'ab'); await pause(1700);
+    await p.fill('#uc-search', 'pricing'); await pause(1700);
+    const doc = await p.evaluate(() => window.Readiness3.fileDoc());
+    ok(doc.check.searches && doc.check.searches.length === 1 && doc.check.searches[0].q === 'chatbot' && out.length === 0 && !(await p.$('[id*="search"][id*="log"]')), T + ' BUILD NOW 8: a search that found nothing for 1.5 s is kept in the saved file (session mode), nothing shown or sent ' + JSON.stringify(doc.check.searches));
+    const p2 = await ctx.newPage(); await p2.goto(URL); await ready3(p2);
+    await send3(p2, 'new'); await send3(p2, 'goto', 'where'); await p2.fill('#uc-search', 'chatbot'); await pause(1700);
+    ok(!(await rec3(p2)).searches, T + ' BUILD NOW 8: without session mode nothing is kept');
+    await ctx.close();
+  });
+  await guard('N10 + BUILD NOW 5', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'use', 'rm-1'); await send3(p, 'goto', 'use');
+    await p.check('#r-gate-G_ACT-suggests');
+    const live = (await p.textContent('#live')).trim(), n = (await st(p)).visible.length, cards = await p.$$eval('input[data-kind="q"]', x => x.length);
+    ok(cards === n * 4 && live === n + ' questions for this use case are now shown below.', T + ' N10 / BUILD NOW 5: the questions that appear are announced ("' + live + '")');
+    await p.check('#r-gate-G_ACT-acts');
+    ok((await p.textContent('#live')).trim() === '', T + ' BUILD NOW 5: changing an answered How it works question announces nothing new');
+    await ctx.close();
+  });
+  await guard('N11', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'goto', 'where');
+    await p.fill('#uc-search', 'pri');
+    await p.evaluate(() => { window.__n = document.getElementById('uc-count'); });
+    await p.type('#uc-search', 'c');
+    const o = await p.evaluate(() => ({ same: window.__n === document.getElementById('uc-count') && document.contains(window.__n), role: window.__n.getAttribute('role'), text: window.__n.textContent }));
+    ok(o.same && o.role === 'status' && /use cases? match/.test(o.text), T + ' N11: the search count is one status node whose text changes (' + o.text + ')');
+    await ctx.close();
+  });
+  await guard('N12', async () => {
+    const { ctx, p } = await mk(b, size, () => { window.claude = { use: () => new Promise(r => setTimeout(() => r({ save: () => Promise.reject({ code: 'unavailable' }) }), 400)) }; });
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('next'); ['s1', 's2', 's3', 's4', 's5'].forEach(id => s('answer', { kind: 's2', id, value: 'yes' })); s('use', 'rm-1'); s('goto', 'result'); });
+    await p.click('#pdf'); await send3(p, 'back'); await pause(700);
+    const o = await p.evaluate(() => ({ step: window.Readiness3.state().step, box: !!document.getElementById('copybox'), toast: document.getElementById('toast').textContent, busy: window.Readiness3.state().busy }));
+    ok(o.step === 'use' && !o.box && o.toast === 'Downloads are not available here. Use Copy on the result.' && !o.busy.length, T + ' N12: a late fallback on another screen gives a toast, no box ' + JSON.stringify(o));
+    await ctx.close();
+  });
+  await guard('N13', async () => {
+    const { ctx, p } = await mk(b, size, () => { Object.defineProperty(navigator, 'clipboard', { get() { return { writeText: () => Promise.reject(new Error('blocked')) }; } }); });
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('next'); s('answer', { kind: 's2', id: 's1', value: 'yes' }); s('goto', 'result'); });
+    await p.click('#save-file'); await p.waitForSelector('#copybox');
+    const l1 = await p.textContent('#copybox .fld span'), m1 = await p.textContent('#copy-msg');
+    await p.click('#copy-box'); await pause(100);
+    const l2 = await p.textContent('#copybox .fld span'), m2 = await p.textContent('#copy-msg'), f = await p.evaluate(() => document.activeElement.id);
+    ok(l1 === 'Saved check' && l1 === l2 && m1 === m2 && /Open a saved file/.test(m2) && f === 'copy-text' && (await p.textContent('#toast')) === 'Copying was blocked. Select the text and copy it.', T + ' N13: Copy in the box keeps its label and instructions, selects the text');
+    await ctx.close();
+  });
+  await guard('N14', async () => {
+    const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] } });
+    const open = async () => { const p = await ctx.newPage(); p._errs = []; await p.goto(URL); await ready3(p); return p; };
+    const A = await open();
+    await send3(A, 'begin'); await send3(A, 'next'); await ans3(A, 's2', 's1', 'yes'); await A.evaluate(() => window.Readiness3.flush());
+    const id = (await rec3(A)).id;
+    const B = await open();
+    await send3(B, 'goto', 'start'); await B.waitForSelector('[data-act="remove-check"]');
+    await B.click('[data-act="remove-check"]'); await B.click('[data-act="remove-yes"]'); await pause(150);
+    ok(await A.isVisible('#gone') && (await st(A)).gone === true, T + ' N14: the tab that has the check open says it was removed elsewhere');
+    await ans3(A, 's2', 's2', 'yes'); await A.evaluate(() => window.Readiness3.flush()); await pause(100);
+    const back = await A.evaluate(([k, i]) => ({ rec: !!localStorage.getItem(k + '_c_' + i), listed: JSON.parse(localStorage.getItem(k)).ids.includes(i) }), [KEY3, id]);
+    ok(!back.rec && !back.listed, T + ' N14: nothing is written back before Keep it here ' + JSON.stringify(back));
+    await A.click('#gone-keep'); await pause(250);
+    const kept = await A.evaluate(([k, i]) => ({ rec: JSON.parse(localStorage.getItem(k + '_c_' + i) || 'null'), listed: JSON.parse(localStorage.getItem(k)).ids.includes(i) }), [KEY3, id]);
+    ok(kept.rec && kept.rec.step2.s2 === 'yes' && kept.listed && !(await A.$('#gone')), T + ' N14: Keep it here writes it back with the answers given since');
+    await ctx.close();
+  });
+  if (size[0] > 500) await guard('N16', async () => {
+    const { ctx, p } = await mk(b, size, () => { window.__uses = 0; window.claude = { use: () => { window.__uses++; return new Promise(r => setTimeout(() => r({ save: () => Promise.resolve() }), window.__uses === 1 ? 10500 : 10)); } }; });
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('goto', 'result'); });
+    await p.click('#pdf'); await p.waitForSelector('#copybox', { timeout: 15000 });
+    await p.click('#copy-close'); await pause(800);
+    await p.click('#pdf'); await pause(500);
+    const o = await p.evaluate(() => ({ uses: window.__uses, box: !!document.getElementById('copybox'), toast: document.getElementById('toast').textContent }));
+    ok(o.uses === 2 && !o.box && /^Saved /.test(o.toast), T + ' N16: after a slow first answer the next click asks the host again and saves ' + JSON.stringify(o));
+    await ctx.close();
+  });
+  /* controls (held on v3.0.1) */
+  await guard('C1', async () => {
+    const { ctx, p } = await mk(b, size, BLOCK_LS);
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('next'); s('answer', { kind: 's2', id: 's1', value: 'no' }); s('next'); s('next'); });
+    const step = (await st(p)).step;
+    await p.click('#save-file-banner'); await p.waitForSelector('#copybox');
+    const focus = await p.evaluate(() => document.activeElement.id);
+    await p.click('#copy-close');
+    const back = await p.evaluate(() => document.activeElement.id);
+    ok(step === 'stop' && focus === 'copy-text' && back === 'save-file-banner' && await noH(p), T + ' C1: stop screen, storage blocked: box, focus, Close back, no sideways scroll');
+    await ctx.close();
+  });
+  await guard('C2', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'goto', 'where');
+    await p.fill('#uc-search', '   ');
+    ok(!!(await p.$('#area-tiles')) && (await p.textContent('#uc-count')) === '', T + ' C2: spaces only → the area tiles, no count');
+    await p.fill('#uc-search', 'zzqx' + 'x'.repeat(80));
+    ok(/No use case matches/.test(await p.textContent('#uc-count')) && /choose an area/.test(await p.textContent('#uc-count')) && await noH(p), T + ' C2: no match message, a long word does not scroll sideways');
+    await p.fill('#uc-search', 'guest');
+    await p.focus('#uc-search'); await p.keyboard.press('Tab'); await p.keyboard.press('Space');
+    const r1 = await rec3(p), f1 = await p.evaluate(() => document.activeElement.id);
+    ok(!!r1.use && f1 === 'r-use-' + r1.use, T + ' C2: keyboard pick from the results keeps focus on the chosen radio (' + r1.use + ')');
+    await p.keyboard.press('ArrowDown');
+    const r2 = await rec3(p), f2 = await p.evaluate(() => document.activeElement.id);
+    ok(r2.use !== r1.use && f2 === 'r-use-' + r2.use, T + ' C2: arrow key moves the choice and the focus (' + r2.use + ')');
+    await p.fill('#uc-search', '');
+    const w = (await st(p)).where, chk = await p.$eval('input[name="n-use"]:checked', x => x.value).catch(() => '');
+    ok(chk === r2.use && w.dept === D.use_cases.find(u => u.id === r2.use).department, T + ' C2: clearing the search shows the chosen use case in its department (' + w.dept + ')');
+    await ctx.close();
+  });
+  await guard('C3 C4', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'use', 'rm-2'); await send3(p, 'goto', 'use');
+    const g = (await st(p)).gates;
+    await p.check('#r-gate-' + g[0] + '-dk');
+    const c0 = await p.$$eval('input[data-kind="q"]', x => x.length);
+    await p.check('#r-gate-' + g[1] + '-dk');
+    const c1 = await p.$$eval('input[data-kind="q"]', x => x.length);
+    await send3(p, 'back'); await send3(p, 'next');
+    ok(g.length === 2 && c0 === 0 && c1 > 0 && Object.keys((await rec3(p)).gates['rm-2']).length === 2, T + ' C3: two gates hold the questions until both are answered; kept over Back/Next');
+    await send3(p, 'use', 'none'); await send3(p, 'goto', 'use');
+    for (const id of (await st(p)).gates) await p.check('#r-gate-' + id + '-dk');
+    ok((await st(p)).gates.length === 5 && (await p.$$eval('input[data-kind="q"]', x => x.length)) === (await st(p)).visible.length * 4, T + ' C4: None fits: 5 gates, then the general questions');
+    await ctx.close();
+  });
+  await guard('C5', async () => {
+    const { ctx, p } = await mk(b, size);
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('next'); s('answer', { kind: 's2', id: 's1', value: 'yes' }); s('answer', { kind: 's2', id: 's3', value: 'no' }); return window.Readiness3.flush(); });
+    await otherTab(p, { s2: 'dk' }, '2999-01-01T00:00:00.000Z');
+    ok((await rec3(p)).step2.s2 === 'dk' && !(await st(p)).conflict, T + ' C5: a change elsewhere with nothing waiting is taken over');
+    await ans3(p, 's2', 's4', 'no'); await otherTab(p, { s5: 'dk' }, '2999-01-02T00:00:00.000Z');
+    ok(await p.isVisible('#conflict') && await noH(p), T + ' C5: the conflict banner shows, no sideways scroll');
+    await p.click('#conflict-theirs');
+    ok((await rec3(p)).step2.s5 === 'dk' && (await p.evaluate(() => document.activeElement.id)) === 'h', T + ' C5: Use the other version → taken, focus on the heading');
+    await ctx.close();
+  });
+  await guard('C7 C8', async () => {
+    const { ctx, p } = await mk(b, size, () => { window.claude = { use: () => Promise.resolve({ save: () => Promise.reject({ code: 'declined' }) }) }; });
+    await p.evaluate(() => { const s = window.Readiness3.send; s('begin'); s('goto', 'result'); });
+    await p.click('#pdf'); await pause(200);
+    ok((await p.textContent('#toast')) === 'Download cancelled.' && (await p.textContent('#pdf')) === 'Download (PDF)' && !(await p.$('#copybox')), T + ' C7: declined → toast, button idle');
+    await p.emulateMedia({ media: 'print' });
+    ok((await p.$$eval('button, #banner, .copybox', xs => xs.filter(x => x.offsetParent !== null).length)) === 0, T + ' C8: print hides buttons and banners');
+    await ctx.close();
+  });
+  /* owner decision 1 (25 Nov 2026): no "Must be Yes" (or other weight) label on any question card; named on the result instead */
+  await guard('owner: no label', async () => {
+    const { ctx, p } = await mk(b, size);
+    await send3(p, 'begin'); await send3(p, 'goto', 'must');
+    const must = await p.evaluate(() => ({ text: document.getElementById('view').textContent, tags: document.querySelectorAll('#view fieldset.card .tag').length, mustCls: document.querySelectorAll('.card.must, .mustyes').length }));
+    ok(!/Must be Yes|must be Yes/.test(must.text) && must.tags === 0 && must.mustCls === 0, T + ' owner: the must-haves carry no "Must be Yes" label and look alike');
+    await send3(p, 'use', 'rm-1'); await send3(p, 'goto', 'use'); await ans3(p, 'gate', 'G_ACT', 'acts');
+    const use = await p.evaluate(() => ({ text: document.getElementById('view').textContent, tags: [...document.querySelectorAll('#view fieldset.card .tag')].map(t => t.textContent), borders: [...new Set([...document.querySelectorAll('#view fieldset.card')].map(c => getComputedStyle(c).borderLeftWidth))] }));
+    ok(!/Must be Yes|Blocker|Important|Nice to have/.test(use.text) && use.tags.every(t => /^Who answers: /.test(t)) && use.borders.length === 1, T + ' owner: step 5 cards show only "Who answers"; every card has the same border ' + use.borders.join(','));
+    await ctx.close();
+  });
+  await guard('owner: result', async () => {
+    const { ctx, p } = await mk(b, size);
+    await p.evaluate(() => { const R = window.Readiness3, s = R.send; s('begin'); s('next'); ['s1', 's2', 's3', 's4', 's5'].forEach(id => s('answer', { kind: 's2', id, value: 'yes' })); s('next');
+      for (let i = 1; i <= 11; i++) s('answer', { kind: 'mh', id: 'm' + i, value: i === 1 ? 'no' : 'yes' }); s('next'); s('use', 'rm-1'); s('next'); s('answer', { kind: 'gate', id: 'G_ACT', value: 'suggests' });
+      R.state().visible.forEach(id => s('answer', { kind: 'q', id, value: id === 'rm-1.te1' ? 'no' : 'yes' })); s('next'); });
+    const o = await p.evaluate(() => ({ reason: document.getElementById('reason').textContent, need: [...document.querySelectorAll('#top3 .need')].map(x => x.textContent), page: document.getElementById('view').textContent, why: (document.getElementById('score-why') || {}).textContent }));
+    ok(/^Needed before a pilot: A named owner with time; .+ \(answered No\)\.$/.test(o.reason) && o.need.length === 2 && o.need.every(t => t === 'Needed before a pilot'), T + ' owner: the reason and the top 3 name the blockers as Needed before a pilot: ' + o.reason);
+    ok(!/Must be Yes/.test(o.page) && o.why === 'The verdict comes from the questions needed before a pilot, not from the score.', T + ' owner: no "Must be Yes" on the result');
+    ok((await p.evaluate(() => window.Readiness3.summaryText())).includes('(General manager; needed before a pilot)'), T + ' owner: Copy names it too');
+    await ctx.close();
+  });
+  /* owner decision 2 (25 Nov 2026): step 4 areas → departments → use cases, with the chosen use case's sources */
+  await guard('owner: step 4', async () => {
+    const ctx = await b.newContext({ viewport: { width: size[0], height: size[1] }, permissions: ['clipboard-read', 'clipboard-write'] });
+    const p = await ctx.newPage(); p._errs = []; p.on('pageerror', e => p._errs.push(String(e))); await p.goto(URL); await ready3(p);
+    await send3(p, 'begin'); await send3(p, 'goto', 'where');
+    const areas = await p.$$eval('#area-tiles .tile', ts => ts.map(t => [t.querySelector('b').textContent, t.querySelectorAll('span')[0].textContent, t.querySelector('.meta').textContent]));
+    const want = [['Commercial', 'Selling rooms and setting prices'], ['Guest-facing', 'Serving the guest before and during the stay'], ['Operational', 'Running the building, rooms and kitchen'], ['Administrative', 'Finance, people, management and control']];
+    const cnt = a => { const ds = [...new Set(D.use_cases.filter(u => AREA[u.department] === a).map(u => u.department))]; return ds.length + ' departments · ' + D.use_cases.filter(u => AREA[u.department] === a).length + ' use cases'; };
+    ok(JSON.stringify(areas) === JSON.stringify(want.map(([a, l]) => [a, l, cnt(a)])) && !!(await p.$('#uc-search')) && (await (await p.$('#uc-search')).boundingBox()).y < (await (await p.$('#area-tiles')).boundingBox()).y, T + ' owner: four area tiles with their lines and counts, the search above ' + JSON.stringify(areas.map(a => a[2])));
+    await p.click('#area-Guest-facing');
+    const depts = await p.$$eval('#dept-tiles .tile', ts => ts.map(t => t.querySelector('b').textContent + ' | ' + t.querySelector('.meta').textContent));
+    const wantD = [...new Set(D.use_cases.filter(u => AREA[u.department] === 'Guest-facing').map(u => u.department))].map(d => d + ' | ' + D.use_cases.filter(u => u.department === d).length + ' use cases');
+    ok(JSON.stringify(depts) === JSON.stringify(wantD) && (await p.evaluate(() => document.activeElement.id)) === 'lvl-h', T + ' owner: the area\'s departments with use-case counts; focus on the level heading');
+    await p.click('#dept-Guest_Experience___Customer_Service');
+    const uses = await p.$$eval('input[name="n-use"]', is => is.map(i => i.value));
+    ok(JSON.stringify(uses) === JSON.stringify(D.use_cases.filter(u => u.department === 'Guest Experience & Customer Service').map(u => u.id)) && !!(await p.$('#r-use-none')), T + ' owner: then the department\'s use cases, and None of these fits');
+    await p.check('#r-use-gx-2');
+    const ab = await p.evaluate(() => ({ h: document.getElementById('about-h').textContent, level: document.getElementById('about-level').textContent, links: [...document.querySelectorAll('#srcs a')].map(a => [a.getAttribute('target'), a.getAttribute('rel'), /^https?:/.test(a.href)]), rows: document.querySelectorAll('#srcs li').length, addr: document.querySelectorAll('#srcs .srcurl').length, copy: document.querySelectorAll('#srcs [data-act="copy-src"]').length, dts: [...document.querySelectorAll('#about dt')].map(x => x.textContent) }));
+    const C = JSON.parse(await p.evaluate(() => document.getElementById('r3-cat').textContent)).uc['gx-2'];
+    ok(ab.h === 'Your choice: ' + D.use_cases.find(u => u.id === 'gx-2').title && JSON.stringify(ab.dts) === JSON.stringify(['Where', 'What it does', 'How the AI works', 'How common in hotels']) && ab.level.startsWith(C.level + ' (') && ab.rows === C.srcs.length && ab.rows > 0, T + ' owner: the chosen use case shows what it does, how the AI works, how common (' + ab.level + ') and ' + ab.rows + ' sources');
+    ok(ab.links.length === C.srcs.filter(x => x.url).length && ab.links.every(l => l[0] === '_blank' && l[1] === 'noopener' && l[2]) && ab.addr === ab.links.length && ab.copy === ab.links.length, T + ' owner: each source name is a real link (new tab, noopener) with its address and Copy address');
+    await p.click('#srcs [data-act="copy-src"]'); await pause(150);
+    ok((await p.evaluate(() => navigator.clipboard.readText())) === C.srcs.find(x => x.url).url && (await p.textContent('#toast')) === 'Copied the address.', T + ' owner: Copy address copies the address');
+    ok(await noH(p), T + ' owner: no sideways scroll with the sources open');
+    await p.click('#crumb-area');
+    ok(!!(await p.$('#dept-tiles')) && (await st(p)).where.area === 'Guest-facing', T + ' owner: the area crumb goes back to the departments');
+    await p.click('#crumb-areas');
+    ok(!!(await p.$('#area-tiles')) && (await rec3(p)).use === 'gx-2', T + ' owner: All areas goes back to the areas; the choice stays');
+    await p.fill('#uc-search', 'energy');
+    ok(!(await p.$('#area-tiles')) && (await p.$$('#uc-results input[name="n-use"]')).length > 0, T + ' owner: a search replaces the tiles with matches that can be chosen');
+    await p.check('#uc-results input[name="n-use"]'); await p.fill('#uc-search', '');
+    const w = (await st(p)).where, cur = (await rec3(p)).use, u = D.use_cases.find(x => x.id === cur);
+    ok(u && w.dept === u.department && w.area === AREA[u.department], T + ' owner: after a search pick, clearing the search shows its department');
+    ok(p._errs.length === 0, T + ' owner: no page errors ' + p._errs.join(' | '));
+    await ctx.close();
+  });
+  /* council v3.0.1 BUILD NOW 6: the heading shows the outline after a keyboard move only, not after a mouse click */
+  await guard('BUILD NOW 6', async () => {
+    const { ctx, p } = await mk(b, size);
+    await p.click('[data-act="begin"]');
+    const mouse = await p.evaluate(() => getComputedStyle(document.getElementById('h')).outlineStyle);
+    await p.focus('[data-act="next"]'); await p.keyboard.press('Enter');
+    const key = await p.evaluate(() => [document.activeElement.id, getComputedStyle(document.getElementById('h')).outlineStyle]);
+    ok(mouse === 'none' && key[0] === 'h' && key[1] === 'solid', T + ' BUILD NOW 6: no outline on the heading after a mouse click (' + mouse + '), an outline after the keyboard (' + key[1] + ')');
+    await ctx.close();
+  });
+}
+
 (async () => {
   const b = await chromium.launch();
   for (const size of [[1280, 800], [360, 740]]) {
     const tag = size[0] + 'px', p0 = pass, f0 = fail;
-    if (process.env.R3_ONLY !== 'cleanup') { /* R3_ONLY=cleanup runs only the v3.0.1 block (used to show it fails on v3.0.0) */
+    if (!/^cleanup/.test(process.env.R3_ONLY || '')) { /* R3_ONLY=cleanup / cleanup2 runs only the v3.0.1 / v3.0.2 block (used to show it fails on the version before) */
     /* 1 + 2 + 3: golden cases through the page */
     for (const n of [1, 2, 9, 10, 14, 15, 19, 28]) {
       const g = G[n - 1], { ctx, p } = await mk(b, size);
@@ -346,8 +734,8 @@ async function cleanup(b, size, tag) {
       ok(p._errs.length === 0 && p._out.length === 0, tag + ' golden ' + n + ': no errors, no outside requests ' + p._errs.concat(p._out).join(' | '));
       if (n === 15) { ok((await p.textContent('#contra-m2')).includes(g.expected_notes[0]), tag + ' golden 15: the contradiction note on the result'); }
       if (n === 19) ok((await p.textContent('#flag')).trim() === D.texts.sensitive_flag, tag + ' golden 19: the sensitive flag verbatim');
-      if (n === 19) ok(await p.evaluate(() => { const f = getComputedStyle(document.getElementById('flag')), v = getComputedStyle(document.getElementById('verdict')); return f.backgroundColor !== v.backgroundColor && f.borderLeftColor === getComputedStyle(document.querySelector('.tag.mustyes') || document.body).backgroundColor; }) || await p.evaluate(() => getComputedStyle(document.getElementById('flag')).backgroundColor !== getComputedStyle(document.getElementById('verdict')).backgroundColor), tag + ' BUILD NOW 5: the flag is in the information style, not the verdict colour');
-      if (s.step === 'result' && m.score >= 50 && (s.verdict === 'Not ready' || s.verdict === 'Not enough info')) ok((await p.textContent('#score-why')).trim() === (s.verdict === 'Not ready' ? 'The verdict comes from the Must be Yes questions, not from the score.' : 'The verdict comes from the Don\'t know yet answers, not from the score.'), tag + ' golden ' + n + ' BUILD NOW 6: the line under a high score');
+      if (n === 19) ok(await p.evaluate(() => { const f = getComputedStyle(document.getElementById('flag')), v = getComputedStyle(document.getElementById('verdict')); return f.backgroundColor !== v.backgroundColor && f.borderLeftColor === getComputedStyle(document.querySelector('.btn.primary') || document.body).backgroundColor; }) || await p.evaluate(() => getComputedStyle(document.getElementById('flag')).backgroundColor !== getComputedStyle(document.getElementById('verdict')).backgroundColor), tag + ' BUILD NOW 5: the flag is in the information style, not the verdict colour');
+      if (s.step === 'result' && m.score >= 50 && (s.verdict === 'Not ready' || s.verdict === 'Not enough info')) ok((await p.textContent('#score-why')).trim() === (s.verdict === 'Not ready' ? 'The verdict comes from the questions needed before a pilot, not from the score.' : 'The verdict comes from the Don\'t know yet answers, not from the score.'), tag + ' golden ' + n + ' BUILD NOW 6: the line under a high score');
       if (s.step === 'result' && !(m.score >= 50 && (s.verdict === 'Not ready' || s.verdict === 'Not enough info'))) ok(!(await p.$('#score-why')), tag + ' golden ' + n + ': no score line otherwise');
       if (s.step === 'result') {
         /* §6.4 order */
@@ -393,8 +781,7 @@ async function cleanup(b, size, tag) {
       await p.click('[data-act="begin"]'); await next(p);
       for (const s of D.step2) await pick(p, 's2', s.id, 'yes'); await next(p);
       for (const m of D.must_haves) await pick(p, 'mh', m.id, m.id === 'm2' ? 'na' : 'yes'); await next(p);
-      await p.selectOption('#dept', 'Sales & Marketing').catch(() => {});
-      const u = D.use_cases.find(x => x.id === 'sm-1'); await p.selectOption('#dept', u.department); await p.check('#r-use-sm-1'); await next(p);
+      await pickUse(p, 'sm-1'); await next(p);
       ok((await p.$$('#gates-first')).length === 1, tag + ' questions wait for the How it works answers');
       ok((await p.textContent('#hiw-h')).trim() === 'First, how will this tool work in your hotel?', tag + ' step 5 opens with How it works');
       await pick(p, 'gate', 'G_PAID', 'no');
@@ -428,7 +815,9 @@ async function cleanup(b, size, tag) {
       ok(await tabTo('[data-act="next"]'), tag + ' keyboard: Next on step 2'); await kb.press('Enter');
       for (const m of D.must_haves) await answerGroup('n-mh-' + m.id, 'yes');
       ok(await tabTo('[data-act="next"]'), tag + ' keyboard: Next on step 3'); await kb.press('Enter');
-      ok(await tabTo('#dept'), tag + ' keyboard: department'); await p.selectOption('#dept', 'Revenue Management');
+      /* v3.0.2: area tile → department tile → use case, by keyboard (was a department select) */
+      ok(await tabTo('#area-Commercial'), tag + ' keyboard: area tile'); await kb.press('Enter');
+      ok(await tabTo('#dept-Revenue_Management'), tag + ' keyboard: department tile'); await kb.press('Enter');
       ok(await tabTo('input[name="n-use"]'), tag + ' keyboard: use-case group'); await kb.press('Space');
       ok((await st(p)).use === 'rm-1', tag + ' keyboard: rm-1 chosen (' + (await st(p)).use + ')');
       ok(await tabTo('[data-act="next"]'), tag + ' keyboard: Next on step 4'); await kb.press('Enter');
@@ -533,7 +922,8 @@ async function cleanup(b, size, tag) {
       await ctx.close();
     }
     }
-    await cleanup(b, size, tag);
+    if (process.env.R3_ONLY !== 'cleanup2') await cleanup(b, size, tag);
+    if (process.env.R3_ONLY !== 'cleanup') await cleanup2(b, size, tag);
     console.log('ui ' + tag + ': ' + (pass - p0) + ' passed, ' + (fail - f0) + ' failed');
   }
   await b.close();

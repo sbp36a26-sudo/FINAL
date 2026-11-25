@@ -4,7 +4,10 @@
    Record (one per check, stored under its own key, see app3.js):
      { id, step, hotel: { name, type, role, country }, step2: { s1..s5 }, mh: { m1..m11 }, use: '' | <use id> | 'none',
        gates: { <use id or 'none'>: { <gate id>: <option key> } }, qa: { <question id>: answer }, cont: '' | 's1' | 's2' | 's1,s2',
-       imported: null | { from: '2.6.1', n, dropped, seen }, timing: absent | { <step>: [enterISO, leaveISO, ms] } (only with ?session=1, see app3.js), created, updated }
+       imported: null | { from: '2.6.1', n, dropped, seen }, timing: absent | { <step>: [enterISO, leaveISO, ms] } and searches: absent |
+       [{ q, at }] (only in session mode, see app3.js), created, updated }
+   updated changes only with a real change (an answer, the hotel details, Continue anyway, the import banner seen): moving
+   between screens does not stamp it (clean-up v2, N15).
    Answers: step 2 yes | no | dk; must-haves yes | planned | no | dk, and na on m2 and m4 only; use-case questions yes | planned | no | dk.
    Gates are kept per use case, so changing the use case never carries a "How it works" answer to another use case. Answers to
    questions that are hidden now are kept and never count (R3Rules.visible decides what counts).
@@ -17,7 +20,7 @@
   'use strict';
   var R = root.R3Rules;
   var FILE_KIND = 'hftp-do-you-need-ai', FILE_V = 4, RULES = '3.0';
-  var APP = '3.0.1'; /* the tool version, written into saved files (app) */
+  var APP = '3.0.2'; /* the tool version, written into saved files (app) */
   var STEPS = ['start', 'hotel', 's2', 'stop', 'must', 'where', 'use', 'result'];
   var NUM = { hotel: 1, s2: 2, stop: 2, must: 3, where: 4, use: 5 };
   var S2_OK = { yes: 1, no: 1, dk: 1 }, CHK_OK = { yes: 1, planned: 1, no: 1, dk: 1 };
@@ -32,6 +35,8 @@
   function now() { return new Date().toISOString(); }
   function blank(id) { var t = now(); return { id: id || newId(), step: 'start', hotel: { name: '', type: '', role: '', country: '' }, step2: {}, mh: {}, use: '', gates: {}, qa: {}, cont: '', imported: null, created: t, updated: t }; }
 
+  function mhOk(m, a) { return own(CHK_OK, a) || (a === 'na' && !!m.na); }
+  function gateOk(g, a) { return typeof a === 'string' && (g.options || []).some(function (x) { return x.key === a; }); }
   function useOf(D, id) { for (var i = 0; i < D.use_cases.length; i++) if (D.use_cases[i].id === id) return D.use_cases[i]; return null; }
   function gateKey(rec) { return rec.use === 'none' || !rec.use ? 'none' : rec.use; }
   function gatesOf(rec) { return obj(rec.gates[gateKey(rec)]); }
@@ -64,6 +69,7 @@
     if (im && im.from) o.imported = { from: str(im.from, 20), n: +im.n || 0, dropped: +im.dropped || 0, seen: !!im.seen };
     o.created = str(r.created, 40) || o.created; o.updated = str(r.updated, 40) || o.updated;
     var tm = cleanTiming(r.timing); if (tm) o.timing = tm;
+    var sr = cleanSearches(r.searches); if (sr) o.searches = sr;
     o.step = STEPS.indexOf(r.step) >= 0 ? r.step : 'start';
     o.step = place(D, o);
     return o;
@@ -76,6 +82,12 @@
       out[k] = [str(v[0], 40), str(v[1], 40), typeof v[2] === 'number' && isFinite(v[2]) && v[2] >= 0 ? Math.round(v[2]) : 0]; n++;
     });
     return n ? out : null;
+  }
+  /* Session mode only (council v3.0.1, BUILD NOW 8): search words that found nothing, [{ q, at }], at most 50. */
+  function cleanSearches(a) {
+    if (!Array.isArray(a)) return null;
+    var out = a.filter(function (x) { return x && typeof x.q === 'string' && x.q.trim(); }).slice(-50).map(function (x) { return { q: str(x.q, 80), at: str(x.at, 40) }; });
+    return out.length ? out : null;
   }
   var QIDS = null;
   /* Every question id a record may hold: the use-case questions, the fallback questions and the gate-added ones of None fits. */
@@ -109,11 +121,12 @@
   /* Unanswered items per screen, in screen order (ids). */
   function open(D, rec, step) {
     var A = answers(D, rec);
-    if (step === 's2') return D.step2.filter(function (s) { return !rec.step2[s.id]; }).map(function (s) { return s.id; });
-    if (step === 'must') return D.must_haves.filter(function (m) { return !rec.mh[m.id]; }).map(function (m) { return m.id; });
+    /* an answer the rules do not know is open, the same as in clean() (clean-up v2, N8) */
+    if (step === 's2') return D.step2.filter(function (s) { return !own(S2_OK, rec.step2[s.id]); }).map(function (s) { return s.id; });
+    if (step === 'must') return D.must_haves.filter(function (m) { return !mhOk(m, rec.mh[m.id]); }).map(function (m) { return m.id; });
     if (step === 'use') {
-      var g = R.askedGates(D, A.use).filter(function (x) { return !A.gates[x.id]; }).map(function (x) { return 'gate:' + x.id; });
-      return g.concat(R.visible(D, A.use, A.gates).filter(function (q) { return !rec.qa[q.id]; }).map(function (q) { return q.id; }));
+      var g = R.askedGates(D, A.use).filter(function (x) { return !gateOk(x, A.gates[x.id]); }).map(function (x) { return 'gate:' + x.id; });
+      return g.concat(R.visible(D, A.use, A.gates).filter(function (q) { return !own(CHK_OK, rec.qa[q.id]); }).map(function (q) { return q.id; }));
     }
     return [];
   }
@@ -133,7 +146,10 @@
   function hasAnswers(rec) {
     if (!rec) return false;
     var g = obj(rec.gates);
-    return !!(Object.keys(rec.step2).length || Object.keys(rec.mh).length || rec.use || Object.keys(rec.qa).length || Object.keys(g).some(function (k) { return Object.keys(obj(g[k])).length; }));
+    function some(o, ok) { o = obj(o); return Object.keys(o).some(function (k) { return ok(o[k]); }); }
+    function chk(a) { return own(CHK_OK, a) || a === 'na'; }
+    return !!(some(rec.step2, function (a) { return own(S2_OK, a); }) || some(rec.mh, chk) || rec.use || some(rec.qa, function (a) { return own(CHK_OK, a); }) ||
+      Object.keys(g).some(function (k) { return some(g[k], function (a) { return typeof a === 'string' && !!a; }); }));
   }
   function hasContent(rec) { return !!(rec && (hasAnswers(rec) || rec.hotel.name || rec.hotel.type || rec.hotel.role || rec.hotel.country)); }
 
@@ -147,13 +163,18 @@
     if (doc.kind !== FILE_KIND || typeof doc.v !== 'number' || !doc.check) return null;
     if (doc.v > FILE_V) return { newer: true };
     if (doc.v === FILE_V) { var r = clean(D, doc.check); return r ? { rec: r, info: { v3: true } } : null; }
-    if (doc.v >= 2) return fromV2(D, MIG, doc.check);
+    if (doc.v >= 2) return fromV2(D, MIG, doc.check, doc.savedAt);
     return null;
   }
   /* Opening a file whose check is already in this browser: 'replace' when the file is as new as the stored one or newer, 'copy' when
      this browser holds a newer version (the file then opens as a copy with a new id, and the stored check stays as it is).
-     stored: the stored record or null. */
-  function openMode(fileRec, stored) { return stored && String(stored.updated || '') > String(fileRec.updated || '') ? 'copy' : 'replace'; }
+     A readiness-2 file (info.from: migrated) over a stored check with answers always opens as a copy: the stored one was made from
+     it, and may hold answers given in v3 since (clean-up v2, N1). stored: the stored record or null. */
+  function openMode(fileRec, stored, info) {
+    if (!stored) return 'replace';
+    if (info && info.from && hasAnswers(stored)) return 'copy';
+    return String(stored.updated || '') > String(fileRec.updated || '') ? 'copy' : 'replace';
+  }
 
   /* ---------- migration of readiness-2 checks (§6.6) ---------- */
   var OLD = { y: 'yes', pl: 'planned', n: 'no', k: 'dk' }, OLD_S2 = { y: 'yes', n: 'no', u: 'dk' };
@@ -170,7 +191,7 @@
      - imported.n ("please answer N new questions") counts only questions that did not exist in v2.6.1 and are open now: m11, the
        How it works questions, use-case questions no old answer maps to (new, gate-added, None fits), and for a record from before
        v2.6, questions 3 and 4 of step 2. Old questions left unanswered are not new and are not counted. */
-  function fromV2(D, MIG, old) {
+  function fromV2(D, MIG, old, savedAt) {
     old = obj(old); if (!okId(old.id)) return null;
     var r = blank(old.id), H = obj(old.hotel), Q = obj(old.Q), A = obj(old.A), T = obj(old.T), dropped = 0, carried = 0;
     function O(x) { return own(OLD, x) ? OLD[x] : ''; }
@@ -191,7 +212,8 @@
         m[qid].forEach(function (nid) { r.qa[nid] = a; }); carried++;
       });
     }
-    r.updated = now();
+    /* the old record's own time stamp (or the file's), never "now": a later v3 change is then newer than the file (clean-up v2, N1) */
+    r.updated = str(old.updated, 40) || str(savedAt, 40) || now();
     var n = newOpen(D, MIG, r, v26).length;
     r.imported = { from: '2.6.1', n: n, dropped: dropped, seen: false };
     r.step = firstOpen(D, r);
@@ -217,9 +239,10 @@
     return keys.map(function (k) { var c = obj(cs[k]); if (!Object.keys(obj(c.Q)).length && !Object.keys(obj(c.A)).length && !c.use) return null; return fromV2(D, MIG, c); }).filter(Boolean);
   }
 
-  var api = { APP: APP, FILE_KIND: FILE_KIND, FILE_V: FILE_V, RULES: RULES, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
+  /* APP, openCount, stopped, newOpen and fromV2 are used by the tests only (clean-up v2, D12); the other constants stay inside. */
+  var api = { APP: APP, STEPS: STEPS, NUM: NUM, TYPES: TYPES, ROLES: ROLES,
     blank: blank, newId: newId, clean: clean, place: place, next: next, back: back, open: open, openCount: openCount, firstOpen: firstOpen,
-    answers: answers, gatesOf: gatesOf, gateKey: gateKey, stopKey: stopKey, continued: continued, stopped: stopped, hasAnswers: hasAnswers, hasContent: hasContent, useOf: useOf,
-    fileDoc: fileDoc, readFile: readFile, openMode: openMode, newOpen: newOpen, fromV2: fromV2, fromV2Store: fromV2Store };
+    answers: answers, gateKey: gateKey, stopKey: stopKey, stopped: stopped, hasAnswers: hasAnswers, hasContent: hasContent, useOf: useOf,
+    mhOk: mhOk, gateOk: gateOk, fileDoc: fileDoc, readFile: readFile, openMode: openMode, newOpen: newOpen, fromV2: fromV2, fromV2Store: fromV2Store };
   root.R3Store = api;
 })(typeof self !== 'undefined' ? self : this);

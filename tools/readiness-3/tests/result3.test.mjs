@@ -37,7 +37,8 @@ goldenCases().forEach((g, i) => {
   ok(m.disclaimer === D.texts.disclaimer, tag + 'disclaimer verbatim');
   /* Copy text and PDF: the same top 3 */
   const copy = RES.summaryText(m);
-  ok(m.top3.every((a, k) => copy.includes((k + 1) + '. ' + a.text + ' (' + a.owner + ')')) && copy.includes(m.verdict) && copy.includes(m.reason) && copy.includes(D.texts.disclaimer), tag + 'Copy holds verdict, reason, top 3 and disclaimer');
+  /* v3.0.2 (owner decision, 25 Nov 2026): a blocker in the top 3 reads "(<owner>; needed before a pilot)" */
+  ok(m.top3.every((a, k) => copy.includes((k + 1) + '. ' + a.text + ' (' + a.owner + (a.need ? '; needed before a pilot' : '') + ')')) && copy.includes(m.verdict) && copy.includes(m.reason) && copy.includes(D.texts.disclaimer), tag + 'Copy holds verdict, reason, top 3 and disclaimer');
   ok(!/Not sure|Unknown|N\/A/.test(copy + RES.planText(m)), tag + 'terms: no "Not sure", "Unknown", "N/A"');
   const b = P.blocks(m), r = P.draw(b, jspdf, font), f = join(root, 'tests/out/result_' + (i + 1) + '.pdf');
   writeFileSync(f, Buffer.from(r.doc.output('arraybuffer')));
@@ -45,7 +46,11 @@ goldenCases().forEach((g, i) => {
   const all = execFileSync('pdftotext', [f, '-']).toString().replace(/\s+/g, ' ');
   const flat = s => s.replace(/\s+/g, ' ');
   ok(p1.includes('Do you need AI? Result') && p1.includes('Hotel Golden') && p1.includes('2026-11-25') && p1.includes(m.verdict) && p1.includes(flat(m.reason)) && (!m.flag || p1.includes(m.flag)) && (m.stop || p1.includes(m.useTitle)), tag + 'PDF page 1: hotel, use case, date, verdict, reason, flag');
-  ok(m.top3.every(a => p1.includes(flat(a.text)) && p1.includes(a.owner)), tag + 'PDF page 1: the same top 3 as Copy');
+  ok(m.top3.every(a => p1.includes(flat(a.text)) && p1.includes(a.owner) && (!a.need || p1.includes(a.owner + ' · Needed before a pilot'))), tag + 'PDF page 1: the same top 3 as Copy, a blocker named Needed before a pilot');
+  /* owner decision, 25 Nov 2026: every blocker not at Yes in the top 3 is marked; "Must be Yes" appears nowhere in the result */
+  ok(m.top3.every(a => a.need === m.res.items.some(i => i.weight === 'B' && i.answer !== 'yes' && a.text === (i.answer === 'dk' ? 'Find out: ' : 'Make sure: ') + i.text.replace(/\?\s*$/, ''))), tag + 'top 3: need = a blocker that is not Yes');
+  ok(!/Must be Yes/.test(copy + RES.planText(m) + all + JSON.stringify(m)), tag + 'no "Must be Yes" in the result, Copy, plan or PDF');
+  if (m.res.blockersNo.length) ok(m.reason.startsWith('Needed before a pilot: ') && /answered No/.test(m.reason) && p1.includes('Needed before a pilot:'), tag + 'blockers No: the reason names them as Needed before a pilot (screen and PDF)');
   ok(r.footers.length === r.pages && r.footers.every((t, k) => t === 'page ' + (k + 1) + ' of ' + r.pages) && (all.match(/This check does not cover legal requirements/g) || []).length === r.pages, tag + 'every page: disclaimer and page n of N (' + r.pages + ' pages)');
   if (!m.stop) {
     const heads = b.blocks.filter(x => x.k === 'h').map(x => x.t);

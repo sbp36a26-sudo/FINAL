@@ -94,8 +94,16 @@
   function ownerLabel(D, k) { return D.labels.owners[k] || k; }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
-  /* A list in the reason sentence names at most two items, then "and N more (see the plan below)" (council v3.0, BUILD NOW 2). */
-  function firstTwo(list) { return list.length <= 2 ? list.join('; ') : list.slice(0, 2).join('; ') + ' and ' + (list.length - 2) + ' more (see the plan below)'; }
+  /* A list in the reason sentence names at most two items, then "; and N more (see the plan below)" (council v3.0, BUILD NOW 2;
+     council v3.0.1, BUILD NOW 4: "; " also before "and", so a title with its own comma reads as one item). tail: what follows in
+     brackets (", answered No" and the like), kept inside the same brackets as "see the plan below". */
+  function firstTwo(list, tail) {
+    if (list.length <= 2) return list.join('; ') + (tail ? ' (' + tail + ')' : '');
+    return list.slice(0, 2).join('; ') + '; and ' + (list.length - 2) + ' more (' + (tail ? tail + '; ' : '') + 'see the plan below)';
+  }
+  /* Owner decision, 25 Nov 2026: the cards no longer say which questions are blockers; the result names a blocker that is not Yes
+     as "Needed before a pilot: …". */
+  var NEED = 'Needed before a pilot';
 
   /* The result. Follows sim_v3.evaluate exactly for verdict, score, dk, caps and notes. */
   function evaluate(D, A) {
@@ -176,7 +184,7 @@
     /* actions, §4 order */
     if (sens) acts.sens.push({ text: 'Ask an adviser before a pilot.', owner: 'GM', from: 'sensitive' });
     items.forEach(function (i) {
-      var t = { text: task(i.text, i.answer), owner: i.owner, from: i.id };
+      var t = { text: task(i.text, i.answer), owner: i.owner, from: i.id, need: i.weight === 'B' };
       if (i.answer === 'yes' || i.answer === 'na') return;
       if (i.weight === 'B' && i.answer === 'no') acts.blockNo.push(t);
       else if (i.weight === 'B') acts.blockSoft.push(t);
@@ -185,18 +193,19 @@
     });
 
     /* one-sentence main reason */
-    var label = function (i) { return i.kind === 'mh' ? i.title : i.text; };
+    var label = function (i) { return i.kind === 'mh' ? i.title : noQ(i.text); };
+    var softB = blockers.filter(function (i) { return i.answer !== 'yes'; });
     if (key === 'info') res.reason = 'More than half of your answers are Don\'t know yet (' + ndk + ' of ' + app.length + ').';
     else if (key === 'not') {
-      if (bNo.length) { var named = firstTwo(bNo.map(label)); res.reason = (bNo.length === 1 ? '1 Must be Yes question is No: ' : bNo.length + ' Must be Yes questions are No: ') + named + (/[?.]$/.test(named) ? '' : '.'); }
+      if (bNo.length) res.reason = NEED + ': ' + firstTwo(bNo.map(label), 'answered No') + '.';
       else if (score < 50) res.reason = 'Too few answers are Yes: fewer than half of the possible points.';
-      else res.reason = 'Fewer than half of the Must be Yes questions are Yes (' + bYes.length + ' of ' + blockers.length + ').';
-    } else if (key === 'ready') res.reason = 'Every Must be Yes question is Yes, and nothing holds the check back.';
+      else res.reason = 'Fewer than half of the questions needed before a pilot are Yes (' + bYes.length + ' of ' + blockers.length + ').';
+    } else if (key === 'ready') res.reason = 'Every question needed before a pilot is Yes, and nothing holds the check back.';
     else {
-      var soft = blockers.length - bYes.length;
+      var soft = softB.length;
       if (res.continued) res.reason = stop.ids[0] === 's1' ? 'You said rules may do this job.' : 'You said the gain may be small.';
       else if (sens) res.reason = D.texts.sensitive_flag.split('. ')[0] + '.';
-      else if (soft) res.reason = plural(soft, 'Must be Yes question is', 'Must be Yes questions are') + ' not Yes yet (Planned or Don\'t know yet).';
+      else if (soft) res.reason = NEED + ': ' + firstTwo(softB.map(label), 'not Yes yet') + '.';
       else if (nf) res.reason = 'This use case may not fit your hotel.';
       else if (res.caps.indexOf('gate unanswered or dk') >= 0 || res.caps.indexOf('gate cap') >= 0) res.reason = 'A question about how the tool works is answered Don\'t know yet.';
       else if (s2held.length) res.reason = 'In step 2 you did not answer Yes to: ' + firstTwo(s2held.map(function (s) { return s.title; })) + '.';
@@ -218,6 +227,6 @@
     return res;
   }
 
-  root.R3Rules = { RULES: RULES, VERDICT: VERDICT, askedGates: askedGates, effects: effects, visible: visible, contradictions: contradictions,
+  root.R3Rules = { RULES: RULES, VERDICT: VERDICT, NEED: NEED, askedGates: askedGates, effects: effects, visible: visible, contradictions: contradictions,
     softStop: softStop, evaluate: evaluate, answerOptions: answerOptions };
 })(typeof self !== 'undefined' ? self : this);
