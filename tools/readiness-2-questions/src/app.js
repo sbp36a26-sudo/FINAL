@@ -44,6 +44,11 @@
   function opt(v, l, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(l) + '</option>'; }
 
   // ---------- storage (versioned store, see F.migrate) ----------
+  /* v2.8.0 (B7): where checks are kept, in this order: window.storage (the artifact viewer's own store) when the page has it, then
+     localStorage (inside try/catch), then only this page's memory, with the "Use Save as file" line on every screen (storage 'blocked').
+     window.storage is not promised by the viewer, so it is only used when present (async get/set); localStorage is read first because
+     it answers at once, and window.storage fills in when localStorage holds nothing. A check is never deleted automatically. */
+  var WS = (function () { try { var w = window.storage; return w && typeof w.get === 'function' && typeof w.set === 'function' ? w : null; } catch (e) { return null; } })();
   var storage = 'ok', loadInfo = {}, corrupt = false;
   /* TABS (audit M3): which check is open belongs to the tab (sessionStorage), not to the shared store, so two tabs can hold two checks. */
   function tabCur() { try { return sessionStorage.getItem(F.CUR_KEY) || ''; } catch (e) { return ''; } }
@@ -70,17 +75,16 @@
     }
     loadInfo = x.info;
     if (x.info.newer) storage = 'newer';
-    /* Blank checks left behind by other tabs are not kept. */
-    Object.keys(x.store.checks).forEach(function (k) { if (k !== x.store.cur && !F.listed(x.store.checks[k])) delete x.store.checks[k]; });
-    return x.store;
+    return x.store; // v2.8.0 (B7): nothing is dropped on load
   }
   function save() {
     setTabCur();
     if (storage === 'newer') return;
-    try {
-      var s = JSON.parse(JSON.stringify(store)); s.checks[s.cur].updated = new Date().toISOString(); store.checks[store.cur].updated = s.checks[s.cur].updated;
-      localStorage.setItem(F.KEY, JSON.stringify(s)); storage = 'ok';
-    } catch (e) { storage = 'blocked'; }
+    var s = JSON.parse(JSON.stringify(store)); s.checks[s.cur].updated = new Date().toISOString(); store.checks[store.cur].updated = s.checks[s.cur].updated;
+    var json = JSON.stringify(s), lsOk = false;
+    try { localStorage.setItem(F.KEY, json); lsOk = true; } catch (e) { /* blocked */ }
+    if (WS) { try { Promise.resolve(WS.set(F.KEY, json)).then(null, function () { if (!lsOk && storage === 'ok') { storage = 'blocked'; render(); } }); } catch (e) { if (!lsOk) storage = 'blocked'; } }
+    storage = lsOk || WS ? 'ok' : 'blocked';
     writeProfile();
   }
   /* Shared hotel profile (key hftp-hotel-profile-v1), read and written exactly as the readiness check does:
@@ -110,6 +114,19 @@
 
   var store = load() || F.blankStore();
   var rec = F.cur(store);
+  /* v2.8.0 (B7): localStorage held nothing (or is blocked): take what window.storage holds, once, if the person has not started yet. */
+  function fromWindowStorage() {
+    if (!WS || storage === 'newer' || F.listed(rec)) return;
+    try {
+      Promise.resolve(WS.get(F.KEY)).then(function (v) {
+        var t = v && typeof v === 'object' && 'value' in v ? v.value : v; if (typeof t !== 'string' || !t || F.listed(rec)) return;
+        var raw; try { raw = JSON.parse(t); } catch (e) { return; }
+        var info = { keep: tabCur() }, m = F.migrate(raw, ENV, info); if (!m) return;
+        store = m; rec = F.cur(store); loadInfo = info; ui.older = olderOf(info); ui.gone = !!info.removedUse; ui.notice = noticeOf(info); storage = 'ok';
+        histAssert(); render();
+      }, function () {});
+    } catch (e) { /* not available */ }
+  }
   /* v2.7.0: { kept, fresh } when the open check was answered against the older (v2.6.1) question list, else null. */
   function olderOf(info) { return info && info.olderList ? { kept: info.olderList.kept, fresh: info.olderList.fresh } : null; }
   function olderText(o) { return C.OLDER_LIST.replace('{n}', o.kept === 1 ? '1 answer was' : o.kept + ' answers were').replace('{m}', o.fresh === 1 ? '1 question is' : o.fresh + ' questions are'); }
@@ -160,6 +177,14 @@
   }
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
+    /* v2.8.0 (B6): "Start a new check" asks "same hotel or a different hotel?" when step 1 holds anything */
+    if (ev === 'new' && arg == null && (rec.hotel.name || rec.hotel.type)) { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'new').c; render(); var ns = $('new-same'); if (ns) { ns.scrollIntoView({ block: 'center' }); ns.focus(); } return true; }
+    if (ev === 'new-same' || ev === 'new-other') {
+      c = F.confirmNext(ui.confirm, 'yes', 'new'); ui.confirm = c.c; if (!c.fire) { render(); return false; }
+      return send('new', { same: ev === 'new-same' }, { noProfile: ev === 'new-other' });
+    }
+    if (ev === 'print') { ui.print = true; render(); window.scrollTo(0, 0); return true; } // v2.8.0 (B1): the printable page
+    if (ev === 'print-off') { ui.print = false; render(); return true; }
     if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-yes'); if (y) y.focus(); return true; }
     if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; render(); return true; }
     if (ev === 'remove-yes') {
@@ -196,7 +221,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      adoptProfile(); ui.open = {}; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.gone = ev === 'import' && !!(opt && opt.gone); ui.elsewhere = null; ui.fileNote = null;
+      if (!(opt && opt.noProfile)) adoptProfile(); ui.open = {}; ui.print = false; ui.dlBlocked = false; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.gone = ev === 'import' && !!(opt && opt.gone); ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -251,6 +276,8 @@
     if (storage === 'blocked') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
     if (storage === 'newer') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
     if (store.notice === 'v1') h += '<p class="savewarn" id="from-v1" role="status">' + esc(C.FROM_V1) + ' <button type="button" class="linkbtn" data-act="seen" id="seen">OK</button></p>';
+    if (ui.confirm && ui.confirm.kind === 'new') h += '<div class="confirmline" data-confirm="new" role="group" aria-label="Start a new check"><p><strong>' + esc(C.NEW_ASK.replace('{name}', rec.hotel.name || 'no name given')) + '</strong></p>' +
+      '<div class="btnrow"><button type="button" class="btn primary" data-act="new-same" id="new-same">Same hotel' + (rec.hotel.name ? ' (' + esc(rec.hotel.name) + ')' : '') + '</button><button type="button" class="btn" data-act="new-other" id="new-other">A different hotel</button><button type="button" class="linkbtn" data-act="confirm-no" id="new-cancel">Cancel</button></div></div>';
     if (ui.gone) h += '<p class="savewarn" id="use-removed" role="status">' + esc(C.USE_REMOVED) + ' <button type="button" class="linkbtn" data-act="gone-ok" id="gone-ok">OK</button></p>';
     if (ui.older) h += '<p class="savewarn" id="older-list" role="status" data-kept="' + ui.older.kept + '" data-fresh="' + ui.older.fresh + '">' + esc(olderText(ui.older)) + ' <button type="button" class="linkbtn" data-act="older-ok" id="older-ok">OK</button></p>';
     if (ui.corrupt) h += '<p class="savewarn" id="corrupt" role="status">' + esc(C.CORRUPT) + ' <button type="button" class="linkbtn" data-act="seen" id="corrupt-ok">OK</button></p>';
@@ -270,10 +297,10 @@
       (rec.step === 'stop' || rec.step === 'result' ? '' : '<button type="button" class="linkbtn" data-act="new" id="new-top">Start a new check</button>') + '</div>' + bar + storeLine();
   }
   function fold(key, label, body) {
-    return '<details class="more" data-fold="' + key + '"' + (ui.open[key] ? ' open' : '') + '><summary>' + esc(label) + '</summary><div class="morebody">' + body + '</div></details>';
+    return '<details class="more" data-fold="' + key + '"' + (ui.open[key] || (ui.print && /^(earlier|src-)/.test(key)) ? ' open' : '') + '><summary>' + esc(label) + '</summary><div class="morebody">' + body + '</div></details>';
   }
   function row(key, title, body, attrs) {
-    return '<details class="panel fold" data-fold="' + key + '"' + (attrs || '') + (ui.open[key] ? ' open' : '') + '><summary><span>' + title + '</span></summary><div class="foldbody">' + body + '</div></details>';
+    return '<details class="panel fold" data-fold="' + key + '"' + (attrs || '') + (ui.open[key] || ui.print ? ' open' : '') + '><summary><span>' + title + '</span></summary><div class="foldbody">' + body + '</div></details>';
   }
   function srcText(t) { return String(t).replace(/\{N\}/g, TQ.matrixTotal).replace(/\{U\}/g, CAT.nUses).replace(/\{D\}/g, TQ.nDraft); }
   function sources(step) {
@@ -333,13 +360,16 @@
   var LV_CLASS = { ready: 'v-go', almost: 'v-hold', notready: 'v-stop', noinfo: 'v-open' };
 
   // ---------- "Your checks in this browser" and files ----------
+  /* v2.8.0 (B7): "<hotel> · <use case> · <date>"; a step-2 stop "Stopped at step 2: not suitable for AI"; unfinished "Not finished: step N". */
+  var STEP_NO = { start: 0, hotel: 1, q: 2, must: 3, where: 4, tailored: 5 };
   function checkLine(r) {
-    var v = L.verdict(r.Q), u = USE[r.use];
-    var name = u ? uName(u) : r.use === 'none' ? 'No use case (“None of these fits”)' : 'No use case chosen yet';
+    var v = L.verdict(r.Q), u = USE[r.use], date = r.updated ? L.fmtDate(r.updated) : L.fmtDate(L.localIso());
+    var what = v.stop ? C.STOPPED : u ? uName(u) : r.use === 'none' ? 'None of these fits' : 'No use case chosen yet';
+    var name = [r.hotel.name || 'Hotel not named', what, date].join(' · ');
     var status;
-    if (v.stop) status = 'Not suitable for AI';
-    else if (F.reachable('result', F.ctxOf(r, ENV))) { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
-    else status = 'Not finished: ' + (STEP_LINE[r.step] ? STEP_LINE[r.step][1] : 'not started');
+    if (v.stop) status = C.STOPPED;
+    else if (r.step === 'result') { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
+    else status = STEP_NO[r.step] ? 'Not finished: step ' + STEP_NO[r.step] : 'Not finished: not started';
     return { name: name, status: status };
   }
   function fileConfirm() {
@@ -354,7 +384,7 @@
     else if (!ids.length) h += '<p class="meta">None yet. Each check you start is kept here until you remove it.</p>';
     if (ids.length) h += '<div class="mylist">' + ids.map(function (k) {
       var r = store.checks[k], l = checkLine(r), isCur = k === store.cur, cRm = ui.confirm && ui.confirm.kind === 'remove' && ui.confirm.id === k;
-      return '<div class="mycheck" data-check="' + esc(k) + '"><div class="g1"><strong>' + esc(l.name) + '</strong><span class="meta">' + esc([r.hotel.name, l.status, r.updated ? 'last changed ' + L.fmtDate(r.updated) : ''].filter(Boolean).join(' · ')) + (isCur ? ' · open now' : '') + '</span></div>' +
+      return '<div class="mycheck" data-check="' + esc(k) + '"><div class="g1"><strong class="checkname">' + esc(l.name) + '</strong><span class="meta checkstatus">' + esc(l.status) + (isCur ? ' · open now' : '') + '</span></div>' +
         '<div class="btnrow">' + (isCur ? '' : '<button type="button" class="btn" data-act="open" data-id="' + esc(k) + '">Open</button>') +
         (cRm ? '<button type="button" class="btn warn" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
           : '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>') + '</div>' +
@@ -437,7 +467,7 @@
       '<p>' + esc(C.STOP.why) + '</p><p><strong>' + esc(C.STOP.instead) + '</strong></p><p id="stop-unsure">' + esc(C.STOP.unsure) + '</p>' +
       '<p class="meta">Because you answered Yes to: “' + esc(L.QBY.q1.q) + '”</p>' +
       '<div class="btnrow"><button type="button" class="btn primary" data-act="change" id="change">Change my answers</button><button type="button" class="btn" data-act="new" id="restart">Start again</button>' +
-      pdfButton('Download (PDF)', 'result') + '</div></section>' + sources('q');
+      pdfButton('Download (PDF)', 'result') + '</div>' + fallbackRow() + '</section>' + sources('q');
   }
   function vMust() {
     var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
@@ -523,7 +553,8 @@
     h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
     /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser"; Copy summary and Print are gone. */
-    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' + copyBox('dl'); // owner 25 Nov 2026: two PDFs, then Start a new check; the Copy fallback box under them
+    var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' +
+      fallbackRow() + copyBox('dl'); // owner 25 Nov 2026: two PDFs, then Start a new check; the Copy fallback box under them
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
@@ -566,6 +597,19 @@
     h += sources('result');
     h += '<div class="navrow noprint"><button type="button" class="btn back" data-act="back" id="back">Back</button><span class="spacer"></span><button type="button" class="linkbtn" data-act="edit" id="edit">Change answers from the start</button></div>';
     return h;
+  }
+  /* v2.8.0 (B1): downloads may give no file in the artifact frame, so these are always offered: the plan and the saved check as text
+     on the clipboard (a copy box when the clipboard is refused), and the printable page (the person prints with Ctrl+P). When a
+     download fails or is blocked, one line says so. */
+  function fallbackRow() {
+    return '<div class="btnrow fallback noprint" id="fallbacks"><span class="meta">No file arrived?</span>' +
+      (rec.step === 'result' ? '<button type="button" class="btn small" data-act="copy-plan" id="copy-plan">Copy plan</button>' : '') +
+      '<button type="button" class="btn small" data-act="copy-saved" id="copy-saved">Copy saved check</button>' +
+      '<button type="button" class="btn small" data-act="print" id="print-open">Open printable page</button></div>' +
+      (ui.dlBlocked ? '<p class="savewarn" id="dl-blocked" role="status">' + esc(C.DL_BLOCKED) + '</p>' : '') + copyBox('plan') + copyBox('saved');
+  }
+  function printBar() {
+    return ui.print ? '<div class="printbar noprint" id="printbar" role="status"><p><strong>' + esc(C.PRINT_BAR) + '</strong></p><div class="btnrow"><button type="button" class="btn primary" data-act="print-now" id="print-now">Print</button><button type="button" class="btn" data-act="print-off" id="print-off">Back to the page</button></div></div>' : '';
   }
   /* v2.5 (council BUILD NOW 6): the role's display name, never lower-cased ("Copy for IT"); only a leading "The" reads "the". */
   function copyLabel(name) { return 'Copy for ' + String(name).replace(/^The /, 'the '); }
@@ -610,10 +654,11 @@
   function saveFile(name, blob, fallback) {
     function viaLink() {
       try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
-      catch (e) { toast('This browser could not save the file.'); dlSend('fail'); }
+      catch (e) { blocked(); }
     }
+    function blocked() { dlSend('fail'); ui.dlBlocked = true; render(); toast(C.DL_BLOCKED); var bl = $('dl-blocked'); if (bl) bl.scrollIntoView({ block: 'nearest' }); }
     if (dlRoute() === 'link') { viaLink(); return; }
-    var copyInstead = function (why) { dlSend('fail'); fallback(why); };
+    var copyInstead = function () { blocked(); }; // v2.8.0 (B1): say so; Copy and Print sit right there
     Promise.resolve().then(function () { return window.claude.use('downloads'); }).then(function (dl) {
       if (!dl || typeof dl.save !== 'function') { copyInstead('unavailable'); return; }
       return dl.save({ filename: name, data: blob }).then(function () { toast('Saved ' + name); dlSend('done'); }, function (e) {
@@ -670,7 +715,7 @@
   /* The check as a file (JSON) the hotel keeps: { kind: 'hftp-do-you-need-ai', v: 3 (F.V), rules, savedAt, check }. */
   var FILE_KIND = 'hftp-do-you-need-ai';
   var OLD_KIND = 'hftp-readiness-check'; // files of the earlier Readiness check (audit L8)
-  function fileDoc() { return { kind: FILE_KIND, v: F.V, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; }
+  function fileDoc() { return { kind: FILE_KIND, v: F.V, version: C.VERSION, rules: L.RULES, savedAt: new Date().toISOString(), check: JSON.parse(JSON.stringify(F.forFile(rec))) }; } // v2.8.0: the tool version
   function saveRecord() {
     if (rec.step !== 'result') return false;
     if (ui.dl !== 'idle') { toast('A download is still being prepared.'); return false; }
@@ -715,8 +760,10 @@
     app.setAttribute('data-check', rec.id);
     if (rec.step === 'result') app.setAttribute('data-level', L.evaluate(rec, TQ).level); else app.removeAttribute('data-level');
     var fk = $('foot-keep'); if (fk) fk.hidden = storage !== 'ok';
+    if (ui.print && rec.step !== 'result' && rec.step !== 'stop') ui.print = false;
+    app.classList.toggle('printview', !!ui.print);
     $('hdr').innerHTML = header();
-    $('view').innerHTML = VIEWS[rec.step]();
+    $('view').innerHTML = printBar() + VIEWS[rec.step]();
     syncDetail();
     /* v2.7.0: after opening a check made with the older question list, step 5 opens on its first unanswered question */
     if (ui.older && !ui.olderShown && rec.step === 'tailored') {
@@ -787,6 +834,9 @@
       try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(su).then(function () { t.textContent = 'Copied'; }, selectIt); else selectIt(); } catch (x) { selectIt(); } }
     else if (act === 'copy-who') { m = model(); var p = m.people.filter(function (x) { return x.who === t.getAttribute('data-who'); })[0]; if (p) copyText(L.personText(m, p, USE[rec.use] ? '· ' + uName(USE[rec.use]) : ''), 'List for ' + p.name.replace(/^The /, 'the '), 'who:' + p.who); }
     else if (act === 'copy-vendor') { m = model(); copyText('Questions about ' + (USE[rec.use] ? uName(USE[rec.use]) : 'the tool') + ':\n\n' + m.vendor.map(function (q, i) { return (i + 1) + '. ' + q; }).join('\n'), 'Vendor questions', 'vendor'); }
+    else if (act === 'copy-plan') copyText(planText(), 'The action plan', 'plan');
+    else if (act === 'copy-saved') copyText(JSON.stringify(fileDoc(), null, 1), 'The saved check', 'saved');
+    else if (act === 'print-now') { try { window.print(); } catch (x) { toast(C.PRINT_BAR); } }
     else if (act === 'pdf') { if (!t.disabled) downloadPdf('result'); }
     else if (act === 'pdf-answers') { if (!t.disabled) downloadPdf('answers'); }
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
@@ -843,7 +893,8 @@
   }
   adoptProfile();
   setTabCur();
-  if (!fromHash()) { histAssert(); takeSnap(); if (rec.step === 'result' || loadInfo.fromOldKey) save(); render(); } // v2.7.0: a store read from the old key is saved under the new one at once
+  if (!fromHash()) { histAssert(); takeSnap(); if (rec.step === 'result' || loadInfo.fromOldKey) save(); render(); }
+  fromWindowStorage(); // v2.7.0: a store read from the old key is saved under the new one at once
   window.addEventListener('hashchange', function () { fromHash(); });
 
   /* AX: read the state without scraping the page; drive it with the same events the buttons send. */
@@ -855,7 +906,7 @@
         from: rec.from || '', tqSig: rec.tqSig || '', elsewhere: ui.elsewhere, fileNote: ui.fileNote, corrupt: ui.corrupt, rules: L.RULES, judgement: Object.assign({}, L.JUDGEMENT),
         reason: ev ? ev.reason : null, held: ev ? ev.held.slice() : null, score: ev ? L.scoreHead(ev) : null,
         ctx: c, events: F.events(rec.step, c), level: ev ? ev.level : null, pct: ev ? ev.pct : null, counts: ev ? ev.counts : null, must: ev ? ev.must : null,
-        confirm: ui.confirm, missing: ui.missing, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
+        confirm: ui.confirm, missing: ui.missing, print: !!ui.print, dlBlocked: !!ui.dlBlocked, version: C.VERSION, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
         questions: tailQs().map(function (q) { return { id: q.id, text: q.q, why: q.why, area: TQ.areas[q.a], who: q.whoLabel }; }),
         dlKind: ui.dlKind, fileInfo: ui.fileInfo, older: ui.older ? Object.assign({}, ui.older) : null, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
         download: ui.dl, downloadRoute: dlRoute(),

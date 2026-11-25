@@ -383,3 +383,11 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 .verdict.result .mustfirst{margin:6px 0 2px;font-size:1rem}
 .verdict.result .boxline.also{font-weight:600}
 .aiq .youranswer{margin:2px 0 0}
+/* v2.8.0 (B1): the fallbacks under the downloads, and the printable page */
+.btnrow.fallback{align-items:center;gap:8px;margin-top:6px}
+.printbar{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 14px;margin:0 0 14px}
+.printview .noprint, .printview #hdr .hdrtop button, .printview .navrow{display:none !important}
+.printview .printbar{display:block !important}
+@media print{.printbar{display:none !important}}
+/* v2.8.0 (B7): a check's name and status */
+.mycheck .checkname{overflow-wrap:anywhere}

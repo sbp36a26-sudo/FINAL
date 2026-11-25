@@ -338,9 +338,9 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   for (let i = 0; i < 52; i++) { const c = mk('rm-1', [], [], { id: 'chk' + i }); c.updated = '2026-11-' + String(1 + (i % 28)).padStart(2, '0') + 'T10:' + String(i).padStart(2, '0') + ':00.000Z'; many.checks[c.id] = JSON.parse(JSON.stringify(c)); }
   many.checks.chk51.step = 'hotel'; many.checks.chk51.updated = '2026-01-01T00:00:00.000Z'; // the open check is the oldest by date
   let mg = F.migrate(many, ENV, {});
-  ok(Object.keys(mg.checks).length === 50 && mg.cur === 'chk51' && mg.checks.chk51.step === 'hotel', 'L4: 52 checks, reload → 50 kept, and the open check is still open (it was dropped)');
+  ok(Object.keys(mg.checks).length === 52 && mg.cur === 'chk51' && mg.checks.chk51.step === 'hotel', 'L4 (v2.8.0 B7): 52 checks, reload → all 52 kept (a check is never dropped automatically), and the open check is still open');
   const dropped = Object.keys(many.checks).filter(k => !mg.checks[k]).map(k => many.checks[k].updated).sort(), keptOldest = Object.keys(mg.checks).filter(k => k !== 'chk51').map(k => mg.checks[k].updated).sort()[0];
-  ok(dropped.length === 2 && dropped.every(u => u <= keptOldest), 'L4: the two oldest by "last changed" are the ones left out');
+  ok(dropped.length === 0, 'L4 (v2.8.0 B7): no check is left out on load');
   const fullS = { v: 2, cur: 'chk0', checks: {} }; for (let i = 0; i < 50; i++) { fullS.checks['chk' + i] = mk('rm-1', [], [], { id: 'chk' + i }); }
   r = F.reduce(fullS, 'new', null, ENV); ok(!r.ok && r.full === true && r.store === fullS, 'L4: a 51st check is refused with a reason ("new")');
   ok(F.reduce(fullS, 'preselect', 'fo-4', ENV).full === true && F.reduce(fullS, 'import', mk('fo-4', [], [], { id: 'brandnew' }), ENV).full === true && F.reduce(fullS, 'import', mk('fo-4', [], [], { id: 'chk7' }), ENV).ok, 'L4: so are a link and a new file; a file that replaces a check here is not');

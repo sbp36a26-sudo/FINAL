@@ -341,7 +341,12 @@
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers. Use Download result (PDF), Download answers (PDF) or Save as file before you close the page.';
+  var NOT_SAVED = 'This browser is not keeping your answers: they are only in this page until you close it. Use Save as file (or Copy saved check) before you close the page.'; // v2.8.0 (B7): memory only
+  /* v2.8.0 (B1, B6, B7) */
+  var DL_BLOCKED = 'Your browser blocked the download. Use Copy or Print instead.';
+  var NEW_ASK = 'Start a new check: same hotel ({name}) or a different hotel?';
+  var PRINT_BAR = 'Printable page: press Ctrl+P (Cmd+P on a Mac) to print it or save it as a PDF.';
+  var STOPPED = 'Stopped at step 2: not suitable for AI';
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 
@@ -350,7 +355,7 @@
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
-    SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, NEWER: NEWER, FROM_V1: FROM_V1,
+    SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, DL_BLOCKED: DL_BLOCKED, NEW_ASK: NEW_ASK, PRINT_BAR: PRINT_BAR, STOPPED: STOPPED, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
     ALSO_STEP2: ALSO_STEP2, SENS_BOX: SENS_BOX, SENS_BOX_MORE: SENS_BOX_MORE, ADVISER: ADVISER, NOTHING_ELSE: NOTHING_ELSE, SCORE_OF: SCORE_OF, VERSION: VERSION, VERSION_LINE: VERSION_LINE,
     ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };

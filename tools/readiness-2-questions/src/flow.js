@@ -21,7 +21,7 @@
       that keeps the five answers and the chosen use case, drops the rest and sets notice 'v1' (shown once).
    3. reduce(store, ev, arg, env): the only function that changes the store. Returns { store, ok }.
       Record events: 'hotel' {k, v} | 'answer' {id, value} | 'by' {id, date} | 'cat' | 'dept' | 'use' | a FLOW event | 'pop' step
-      Store events: 'new' (a blank check; the hotel details carry over) | 'open' id | 'remove' id | 'import' rec (from a file)
+      Store events: 'new' (a blank check; the hotel details carry over unless arg.same is false, v2.8.0 B6) | 'open' id | 'remove' id | 'import' rec (from a file)
                     | 'preselect' useId (from #use=<id>: a new check with that use case chosen) | 'snap' snapshot | 'seen' (notice read) | 'profile' {name, country, type} (shared hotel profile)
                     | 'share' {named} | 'shared' {id, at, mode, sig} | 'unshared' {id}  (id: the check the copy belongs to, open or not; v2.1)
       v2.1 (24 Nov 2026, clean-up audit): a check carries from ('link' when it was started by #use=<id>) and tqSig (the signature of
@@ -237,9 +237,9 @@
     if (v > V) info.newer = true;
     if (v < V) info.older = true; // v2.6.1 (inventory v4 B4): saved by an older page (for a storage event: another tab still open on it)
     var cs = obj(raw.checks);
-    /* At most MAX_CHECKS: the open one (info.keep: this tab's; else the store's) always, then the newest by "last changed" (audit L4). */
+    /* v2.8.0 (B7): every saved check is kept, never dropped on load (MAX_CHECKS only refuses a new one, with a reason). */
     var open = own(cs, info.keep) ? info.keep : raw.cur;
-    var keys = Object.keys(cs).sort(function (a, b) { return (b === open) - (a === open) || String(obj(cs[b]).updated || '').localeCompare(String(obj(cs[a]).updated || '')); }).slice(0, MAX_CHECKS);
+    var keys = Object.keys(cs);
     Object.keys(cs).forEach(function (k) { if (keys.indexOf(k) < 0) return; var one = {}, c = cleanRec(cs[k], env, k === open ? info : one); if (c && c.id === k) s.checks[k] = c; });
     if (raw.notice === 'v1') s.notice = 'v1';
     if (s.checks[open]) s.cur = open;
@@ -330,7 +330,8 @@
       case 'seen': { if (!store.notice) return no; s = { v: V, cur: store.cur, checks: store.checks }; return { store: s, ok: true }; }
       case 'new': {
         if (listed(rec) && full(store, rec)) return { store: store, ok: false, full: true }; // the cap (audit L4): said, never silently dropped
-        r = blank(); r.hotel = Object.assign({}, rec.hotel); // the hotel details carry over to the next check
+        /* v2.8.0 (B6): arg { same: false } starts with a blank hotel; otherwise (same hotel) step 1 carries over and steps 2 to 5 are new */
+        r = blank(); if (!(arg && arg.same === false)) r.hotel = Object.assign({}, rec.hotel);
         s = withRec(store, r); s.cur = r.id;
         if (!listed(rec)) delete s.checks[rec.id]; // an untouched check is not kept
         return { store: s, ok: true };

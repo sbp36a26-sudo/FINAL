@@ -73,4 +73,31 @@ ok(C.VERSION === '2.8.0' && C.VERSION_LINE === 'v2.8 (rules unchanged since v2.6
 { const meth = L.method(L.evaluate(finished(F, D, 'gx-2'), TQ)).join('\n');
   ok(!/rules v2\.5|Rules v2\.6/i.test(meth) && meth.includes('Version v2.8 (rules unchanged since v2.6).'), 'the method shows one version string; no "rules v2.5"'); }
 ok(html.includes('<title>Can AI solve your problems? (use-case questions v2.8)</title>') && html.includes('data-version="2.8.0"') && P.LINE.includes('Version v2.8 (rules unchanged since v2.6).'), 'page title, footer and PDF line carry the version');
+// ---------- commit 4: B1 (downloads), B6 (new check), B7 (saved checks) ----------
+{ const env2 = (await import('./load.mjs')).envOf(D, F);
+  let s = F.blankStore(); const id0 = s.cur;
+  const run = (st, ev, arg) => { const r = F.reduce(st, ev, arg, env2); if (!r.ok) throw new Error(ev); return r.store; };
+  s = run(s, 'begin'); s = run(s, 'hotel', { k: 'type', v: 'group' }); s = run(s, 'hotel', { k: 'name', v: 'Hotel A' }); s = run(s, 'next'); s = run(s, 'answer', { id: 'q1', value: 'n' });
+  const same = F.reduce(s, 'new', { same: true }, env2).store, other = F.reduce(s, 'new', { same: false }, env2).store;
+  ok(F.cur(same).hotel.name === 'Hotel A' && F.cur(same).hotel.type === 'group' && F.cur(same).step === 'start' && !Object.keys(F.cur(same).Q).length, 'B6: same hotel keeps step 1 only');
+  ok(!F.cur(other).hotel.name && !F.cur(other).hotel.type && other.checks[id0], 'B6: a different hotel starts blank; the earlier check is kept');
+  ok(F.cur(F.reduce(s, 'new', null, env2).store).hotel.name === 'Hotel A', 'B6: the store event without an answer keeps the hotel (the page asks first)');
+  // three checks survive a reload
+  let t = F.blankStore();
+  for (const [n, use] of [['One', 'fo-4'], ['Two', 'gx-2'], ['Three', 'rm-1']]) {
+    t = run(t, 'begin'); t = run(t, 'hotel', { k: 'type', v: 'independent' }); t = run(t, 'hotel', { k: 'name', v: n }); t = run(t, 'next');
+    ['q1', 'q2', 'q3', 'q4', 'q5'].forEach(q => { t = run(t, 'answer', { id: q, value: q === 'q1' ? 'n' : 'y' }); }); t = run(t, 'next'); t = run(t, 'next');
+    const d = D.cat.depts.find(x => x.uses.some(u => u.id === use)); t = run(t, 'cat', d.cat); t = run(t, 'dept', d.id); t = run(t, 'use', use);
+    t = run(t, 'new', { same: false });
+  }
+  const back = F.migrate(JSON.parse(JSON.stringify(t)), env2, {});
+  ok(Object.keys(back.checks).filter(k => F.listed(back.checks[k])).length === 3, 'B7: 3 checks, reload (migrate) → all 3 are still listed');
+  ok(!/\.slice\(0, MAX_CHECKS\)/.test(rd('src/flow.js')) && !/!F\.listed\(x\.store\.checks\[k\]\)\) delete/.test(app), 'B7: nothing is dropped or deleted on load'); }
+ok(/data-act="copy-plan" id="copy-plan">Copy plan/.test(app) && /data-act="copy-saved" id="copy-saved">Copy saved check/.test(app) && /data-act="print" id="print-open">Open printable page/.test(app), 'B1: Copy plan, Copy saved check and Open printable page are always offered');
+ok(C.DL_BLOCKED === 'Your browser blocked the download. Use Copy or Print instead.' && /id="dl-blocked"/.test(app), 'B1: the blocked line');
+ok(/window\.claude\.use\('downloads'\)/.test(app), 'B1: the downloads capability is used when the viewer serves it');
+ok(C.NEW_ASK === 'Start a new check: same hotel ({name}) or a different hotel?' && /id="new-same"/.test(app) && /id="new-other"/.test(app), 'B6: the question and its two answers');
+ok(C.STOPPED === 'Stopped at step 2: not suitable for AI' && /'Not finished: step ' \+ STEP_NO\[r\.step\]/.test(app) && /\[r\.hotel\.name \|\| 'Hotel not named', what, date\]\.join\(' · '\)/.test(app), 'B7: names "<hotel> · <use case> · <date>", stops and unfinished checks');
+ok(/var WS = \(function \(\) \{ try \{ var w = window\.storage;/.test(app) && /try \{ localStorage\.setItem\(F\.KEY, json\); lsOk = true; \} catch/.test(app) && /storage = lsOk \|\| WS \? 'ok' : 'blocked'/.test(app) && /Use Save as file/.test(C.NOT_SAVED), 'B7: window.storage, then localStorage in try/catch, then memory with the "Use Save as file" line');
+ok(/version: C\.VERSION, rules: L\.RULES/.test(app), 'the saved file carries version 2.8.0');
 done();
