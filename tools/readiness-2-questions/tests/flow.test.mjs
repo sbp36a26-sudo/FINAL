@@ -15,7 +15,7 @@ const sendAll = (s, ev, ids, v) => ids.reduce((st, id) => F.reduce(st, ev, { id,
 ok(eq(F.STEPS, ['start', 'hotel', 'q', 'stop', 'must', 'where', 'tailored', 'result']) && F.V === 4 && F.KEY === 'hftp-readiness2q-v1', 'states; v2.7.0: version 4 (new question ids), own storage key hftp-readiness2q-v1');
 ok(eq(Object.keys(F.FLOW), F.STEPS) && eq(F.FLOW.start, { begin: 'hotel' }) && eq(F.FLOW.stop, { change: 'q' }), 'one row per state; the stop screen only goes back to the questions');
 const full = { hotelDone: true, q1Stop: false, qDone: true, mustDone: true, whereDone: true, none: false, hasTail: true, tailDone: true };
-const EXPECT = { 'start.begin': 'hotel', 'hotel.back': 'start', 'hotel.next': 'q', 'q.back': 'hotel', 'q.next': 'must', 'must.back': 'q', 'must.next': 'where', 'where.back': 'must', 'where.next': 'tailored', 'tailored.back': 'where', 'tailored.next': 'result', 'result.back': 'tailored', 'result.edit': 'q', 'stop.change': 'q' };
+const EXPECT = { 'start.begin': 'hotel', 'hotel.back': 'start', 'hotel.next': 'q', 'q.back': 'hotel', 'q.next': 'must', 'must.back': 'q', 'must.next': 'where', 'where.back': 'must', 'where.next': 'tailored', 'tailored.back': 'where', 'tailored.next': 'result', 'result.back': 'tailored', 'result.edit': 'hotel', 'stop.change': 'q' };
 F.STEPS.forEach(s => ['begin', 'next', 'back', 'change', 'edit', 'nope'].forEach(e => {
   const to = F.flowNext(s, e, full), want = EXPECT[s + '.' + e] || null;
   ok(to === want, 'transition ' + s + ' --' + e + '--> ' + want + ' (got ' + to + ')');
@@ -73,7 +73,7 @@ s = sendAll(s, 'answer', F.QIDS, 'y'); s = F.reduce(s, 'answer', { id: 'q1', val
 ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'where', 'must-haves: Next goes on with none answered (v2.7.1)');
 s = sendAll(s, 'answer', F.MUST_IDS.slice(0, 9), 'y'); ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'where', 'must-haves: Next goes on with one unanswered (v2.7.1)');
 ok(!F.reduce(s, 'answer', { id: 'm10', value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: 'm10', value: 'p' }, env).ok, 'must-haves: "Doesn\'t apply" and (v2.3) "Partly" are not offered');
-ok(!F.reduce(s, 'answer', { id: 'm10', value: 'k' }, env).ok, 'a stored "k" is refused: a blank is not answered yet (v2.7.1)');
+ok(F.reduce(s, 'answer', { id: 'm10', value: 'k' }, env).ok, 'v2.8.2 (owner): "k" (Don’t know yet) is an answer again');
 s = F.reduce(s, 'answer', { id: 'm3', value: 'pl' }, env).store;
 ok(!F.reduce(s, 'by', { id: 'm3', date: '2026-02-31' }, env).ok && !F.reduce(s, 'by', { id: 'm1', date: '2027-01-15' }, env).ok, 'By when: real dates only, and only for a Planned answer');
 s = F.reduce(s, 'by', { id: 'm3', date: '2027-01-15' }, env).store; ok(F.cur(s).By.m3 === '2027-01-15', 'By when kept');
@@ -88,14 +88,14 @@ ok(F.cur(F.reduce(s, 'next', null, env).store).step === 'result' && !F.reduce(s,
 s = sendAll(s, 'answer', tids, 'y'); ok(!F.reduce(s, 'answer', { id: tids[0], value: 'na' }, env).ok && !F.reduce(s, 'answer', { id: tids[0], value: 'p' }, env).ok && F.cur(s).T[tids[0]] === 'y', 'tailored (v2.3): "Doesn\'t apply" and "Partly" are not offered');
 s = F.reduce(s, 'next', null, env).store; ok(F.cur(s).step === 'result', 'tailored answered → result');
 ok(!F.reduce(s, 'answer', { id: 'm1', value: 'n' }, env).ok && !F.reduce(s, 'next', null, env).ok, 'result: no answers, no Next');
-ok(F.cur(F.reduce(s, 'back', null, env).store).step === 'tailored' && F.cur(F.reduce(s, 'edit', null, env).store).step === 'q', 'result: Back → tailored; edit → q');
+ok(F.cur(F.reduce(s, 'back', null, env).store).step === 'tailored' && F.cur(F.reduce(s, 'edit', null, env).store).step === 'hotel', 'result: Back → tailored; edit → hotel (v2.8.2, owner: step 1, answers kept)');
 // changing the use case clears the tailored answers; "None" skips step 5
 let s2 = drive(s, [['back'], ['back'], ['use', 'gx-1']]).store; ok(eq(F.cur(s2).T, {}) && F.cur(s2).use === 'gx-1', 'another use case: its tailored answers start empty');
 ok(eq(F.cur(drive(s, [['back'], ['back'], ['use', 'gx-2']]).store).T, F.cur(s).T), 'the same use case again keeps the answers');
 s2 = drive(s, [['back'], ['back'], ['use', 'none'], ['next']]).store; ok(F.cur(s2).step === 'result' && eq(F.cur(s2).T, {}), '"None of these fits" → straight to the result');
 ok(F.cur(F.reduce(s2, 'back', null, env).store).step === 'where', 'and Back from that result → where');
 // Q1 changed to No from the result: later steps close
-s2 = drive(s, [['edit'], ['answer', { id: 'q1', value: 'y' }]]).store; ok(F.cur(F.reduce(s2, 'pop', 'result', env).store).step === 'stop' && F.cur(F.reduce(s2, 'next', null, env).store).step === 'stop', 'Q1 changed to Yes (v2.6): the result is closed, Next goes to stop');
+s2 = drive(s, [['edit'], ['next'], ['answer', { id: 'q1', value: 'y' }]]).store; // v2.8.2: edit opens step 1 ok(F.cur(F.reduce(s2, 'pop', 'result', env).store).step === 'stop' && F.cur(F.reduce(s2, 'next', null, env).store).step === 'stop', 'Q1 changed to Yes (v2.6): the result is closed, Next goes to stop');
 // all 99 use cases can be walked to a result
 D.cat.depts.forEach(d => d.uses.forEach(u => { const f = finished(F, D, u.id); f.step = 'where'; const x = F.cleanRec(f, env, {}); ok(x.step === 'where' && F.flowNext('where', 'next', F.ctxOf(x, env)) === 'tailored' && F.placeStep('result', F.ctxOf(x, env)) === 'result', u.id + ': selectable, has tailored questions, reaches the result'); }));
 

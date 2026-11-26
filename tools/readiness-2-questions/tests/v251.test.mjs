@@ -32,21 +32,30 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
       n++; types[x.type] = (types[x.type] || 0) + 1; const li = items[j] || '', fail = why => bad.push(id + ' #' + (j + 1) + ' (' + x.type + '): ' + why);
       const hrefs = [...li.matchAll(/href="([^"]*)"/g)].map(m => unesc(m[1]));
       if (x.url) { nUrl++; if (hrefs.length !== 1 || hrefs[0] !== x.url) fail('expected one link to ' + x.url + ', got ' + JSON.stringify(hrefs)); if (!/target="_blank" rel="noopener"/.test(li)) fail('the link does not open in a new tab'); }
-      const text = unesc(strip(li.replace(/<span class="srcaddr">[\s\S]*?<\/span><\/span>/, '').replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
-      if (x.kind === 'v2') { if (!unesc(strip(li)).includes(x.text)) fail('the audited text is not shown word for word'); }
-      else { if (/https?:\/\/(?!\S*\s*$)/.test(text.replace(/\s+/g, ' ').trim()) && /https?:\/\//.test(text)) fail('a URL printed as text'); if (!x.name.trim()) fail('no name'); if (x.note && !text.includes(x.note)) fail('the note is missing'); if (x.type === 'h' && !/<span class="tag">Hotel<\/span>/.test(li)) fail('no Hotel tag'); }
+      /* v2.8.2 (owner): every source in one format (R2Logic.srcFmt): organisation, title, year, then one short link; no "Copy address",
+         no hidden URL span, no full address printed (was: the audited text word for word, the note, a Hotel tag) */
+      const f = L.srcFmt(x), text = unesc(('<li' + li.split('</li>')[0]).replace(/<a\b[\s\S]*?<\/a>/g, '').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+      if (!f.text) fail('no readable text');
+      if (text !== f.text.replace(/\s+/g, ' ').trim()) fail('the text is not org, title, year: ' + JSON.stringify(text) + ' vs ' + JSON.stringify(f.text));
+      if (/https?:\/\//.test(text)) fail('a URL printed as text');
+      if (/srcaddr|srcurl|copy-src|Copy address/.test(li)) fail('an address line or "Copy address" is left');
+      if (x.url && !li.includes('>' + f.label.replace(/&/g, '&amp;') + '</a>')) fail('the link label is not the short link ' + f.label);
+      if (x.url && f.label.length > 60) fail('the link label is long: ' + f.label);
       if (/Credible \(7\+\)|Below 7|Not scored|>Partial<|class="badge/.test(li)) fail('a credibility label is shown (owner 26 Nov 2026: none)');
     });
   });
   // Edge cases the renderer must survive (nothing in today's catalogue, but a later edit must not print a URL or a key).
-  ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '').replace(/href="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
+  // v2.8.2 (owner): the full address sits in href (and the link's title); the shown label is the short link
+  ok(L.sourceItem(['l', 'https://example.com/x']).url === 'https://example.com/x' && !/https?:/.test(L.sourceRow(['l', 'https://example.com/x']).replace(/href="[^"]*"/, '').replace(/title="[^"]*"/, '')), 'a link with only a URL shows a link, not the URL');
   ok(L.sourceItem(['r', 'S99', 'note'], {}).name === 'S99' && L.sourceItem(['r', 'S99', 'note'], {}).url === '', 'an unknown study key does not throw and gives no link');
   ok(!/href/.test(L.sourceRow(['c', 'Vendor', 'note', 'javascript:alert(1)'])), 'a non-http(s) URL is never a link');
   // v2.6: the name is the link (no data-ext marker); the layer renders from L.detailData through R2Logic.sourceRowItem (tests/v26.test.mjs)
-  ok(/<a href="https:\/\/a\.com\/" target="_blank" rel="noopener">A<\/a>/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links: the name is the link (v2.6; was a data-ext="source" "Open the source" link)');
-  ok(!bad.length, 'every source of all 98 use cases: one link per URL, labels, a readable name and its note, sources_v2 text word for word (' + n + ' sources, ' + nUrl + ' with a URL; ' + JSON.stringify(types) + ')' + (bad.length ? '\n  ' + bad.slice(0, 8).join('\n  ') : ''));
+  // v2.8.2 (owner): one format: the organisation, the title, then one short link (was: the name is the link)
+  ok(/^<li data-src="c"><b>A<\/b>, B, n\.d\. <a href="https:\/\/a\.com\/" target="_blank" rel="noopener" title="https:\/\/a\.com\/">a\.com<\/a><\/li>$/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'source links: org, title, then one short link "a.com" (v2.8.2)');
+  ok(!bad.length, 'every source of all 98 use cases: one link per URL with a short label, org, title and year in one format (v2.8.2) (' + n + ' sources, ' + nUrl + ' with a URL; ' + JSON.stringify(types) + ')' + (bad.length ? '\n  ' + bad.slice(0, 8).join('\n  ') : ''));
   ok(['c', 'h', 'r', 'l', 'v'].every(t => types[t] > 0), 'all five source types are covered (v2.8.0: v = sources_v2)');
-  ok(Object.values(D.detail).every(x => x.srcs.every(s => ['k', 't', 'n', 'o', 'u', 's', 'f'].every(k => k in s))), 'the bundle carries one shape for every entry (v2.8.0)');
+  // v2.8.2 (owner): the page data carries no review score or fit
+  ok(Object.values(D.detail).every(x => x.srcs.every(s => ['k', 't', 'n', 'o', 'u'].every(k => k in s) && !('s' in s) && !('f' in s))), 'the bundle carries one shape for every entry, without score or fit (v2.8.2)');
   ok(/L\.sourcesBox\(x, id\)/.test(app) && !/s\[3\] \? ' <a href/.test(app), 'the detail layer renders through R2Logic.sourcesBox (v2.8.0)');
 }
 
@@ -65,11 +74,13 @@ for (const [tag, Q] of Object.entries(cases)) {
   ok(m.answers.length === 5 && m.answers.map(a => a.title).join('|') === 'Needs judgement|Return|Information to learn from|Safety net|Proof', tag + ': five rows with the five titles (v2.8.0 B10: Needs judgement)');
   m.answers.forEach(a => {
     const q = C.QUESTIONS.find(x => x.id === a.id), ans = Q[a.id];
-    ok(a.a === { y: 'Yes', n: 'No', u: 'Not sure' }[ans] && a.state === ans, tag + ' ' + a.id + ': the answer word');
+    ok(a.a === { y: 'Yes', n: 'No', u: 'Don’t know yet' }[ans] && a.state === ans, tag + ' ' + a.id + ': the answer word'); // v2.8.2 (owner): Not sure renamed
     // v2.6: the answer that goes on is No for question 1 (its No-if test), Yes for the others
     const goes = a.id === 'q1' ? 'n' : 'y', test = a.id === 'q1' ? q.noIf : q.yesIf;
     if (ans === goes) ok(a.line.startsWith('Met: ') && a.line.toLowerCase().includes(test.slice(1, 30).toLowerCase()) && a.good === true, tag + ' ' + a.id + ': the answer that goes on explains its test');
-    if (ans && ans !== 'u' && ans !== goes) ok(a.line === q.outcome + (q.add ? ' ' + q.add : '') && a.good === false, tag + ' ' + a.id + ': the other answer gives the defined consequence');
+    /* v2.8.2 (owner): "Define success first." etc. is said once: the row drops the outcome when it is the card's headline */
+    const full = q.outcome + (q.add ? ' ' + q.add : ''), want = m.ai.head && full.indexOf(m.ai.head) === 0 ? full.slice(m.ai.head.length).trim() : full;
+    if (ans && ans !== 'u' && ans !== goes) ok(a.line === want && a.good === false, tag + ' ' + a.id + ': the other answer gives the defined consequence');
     if (ans === 'u') ok(a.line.startsWith('To find out: yes if ') && a.line.includes('; no if ') && a.ask === 'Ask ' + q.who + '.' && a.ifNo, tag + ' ' + a.id + ': Not sure says what to find out, whom to ask and what a No would mean');
     ok(!/—/.test([a.line, a.ask, a.ifNo].join(' ')), tag + ' ' + a.id + ': no em dash');
   });
@@ -79,7 +90,8 @@ for (const [tag, Q] of Object.entries(cases)) {
 }
 {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: cases.withNo }), env);
-  ok(m.answers[3].line.startsWith('A rule-based tool or a person is the better choice.'), 'Q4 No (v2.6): a rule-based tool or a person (was: assistant only)');
+  // v2.8.2 (owner): the outcome is said once: here it is the card's headline, so the row does not repeat it
+  ok(m.ai.head === 'A rule-based tool or a person is the better choice.' && !m.answers[3].line.includes(m.ai.head), 'Q4 No (v2.6): a rule-based tool or a person (was: assistant only), said once as the headline');
   const mu = L.resultModel(finished(F, D, 'gx-2', { Q: cases.notSure }), env);
   ok(mu.answers[0].ifNo === 'If question 1 turns out to be Yes, this is not suitable for AI: rules or ordinary automation will do it.', 'Q1 Not sure keeps the Q1 sentence (v2.6: Yes is the stop answer)');
   ok(mu.ai.head === 'Find out first.' && L.resultModel(finished(F, D, 'gx-2', { Q: cases.allYes }), env).ai.head === 'Worth exploring with AI.', 'the verdict words stay');

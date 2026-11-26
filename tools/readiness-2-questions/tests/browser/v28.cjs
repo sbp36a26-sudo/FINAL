@@ -16,10 +16,10 @@ const SHOOT = process.env.SHOTS === '1'; // v2.8.1 (inventory S4): screenshots o
 if (SHOOT) fs.mkdirSync(SHOTS, { recursive: true });
 const Q = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'usecase_questions_only.json'), 'utf8'));
 const QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u]));
-const DISCLAIMER = Q.fixed_texts.disclaimer, FLAG = Q.fixed_texts.sensitive_flag, HOLD = Q.fixed_texts.sensitive_hold_reason;
+const DISCLAIMER = Q.fixed_texts.disclaimer, FLAG = "This area involves people's personal data or jobs. Ask an adviser before a pilot.", HOLD = FLAG; // v2.8.2 (owner): the exact sentence (the data file keeps the review's fixed texts)
 const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'transparency obligation', 'prohibited', 'DPIA', 'GDPR', 'FADP', 'CE mark', 'works council', 'PCI', 'consent', 'legal basis', 'law', 'laws', 'regulation', 'compliance', 'legal', 'not legal advice', 'delete', 'deleted', 'kept for', 'retention', 'regulator', 'ISO', 'regulatory'];
 const bannedHits = t => { t = String(t).split(DISCLAIMER).join(' ').split(FLAG).join(' '); const re = new RegExp('(?<![A-Za-z0-9_])(' + BANNED.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![A-Za-z0-9_])', 'gi'); return t.match(re) || []; };
-const DONTKNOW = /don[’']t know/i;
+const DONTKNOW = /Don[’']t know(?! yet)/i; // v2.8.2 (owner): “Don’t know yet” is the answer again; a bare “Don’t know” is still a fault
 let pass = 0, fail = 0; const ok = (c, n) => { if (c) pass++; else { fail++; console.log('FAIL  ' + n); } };
 const seen = { texts: 0, banned: [], dontknow: [] };
 
@@ -89,13 +89,13 @@ async function run(p, vp, use, o, tag) {
     {
       const { ctx, p } = await mk(b, vp); const tag = vn + ' hr-1';
       await scan(p, tag + ' cover');
-      ok((await p.textContent('#foot-version')).includes('Version v2.8.1 (rules unchanged since v2.6).'), tag + ': the footer shows the version');
+      ok((await p.textContent('#foot-version')).includes('Version v2.8.2 (rules unchanged since v2.6).'), tag + ': the footer shows the version');
       const s = await run(p, vp, 'hr-1', { name: 'Hotel Alpha' }, tag);
       ok(s.step === 'result' && s.level === 'almost' && s.pct === 100 && JSON.stringify(s.held) === '["sensitive"]', tag + ': all Yes → Almost ready at 100%, held (sensitive)');
       const t = await toolText(p, '#view');
       const n = (x) => t.split(x).length - 1;
-      ok(n('Almost ready: everything is in place, but this area needs an adviser’s view first.') === 1 && n(FLAG) === 1 && n(HOLD) === 0 && (await p.locator('#sensitive-flag').count()) === 1, tag + ': the hold once in the verdict box, the flag box once, the hold text nowhere else');
-      ok((await p.textContent('#first ol li:first-child')).startsWith('General manager: Ask an adviser before a pilot') && (await p.textContent('#nothing-else')).trim() === 'Nothing else to fix.', tag + ': action 1 "Ask an adviser before a pilot" (GM); "Nothing else to fix."');
+      ok(n('For this area the best verdict is Almost ready.') === 1 && n(FLAG) === 1 && n('Ask an adviser before a pilot') === 1 /* v2.8.2 (owner): once */ && (await p.locator('#sensitive-flag').count()) === 1, tag + ': the hold once in the verdict box, the flag box once, the hold text nowhere else');
+      ok((await p.textContent('#first ol li:first-child')).startsWith('General manager: Talk to an adviser about this use case first') && (await p.textContent('#nothing-else')).trim() === 'Nothing else to fix.', tag + ': action 1 "Talk to an adviser about this use case first" (GM, v2.8.2); "Nothing else to fix."');
       const order = await p.evaluate(() => { const r = document.getElementById('result'), a = r.querySelector('#must-line'), b2 = r.querySelector('#score'); return !!(a && b2 && (a.compareDocumentPosition(b2) & Node.DOCUMENT_POSITION_FOLLOWING) && a.querySelector('strong')); });
       ok(order && /^Score: 100% of points from all questions$/.test((await p.textContent('#score')).trim()), tag + ': must-haves line first, in bold; "Score: 100% of points from all questions" (B3)');
       ok((await p.getAttribute('#ai-rows li[data-q="q1"]', 'data-cond')) === 'Met' && (await p.textContent('#ai-rows li[data-q="q1"] .chip')).trim() === 'Met' && (await p.textContent('#ai-rows li[data-q="q1"] .youranswer')).trim() === 'Your answer: No', tag + ': Q1 = No shows Met, with "Your answer: No" underneath (B5)');
@@ -141,8 +141,8 @@ async function run(p, vp, use, o, tag) {
       await shot(p, 'step5-sources-' + vn);
       for (const q of QU['gx-2'].questions) await answer(p, q.id, 'y');
       await click(p, '#next'); await p.waitForSelector('#result');
-      const also = (await p.textContent('#also-step2')).trim();
-      ok(also === 'Also: the first questions suggest this may not be worth doing with AI (Return: No).' && (await st(p)).level === 'almost', tag + ': step-2 No with everything else Yes → Almost ready and the "Also" line (B2)');
+      const also = (await p.textContent('#box-reason')).trim(), sx = await st(p);
+      ok(also === 'Step 2 suggests this may not be worth doing with AI (Return: No).' && sx.level === 'almost' && !(await p.$('#also-step2')), tag + ': step-2 No with everything else Yes → Almost ready, the reason in the verdict box (v2.8.2, owner item 9; score ' + sx.pct + '%)');
       ok((await p.textContent('#first ol li:first-child')).startsWith('General manager: Settle this first: in step 2 you answered No to “Return”.'), tag + ': and it is the first action');
       ok((await p.getAttribute('#ai-rows li[data-q="q2"]', 'data-cond')) === 'Not met', tag + ': Q2 No shows Not met (B5)');
       ok((await p.textContent('#sum-where summary')).trim() === 'Examples and sources (' + D.srcs.length + ')', tag + ': the result page has the box too');
@@ -172,7 +172,7 @@ async function run(p, vp, use, o, tag) {
       ok(plan.startsWith('Can AI solve your problems? · ') && plan.includes(DISCLAIMER) && !DONTKNOW.test(plan) && bannedHits(plan).length === 0, tag + ': Copy plan puts the plan text on the clipboard');
       await click(p, '#copy-saved'); await p.waitForFunction(() => window.__clip.length === 2);
       const saved = JSON.parse(await p.evaluate(() => window.__clip[1]));
-      ok(saved.kind === 'hftp-do-you-need-ai' && saved.version === '2.8.1' && saved.check.use === 'fo-4', tag + ': Copy saved check puts the check (JSON, version 2.8.0) on the clipboard');
+      ok(saved.kind === 'hftp-do-you-need-ai' && saved.version === '2.8.2' && saved.check.use === 'fo-4', tag + ': Copy saved check puts the check (JSON, version 2.8.2) on the clipboard');
       await click(p, '#print-open'); await p.waitForSelector('#printbar');
       ok(await p.evaluate(() => document.getElementById('app').classList.contains('printview')) && !(await p.locator('#actions').isVisible()) && await p.evaluate(() => document.querySelector('#answers').open && document.querySelector('#how').open), tag + ': Open printable page: the print view (actions hidden, every fold open)');
       ok((await p.textContent('#printbar')).includes('press Ctrl+P (Cmd+P on a Mac)'), tag + ': it tells the person to press Ctrl+P');

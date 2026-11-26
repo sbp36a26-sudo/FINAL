@@ -1,4 +1,4 @@
-# Can AI solve your problems? (questions-only, v2.8.1, standalone)
+# Can AI solve your problems? (questions-only, v2.8.2, standalone)
 
 **This folder (`tools/readiness-2-questions/`) is the standalone "Can AI solve your problems?" tool (formerly "Do you need AI?") with
 use-case-specific questions and no legal content.** It started as a copy of `tools/readiness-2/` (see `NOTES.md` and `CHANGELOG.md`);
@@ -14,7 +14,7 @@ notice, an opt-out and sending to the owner's Google Sheet (see "Hosting"). Two 
 | claude.ai artifact | `index.html` (`node build.mjs`) | window.storage (if the viewer has it), localStorage, else memory | downloads capability (publish with `{downloads: true}`), Copy / Print fallbacks | never |
 | public (GitHub Pages) | `public/index.html` (`node build.mjs --public`) | localStorage, else memory | ordinary browser download, Copy / Print fallbacks | yes, unless "Don't send my answers" is ticked or `collectUrl` is empty |
 
-Shown version: "v2.8.1 (rules unchanged since v2.6)". Scoring, cut-offs, answer options and the owner's data are unchanged.
+Shown version: "v2.8.2 (rules unchanged since v2.6)". v2.8.2 (26 Nov 2026): the owner's twelve fixes, see `CHANGELOG.md`. Scoring, cut-offs, answer options and the owner's data are unchanged.
 `spec/review/usecase_questions_fixed.json` is the shipped question data (= `data/usecase_questions_only.json`); `spec/usecase_questions_only.json`
 and `spec/review/sources_fixes.json` are review records, not read by the build.
 

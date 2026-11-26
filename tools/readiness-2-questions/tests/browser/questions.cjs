@@ -110,7 +110,7 @@ async function run(p, use, tailFn, tag) {
       ok(c1, tag + ': all Yes → ' + wantLevel + ' at 100% (got ' + s.level + ' ' + s.pct + ')');
       const flag = await p.locator('#sensitive-flag').count();
       ok((flag === 1) === !!QU[use].sensitive, tag + ': sensitive flag only for a sensitive use case');
-      if (QU[use].sensitive) ok((await p.textContent('#box-reason')).trim() === 'Almost ready: everything is in place, but this area needs an adviser’s view first.' && !(await p.locator('#reason').count()), tag + ': the hold is said once, in the verdict box (v2.8.0 B4)');
+      if (QU[use].sensitive) ok((await p.textContent('#box-reason')).trim() === 'For this area the best verdict is Almost ready.' /* v2.8.2 (owner) */ && !(await p.locator('#reason').count()), tag + ': the hold is said once, in the verdict box (v2.8.0 B4)');
       // the result page: exactly two downloads (plus Start a new check), disclaimer, no AI Act fold
       const btns = await p.$$eval('#actions button', bs => bs.map(x => x.id));
       ok(JSON.stringify(btns) === JSON.stringify(['pdf', 'pdf-answers', 'new-check']) && !(await p.locator('#actions #save-file').count()), tag + ': result row: Download result (PDF), Download answers (PDF), Start a new check; Save as file is in Your checks');
@@ -146,7 +146,7 @@ async function run(p, use, tailFn, tag) {
       const [dlf] = await Promise.all([p.waitForEvent('download'), click(p, '#save-file')]);
       const ff = path.join(TMP, vpName + '-' + use + '.json'); await dlf.saveAs(ff);
       const doc = JSON.parse(fs.readFileSync(ff, 'utf8'));
-      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.version === '2.8.1' && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
+      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.version === '2.8.2' && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
       const before = await st(p);
       await click(p, '#new-check'); await click(p, '#new-same'); await p.locator('#file-open').setInputFiles(ff);
       await p.waitForSelector('#import-yes'); await click(p, '#import-yes');
@@ -221,7 +221,7 @@ async function run(p, use, tailFn, tag) {
     ok(/Head of the department using it:|General manager:|Finance:|IT:/.test(t) && t.includes('Questions for the vendor:') && t.includes(DISCLAIMER) && bannedHits(t).length === 0, 'clipboard refused: Copy plan opens the copy box with the plan text');
     await click(p, '#copy-saved'); await p.waitForSelector('#copybox[data-from="saved"]');
     const j = JSON.parse(await p.inputValue('#copytext'));
-    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1' && j.version === '2.8.1', 'clipboard refused: Copy saved check opens the copy box with the check as JSON');
+    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1' && j.version === '2.8.2', 'clipboard refused: Copy saved check opens the copy box with the check as JSON');
     count('copy fallback', true);
     ok(!p._errs.length, 'copy fallback: no page errors: ' + p._errs.join(' | '));
     await ctx.close();
@@ -232,7 +232,7 @@ async function run(p, use, tailFn, tag) {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: s => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('hftp-readiness2-v1', s); } }, arg: JSON.stringify(FX.store), wait: '#older-list' });
     const s = await st(p), cur = FX.store.cur;
     const use = FX.store.checks[cur].use, want = QU[use].questions;
-    const kept = want.filter(q => q.carry_answer_from && ['y', 'pl', 'n'].includes(FX.store.checks[cur].T[q.carry_answer_from])).length; // v2.7.1: a stored "k" is not an answer
+    const kept = want.filter(q => q.carry_answer_from && ['y', 'pl', 'n', 'k'].includes(FX.store.checks[cur].T[q.carry_answer_from])).length; // v2.8.2 (owner): a stored "k" is Don’t know yet, kept
     ok(s.id === cur && s.step === 'tailored' && s.older && s.older.kept === kept && s.older.fresh === want.length - kept, 'old key: the open check migrates, step 5, ' + kept + ' kept, ' + (want.length - kept) + ' new');
     const line = (await p.textContent('#older-list')).replace(/\s*OK$/, '').trim();
     ok(line === 'This check was made with an older question list. ' + (kept === 1 ? '1 answer was' : kept + ' answers were') + ' kept, ' + (want.length - kept === 1 ? '1 question is' : (want.length - kept) + ' questions are') + ' new.', 'the notice: ' + line);
@@ -249,7 +249,7 @@ async function run(p, use, tailFn, tag) {
     if (await p.locator('#import-yes').count()) await click(p, '#import-yes'); // the store above holds the same check: replace it with the file
     await p.waitForFunction(id => window.Readiness2.state().id === id, file.check.id);
     const f = await st(p);
-    ok(f.step === 'tailored' && f.older && f.older.kept === 7 && f.older.fresh === 5 && f.T['gx-2.ACT_OFF'] === 'pl' && f.TBy['gx-2.ACT_OFF'] === '2027-04-15', 'v2.6.1 file: opens on step 5, 7 kept, 5 new (v2.7.1: a stored "k" is not kept), dates carried');
+    ok(f.step === 'tailored' && f.older && f.older.kept === 8 && f.older.fresh === 4 && f.T['gx-2.ACT_OFF'] === 'pl' && f.TBy['gx-2.ACT_OFF'] === '2027-04-15', 'v2.6.1 file: opens on step 5, 8 kept, 4 new (v2.8.2: a stored "k" is kept as Don’t know yet), dates carried');
     ok(!p._errs.length, 'migration: no page errors: ' + p._errs.join(' | '));
     count('migration', true);
     await ctx.close();

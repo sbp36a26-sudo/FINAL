@@ -97,5 +97,5 @@ ok(C.NOT_SAVED === 'This browser is not keeping your answers: they are only on t
 ok(C.DL_STARTED.replace('{name}', 'x.pdf') === 'Download started: x.pdf. If no file appears, use Copy plan or Open printable page below.', 'BUILD NOW 4: the toast copy');
 ok(F.QIDS.length + F.MUST_IDS.length + L.tailRange(TQ)[0] === 21 && F.QIDS.length + F.MUST_IDS.length + L.tailRange(TQ)[1] === 27, 'BUILD NOW 6: 21 to 27 questions, from the data');
 ok(/var PUB = window\.R2_PUBLIC/.test(app) && /var WS = PUB \? null :/.test(app), 'BUILD NOW 3: the public flag turns window.storage off');
-ok(C.VERSION === '2.8.1', 'version 2.8.1');
+ok(C.VERSION === '2.8.2', 'version 2.8.2'); // v2.8.2 (owner): version bumped
 done();

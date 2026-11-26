@@ -55,8 +55,8 @@ async function walk(p, o) {
     ok(JSON.stringify(ev) === JSON.stringify(['step_done:1', 'step_done:2', 'step_done:3', 'step_done:4', 'step_done:5', 'result:result']), 'one event per completed step, then the result', ev);
     ok(got.every(g => g.method === 'POST' && /^text\/plain/.test(g.type)), 'POST as text/plain');
     const r = got[got.length - 1].body, s = await st(p);
-    ok(r.check_id === s.id && got.every(g => g.body.check_id === s.id) && r.verdict === s.level && r.score === s.pct && r.version === '2.8.1' && r.use_case === 'hr-1', 'the result event: check id, verdict, score, version, use case', r);
-    ok(r.hotel_type === 'group' && r.role === 'gm' && r.country === 'France' && r.hotel_name === '' && r.step2.q3 === 'Not sure' && r.must.m2 === 'Planned' && r.must.m3 === 'No' && Object.values(r.answers).includes('Yes'), 'profile without a name (none typed), step 2, must-haves, step-5 answers', r);
+    ok(r.check_id === s.id && got.every(g => g.body.check_id === s.id) && r.verdict === s.level && r.score === s.pct && r.version === '2.8.2' && r.use_case === 'hr-1', 'the result event: check id, verdict, score, version, use case', r);
+    ok(r.hotel_type === 'group' && r.role === 'gm' && r.country === 'France' && r.hotel_name === '' && r.step2.q3 === "Don't know yet" && r.must.m2 === 'Planned' && r.must.m3 === 'No' && Object.values(r.answers).includes('Yes'), 'profile without a name (none typed), step 2, must-haves, step-5 answers', r);
     ok(got[0].body.step2 && Object.keys(got[0].body.step2).length === 0 && got[1].body.step2.q1 === 'No', 'events carry the answers given so far');
     ok(other.length === 0 && (await ctx.cookies()).length === 0 && !p._errs.length, 'no other host, no cookie, no page error', { other, errs: p._errs });
     await ctx.close(); }

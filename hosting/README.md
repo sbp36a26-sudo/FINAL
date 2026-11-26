@@ -21,7 +21,7 @@ Sheet `events`, one row per event: `received_at, check_id, event, step, version,
 verdict, score, step2, must, answers`. `event` is `step_done` (step `1` to `5`: that step was finished) or `result` (step `result`, or
 `stop` when question 1 stopped the check). A check that has `step_done` rows but no `result` row was not finished. `check_id` is a
 random id per check, so the rows of one check belong together. `step2`, `must` and `answers` are JSON text with the answers in words
-(Yes, Planned, No, Not sure). No IP address, browser name or cookie is stored by the tool or the script.
+(Yes, Planned, No, Don't know yet; tool v2.8.1 sent "Not sure" in step 2). No IP address, browser name or cookie is stored by the tool or the script.
 
 ## Owner steps (one time)
 

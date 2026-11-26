@@ -46,8 +46,8 @@ Definitions used everywhere:
 | Score bands | Finished checks by score: 0–49, 50–74, 75–100. "No score given" are finished checks without a score (for example "Not enough information yet"). The share is of finished checks with a score. |
 | Top use cases | The 15 use cases chosen most often (the code the tool sends, for example a catalogue number), one per check, all checks. |
 | By hotel type / role / country / tool version | How the checks split, using the latest value each check gave. "(not given)" means the person left it blank. |
-| Step 2: the five questions | For q1 to q5 (Needs judgement, Worth real money or hours, Past examples to learn from, Mistakes can be caught, Success has a number): the share of finished checks answering Yes / Planned / No / Not sure / Unanswered. Step 2 only offers Yes, No and Not sure, so Planned stays at 0%. Checks stopped at the stop screen are not in this base. |
-| Step 3: the ten must-haves | The same for m1 to m10. Step 3 only offers Yes, Planned and No, so Not sure stays at 0%. Unanswered includes blanks and broken cells. |
+| Step 2: the five questions | For q1 to q5 (Needs judgement, Worth real money or hours, Past examples to learn from, Mistakes can be caught, Success has a number): the share of finished checks answering Yes / Planned / No / Don't know yet / Unanswered. Question 1 offers Yes, No and Don't know yet; questions 2 to 5 also offer Planned (since v2.8.2). Checks stopped at the stop screen are not in this base. |
+| Step 3: the ten must-haves | The same for m1 to m10. Since v2.8.2 steps 2, 3 and 5 offer Yes, Planned, No and Don't know yet ("Not sure" sent by v2.8.1 is counted as Don't know yet). Unanswered includes blanks and broken cells. |
 
 ## Export for the report
 

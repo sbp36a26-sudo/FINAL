@@ -1,4 +1,4 @@
-/* "Can AI solve your problems?" v2.8.1: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
+/* "Can AI solve your problems?" v2.8.2: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
    Words come from src/content.js (R2Content); the step-5 questions from data/usecase_questions_only.json (TQ below, built by build.mjs).
    1. verdict(Q): the five questions (unchanged from v1; research_notes/AI starting point/research.md, part A).
    2. evaluate(rec, TQ): the score in % and the verdict (owner, 24 Nov 2026: "percentage plus verdict").
@@ -16,7 +16,7 @@
   var C = root.R2Content;
   var RULES = 'v2.6 (24 Nov 2026)';
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
-  var Q_OK = { y: 1, n: 1, u: 1 };
+  var Q_OK = { y: 1, n: 1, u: 1, pl: 1 }; // v2.8.2: Planned (questions 2 to 5) counts like Don’t know yet ('u')
   var Q1_UNSURE = 'If question 1 turns out to be Yes, this is not suitable for AI: rules or ordinary automation will do it.';
   /* v2.6: the answer to a step 2 question that holds (stopOn for question 1: 'y'; 'n' for the others). */
   function badAns(id) { return (QBY[id] && QBY[id].stopOn) || 'n'; }
@@ -31,11 +31,11 @@
     QIDS.forEach(function (id) {
       var a = Q[id]; if (!Q_OK[a]) return;
       if (id === 'q3' || id === 'q4') { dropped.push(id); return; }
-      out[id] = id === 'q1' ? ({ y: 'n', n: 'y', u: 'u' })[a] : a;
+      out[id] = id === 'q1' ? ({ y: 'n', n: 'y', u: 'u', pl: 'u' })[a] : a;
     });
     return { Q: out, dropped: dropped };
   }
-  var A_OK = { y: 1, pl: 1, n: 1 }; // v2.7.1: a blank is not answered yet; a stored 'k' is read as blank
+  var A_OK = { y: 1, pl: 1, n: 1, k: 1 }; // v2.8.2: Don’t know yet ('k') is an answer again; it scores like a blank (0 points, not answered yet)
   var OLD = C.OLD_ANSWER; // answers saved before v2.3 ({ p: 'Partly', na: 'Doesn’t apply' }): kept in the record, never scored
   var MUST_IDS = C.MUSTS.map(function (x) { return x.id; });
   var MUST = {}; C.MUSTS.forEach(function (x) { MUST[x.id] = x; });
@@ -79,7 +79,7 @@
      (Before v2.6 Q1 No stopped and Q4 No was a modifier, "assistant only".) */
   function verdict(Q) {
     Q = Q || {};
-    var a = function (id) { return Q_OK[Q[id]] ? Q[id] : ''; };
+    var a = function (id) { var x = Q_OK[Q[id]] ? Q[id] : ''; return x === 'pl' ? 'u' : x; }; // v2.8.2: Planned counts like Don’t know yet
     var complete = QIDS.every(function (id) { return !!a(id); });
     if (a('q1') === badAns('q1')) return { key: 'stop', head: C.VERDICT.stop, second: '', complete: complete, stop: true, carried: [], find: [], q1Unsure: false };
     var carried = ['q2', 'q3', 'q4', 'q5'].filter(function (id) { return a(id) === 'n'; }).map(function (id) { return { id: id, text: QBY[id].outcome, add: QBY[id].add || '' }; });
@@ -116,7 +116,8 @@
   function noStop(t) { return String(t || '').replace(/[.\s]+$/, ''); }
   function aiMeaning(id, ans) {
     var q = QBY[id], a = Q_OK[ans] ? ans : '';
-    var o = { state: a, answer: ({ y: 'Yes', n: 'No', u: 'Not sure' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null, cond: 'Not answered' };
+    var o = { state: a === 'pl' ? 'u' : a, answer: ({ y: 'Yes', n: 'No', u: C.DK, pl: 'Planned' })[a] || 'Not answered', line: '', ask: '', ifNo: '', good: null, cond: 'Not answered' };
+    if (a === 'pl') a = 'u';
     if (!q) return o;
     var bad = badAns(id);
     if (a === 'y' || a === 'n') {
@@ -179,8 +180,7 @@
   /* The same, as plain lines for the PDF: [{ badges, text, url }]. */
   function sourceLines(d) {
     return (d.srcs || []).map(function (x) {
-      var t = x.kind === 'v2' ? x.text : (x.type === 'h' ? 'Hotel: ' : '') + x.name + (x.note ? ': ' + x.note : '');
-      return { badges: '', text: t, url: x.url }; /* owner, 26 Nov 2026: no credibility labels */
+      var f = srcFmt(x); return { badges: '', text: f.text, url: f.url, label: f.label }; /* v2.8.2: the same format as the page */
     });
   }
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -188,19 +188,55 @@
      (no frame interception); a "Hotel" tag for 'h'; the note; then the address, selectable, with "Copy address". */
   /* test-only (inventory D7): sourceItem then sourceRowItem, as the page does inside sourcesBox */
   function sourceRow(s, refs) { return sourceRowItem(sourceItem(s, refs)); }
-  /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). */
+  /* v2.8.2 (owner, 26 Nov 2026): every source in one format: organisation or author, title, year, one link with a short label.
+     Internal review marks (the review's score, "abstract only", the base and type notes) never reach the screen or the PDF. */
+  var YEAR = /\b(19[5-9]\d|20[0-4]\d)\b/g;
+  function lastYear(t) { var m = String(t || '').match(YEAR); return m ? m[m.length - 1] : ''; }
+  function firstYear(t) { var m = String(t || '').match(YEAR); return m ? m[0] : ''; }
+  /* "Org: rest (meta with a year)" → { org, rest, year }: a trailing bracket that carries a year is taken off and gives the year */
+  /* v2.8.2 (council): a trailing bracket is the review's note (type, date, caveats such as "no AI stated"): taken off, its year kept */
+  function tailParen(t) {
+    t = String(t || '').trim(); var m = /\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)\.?$/.exec(t);
+    if (m && m.index > 0) return { text: t.slice(0, m.index).trim(), year: lastYear(m[1]) };
+    return { text: t, year: '' };
+  }
+  function shortLink(url) {
+    var u = String(url || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/[?#].*$/, '').replace(/\/+$/, '');
+    if (u.length <= 42) return u;
+    var host = u.split('/')[0], path = u.slice(host.length);
+    return host + (path.length > 1 ? '/…' : '');
+  }
+  function srcFmt(x0) {
+    var x = x0 || {}, org = '', title = '', year = '', t;
+    if (x.kind === 'v2') {
+      t = String(x.text || ''); var i = t.indexOf(': '); org = i > 0 ? t.slice(0, i) : ''; var rest = i > 0 ? t.slice(i + 2) : t;
+      var dash = rest.indexOf(' — '), tp = tailParen(rest);
+      title = dash > 0 ? rest.slice(0, dash) : tp.text; year = tp.year || firstYear((dash > 0 ? rest.slice(dash) : '').replace(/“[^”]*”/g, ''));
+    } else if (x.type === 'r') {
+      var m = /^(.+?)\s*\((\d{4})[a-z]?\),\s*(.+)$/.exec(String(x.name || ''));
+      if (m) { org = m[1]; year = m[2]; title = m[3]; } else { var r = tailParen(x.name); title = r.text; year = r.year || lastYear(x.name); }
+    } else if (x.type === 'l') {
+      var n = String(x.name || ''), j = n.indexOf(': '), lp = tailParen(j > 0 && j < 90 ? n.slice(j + 2) : n);
+      org = j > 0 && j < 90 ? n.slice(0, j) : ''; title = lp.text; year = lp.year;
+    } else {
+      var np = tailParen(x.note); org = String(x.name || ''); title = np.text; year = np.year || lastYear(x.note);
+    }
+    title = String(title || '').replace(/^[a-z]/, function (c) { return c.toUpperCase(); }).replace(/[.;:,\s]+$/, '');
+    org = String(org || '').replace(/[.;:,\s]+$/, '');
+    var url = HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '';
+    if (!year) year = 'n.d.'; // no date given by the source
+    var text = [org, title, year].filter(Boolean).join(', ');
+    return { org: org, title: title, year: year, url: url, label: url ? shortLink(url) : '', text: text ? text.replace(/\.?$/, '.') : '' };
+  }
+  /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). v2.8.2: one format for every source (srcFmt); one link, no
+     address printed in full, no hidden text. */
   function sourceRowItem(x0) {
-    var x = x0 || {}; x = { type: x.type, name: String(x.name || ''), note: String(x.note || ''), text: String(x.text || ''), kind: x.kind || '', score: x.score, fit: x.fit || '', url: HTTP.test(String(x.url || '').trim()) ? String(x.url).trim() : '' };
-    var nm = x.url ? '<a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.name) + '</a>' : escH(x.name);
-    /* v2.8.0: the credibility labels first (entries from build.mjs sourcesModel carry kind); a sources_v2 entry is its audited text, word
-       for word, with its address as the link ("Org: summary (type, date; caveats) | URL") */
-    var badges = ''; /* owner, 26 Nov 2026: no credibility labels on sources (the order still follows the review's scores) */
-    var meta = x.kind ? ' data-kind="' + escH(x.kind) + '" data-score="' + (x.score == null ? '' : x.score) + '" data-fit="' + escH(x.fit) + '"' : '';
-    if (x.kind === 'v2') return '<li data-src="v"' + meta + '>' + badges + '<span class="srctext">' + escH(x.text) + '</span>' + (x.url ? ' | <a href="' + escH(x.url) + '" target="_blank" rel="noopener">' + escH(x.url) + '</a>' +
-      '<span class="srcaddr"><button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button><span class="srcurl" hidden>' + escH(x.url) + '</span></span>' : '') + '</li>';
-    /* a plain link ('l') is a sentence, not a name: not set in bold */
-    return '<li data-src="' + escH(x.type) + '"' + meta + '>' + badges + (x.type === 'h' ? '<span class="tag">Hotel</span> ' : '') + (x.type === 'l' ? nm : '<b>' + nm + '</b>') + (x.note ? ': ' + escH(x.note) : '') +
-      (x.url ? '<span class="srcaddr"><span class="srcurl">' + escH(x.url) + '</span> <button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + escH(x.url) + '">Copy address</button></span>' : '') + '</li>';
+    var f = srcFmt(x0), parts = [];
+    if (f.org) parts.push('<b>' + escH(f.org) + '</b>');
+    if (f.title) parts.push(escH(f.title));
+    if (f.year) parts.push(escH(f.year));
+    return '<li data-src="' + escH((x0 && (x0.kind === 'v2' ? 'v' : x0.type)) || '') + '">' + parts.join(', ') + (parts.length && !/\.$/.test(parts[parts.length - 1]) ? '.' : '') +
+      (f.url ? ' <a href="' + escH(f.url) + '" target="_blank" rel="noopener" title="' + escH(f.url) + '">' + escH(f.label) + '</a>' : '') + '</li>';
   }
 
   /* ---------- dates ---------- */
@@ -235,11 +271,11 @@
     var sy = systemsFor(rec), out = [];
     C.MUSTS.forEach(function (m) {
       var v = rec.A && A_OK[rec.A[m.id]] ? rec.A[m.id] : '';
-      out.push({ key: m.id, grp: 'must', a: 'must', name: m.name, q: m.q, who: m.who, act: m.act.replace('{ex}', sy.text), v: v, by: v === 'pl' ? (rec.By || {})[m.id] || '' : '', old: v ? '' : oldOf((rec.A || {})[m.id]) });
+      out.push({ key: m.id, grp: 'must', a: 'must', name: m.name, q: m.q, who: m.who, act: m.act.replace('{ex}', sy.text), v: v, dk: v === 'k', by: v === 'pl' ? (rec.By || {})[m.id] || '' : '', old: v ? '' : oldOf((rec.A || {})[m.id]) });
     });
     useQs(TQ, rec.use).forEach(function (t) {
       var raw = (rec.T || {})[t.id], v = A_OK[raw] ? raw : '';
-      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, why: t.why, who: t.who, whoLabel: t.whoLabel, act: actText(t.act), v: v, by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw) });
+      out.push({ key: t.id, grp: 'tail', a: t.a, name: TQ.areas[t.a], q: t.q, why: t.why, who: t.who, whoLabel: t.whoLabel, act: actText(t.act), v: v, dk: v === 'k', by: v === 'pl' ? (rec.TBy || {})[t.id] || '' : '', old: v ? '' : oldOf(raw) });
     });
     return out;
   }
@@ -269,7 +305,7 @@
       var g = area[it.a] = area[it.a] || { k: it.a, name: it.a === 'must' ? 'Must-haves' : it.name, n: 0, known: 0, yes: 0, unknown: 0, pts: 0, max: 0 };
       c.total++; g.n++;
       if (it.grp === 'must') must.n++; else tail.n++;
-      if (!it.v) { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
+      if (!it.v || it.v === 'k') { c.unknown++; g.unknown++; it.state = 'unknown'; if (it.grp === 'must') must.unknown++; if (zero) { max += 2; g.max += 2; } return; }
       c.known++; g.known++; pts += POINTS[it.v]; max += 2; g.pts += POINTS[it.v]; g.max += 2; if (it.v === 'y') g.yes++;
       var w = { y: 'yes', pl: 'planned', n: 'no' }[it.v]; c[w]++; it.state = w;
       if (it.grp === 'must') must[w]++; else { tail.known++; tail[w]++; }
@@ -308,16 +344,16 @@
       if (JUDGEMENT.NONE_BEST_ALMOST && none) held.push('none');
       if (held.length) {
         level = 'almost'; kind = 'held'; var parts = [];
-        if (held.indexOf('carried') >= 0) parts.push('you answered No in step 2 to ' + carried.map(function (x) { return '“' + QBY[x.id].title + '” (' + x.text.replace(/\.$/, '') + ')'; }).join(' and ') + '. The top verdict is held back until that is settled.');
-        if (held.indexOf('notsure') >= 0) parts.push('you answered Not sure to ' + notSureTitles(v) + ' in step 2. The top verdict is held back until that is found out.');
+        if (held.indexOf('carried') >= 0) parts.push('you answered No in step 2 to ' + carried.map(function (x) { return '“' + QBY[x.id].title + '”'; }).join(' and ') + '. The top verdict waits until that is settled.'); // v2.8.2: the outcome is said on the card
+        if (held.indexOf('notsure') >= 0) parts.push('you answered ' + dkWords(rec.Q, v) + ' to ' + notSureTitles(v) + ' in step 2. The top verdict waits until that is found out.');
         if (held.indexOf('tail') >= 0) parts.push('only ' + tail.yes + ' of the ' + n_(tail.known, 'question', 'questions') + ' you answered for this use case ' + (tail.yes === 1 ? 'is' : 'are') + ' Yes. The top verdict needs at least half of them at Yes.');
         if (held.indexOf('none') >= 0) parts.push('no use case was chosen: the must-haves are in place, but nothing was checked for a particular tool.');
         /* v2.7.0: the sensitive hold reads as the data file's sensitive_hold_reason, verbatim; any other hold follows it */
-        reason = held.indexOf('sensitive') >= 0 ? C.SENSITIVE_HOLD + (parts.length ? ' Also because ' + parts.join(' Also because ') : '') : 'Because ' + parts.join(' Also because ');
-        why = held.map(function (h) { return { sensitive: 'the use case involves people’s personal data or jobs', carried: 'a No from step 2 is still open', notsure: 'a Not sure from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
+        reason = held.indexOf('sensitive') >= 0 ? 'Because this area involves people’s personal data or jobs.' + (parts.length ? ' Also because ' + parts.join(' Also because ') : '') : 'Because ' + parts.join(' Also because '); // v2.8.2: the adviser line is said once, in “Start with”
+        why = held.map(function (h) { return { sensitive: 'the use case involves people’s personal data or jobs', carried: 'a No from step 2 is still open', notsure: 'a Don’t know yet from step 2 is still open', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case was chosen' }[h]; }).join(', and ') + ' (every must-have is Yes and the score is ' + T.READY + '% or more)';
         /* v2.8.0: a carried No is said by the "Also" line (B2); the sensitive hold once, in its own words (B4) */
-        var bh = held.filter(function (h) { return h !== 'carried' && h !== 'sensitive'; }).map(function (h) { return C.BOX[h]; }).join('; ');
-        box = held.indexOf('sensitive') >= 0 ? (bh ? C.SENS_BOX_MORE.replace('{why}', bh) : C.SENS_BOX) : bh ? C.BOX.held.replace('{why}', bh) : '';
+        /* v2.8.2 (owner): no "Held back"; each hold is one plain sentence in the box (a carried No is said by the step-2 line below) */
+        box = held.filter(function (h) { return h !== 'carried'; }).map(function (h) { return h === 'sensitive' ? C.SENS_BOX : h === 'notsure' ? ({ Planned: C.BOX.notsurePlOnly }[dkWords(rec.Q, v)] || (dkWords(rec.Q, v) === C.DK ? C.BOX.notsure : C.BOX.notsurePl)) : C.BOX[h]; }).join(' ');
         reasonShown = held.indexOf('sensitive') >= 0 ? (parts.length ? 'Also because ' + parts.join(' Also because ') : '') : reason;
       } else {
         level = 'ready'; kind = 'ready'; why = 'every must-have is Yes, the score is ' + T.READY + '% or more, and fewer than a quarter of the questions are unknown';
@@ -332,11 +368,15 @@
     }
     /* v2.8.0 (B2): any No on questions 2 to 5 is said in the verdict box, whatever the verdict */
     var also = carried.length ? C.ALSO_STEP2.replace('{list}', carried.map(function (x) { return QBY[x.id].title + ': No'; }).join('; ')) : '';
+    /* v2.8.2 (owner): the step-2 line always stands in the verdict box, so a 100% with a No in step 2 never shows an empty box */
+    if (also) { box = box ? box + ' ' + also : also; also = ''; }
     return { items: items, counts: c, pts: pts, max: max, pct: level === 'noinfo' ? null : pctOf(pts, max), must: must, tail: tail, areas: areas, level: level, kind: kind, why: why, reason: reason, reasonShown: reasonShown === null ? reason : reasonShown, also: also, held: held, box: box,
       sensitive: sens, carried: carried.map(function (x) { return x.id; }), notSure: v.find.map(function (x) { return x.id; }),
       mustOnly: !useQs(TQ, rec.use).length, cap: !must.allYes };
   }
   /* “Needs judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
+  /* v2.8.2: "Don’t know yet", "Planned" or "Don’t know yet or Planned": the step-2 answers that are still to settle */
+  function dkWords(Q, v) { Q = Q || {}; var pl = v.find.some(function (x) { return Q[x.id] === 'pl'; }), dk = v.find.some(function (x) { return Q[x.id] !== 'pl'; }); return pl && dk ? C.DK + ' or Planned' : pl ? 'Planned' : C.DK; }
   function notSureTitles(v) { return v.find.map(function (x) { return '“' + QBY[x.id].title + '”'; }).join(' and '); }
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   /* v2.8.1 (council BUILD NOW 7): "The top verdict needs every must-have at Yes: 7 are not Yes yet (4 No, 3 planned)." The same
@@ -360,7 +400,7 @@
   function task(it) {
     var d = fmtDate(it.by);
     if (it.old) return 'Answer again: “' + it.q + '” (the earlier answer “' + OLD[it.old] + '” is no longer offered)';
-    if (it.state === 'unknown') return 'Answer this: “' + it.q + '”';
+    if (it.state === 'unknown') return (it.dk ? 'Find out: “' : 'Answer this: “') + it.q + '”';
     if (it.state === 'planned') return (d ? 'Finish by ' + d + (it.overdue ? ' (overdue)' : '') : 'Finish') + ': ' + it.act;
     return it.act;
   }
@@ -375,11 +415,11 @@
   function firstLabel(n) { return n === 1 ? 'Start with this one' : 'Start with these ' + (n === 3 ? 'three' : 'two'); }
   var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Not answered yet' };
   /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such. */
-  function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
+  function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : it.dk ? C.DK : STATE_WORD[it.state]; }
   /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3? } (v2.6: the must-have 7 line is gone) */
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
-    if ((Q.q5 === 'n' || Q.q5 === 'u') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
+    if ((Q.q5 === 'n' || Q.q5 === 'u' || Q.q5 === 'pl') && A.m3 === 'y') o.m3 = C.CONSIST.m3;
     return o;
   }
 
@@ -463,8 +503,8 @@
   /* ---------- how it was worked out ---------- */
   function method(ev) {
     var c = ev.counts, out = [], zero = JUDGEMENT.UNKNOWN_SCORES_ZERO;
-    out.push(zero ? 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0 · Not answered yet 0.'
-      : 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. A question not answered yet is left out of the points.');
+    out.push(zero ? 'Points per answer: Yes 2 · Planned 1 · No 0 · Don’t know yet or not answered 0.'
+      : 'Points per answer: Yes 2 · Planned 1 · No 0. A question not answered yet (or Don’t know yet) is left out of the points.');
     out.push('You answered ' + c.known + ' of ' + c.total + ' questions (' + c.unknown + ' not answered yet).');
     out.push(ev.pct != null ? 'Your points: ' + ev.pts + ' of ' + ev.max + ' possible = ' + ev.pct + '% (rounded down).'
       : 'No score is shown while more than half the questions are not answered yet' + (ev.max ? ' (your points so far: ' + ev.pts + ' of ' + ev.max + ')' : '') + '.');
@@ -472,11 +512,11 @@
     out.push('Cut-offs: “' + C.LEVELS.ready.name + '” needs every must-have at Yes, a score of ' + T.READY + '% or more, and fewer than a quarter of the questions are not answered yet. “' + C.LEVELS.almost.name + '”: ' + T.ALMOST + '% to ' + (T.READY - 1) + '%, or a must-have that is not Yes yet but none at No. “' + C.LEVELS.notready.name + '”: below ' + T.ALMOST + '%, or any must-have at No' + (JUDGEMENT.ALMOST_MIN_MUST_YES ? ', or fewer than half the must-haves at Yes' : '') + '. “' + C.LEVELS.noinfo.name + '”: more than half the questions are not answered yet.');
     out.push('Areas in words, only where an area has two or more answers: Strong (' + T.STRONG + '% or more of its points), Gaps to close (' + T.GAPS + '% to ' + (T.STRONG - 1) + '%), Weak (below ' + T.GAPS + '%).');
     if (zero) out.push('Team judgement: a question not answered yet counts as 0 points, so the score is the share of everything asked that is in place. It is still listed as not answered yet.');
-    if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here. Ask an adviser before a pilot.');
-    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.');
+    if (JUDGEMENT.SENSITIVE_HOLDS_TOP) out.push('Team judgement: a use case that involves people’s personal data or jobs does not get the top verdict here.'); // v2.8.2: the adviser line is said once, in “Start with”
+    if (JUDGEMENT.CARRIED_NO_HOLDS_TOP) out.push('Team judgement: a No on question 2, 3, 4 or 5 of step 2 keeps the top verdict back until it is settled.');
     if (JUDGEMENT.ALMOST_MIN_MUST_YES) out.push('Team judgement: “' + C.LEVELS.almost.name + '” needs at least half the must-haves at Yes, because “Planned” is not done yet. Below that the verdict is “' + C.LEVELS.notready.name + '”.');
     if (JUDGEMENT.READY_MIN_TAIL_YES) out.push('Team judgement: “' + C.LEVELS.ready.name + '” needs at least half the questions for this use case that you answered at Yes.');
-    if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement: a “Not sure” in step 2 holds the top verdict back until it is found out.');
+    if (JUDGEMENT.NOT_SURE_HOLDS_TOP) out.push('Team judgement: a “Don’t know yet” or “Planned” in step 2 keeps the top verdict back until it is found out.');
     if (JUDGEMENT.NONE_BEST_ALMOST) out.push('Team judgement: with “None of these fits” the best verdict is “' + C.LEVELS.almost.name + '”, because nothing was checked for a particular tool.');
     out.push('Your verdict is “' + C.LEVELS[ev.level].name + '”. ' + ev.reason);
     if (ev.mustOnly) out.push(C.MUST_ONLY);
@@ -493,7 +533,7 @@
     return p.join(' · ');
   }
   /* The score is never worded as "% ready" (council, items 1 and 2): "Score: 83%", or no score at all under "Not enough information yet". */
-  function scoreHead(ev) { return ev.pct == null ? 'No score yet: you answered ' + ev.counts.known + ' of ' + ev.counts.total + ' questions.' : 'Score: ' + ev.pct + '% ' + C.SCORE_OF; } // v2.8.0 (B3)
+  function scoreHead(ev) { return ev.pct == null ? 'No score yet: ' + ev.counts.known + ' of ' + ev.counts.total + ' questions have Yes, Planned or No.' : 'Score: ' + ev.pct + '% ' + C.SCORE_OF; } // v2.8.0 (B3)
   /* The points and the question counts that stand next to the score, then the caveat. */
   function scoreSub(ev) {
     var c = ev.counts;
@@ -515,15 +555,15 @@
   }
   /* "Settle this first: ..." for each hold that needs its own line (BUILD NOW 3; O2, O4). A 'tail' hold needs none: its
      planned and missing questions are already the open items. */
-  function holdItems(ev, v, useName) {
+  function holdItems(ev, v, useName, rec0, head0) {
     /* v2.8.0: the step-2 and hold items that come first in "Start with" and in the plan (whoKey: the person who does it).
        B2: every No on questions 2 to 5, whatever the verdict. B4: the sensitive hold reads "Ask an adviser before a pilot" (GM).
        Owner (25 Nov 2026): each "Not sure" in step 2 becomes "Find out: …" for the person its question names. "None of these fits". */
     var out = [], h = ev.held;
-    ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
+    ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.HOLD.carried.replace('{title}', q.title).replace(' {outcome}', q.add ? ' ' + q.add : '') /* v2.8.2: the outcome is said once, on the card */, sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
     /* v2.8.1 (council BUILD NOW 8): the sub-line names the use case that holds it */
     if (h.indexOf('sensitive') >= 0) out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.ADVISER, sub: useName ? 'Because of the use case you chose: ' + useName : 'Because of the use case you chose', hold: 'sensitive' });
-    v.find.forEach(function (f) { var q = QBY[f.id]; out.push({ who: C.WHO[q.whoKey], whoKey: q.whoKey, text: q.find, sub: 'Step 2: ' + q.title + ' · your answer: Not sure', hold: 'notsure' }); });
+    v.find.forEach(function (f) { var q = QBY[f.id]; out.push({ who: C.WHO[q.whoKey], whoKey: q.whoKey, text: q.find, sub: 'Step 2: ' + q.title + ' · your answer: ' + ((rec0 && rec0.Q && rec0.Q[f.id] === 'pl') ? 'Planned' : C.DK), hold: 'notsure' }); });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
   }
@@ -570,7 +610,10 @@
       areas: ev.areas.map(function (g) { return { k: g.k, name: g.name, yes: g.yes, n: g.n, unknown: g.unknown, count: g.yes + ' of ' + g.n, share: g.n ? Math.round(100 * g.yes / g.n) : 0, word: g.word ? C.AREA_WORD[g.word] : '', cls: g.word || 'none', line: areaLine(g) }; }),
       method: method(ev), since: since(rec.snaps) };
     /* BUILD NOW 3: a held verdict lists what holds it as item 1 (who: '': the line names the step it comes from). */
-    var holds = holdItems(ev, v, u ? useLabel(TQ, u) : ''), all = open(ev);
+    /* v2.8.2 (owner): an outcome such as “Define success first.” is said once per result: as the card's headline when it is the
+       headline, otherwise on its answer row; the "Settle this first" item then gives only the action (q.add) */
+    o.answers.forEach(function (a) { if (a.good === false && o.ai.head && a.line.indexOf(o.ai.head) === 0) { a.line = a.line.slice(o.ai.head.length).trim(); } });
+    var holds = holdItems(ev, v, u ? useLabel(TQ, u) : '', rec, o.ai.head), all = open(ev);
     o.first = holds.concat(all.map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + a.word }; })).slice(0, 3);
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
     o.nothingElse = holds.length && !all.length ? C.NOTHING_ELSE : ''; // B4: the hold (or step 2) is all that is open
@@ -590,7 +633,7 @@
   }
   var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, sensitiveOf: sensitiveOf, vendorQs: vendorQs, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
-    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, srcList: srcList, sourcesBox: sourcesBox, sourceLines: sourceLines, THIN: THIN, NO_SOURCE: NO_SOURCE, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
+    verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, srcList: srcList, sourcesBox: sourcesBox, sourceLines: sourceLines, srcFmt: srcFmt, shortLink: shortLink, THIN: THIN, NO_SOURCE: NO_SOURCE, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
     useQs: useQs, questions: questions, evaluate: evaluate, open: open, task: task, actText: actText, firstLabel: firstLabel,
     pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,

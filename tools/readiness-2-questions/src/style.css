@@ -188,7 +188,7 @@ details.more[open] > summary::before{transform:rotate(45deg) translate(-.1em,-.1
 .a-n,.a-p{background:var(--lo-s);color:var(--lo)} .a-k{background:var(--accent-soft);color:var(--accent)} .a-pl{background:var(--md-s);color:var(--md)}
 .handover{border-left:1px solid var(--line)}
 .copybox textarea{font:0.875rem/1.45 var(--mono);width:100%;min-height:220px;padding:10px;border:1px solid var(--ctl);border-radius:6px;background:var(--panel);color:var(--ink)}
-.printhead{display:none}
+.resulthead{font-size:0.9375rem;color:var(--ink2);margin:0 0 10px}
 
 #toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 16px;border-radius:6px;font-size:0.875rem;max-width:min(92vw,560px);z-index:20}
 .foot{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:4px}
@@ -229,7 +229,6 @@ details.more[open] > summary::before{transform:rotate(45deg) translate(-.1em,-.1
   body{background:#fff;font-size:11pt}
   .wrap{max-width:none;padding:0;gap:10px}
   .noprint,.hdr,.navrow,#toast,.copybox,button,.btn{display:none!important}
-  .printhead{display:block}
   .panel{border:1px solid #bbb;break-inside:avoid;padding:12px}
   .verdict{border-width:0 0 0 4px;border-radius:0;background:#fff!important}
   a{color:#000;text-decoration:none}
@@ -384,7 +383,6 @@ dialog.detail .tag{display:inline-block;font-size:0.75rem;font-weight:600;color:
 
 /* v2.7.0: the disclaimer (cover, result, footer) and the sensitive-area flag */
 .disclaimer{margin:12px 0;padding:10px 14px;border-left:3px solid var(--ink3);background:var(--panel);color:var(--ink);font-size:.9375rem;border-radius:4px}
-#app[data-state="start"] #foot-disclaimer,#app[data-state="result"] #foot-disclaimer{display:none}
 .flagline{margin:8px 0;padding:10px 14px;border-left:3px solid var(--md);background:var(--md-s);color:var(--ink);border-radius:4px}
 
 /* v2.8.0 (B12): the rest of a long use-case name, under its short name */

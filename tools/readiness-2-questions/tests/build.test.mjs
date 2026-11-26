@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, load, data, tester, PAGE } from './load.mjs';
-import { catalogueModel, detailModel, sourcesModel, tqModel, explainModel, nameHash, BANNED } from '../build.mjs';
+import { catalogueModel, detailModel, sourcesModel, shipDetail, tqModel, explainModel, nameHash, BANNED } from '../build.mjs';
 const { C, L, F } = load();
 const { ok, done } = tester('build');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -23,13 +23,13 @@ ok(X.depts.every(d => d.uses.every((u, i) => { const id = d.id + '-' + (i + 1), 
 ok(eq(D.tq, tqModel(Q, JSON.parse(rd('data/must-meta.json')), JSON.parse(rd('data/v27-sigs.json')).sigs, JSON.parse(rd('data/actions_questions_only.json')).actions)), 'the inlined step-5 questions equal tqModel(data file, v2.7 signatures)');
 ok(eq(Object.keys(D.tq.uses).sort(), D.cat.depts.flatMap(d => d.uses.map(u => u.id)).sort()), 'every listed use case has its questions (all 98 selectable)');
 const det = sourcesModel(catHtml, D.cat.removed, JSON.parse(rd('data/sources_fixes.json')), JSON.parse(rd('data/sources_edits.json')), JSON.parse(rd('data/use_case_sources_v2.json')), JSON.parse(rd('data/source_scores_v27.json')));
-ok(eq(D.detail, JSON.parse(JSON.stringify(det))), 'v2.8.0: the inlined sources equal sourcesModel(catalogue, fixes, edits, sources_v2, review scores)');
+ok(eq(D.detail, JSON.parse(JSON.stringify(shipDetail(det)))), 'v2.8.2: the inlined sources equal shipDetail(sourcesModel(catalogue, fixes, edits, sources_v2, review scores)): no score, no fit, the audited text cut to its name, title and year');
 ok(detailModel(catHtml, D.cat.removed).dropped.length === 0, 'v2.8.0 (owner decision 2): no catalogue source is left out for a banned word');
 ok(['res-4', 'it-4', 'lg-4'].every(id => D.detail[id].srcs.some(e => BANNED.test([e.n, e.o, e.x].join(' ')))), 'v2.8.0: sources whose title or quote carries a banned word are shown as given (e.g. res-4, it-4, lg-4)');
 ok(eq(D.ex, explainModel(JSON.parse(rd('data/explain.json')), D.cat.depts.flatMap(d => d.uses.map(u => u.id)))), 'the explainer data is data/explain.json');
 ok(!('rc' in D), 'no readiness-check or register data block');
 // the page
-ok(/<title>Can AI solve your problems\?<\/title>/.test(html) && /data-version="2\.8\.1">Version v2\.8\.1 \(rules unchanged since v2\.6\)\./.test(html) && html.includes('id="app" data-state="start"'), 'title and the data-state root');
+ok(/<title>Can AI solve your problems\?<\/title>/.test(html) && /data-version="2\.8\.2">Version v2\.8\.2 \(rules unchanged since v2\.6\)\./.test(html) && html.includes('id="app" data-state="start"'), 'title and the data-state root');
 ok(html.includes(C.DISCLAIMER) && html.includes('as of 25 Nov 2026'), 'footer with the disclaimer and the content date');
 ok(!html.includes('root.RCLogic = api') && !html.includes('root.RCStore = api') && html.includes('window.Readiness2 = {') && html.includes('id="r2-font"') && /jsPDF/.test(html), 'jsPDF and the PDF font are inlined; the readiness check\'s rules and store are not');
 ok(!/AIHA|AI Hospitality Alliance|wikipedia/i.test(html.replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')), 'no banned source named anywhere in the page');

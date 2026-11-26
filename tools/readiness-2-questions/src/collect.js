@@ -1,10 +1,10 @@
-/* "Can AI solve your problems?" v2.8.1: R2Collect, the public build's data sending (owner, 26 Nov 2026). Pure apart from the
+/* "Can AI solve your problems?" v2.8.2: R2Collect, the public build's data sending (owner, 26 Nov 2026). Pure apart from the
    functions it is given, so it runs in the Node tests (tests/collect.test.mjs). Only the public build (build.mjs --public) includes
    this file; the claude.ai artifact build sends nothing.
    What is sent, one event at a time (the columns of hosting/apps-script/Code.gs, sheet "events"):
      { check_id, event: 'step_done' | 'result', step: '1'..'5' | 'result' | 'stop', version, at (the time, as text),
        hotel_type, role, country, hotel_name (only if typed), use_case, verdict, score,
-       step2: { q1..q5: 'Yes' | 'No' | 'Not sure' }, must: { m1..m10: 'Yes' | 'Planned' | 'No' }, answers: { <question id>: same } }
+       step2: { q1..q5: 'Yes' | 'Planned' | 'No' | "Don't know yet" }, must: { m1..m10: 'Yes' | 'Planned' | 'No' | "Don't know yet" }, answers: { <question id>: same } }
    No IP address or browser name is put in the payload, and no cookie is set. How it goes: fetch(url, POST, mode 'no-cors',
    Content-Type text/plain, credentials 'omit', keepalive), and navigator.sendBeacon when fetch is missing, throws or fails.
    Failures are silent and never stop the tool. An empty url sends nothing. The opt-out ("Don't send my answers") is kept per
@@ -13,7 +13,7 @@
   'use strict';
   var OPT_KEY = 'hftp-readiness2q-nosend', MAX_BYTES = 50000;
   var STEP_NO = { hotel: '1', q: '2', must: '3', where: '4', tailored: '5' };
-  var Q_WORD = { y: 'Yes', n: 'No', u: 'Not sure' }, A_WORD = { y: 'Yes', pl: 'Planned', n: 'No' };
+  var Q_WORD = { y: 'Yes', pl: 'Planned', n: 'No', u: "Don't know yet" }, A_WORD = { y: 'Yes', pl: 'Planned', n: 'No', k: "Don't know yet" }; // v2.8.2: the four answers
   function str(v, n) { return typeof v === 'string' ? v.slice(0, n || 200) : ''; }
   function words(src, ids, W) { var o = {}; (ids || []).forEach(function (id) { var v = src && src[id]; if (W[v]) o[id] = W[v]; }); return o; }
   /* The payload of one event. rec: the check (R2Flow record); x: { step (the step completed, or 'result' / 'stop'), version,

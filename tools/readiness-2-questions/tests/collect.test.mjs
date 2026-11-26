@@ -25,7 +25,7 @@ const gs = rd('../../hosting/apps-script/Code.gs');
 ok(COLS.every(c => gs.includes("'" + c + "'")) && gs.includes("'received_at'") && /step_done: true, result: true/.test(gs), 'Code.gs has every column and accepts step_done and result');
 ok(p.check_id === 'dynTest01' && p.event === 'result' && p.step === 'result' && p.version === '2.8.1' && p.at === x.now && p.verdict === 'almost' && p.score === 81, 'ids, event, step, version, time, verdict, score');
 ok(p.hotel_type === 'independent' && p.role === 'gm' && p.country === 'France' && p.hotel_name === 'Hotel Test' && p.use_case === 'hr-1', 'hotel profile and use case');
-ok(p.step2.q1 === 'No' && p.step2.q3 === 'Not sure' && Object.keys(p.step2).length === 5, 'step 2 in words');
+ok(p.step2.q1 === 'No' && p.step2.q3 === "Don't know yet" && Object.keys(p.step2).length === 5, 'step 2 in words (v2.8.2, owner: Don\'t know yet)');
 ok(p.must.m1 === 'Yes' && p.must.m2 === 'Planned' && p.must.m3 === 'No' && Object.keys(p.must).length === 10, 'must-haves in words');
 ok(Object.keys(p.answers).length === x.tailIds.length && Object.values(p.answers).every(v => v === 'Yes'), 'step-5 answers, by question id');
 ok(K.payload('step_done', rec, { step: 'must' }).step === '3' && K.payload('step_done', rec, { step: 'hotel' }).step === '1' && K.payload('step_done', rec, { step: 'tailored' }).step === '5', 'step_done carries the step number');

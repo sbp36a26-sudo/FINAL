@@ -1,5 +1,40 @@
 # Changelog: Can AI solve your problems? (formerly "Do you need AI?"; questions-only, readiness-2-questions)
 
+## v2.8.2 (26 Nov 2026): the owner's twelve fixes on the live tool. Published to GitHub Pages; the claude.ai artifact is not republished.
+
+Kept as they were (owner): step order, use cases, questions, scoring rules, cut-offs, the sensitive-area cap.
+1. Version 2.8.2 on the footer, both PDFs and saved files.
+2. Step 3 intro: "how many of the 90 use cases your team analysed (out of 98 in this tool) need it" ({N} and {U} from the data).
+3. Answers: steps 2, 3 and 5 offer Yes / Planned / No / Don't know yet ("Not sure" and "Planned, not done yet" renamed). Question 1
+   keeps Yes / No / Don't know yet (its Yes stops the check; Planned has no meaning there). In step 2, Planned counts like Don't know yet
+   (the old Not sure: something to settle, it keeps the top verdict back). In steps 3 and 5, Don't know yet (`k`) scores like a blank:
+   0 points, counted as not answered yet, task "Find out: …". "By when?" stays for Planned in steps 3 and 5. A `k` saved by v2.7.0 is
+   read as Don't know yet again. R2Collect sends the new words; the Sheet summary counts "Not sure" as Don't know yet.
+4. Sensitive note exactly "This area involves people's personal data or jobs. Ask an adviser before a pilot."; the only legal line is the
+   disclaimer.
+6. Sources: one format everywhere (organisation or author, title, year, one link with a short label; the full address in the link). No
+   "Copy address", no hidden address. The page carries no review score, fit or review notes. Audited sources scored below 7 are not shown
+   (13 entries in me-2, fa-1, fa-3, fa-6, fa-7, hr-1, gm-2, it-5, lg-3, lg-4; listed by `build.mjs` as `removedLow`).
+7. "Define success first." once per result (the card headline or the answer row, not both; the "Settle this first" item gives only the
+   action); "Ask an adviser before a pilot" once (the sensitive note; the action item reads "Talk to an adviser about this use case
+   first"); the disclaimer once on the cover, once on the result page, once at the end of each PDF (page footers: page number only; the
+   page footer's disclaimer is gone).
+8. No "Held back": each reason is a plain sentence ("Some step 2 answers are Don't know yet.").
+9. A No in step 2 is always said in the verdict box: "Step 2 suggests this may not be worth doing with AI (Return: No)." (the old
+   separate "Also" line is merged into the box).
+10. "Change answers from the start" opens step 1 with every answer kept.
+11. The hotel name in the result header (and a visible hotel · date line on the result page, which replaces the print-only line).
+12. Favicon (inline SVG, base64): no favicon.ico request.
+13. No hidden text: the print-only header, the hidden address spans and the footer disclaimer hidden on two screens are gone.
+Council and clean-up on v2.8.2 (same day), fixed: "Define success first." twice when only Proof is No (the reason no longer repeats
+the outcome); review notes in brackets taken off source titles, "n.d." where a source gives no year; a Planned-only step-2 hold reads
+"Some step 2 answers are Planned."; "No score yet: n of m questions have Yes, Planned or No."; the verdict box no longer repeats the
+sensitive sentence ("For this area the best verdict is Almost ready."); stale "Not sure" in the hosting docs.
+Tests: `tests/v282.test.mjs` (785 PDFs of every use case with all Yes / No / Don't know yet / Planned and the stop PDF),
+`tests/browser/v282.cjs` (392 result pages and 98 side panels, the stop, each must-have No alone, every screen, edit, favicon); older
+suites updated where they checked the old wording. Source titles that carry a listed word are the catalogue's own text, shown as given
+(res-4 "consent", it-4 "AI Act" x3, lg-3 "Legal"); "score" also appears as a use-case word (risk score, lead score) in the owner's texts.
+
 ## v2.8.1 (26 Nov 2026): clean-up inventory v28, council BUILD NOW, and a public build with transparent data collection. Committed; the artifact is not published here.
 
 Sources: `reports/audit-readiness-2-questions/cleanup_inventory_v28.md`, `reports/Council - Do you need AI v2.8.md` section (a), the

@@ -26,7 +26,7 @@ export const BANNED = ['AI Act', 'Article', 'Art.', 'Annex', 'high-risk', 'trans
   'delete', 'deleted', 'kept for', 'retention', 'regulator', 'ISO', 'regulatory'];
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const RE = () => new RegExp('(?<![A-Za-z0-9_])(' + BANNED.map(esc).join('|') + ')(?![A-Za-z0-9_])', 'gi'); // whole words ("Art." ends in a dot)
-const ALLOWED = [FX.disclaimer, FX.sensitive_flag];
+const ALLOWED = [FX.disclaimer, FX.sensitive_flag, C.SENSITIVE_FLAG]; // v2.8.2 (owner): the new sensitive note is allowed too
 const JSPDF_SPAN = 'legal:[612,1008],"junior-legal":[576,360]';
 function hits(text, opt) {
   let t = String(text);
@@ -38,7 +38,9 @@ function hits(text, opt) {
 }
 
 // ---------- the fixed texts are the data file's ----------
-ok(C.DISCLAIMER === FX.disclaimer && C.SENSITIVE_FLAG === FX.sensitive_flag && C.SENSITIVE_HOLD === FX.sensitive_hold_reason, 'disclaimer, sensitive flag and hold reason are the data file\'s fixed_texts, verbatim');
+// v2.8.2 (owner): the sensitive note is now exactly the owner's sentence (the data file's fixed_texts still hold the old wording), and the hold equals it
+const SENS_NOTE = 'This area involves people\'s personal data or jobs. Ask an adviser before a pilot.';
+ok(C.DISCLAIMER === FX.disclaimer && C.SENSITIVE_FLAG === SENS_NOTE && C.SENSITIVE_HOLD === C.SENSITIVE_FLAG, 'disclaimer is the data file\'s fixed text; sensitive flag and hold are the owner\'s v2.8.2 sentence, verbatim');
 ok(L.MUST.m5.name === FX.must_have_5.title && L.MUST.m5.q === FX.must_have_5.text && F.MUST_IDS[4] === 'm5', 'must-have 5: title and text from fixed_texts, id m5 kept');
 ok(hits(JSON.stringify(L.MUST.m5)).length === 0, 'must-have 5 carries no banned term in any of its help texts');
 
@@ -57,7 +59,8 @@ const h1 = hits(TOOL_HTML);
 ok(h1.length === 0, 'built index.html (tool text and code, sources and jsPDF excluded): 0 hits (' + h1.length + '): ' + h1.slice(0, 5).join(' | '));
 const srcHits = Object.entries(Dd.detail).flatMap(([id, d]) => d.srcs.filter(e => hits([e.n, e.o, e.x, e.u].join(' ')).length).map(e => id + ': ' + (e.n || e.x).slice(0, 60)));
 console.log('source entries carrying a listed word (shown as given, for owner review): ' + srcHits.length);
-ok(html.split(FX.disclaimer).length - 1 >= 2, 'the disclaimer is in the page (content and footer)');
+// v2.8.2 (owner): the footer disclaimer in page.html is gone; the disclaimer stays in the page content (cover, result)
+ok(html.split(FX.disclaimer).length - 1 >= 1 && !/id="foot-disclaimer"/.test(html), 'the disclaimer is in the page content, not in the page footer');
 ok(!/EU AI Act|AI Register|AI Act guide/i.test(TOOL_HTML), 'no AI Act section, AI Register or AI Act guide anywhere in the page (sources excluded)');
 const noLib = html.replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '');
 ok(noLib.length < html.length - 100000 && !/https?:\/\/fonts\.|<link[^>]+stylesheet|<script[^>]+src=/i.test(noLib), 'no external font, stylesheet or script (outside the jsPDF library text)');
@@ -76,22 +79,25 @@ function drawnText(m) {
 }
 const env = { cat: D.cat, TQ, ex: D.ex, detail: D.detail, today: '2026-11-25' };
 const mix = (use, k) => { const r = finished(F, D, use); const w = ['y', 'pl', 'n', 'k']; F.MUST_IDS.forEach((id, i) => { r.A[id] = w[(i + k) % 4]; }); if (use !== 'none') TQ.uses[use].qs.forEach((q, i) => { r.T[q.id] = w[(i + k + 1) % 4]; }); r.Q.q3 = k % 2 ? 'u' : 'y'; return r; };
-let pdfHits = 0, pdfs = 0, footOk = 0, footN = 0, nSrcPdf = 0;
+let pdfHits = 0, pdfs = 0, footOk = 0, footN = 0, nSrcPdf = 0, lastOk = 0;
 const uses = Object.keys(TQ.uses);
 uses.forEach((use, i) => {
   for (const rec of [finished(F, D, use), mix(use, i)]) for (const kind of ['result', 'answers']) {
     const m0 = P.model(rec, env, kind), m = noSrcBlocks(m0), d = drawnText(m), h = hits(d.text + '\n' + d.footers.join('\n'));
     if (kind === 'result' && use !== 'none') { nSrcPdf += m0.blocks.filter(b => b.k === 'src').length; }
     pdfs++; if (h.length) { pdfHits += h.length; console.log('PDF hit', use, kind, h[0]); }
-    d.footers.forEach(f => { footN++; if (f.startsWith(FX.disclaimer)) footOk++; });
+    d.footers.forEach((f, j) => { footN++; if (f === 'page ' + (j + 1) + ' of ' + d.footers.length) footOk++; }); // v2.8.2 (owner): "page n of m" only
+    lastOk += m0.blocks[m0.blocks.length - 1].t === FX.disclaimer ? 1 : 0; // v2.8.2 (owner): the disclaimer is the last block
     if (kind === 'result') ok(!m.blocks.some(b => /AI Act|provisional label/i.test(b.t || '')), use + ': no AI Act section in the result PDF');
   }
 });
 const stop = finished(F, D, 'gx-2'); stop.Q.q1 = 'y'; stop.step = 'stop';
-{ const d = drawnText(P.model(stop, env)); pdfs++; pdfHits += hits(d.text + d.footers.join('\n')).length; d.footers.forEach(f => { footN++; if (f.startsWith(FX.disclaimer)) footOk++; }); }
+{ const ms = P.model(stop, env), d = drawnText(ms); pdfs++; pdfHits += hits(d.text + d.footers.join('\n')).length; d.footers.forEach((f, j) => { footN++; if (f === 'page ' + (j + 1) + ' of ' + d.footers.length) footOk++; }); lastOk += ms.blocks[ms.blocks.length - 1].t === FX.disclaimer ? 1 : 0; }
 ok(nSrcPdf > 800, 'the Result PDFs carry the use cases\' sources (' + nSrcPdf + ' source blocks, left out of the scan)');
 ok(pdfHits === 0, 'PDF text: 0 hits over ' + pdfs + ' PDFs (every use case, Result and Answers, all-Yes and mixed answers, the stop PDF)');
-ok(footOk === footN && footN > pdfs, 'every page footer of every PDF starts with the disclaimer (' + footOk + ' of ' + footN + ')');
+// v2.8.2 (owner): the footer is "page n of m" only; the disclaimer is the last block of each PDF
+ok(footOk === footN && footN > pdfs, 'every page footer of every PDF is "page n of m" (' + footOk + ' of ' + footN + ')');
+ok(lastOk === pdfs, 'the disclaimer is the last block of every PDF (' + lastOk + ' of ' + pdfs + ')');
 
 // ---------- 3. a saved file and the exported plan ----------
 let fileHits = 0, planHits = 0;
@@ -112,9 +118,10 @@ ok(SENS.length === 12, '12 sensitive use cases in the data');
 uses.forEach(use => {
   const m = L.resultModel(finished(F, D, use), env);
   ok(!('legal' in m) && !('legalNote' in m) && !('law' in m), use + ': the result model has no legal block');
-  ok((m.flag === FX.sensitive_flag) === SENS.includes(use) && m.disclaimer === FX.disclaimer, use + ': sensitive flag only where the data says, disclaimer always');
+  ok((m.flag === C.SENSITIVE_FLAG) === SENS.includes(use) && m.disclaimer === FX.disclaimer, use + ': sensitive flag only where the data says, disclaimer always');
 });
 const app = rd('src/app.js');
-ok(/id="cover-disclaimer"/.test(app) && /id="result-disclaimer"/.test(app) && /id="foot-disclaimer"/.test(rd('src/page.html')), 'the disclaimer is drawn on the cover, on the result and in the page footer');
+// v2.8.2 (owner): the footer disclaimer in page.html is gone
+ok(/id="cover-disclaimer"/.test(app) && /id="result-disclaimer"/.test(app) && !/id="foot-disclaimer"/.test(rd('src/page.html')), 'the disclaimer is drawn on the cover and on the result, not in the page footer');
 ok(!/m\.legal|EU AI Act|to-register/.test(app), 'app.js draws no AI Act fold and no AI Register link');
 done();

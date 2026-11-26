@@ -15,8 +15,8 @@ const { ok, done } = tester('v21');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const rd = p => readFileSync(join(root, p), 'utf8');
 const SENS = Object.keys(TQ.uses).filter(k => TQ.uses[k].sensitive).sort();
-const noK = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== 'k')); // v2.7.1: a stored "k" is not an answer and is not carried
-const carryT = (use, T) => { const o = {}; (TQ.uses[use] ? TQ.uses[use].qs : []).forEach(q => { if (q.carry && T && T[q.carry] != null && T[q.carry] !== 'k') o[q.id] = T[q.carry]; }); return o; }; // v2.7.0: old answers taken over by carry_answer_from
+const noK = o => Object.assign({}, o || {}); // v2.8.2 (owner): "k" is Don’t know yet, an answer again, so a stored one is kept (v2.7.1 dropped it)
+const carryT = (use, T) => { const o = {}; (TQ.uses[use] ? TQ.uses[use].qs : []).forEach(q => { if (q.carry && T && T[q.carry] != null) o[q.id] = T[q.carry]; }); return o; }; // v2.8.2 (owner): a carried "k" is kept too // v2.7.0: old answers taken over by carry_answer_from
 const env = { cat: D.cat, TQ, today: '2026-11-24' };
 function mk(use, musts, tail, o) {
   const r = finished(F, D, use, o);
@@ -45,7 +45,7 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
     const m = L.resultModel(r, env), pdf = pdfText(r); // v2.5: Copy summary (summaryText) is gone; the PDF is the text that leaves the page
     ok(m.level === level, tag + ': ' + level + ' (got ' + m.level + ')');
     ok(![everyWord(m), pdf].some(t => /\d+% ready/.test(t)), tag + ': "% ready" appears nowhere (screen words, PDF)');
-    ok(/^(Score: \d+% of points from all questions|No score yet: you answered \d+ of \d+ questions\.)$/.test(m.scoreHead), tag + ': the score reads "Score: n% of points from all questions" (v2.8.0 B3) or "No score yet: …": ' + m.scoreHead);
+    ok(/^(Score: \d+% of points from all questions|No score yet: \d+ of \d+ questions have Yes, Planned or No\.)$/.test(m.scoreHead), tag + ': the score reads "Score: n% of points from all questions" (v2.8.0 B3) or "No score yet: …": ' + m.scoreHead);
     ok(m.reason.startsWith('Because ') && pdf.includes(m.reason), tag + ': the reason is a visible line, on screen and in the PDF: ' + m.reason);
     ok(pdf.includes(m.levelName + ' · ' + m.scoreHead), tag + ': the PDF carries the verdict and score string');
   });
@@ -58,8 +58,8 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
   ok(eq(C.GET_SCORE, ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']), 'item 1: the cover bullet (final copy)');
   // item 2: no score under "Not enough information yet"
   const none = L.resultModel(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []), env);
-  ok(none.level === 'noinfo' && none.scoreHead === 'No score yet: you answered 4 of 10 questions.' && none.ev.pct === null && !/%/.test(none.scoreHead + none.scoreSub), 'item 2: "No score yet: you answered 4 of 10 questions." and no percentage (the council\'s none-6-result case)');
-  ok(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), [])).includes('Not enough information yet · No score yet: you answered 4 of 10 questions.') && !/Score: \d/.test(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []))), 'item 2: the same in the PDF');
+  ok(none.level === 'noinfo' && none.scoreHead === 'No score yet: 4 of 10 questions have Yes, Planned or No.' && none.ev.pct === null && !/%/.test(none.scoreHead + none.scoreSub), 'item 2: "No score yet: you answered 4 of 10 questions." and no percentage (the council\'s none-6-result case)');
+  ok(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), [])).includes('Not enough information yet · No score yet: 4 of 10 questions have Yes, Planned or No.') && !/Score: \d/.test(pdfText(mk('none', ['y', 'y', 'y', 'y'].concat(rep('k', 6)), []))), 'item 2: the same in the PDF');
   ok(L.snapshot(none.ev, '2026-11-24T10:00:00.000Z', 'none').pct === null, 'item 2: no percentage goes into the history or a shared copy either');
   // item 3: the reason in the verdict line (final copy)
   ok(L.evaluate(mk('fo-4', ['y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'n'], []), TQ).reason === 'Because 1 must-have is missing: Rules for staff on AI tools. A missing must-have outweighs the score.', 'item 3: must-have at No (final copy)');
@@ -76,7 +76,8 @@ ok(L.RULES === 'v2.6 (24 Nov 2026)', 'rules version bumped (v2.1, v2.3 four answ
 // Council items 4–9
 // ====================================================================================================================
 ok(C.LEVELS.almost.line === 'Nothing you answered blocks a start, but points are still open. Close the ones below before you sign anything.' && !/Most of it is there/.test(JSON.stringify(C.LEVELS)), 'item 4: the "Almost ready" line (final copy)');
-ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the {N} use cases in the team’s analysis need it.' && TQ.matrixTotal === 90 && !/every AI project/.test(rd('src/app.js') + rd('src/content.js')), 'item 5: the step 3 intro (final copy), 90 read from the workbook, and "every AI project" is gone from the page');
+// v2.8.2 (owner): the step 3 intro names both counts, {N} analysed and {U} in this tool
+ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the {N} use cases your team analysed (out of {U} in this tool) need it.' && TQ.matrixTotal === 90 && !/every AI project/.test(rd('src/app.js') + rd('src/content.js')), 'item 5: the step 3 intro (final copy), 90 read from the workbook, and "every AI project" is gone from the page');
 {
   // item 6: areas as counts, not percentages; a word only with two or more known answers
   const r = mk('fo-4', ['y', 'y', 'pl', 'y', 'k', 'y', 'pl', 'y', 'n', 'y'], ['y', 'k', 'y', 'y', 'pl', 'y', 'n', 'y']), m = L.resultModel(r, env); // v2.3: no p / na
@@ -91,7 +92,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
 {
   // item 7 (v2.7.0, owner): the law line and the AI Act block are gone; the data file's sensitive-area flag is shown on the result
   // (and the PDF) for the 12 sensitive use cases, under any verdict
-  ok(!('LAW_LINE' in C) && C.SENSITIVE_FLAG === "This area involves people's personal data or jobs and has extra rules. Ask an adviser before a pilot.", 'item 7: the sensitive flag (verbatim)');
+  ok(!('LAW_LINE' in C) && C.SENSITIVE_FLAG === "This area involves people's personal data or jobs. Ask an adviser before a pilot.", /* v2.8.2 (owner): the exact new sentence */ 'item 7: the sensitive flag (verbatim)');
   const sens = Object.keys(TQ.uses).filter(k => TQ.uses[k].sensitive).sort();
   ok(eq(sens, ['fo-3', 'fo-6', 'gx-4', 'hk-6', 'hr-1', 'hr-2', 'hr-4', 'hr-5', 'hr-6', 'it-4', 'res-8', 'sm-3']), 'item 7: the sensitive use cases: ' + sens);
   Object.keys(TQ.uses).forEach(id => {
@@ -111,7 +112,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   const html = rd(PAGE), noData = html.replace(/<script type="application\/json" id="r2-data">[\s\S]*?<\/script>/, '');
   ok(!/[A-Z]{3}-\d{3}-\d{2}/.test(noData), 'M8: no evidence id in the page outside its data block');
 }
-ok(C.TAIL_TODAY === 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.' && rd('src/app.js').includes('C.TAIL_TODAY'), 'item 9: the step 5 intro (final copy), on the page');
+ok(C.TAIL_TODAY === 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned”.' /* v2.8.2 (owner): "Planned, not done yet" renamed "Planned" */ && rd('src/app.js').includes('C.TAIL_TODAY'), 'item 9: the step 5 intro (final copy), on the page');
 // item 10 (generator frames): retired in v2.7.0 with the generator; the questions-only data is checked in tests/questions.test.mjs
 
 // ====================================================================================================================
@@ -123,8 +124,10 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   // B2
   let r = mk('fo-4', [], ['k', 'k', 'k', 'k', 'y', 'y', 'y', 'y']), e = L.evaluate(r, TQ);
   ok(e.pts === 28 && e.max === 36 && e.pct === 77 && e.counts.unknown === 4 && L.mustLine(L.evaluate(mk('fo-4', ['k'], []), TQ)).includes('1 not answered yet'), 'B2 on: a question not answered yet counts as 0 points (28 of 36 = 77%) and is still shown as "not answered yet"');
-  ok(L.open(e).filter(a => a.state === 'unknown').length === 4 && L.open(e).filter(a => a.state === 'unknown').every(a => a.text.startsWith('Answer this: ')), 'B2: the unknown items stay on the to-do list as "Answer this: …"');
-  flip('UNKNOWN_SCORES_ZERO', () => { const e2 = L.evaluate(r, TQ); ok(e2.pts === 28 && e2.max === 28 && e2.pct === 100 && L.scoreSub(e2).startsWith('28 of 28 points on the 14 questions you answered (of 18).'), 'B2 off: unknown is left out of the points again (the council\'s item 1 wording)'); ok(L.method(e2)[0] === 'Points per answer: Yes 2 · Planned, not done yet 1 · No 0. A question not answered yet is left out of the points.' && !L.method(e2).some(t => /counts as 0 points/.test(t)), 'B2 off: the working-out says so'); });
+  // v2.8.2 (owner): "k" is Don’t know yet again: still unknown (0 points), on the to-do list as "Find out: …"; a real blank stays "Answer this: …"
+  ok(L.open(e).filter(a => a.state === 'unknown').length === 4 && L.open(e).filter(a => a.state === 'unknown').every(a => a.text.startsWith('Find out: ')), 'B2: the Don’t know yet items stay on the to-do list as "Find out: …"');
+  { const rb = mk('fo-4', [], []); TQ.uses['fo-4'].qs.slice(0, 4).forEach(q => { delete rb.T[q.id]; }); const ob = L.open(L.evaluate(rb, TQ)).filter(a => a.state === 'unknown'); ok(ob.length === 4 && ob.every(a => a.text.startsWith('Answer this: ')), 'B2: the blank items stay on the to-do list as "Answer this: …"'); }
+  flip('UNKNOWN_SCORES_ZERO', () => { const e2 = L.evaluate(r, TQ); ok(e2.pts === 28 && e2.max === 28 && e2.pct === 100 && L.scoreSub(e2).startsWith('28 of 28 points on the 14 questions you answered (of 18).'), 'B2 off: unknown is left out of the points again (the council\'s item 1 wording)'); ok(L.method(e2)[0] === 'Points per answer: Yes 2 · Planned 1 · No 0. A question not answered yet (or Don’t know yet) is left out of the points.' /* v2.8.2 (owner): Planned renamed; Don’t know yet scores like a blank */ && !L.method(e2).some(t => /counts as 0 points/.test(t)), 'B2 off: the working-out says so'); });
   ok(L.method(e).some(t => t.startsWith('Team judgement: a question not answered yet counts as 0 points')), 'B2: listed in "How this was worked out" as team judgement');
   // the less you know, the lower the score: never the reverse
   for (let k = 0; k <= 8; k++) { const a = L.evaluate(mk('fo-4', [], rep('k', k)), TQ), b = L.evaluate(mk('fo-4', [], rep('k', k + 1 > 8 ? 8 : k + 1)), TQ); ok((b.pct == null ? -1 : b.pct) <= (a.pct == null ? 101 : a.pct), 'B2: one more "Don\'t know yet" never raises the score (' + k + ')'); }
@@ -132,7 +135,8 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   SENS.forEach(id => { // v2.7.0: the data's 12 sensitive use cases (was: the register's high-risk list and the sens add-on)
     const e5 = L.evaluate(mk(id, [], []), TQ), m5 = L.resultModel(mk(id, [], []), env);
     ok(e5.level === 'almost' && e5.pct === 100 && eq(e5.held, ['sensitive']) && e5.must.allYes, id + ': all Yes, 100%, but no top verdict (held: sensitive, v2.7.0)');
-    ok(m5.reason === C.SENSITIVE_HOLD && m5.reasonShown === '' && m5.levelLine === C.ALMOST_HELD && m5.flag === C.SENSITIVE_FLAG && m5.boxLine === C.SENS_BOX && m5.first[0].text === C.ADVISER, id + ': the result says why once (v2.8.0 B4: box line, flag, "Ask an adviser before a pilot"; the hold reason stays in the method)');
+    // v2.8.2 (owner): "Ask an adviser before a pilot" is said once (the flag); the hold reason is the plain sentence, the hold item "Talk to an adviser…"
+    ok(m5.reason === 'Because this area involves people’s personal data or jobs.' && C.SENSITIVE_HOLD === C.SENSITIVE_FLAG && m5.reasonShown === '' && m5.levelLine === C.ALMOST_HELD && m5.flag === C.SENSITIVE_FLAG && m5.boxLine === C.SENS_BOX && m5.first[0].text === C.ADVISER, id + ': the result says why once (v2.8.0 B4: box line, flag, "Ask an adviser before a pilot"; the hold reason stays in the method)');
     ok(!/\b(must|requires?|applies|obliged|illegal|unlawful)\b/i.test(m5.reason + C.ALMOST_HELD), id + ': the reason makes no legal claim');
   });
   flip('SENSITIVE_HOLDS_TOP', () => { const e5 = L.evaluate(mk('hr-2', [], []), TQ); ok(e5.level === 'ready' && e5.held.length === 0 && L.resultModel(mk('hr-2', [], []), env).flag === C.SENSITIVE_FLAG && !L.method(e5).some(t => /does not get the top verdict/.test(t)), 'B5 off: the top verdict is possible again; the flag (item 7) stays'); });
@@ -144,15 +148,15 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   [['q2', 'Return', 'Probably not worth it'], ['q3', 'Information to learn from', 'Too few examples to learn from'], ['q4', 'Safety net', 'A rule-based tool or a person is the better choice'], ['q5', 'Proof', 'Define success first']].forEach(([q, title, out]) => {
     const r6 = mk('fo-4', [], []); r6.Q[q] = 'n'; const e6 = L.evaluate(r6, TQ);
     ok(e6.level === 'almost' && eq(e6.held, ['carried']) && e6.pct === 100, 'B6: a No on ' + q + ' blocks the top verdict');
-    ok(e6.reason === 'Because you answered No in step 2 to “' + title + '” (' + out + '). The top verdict is held back until that is settled.', 'B6: the reason is shown: ' + e6.reason);
+    ok(e6.reason === 'Because you answered No in step 2 to “' + title + '”. The top verdict waits until that is settled.' /* v2.8.2 (council): the outcome is said on the card, not again here */ /* v2.8.2 (owner): no "held back" */, 'B6: the reason is shown: ' + e6.reason);
   });
   let r6 = mk('fo-4', [], []); r6.Q.q3 = 'u';
   ok(L.evaluate(r6, TQ).level === 'almost' && eq(L.evaluate(r6, TQ).held, ['notsure']), 'B6 / v2.5 (owner O2): a "Not sure" in step 2 now holds the top verdict too (was: only a No)');
   r6 = mk('fo-4', [], []); r6.Q.q3 = 'n';
   flip('CARRIED_NO_HOLDS_TOP', () => ok(L.evaluate(r6, TQ).level === 'ready' && L.resultModel(r6, env).ai.carried.length === 1, 'B6 off: the No is carried as a condition only'));
-  ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled\.$/.test(t)), 'B6 (v2.6 wording: question 4 holds too): listed in "How this was worked out" as team judgement');
+  ok(L.method(L.evaluate(r6, TQ)).some(t => /^Team judgement: a No on question 2, 3, 4 or 5 of step 2 keeps the top verdict back until it is settled\.$/ /* v2.8.2 (owner): no "held back" wording */.test(t)), 'B6 (v2.6 wording: question 4 holds too): listed in "How this was worked out" as team judgement');
   r6 = mk('hr-2', [], []); r6.Q.q5 = 'n'; const both = L.evaluate(r6, TQ);
-  ok(eq(both.held, ['sensitive', 'carried']) && both.reason.startsWith(C.SENSITIVE_HOLD + ' Also because you answered No in step 2 to “Proof”'), 'B5 + B6 together: both reasons, in one sentence each');
+  ok(eq(both.held, ['sensitive', 'carried']) && both.reason.startsWith('Because this area involves people’s personal data or jobs. Also because you answered No in step 2 to “Proof”') /* v2.8.2 (owner): the adviser line is said once, not in the reason */, 'B5 + B6 together: both reasons, in one sentence each');
   // the switches are named in the source where the owner flips them
   ok(/var JUDGEMENT = \{ UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRIED_NO_HOLDS_TOP: true,\n\s+ALMOST_MIN_MUST_YES: 50, READY_MIN_TAIL_YES: 50, NOT_SURE_HOLDS_TOP: true, NONE_BEST_ALMOST: true \};/.test(rd('src/logic.js')), 'one named constant each, in one block of src/logic.js');
   // owner decisions kept: the cap, the names, the percentage

@@ -1,4 +1,4 @@
-/* "Can AI solve your problems?" v2.8.1 (folder tools/readiness-2-questions): every word the tool itself writes.
+/* "Can AI solve your problems?" v2.8.2 (folder tools/readiness-2-questions): every word the tool itself writes.
    Sources: research_notes/AI starting point/research.md (23 Nov 2026) for the five questions and the sourced figures;
    the owner's workbook "AI Use Cases: Resources Needed per Use Case (D4 x D6)" for the must-haves; the step-5 questions are the
    owner's data file (data/usecase_questions_only.json, verbatim). PUB: the public build's data notice (v2.8.1).
@@ -20,7 +20,7 @@
       noIf: 'Every case is different, like guest emails, photos or tomorrow’s demand.',
       q: 'Can each case be fixed with an “if this, then that” rule?',
       hint: 'Yes if you could write it down as fixed rules, like “send an email 3 days before arrival” or “reorder towels when stock falls below 200”. No if every case is different, like guest emails, photos or tomorrow’s demand.',
-      guard: 'Think about the job itself, not how you do it today. If you use rules now only because nothing better existed (for example price rules), answer Not sure.', // v1.2, council BUILD NOW 1
+      guard: 'Think about the job itself, not how you do it today. If you use rules now only because nothing better existed (for example price rules), answer Don’t know yet.', // v1.2, council BUILD NOW 1
       whyShort: 'AI only helps when a job needs judgement. If fixed rules can do the job, ordinary software is cheaper and more reliable.', // v1.3 (owner): the first line of the "Why this matters" fold (`short` is already the to-find-out label)
       why: 'Software that only follows rules written by people is not AI, and a simpler tool is cheaper, easier to explain and easier to fix.',
       yes: 'Sending a pre-arrival email three days before arrival, or alerting when a room is not cleaned by 14:00.',
@@ -69,7 +69,11 @@
   /* v2.6: above the questions when a saved check lost its answers to the old questions 3 and 4 (rec.Qnew). */
   var Q_CHANGED = 'Step 2 changed on 24 Nov 2026: question 1 is now asked the other way round (your answer was turned round with it, so it means the same), and questions 3 and 4 are new. Please answer questions 3 and 4.';
   var Q_NEW_LINE = 'New question: please choose an answer.';
-  var Q_ANSWERS = [['y', 'Yes'], ['n', 'No'], ['u', 'Not sure']];
+  /* v2.8.2 (owner, 26 Nov 2026): steps 2, 3 and 5 use the same four answers, Yes / Planned / No / Don’t know yet. Question 1 stays as it is
+     (its Yes stops the check), so it offers no Planned. In step 2, Planned counts like Don’t know yet (the old Not sure): something to settle. */
+  var Q_ANSWERS = [['y', 'Yes'], ['pl', 'Planned'], ['n', 'No'], ['u', 'Don’t know yet']];
+  var Q1_ANSWERS = [['y', 'Yes'], ['n', 'No'], ['u', 'Don’t know yet']];
+  var DK = 'Don’t know yet';
 
   /* The stop screen (owner's hard rule: the stop answer to Q1 ends the journey; since v2.6 that answer is Yes). Reads: headline, why, instead, then the "Not sure" line.
      v1.2 (owner B2): the headline was "This is not an AI problem."; unsure: council BUILD NOW 2. */
@@ -77,7 +81,7 @@
     head: 'This is not suitable for AI.',
     why: 'The job follows rules a person can write down, so rules or ordinary automation will do it, and a simpler tool is cheaper, easier to explain and easier to fix.',
     instead: 'Instead: set up a rule, a report or an automatic message in the software you already have, or change the process. Ask your current software vendor whether a rule or report can do it.',
-    unsure: 'If a vendor offers you an AI tool for this job, ask what the AI does that a rule could not. If you are unsure, change your answer to Not sure: it becomes something to find out.'
+    unsure: 'If a vendor offers you an AI tool for this job, ask what the AI does that a rule could not. If you are unsure, change your answer to Don’t know yet: it becomes something to find out.'
   };
 
   /* Verdict headlines (research A, "Verdict logic"). */
@@ -94,11 +98,11 @@
 
   /* ---------- Must-haves and tailored questions: the readiness check's answer scale ---------- */
   /* v2.3 (owner, 24 Nov 2026): four answers only, in this order. "Partly" and "Doesn't apply" are no longer offered. */
-  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned, not done yet'], ['n', 'No']]; // v2.7.1 (owner): three answers; a question left blank is not answered yet
+  var ANSWERS = [['y', 'Yes'], ['pl', 'Planned'], ['n', 'No'], ['k', 'Don’t know yet']]; // v2.8.2 (owner): four answers; Don’t know yet scores like a blank (0 points, not answered yet)
   /* Answers that records saved before v2.3 may still hold. Never offered; shown as unanswered with OLD_LINE until the person picks again. */
   var OLD_ANSWER = { p: 'Partly', na: 'Doesn’t apply' };
   var OLD_LINE = 'Your earlier answer was {a}; this answer is no longer offered, please choose again.';
-  var ANSWER_WORD = { y: 'Yes', pl: 'Planned, not done yet', n: 'No' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
+  var ANSWER_WORD = { y: 'Yes', pl: 'Planned', n: 'No', k: 'Don’t know yet' }; // v2.5: an old p / na is named by R2Logic.answerWord (audit v3 L2)
 
   /* ---------- Step 3: the must-haves (at most 10; they apply to every AI installation) ----------
      Chosen from the workbook's Framework matrix and the six D6 gates its README names (P1, F1, F2, T1, D5, O1), worded so a
@@ -234,8 +238,8 @@
   /* v2.7.0 (owner, 25 Nov 2026): these three texts are the data file's fixed_texts, verbatim (data/usecase_questions_only.json;
      the banned-term test checks they match). */
   var DISCLAIMER = 'This check does not cover legal requirements. Check those with your adviser before you start.';
-  var SENSITIVE_FLAG = 'This area involves people\'s personal data or jobs and has extra rules. Ask an adviser before a pilot.';
-  var SENSITIVE_HOLD = 'Held back: this area involves people\'s personal data or jobs. Ask an adviser before a pilot.';
+  var SENSITIVE_FLAG = 'This area involves people\'s personal data or jobs. Ask an adviser before a pilot.'; // v2.8.2 (owner), exact
+  var SENSITIVE_HOLD = SENSITIVE_FLAG; // v2.8.2: one sentence for the flag and the hold, said once per result
   /* ---------- v2.5 (24 Nov 2026): reports/Council - Do you need AI v2.4.md, BUILD NOW items and owner decisions O1 to O5 (copy as given there) ---------- */
   /* BUILD NOW 1: under "Not ready yet" when no must-have is No but fewer than half are Yes (O1: "Almost ready" needs at least half). {n}: Yes, {m}: must-haves. */
   var ALMOST_FEW_MUST = 'No must-have is at No, but only {n} of {m} are in place. “Planned” is not done yet: finish these before you talk to vendors.';
@@ -245,23 +249,24 @@
   var NONE_ALMOST = 'No use case chosen: the must-haves are in place, but nothing was checked for a particular tool.';
   /* BUILD NOW 3: a held verdict lists its hold as item 1 of "Start with". */
   var HOLD = {
-    carried: 'Settle this first: in step 2 you answered No to “{title}”. {outcome}',
+    carried: 'Settle this first: in step 2 you answered No to “{title}”. {outcome}', // v2.8.2: {outcome} is the add line only when the outcome is already said on the page
     sensitive: SENSITIVE_HOLD, // v2.7.0: the data file's sensitive_hold_reason, verbatim
-    notsure: 'Settle this first: you answered Not sure to {titles} in step 2. {find}',
+    notsure: 'Settle this first: you answered Don’t know yet or Planned to {titles} in step 2. {find}',
     none: 'Settle this first: no use case chosen. The must-haves are in place, but nothing was checked for a particular tool.'
   };
   /* O5: one short line in the verdict box, only for "Not ready yet" and a held verdict. */
-  var BOX = { held: 'Held back: {why}.', sensitive: 'this area involves people\'s personal data or jobs', carried: 'a No in step 2', notsure: 'Not sure in step 2', tail: 'fewer than half the questions for this use case are Yes', none: 'no use case chosen' };
+  /* v2.8.2 (owner): no “Held back”; each reason is a plain sentence */
+  var BOX = { sensitive: 'This area involves people\'s personal data or jobs.', notsure: 'Some step 2 answers are Don’t know yet.', notsurePl: 'Some step 2 answers are Don’t know yet or Planned.', notsurePlOnly: 'Some step 2 answers are Planned.', tail: 'Fewer than half the questions for this use case are Yes.', none: 'No use case was chosen.' };
   /* v2.8.0 (live review, 25 Nov 2026). B2: a No in step 2 is said in the verdict box and is the first action. {list}: "Return: No; Proof: No". */
-  var ALSO_STEP2 = 'Also: the first questions suggest this may not be worth doing with AI ({list}).';
+  var ALSO_STEP2 = 'Step 2 suggests this may not be worth doing with AI ({list}).'; // v2.8.2 (owner): always in the verdict box
   /* B4: the sensitive hold, said once in the verdict box; action 1 is the adviser (owner GM); nothing else open → NOTHING_ELSE. */
-  var SENS_BOX = 'Almost ready: everything is in place, but this area needs an adviser’s view first.';
-  var SENS_BOX_MORE = 'Almost ready: this area needs an adviser’s view first. Also held back: {why}.';
-  var ADVISER = 'Ask an adviser before a pilot';
+  var SENS_BOX = 'For this area the best verdict is Almost ready.'; // v2.8.2: the reason is said once, in the sensitive note
+  var SENS_BOX_MORE = SENS_BOX;
+  var ADVISER = 'Talk to an adviser about this use case first'; // v2.8.2: “Ask an adviser before a pilot” is said once, in the sensitive note
   var NOTHING_ELSE = 'Nothing else to fix.';
   /* B3: the score's label. B10: the five plain names (no letters). Version: one string on the page, the PDF and the files. */
   var SCORE_OF = 'of points from all questions';
-  var VERSION = '2.8.1', VERSION_LINE = 'v2.8.1 (rules unchanged since v2.6)';
+  var VERSION = '2.8.2', VERSION_LINE = 'v2.8.2 (rules unchanged since v2.6)';
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
@@ -273,9 +278,9 @@
   var AREA_WORD = { strong: 'Strong', gaps: 'Gaps to close', weak: 'Weak', thin: 'Too little to say' };
   var SCORE_NOTE = 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.'; // v2.1, council item 1
   /* v2.1, council items 5 and 9 (final copy). {N}: the number of use cases in the team's analysis, read from the workbook at build time. */
-  var MUST_INTRO = 'Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the {N} use cases in the team’s analysis need it.';
+  var MUST_INTRO = 'Ten things to have in place before an AI project starts. Think of the project you have in mind. Under each one you can see how many of the {N} use cases your team analysed (out of {U} in this tool) need it.'; // v2.8.2 (owner)
   var MUST_COVER = 'Ten things to have in place before an AI project starts, such as an owner with time and a budget for the full first year.';
-  var TAIL_TODAY = 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.';
+  var TAIL_TODAY = 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned”.';
   var GET_SCORE = ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']; // cover bullet, council item 1
   var MUST_ONLY = 'No use case was chosen (“None of these fits”), so this result rests on the must-haves only.';
   /* v2.7.0: vendor questions, four of the register's list left out (who the maker is, the data agreement, the marking and
@@ -383,7 +388,7 @@
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 
-  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
+  root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, Q1_ANSWERS: Q1_ANSWERS, DK: DK, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
     LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,

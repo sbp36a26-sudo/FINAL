@@ -39,15 +39,16 @@
     must: { back: 'q', next: 'where' },
     where: { back: 'must', next: '@where' },
     tailored: { back: 'where', next: 'result' },
-    result: { back: '@result', edit: 'q' }
+    result: { back: '@result', edit: 'hotel' } // v2.8.2 (owner): “Change answers from the start” opens step 1, every answer kept
   };
   var QIDS = ['q1', 'q2', 'q3', 'q4', 'q5'];
   var MUST_IDS = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10'];
   /* v2.3 (owner, 24 Nov 2026): steps 3 and 5 offer the same four answers. OLD_A / OLD_T: answers saved before v2.3 ("Partly" on
      both steps, "Doesn't apply" on step 5). A saved one is kept in the record as it was (never turned into another answer) but is
      not an answer: the step is not done until the person picks again, so a check that stood on its result opens on that step. */
-  // v2.7.1: 'k' is no longer an answer; a stored one reads as blank
-  var Q_OK = { y: 1, n: 1, u: 1 }, A_OK = { y: 1, pl: 1, n: 1 }, T_OK = A_OK, OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
+  // v2.8.2 (owner): 'k' is Don’t know yet again (steps 3 and 5), scored like a blank
+  var Q_OK = { y: 1, n: 1, u: 1, pl: 1 }, A_OK = { y: 1, pl: 1, n: 1, k: 1 }, T_OK = A_OK, // v2.8.2 (owner): Planned in step 2, Don’t know yet in steps 3 and 5
+  OLD_A = { p: 1 }, OLD_T = { p: 1, na: 1 };
   var CATS = ['Commercial', 'Guest-facing', 'Operational', 'Administrative'];
   var TYPES = ['independent', 'group', 'managed'], ROLES = ['gm', 'owner', 'dept', 'it', 'fin', 'other'];
   var MAX_SNAPS = 20, MAX_CHECKS = 50, HIST_SKIP_MAX = 60;

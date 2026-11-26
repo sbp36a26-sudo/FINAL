@@ -165,7 +165,7 @@ const CASES = {
     await ctx.addInitScript(([k, v]) => { if (!localStorage.getItem('__seeded')) { localStorage.setItem('__seeded', '1'); localStorage.setItem(k, v); } }, [KEY, FX.three]);
     const A = (await page(b, { ctx })).p, B = (await page(b, { ctx })).p;
     await A.click('#new-check'); await A.waitForSelector('[data-confirm="new"]');
-    await B.click('#edit'); await B.click('label[for="a-q2-u"]'); await wait(500);
+    await B.click('#edit'); await B.click('#next'); await B.click('label[for="a-q2-u"]'); await wait(500);
     ok(!!(await A.$('[data-confirm="new"]')), 'L5 the other tab\'s save leaves the "same or different hotel?" question open');
     await ctx.close();
   },
@@ -176,7 +176,7 @@ const CASES = {
     await p.reload(); await p.waitForSelector('#app[data-state]'); await wait(200);
     let s = await p.evaluate(() => window.Readiness2.store());
     ok(s.checks.fixB01.updated.slice(0, 10) === '2026-11-02' && s.checks.fixB03.updated.slice(0, 10) === '2026-11-04', 'L6 Open and reload keep the dates', [s.checks.fixB01.updated, s.checks.fixB03.updated]);
-    await p.click('#edit'); await p.click('label[for="a-q2-u"]'); await wait(200);
+    await p.click('#edit'); await p.click('#next'); await p.click('label[for="a-q2-u"]'); await wait(200);
     s = await p.evaluate(() => window.Readiness2.store());
     ok(s.checks.fixB01.updated.slice(0, 10) !== '2026-11-02', 'L6 a changed answer re-dates the check', s.checks.fixB01.updated);
     await ctx.close();
@@ -272,7 +272,7 @@ const CASES = {
     await p.click('#next'); out.push(['3', await h1()]); await p.click('#next'); out.push(['4', await h1()]);
     await p.click('#cat-administrative'); await p.click('#dept-hr'); await p.click('label[for="u-hr-1"] .ucn'); await p.click('#next'); out.push(['5', await h1()]);
     await p.click('#next'); out.push(['result', await h1()]);
-    await p.click('#edit'); await p.click('label[for="a-q1-y"]'); await p.click('#next'); out.push(['stop', await h1()]);
+    await p.click('#edit'); await p.click('#next'); await p.click('label[for="a-q1-y"]'); await p.click('#next'); out.push(['stop', await h1()]);
     ok(out.every(x => x[1].length === 1), 'BUILD NOW 5: exactly one h1 on the cover, steps 1 to 5, the result and the stop screen', out);
     ok(/^In all, 21 to 27 questions, depending on the use case\. You can stop and come back\.$/.test(cover.trim()), 'BUILD NOW 6: the cover\'s count', cover);
     await ctx.close();

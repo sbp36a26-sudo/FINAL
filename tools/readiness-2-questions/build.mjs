@@ -157,6 +157,10 @@ export function sourcesModel(catHtml, removed, fixes, edits, v2, scores) {
       out[id].nV2++;
     });
   });
+  /* v2.8.2 (owner, 26 Nov 2026): an audited source (sources_v2) scored below 7 is not shown; each one is logged in out.removedLow */
+  const removedLow = [];
+  Object.keys(out).forEach(id => { out[id].srcs = out[id].srcs.filter(e => { if (e.k === 'v2' && e.s != null && e.s < 7) { removedLow.push({ use: id, score: e.s, text: e.x, url: e.u }); log.push(id + ' removed: ' + e.x.slice(0, 60) + ' (scored ' + e.s + ', below 7)'); out[id].nV2--; return false; } return true; }); });
+  Object.defineProperty(out, 'removedLow', { value: removedLow, enumerable: false });
   Object.keys(out).forEach(id => {
     const L = out[id].srcs, g = e => e.s != null && e.s >= 7 ? (e.f === 'direct' ? 0 : 1) : 2;
     out[id].srcs = L.map((e, i) => [g(e), i, e]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(a => a[2]);
@@ -184,7 +188,7 @@ export function buildPage(opt) {
   const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
   const TQ = tqModel(Q, meta, JSON.parse(read('data/v27-sigs.json')).sigs, JSON.parse(read('data/actions_questions_only.json')).actions), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
-  const data = { cat, tq: TQ, ex, detail, builtOn: opt.builtOn || new Date().toISOString().slice(0, 10) };
+  const data = { cat, tq: TQ, ex, detail: shipDetail(detail), builtOn: opt.builtOn || new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
   const fontBlock = `<script type="application/json" id="r2-font">${JSON.stringify(font)}</script>`;
@@ -202,6 +206,15 @@ export function buildPage(opt) {
     html = html.replace(mark, () => text);
   }
   return { html, cat, TQ, detail };
+}
+/* v2.8.2 (owner): what the page carries of each source: no review score, no fit, and an audited text cut to "Org: title (year)", so the
+   review's internal notes (score, "abstract only", base, type) are not in the page at all. Order and the thin flag are kept. */
+export function shipDetail(detail) {
+  const year = t => { const m = String(t || '').match(/\b(19[5-9]\d|20[0-4]\d)\b/); return m ? m[0] : ''; };
+  const cut = x => { const i = x.indexOf(': '), rest = i > 0 ? x.slice(i + 2) : x, d = rest.indexOf(' — '), p = rest.lastIndexOf(' ('); const title = d > 0 ? rest.slice(0, d) : p > 0 ? rest.slice(0, p) : rest; const y = year((d > 0 ? rest.slice(d) : p > 0 ? rest.slice(p) : '').replace(/“[^”]*”/g, '')); return (i > 0 ? x.slice(0, i) + ': ' : '') + title + (y ? ' (' + y + ')' : ''); };
+  const out = {};
+  Object.entries(detail).forEach(([id, d]) => { out[id] = { srcs: d.srcs.map(e => e.k === 'v2' ? { k: 'v2', t: 'v', n: '', o: '', x: cut(e.x), u: e.u } : { k: 'cat', t: e.t, n: e.n, o: e.o, u: e.u }), thin: d.thin, note: d.note, nV2: d.nV2 }; });
+  return out;
 }
 /* hosting.config.json → { collectUrl, contact }: strings only; collectUrl must be empty or an https address. */
 export function publicConfig(c) {

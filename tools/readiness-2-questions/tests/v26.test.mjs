@@ -132,23 +132,25 @@ const base = { q1: 'n', q2: 'y', q3: 'y', q4: 'y', q5: 'y' };
 ok(L.verdict(Object.assign({}, base, { q3: 'n' })).key === 'data' && L.verdict(Object.assign({}, base, { q4: 'n' })).key === 'exact', 'B: Q3 No and Q4 No each give their verdict');
 ok(L.verdict(Object.assign({}, base, { q2: 'n', q4: 'n' })).key === 'worth' && L.verdict(Object.assign({}, base, { q4: 'n', q5: 'n' })).key === 'exact', 'B: order Q2 > Q3 > Q4 > Q5');
 ok(C.VERDICT.exact === q4.outcome && C.VERDICT.data === q3.outcome && !('assist' in C.VERDICT), 'B: the verdict words are the outcomes; no "assistant only" verdict');
-for (const [k, o, held] of [['Q3 No', { q3: 'n' }, ['carried']], ['Q4 No', { q4: 'n' }, ['carried']], ['Q3 Not sure', { q3: 'u' }, ['notsure']], ['Q4 Not sure', { q4: 'u' }, ['notsure']]]) {
+for (const [k, o, held] of [['Q3 No', { q3: 'n' }, ['carried']], ['Q4 No', { q4: 'n' }, ['carried']], ['Q3 Don’t know yet', { q3: 'u' }, ['notsure']], ['Q4 Don’t know yet', { q4: 'u' }, ['notsure']]] /* v2.8.2 (owner): Not sure renamed */) {
   const m = L.resultModel(finished(F, D, 'gx-2', { Q: Object.assign({}, base, o) }), env);
-  ok(m.level === 'almost' && eq(m.held, held) && (held[0] === 'carried' ? /^Also: the first questions suggest this may not be worth doing with AI \(.+: No\)\.$/.test(m.alsoLine) && !m.boxLine : /^Held back: /.test(m.boxLine) && !m.alsoLine) && /^Because /.test(m.reason), 'B: ' + k + ' holds the top verdict, reason shown (' + m.level + ' ' + JSON.stringify(m.held) + ')');
+  ok(m.level === 'almost' && eq(m.held, held) && (held[0] === 'carried' ? /^Step 2 suggests this may not be worth doing with AI \(.+: No\)\.$/.test(m.boxLine) && !m.alsoLine : m.boxLine === 'Some step 2 answers are Don’t know yet.' && !m.alsoLine) /* v2.8.2 (owner): the step-2 line stands in the verdict box; no "Held back" */ && /^Because /.test(m.reason), 'B: ' + k + ' holds the top verdict, reason shown (' + m.level + ' ' + JSON.stringify(m.held) + ')');
 }
 ok(L.resultModel(finished(F, D, 'gx-2'), env).level === 'ready', 'B: all fine: the top verdict');
 ok(!('Q4_NO_HOLDS_TOP' in L.JUDGEMENT) && !C.ASSIST_LINE && !/assist/.test(pdfSrc) && !/m\.assist|id="assist"/.test(app) && !/q4No/.test(logicSrc), 'B: the assistant-only condition is gone');
-ok(L.method(L.evaluate(finished(F, D, 'gx-2'), TQ)).some(t => t === 'Team judgement: a No on question 2, 3, 4 or 5 of step 2 holds the top verdict back until it is settled.'), 'B: How this was worked out names questions 2 to 5');
+ok(L.method(L.evaluate(finished(F, D, 'gx-2'), TQ)).some(t => t === 'Team judgement: a No on question 2, 3, 4 or 5 of step 2 keeps the top verdict back until it is settled.') /* v2.8.2 (owner): no "held back" wording */, 'B: How this was worked out names questions 2 to 5');
 ok(!L.consistLines({ Q: { q3: 'n' }, A: { m7: 'y' } }).m7 && !C.CONSIST.m7 && !!L.consistLines({ Q: { q5: 'n' }, A: { m3: 'y' } }).m3, 'B: the must-have 7 line (old Q3 meaning) is gone; must-have 3 stays');
 ok(/v2\.6/.test(rd('README.md')) && /## v2\.6/.test(rd('CHANGELOG.md')), 'B: README and CHANGELOG');
 
 // ---------- C. plain hyperlinks ----------
 {
   const row = L.sourceRow(['c', 'Vendor A', 'a note', 'https://a.com/x']);
-  ok(/<a href="https:\/\/a\.com\/x" target="_blank" rel="noopener">Vendor A<\/a>/.test(row) && !/Open the source/.test(row), 'C: the source name is the link; no "Open the source"');
-  ok(/<span class="srcaddr"><span class="srcurl">https:\/\/a\.com\/x<\/span> <button type="button" class="linkbtn copysrc" data-act="copy-src"/.test(row), 'C: the address line with Copy address stays');
-  ok(/<span class="tag">Hotel<\/span> <b><a href="https:\/\/h\.com\/" target="_blank" rel="noopener">Hotel B<\/a><\/b>/.test(L.sourceRow(['h', 'Hotel B', '', 'https://h.com/'])), 'C: a hotel source keeps its tag');
-  ok(/^<li data-src="c"><b>No link<\/b>: n<\/li>$/.test(L.sourceRow(['c', 'No link', 'n', ''])), 'C: without a URL the name is plain text');
+  /* v2.8.2 (owner): one format (R2Logic.srcFmt): organisation in bold, title, year, then one plain link with a short label; no
+     "Copy address", no hidden address span, no Hotel tag (was: the name is the link, the address line with Copy address, the tag) */
+  ok(/^<li data-src="c"><b>Vendor A<\/b>, A note, n\.d\. <a href="https:\/\/a\.com\/x" target="_blank" rel="noopener" title="https:\/\/a\.com\/x">a\.com\/x<\/a><\/li>$/.test(row) && !/Open the source/.test(row), 'C: org, title, then one short link; no "Open the source"');
+  ok(!/srcaddr|srcurl|copy-src|Copy address/.test(row), 'C: no address line and no Copy address (v2.8.2)');
+  ok(/^<li data-src="h"><b>Hotel B<\/b>, n\.d\. <a href="https:\/\/h\.com\/" target="_blank" rel="noopener" title="https:\/\/h\.com\/">h\.com<\/a><\/li>$/.test(L.sourceRow(['h', 'Hotel B', '', 'https://h.com/'])), 'C: a hotel source in the same format (v2.8.2: no Hotel tag)');
+  ok(/^<li data-src="c"><b>No link<\/b>, N, n\.d\.<\/li>$/.test(L.sourceRow(['c', 'No link', 'n', ''])), 'C: without a URL there is no link, only the text');
   ok(!/data-ext/.test(L.sourceRow(['c', 'A', 'b', 'https://a.com/'])), 'C: no interception marker');
 }
 ok(!/hub: 'link'/.test(app), 'C: readiness-2 no longer sends { hub: \'link\' }');

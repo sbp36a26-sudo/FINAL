@@ -22,7 +22,8 @@
   var TITLE = 'Can AI solve your problems? Result', TITLE_ANSWERS = 'Can AI solve your problems? Your answers', TITLE_STOP = 'Can AI solve your problems? Not suitable for AI'; // v2.1 (audit L7): the screen's own title; the stop PDF has no score
   var LINE = 'Student prototype by EHL SBP Group 36 for HFTP. Questions, rules and content as of ' + C.AS_OF + '. Version ' + C.VERSION_LINE + '.';
   /* v2.7.0 (owner): the footer of every page is the disclaimer (the data file's fixed text), then the page number */
-  var FOOT_L = C.DISCLAIMER, FOOT = FOOT_L + ' · page ';
+  /* v2.8.2 (owner): the footer is the page number only; the disclaimer stands once, at the end of each document */
+  var FOOT_L = '', FOOT = 'page ';
 
   function head(m, stop, use, title, extra) {
     var b = [{ k: 'title', t: title || (stop ? TITLE_STOP : TITLE) }];
@@ -38,6 +39,7 @@
      v2.6: the tone follows the meaning (a.good), so question 1 No is drawn in the good tone. */
   /* v2.8.0 (B5): the pill is the condition (Met / Not met / To find out); the answer is said under it */
   function answers(m) { return m.answers.map(function (a) { return { k: 'q', n: a.n, t: a.title + ': ' + a.q, title: a.title, q: a.q, a: 'Your answer: ' + a.a, val: a.cond, tone: a.good === true ? 'hi' : a.good === false ? 'lo' : a.state === 'u' ? 'md' : 'na', m: 'Your answer: ' + a.a + '. ' + L.aiMeaningText(a) }; }); }
+  function endNote() { return { k: 'p', t: C.DISCLAIMER, id: 'disclaimer', small: true }; } // v2.8.2: once, at the end
   var STATE_TONE = { yes: 'hi', planned: 'md', no: 'lo' };
   var LEVEL_TONE = { ready: 'hi', almost: 'md', notready: 'lo', noinfo: 'accent' };
 
@@ -47,7 +49,7 @@
     var v = L.verdict(rec.Q), m = L.resultModel(rec, env), run = { hotel: m.hotel, date: m.date }, use = v.stop ? '' : m.useName || (m.none ? m.path : '');
     if (v.stop) {
       return { stop: true, kind: 'result', run: run, blocks: head(m, true, '').concat([{ k: 'h', t: C.STOP.head, tone: 'lo' }, { k: 'p', t: C.STOP.why }, { k: 'lead', t: C.STOP.instead }, { k: 'p', t: C.STOP.unsure },
-        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m)) };
+        { k: 'p', t: 'Because you answered Yes to: “' + L.QBY.q1.q + '”', small: true }, { k: 'label', t: 'Your five answers' }], answers(m), [endNote()]) };
     }
     return kind === 'answers' ? answersModel(m, run, use) : resultModel(m, run, use, srcData(rec, env));
   }
@@ -83,11 +85,12 @@
     if (sd) {
       b.push({ k: 'h', t: 'Examples and sources (' + sd.srcs.length + ')', srcHead: true });
       if (!sd.srcs.length) b.push({ k: 'p', t: L.NO_SOURCE });
-      L.sourceLines(sd).forEach(function (x) { b.push({ k: 'src', t: x.text, badges: x.badges, url: x.url }); });
+      L.sourceLines(sd).forEach(function (x) { b.push({ k: 'src', t: x.text, badges: x.badges, url: x.url, label: x.label }); });
       if (sd.thin) b.push({ k: 'p', t: L.THIN, id: 'thin' });
       if (sd.srcNote) b.push({ k: 'p', t: sd.srcNote, small: true, id: 'src-note' });
     }
 
+    b.push(endNote());
     return { stop: false, kind: 'result', run: run, blocks: b };
   }
 
@@ -108,6 +111,7 @@
       var val = raw && raw.old ? 'Not answered' : it.answer;
       b.push({ k: 'item', id: it.key, name: it.grp === 'must' ? it.name : it.q, check: it.grp === 'must' ? it.q : '', ex: '', answer: 'Your answer: ' + val, val: val, tone: raw && raw.old ? 'na' : STATE_TONE[it.state] || 'na', action: '' });
     });
+    b.push(endNote());
     return { stop: false, kind: 'answers', run: run, blocks: b };
   }
 
@@ -237,7 +241,7 @@
         case 'src': { /* v2.8.0: one source: its labels, its text, its address */
           if (b.badges) { para(b.badges, M, TW, SZ.small, 'bold', 'ink3'); y += 0.4; }
           para(b.t, M, TW, SZ.small, 'normal', 'ink');
-          if (b.url) { y += 0.3; para(b.url, M, TW, SZ.small, 'normal', 'accent'); }
+          if (b.url) { y += 0.3; f('normal', SZ.small, 'accent'); if (!DRY) doc.textWithLink(safe(b.label || b.url), M, y + lh(SZ.small) * 0.74, { url: b.url }); y += lh(SZ.small); } // v2.8.2: a short label, the full address in the link
           y += g(2.2); break;
         }
         case 'item': {
@@ -264,7 +268,7 @@
     for (var p = 1; p <= n; p++) {
       doc.setPage(p); var ft = footer(p, n); footers.push(ft);
       stroke('line', 0.2); doc.line(M, H - 15, W - M, H - 15);
-      f('normal', SZ.small, 'ink3'); doc.text(FOOT_L, M, H - 10.5); right('page ' + p + ' of ' + n, W - M, H - 10.5, SZ.small, 'normal', 'ink3');
+      right('page ' + p + ' of ' + n, W - M, H - 10.5, SZ.small, 'normal', 'ink3');
       if (p > 1) { /* the running header */
         f('normal', SZ.small, 'ink3'); var hl = doc.splitTextToSize(hd, TW - 4); doc.text(hl[0] + (hl.length > 1 ? '…' : ''), M, 12.5);
         stroke('line', 0.2); doc.line(M, 15, W - M, 15);

@@ -81,12 +81,12 @@ assert.equal(Object.fromEntries(s.role).Owner, 1);
 
 // Step 2 among finished (A all Yes; B bad JSON = unanswered; F q1 Not sure, q2 No)
 const q1 = s.step2[0].counts, q2 = s.step2[1].counts, q5 = s.step2[4].counts;
-assert.deepEqual(q1, { Yes: 1, Planned: 0, No: 0, 'Not sure': 1, Unanswered: 1 });
-assert.deepEqual(q2, { Yes: 1, Planned: 0, No: 1, 'Not sure': 0, Unanswered: 1 });
-assert.deepEqual(q5, { Yes: 1, Planned: 0, No: 0, 'Not sure': 0, Unanswered: 2 });
+assert.deepEqual(q1, { Yes: 1, Planned: 0, No: 0, "Don't know yet": 1, Unanswered: 1 });
+assert.deepEqual(q2, { Yes: 1, Planned: 0, No: 1, "Don't know yet": 0, Unanswered: 1 });
+assert.deepEqual(q5, { Yes: 1, Planned: 0, No: 0, "Don't know yet": 0, Unanswered: 2 });
 // Must-haves: m1 A Yes, B No, F Planned; m2 A Planned, others unanswered
-assert.deepEqual(s.must[0].counts, { Yes: 1, Planned: 1, No: 1, 'Not sure': 0, Unanswered: 0 });
-assert.deepEqual(s.must[1].counts, { Yes: 0, Planned: 1, No: 0, 'Not sure': 0, Unanswered: 2 });
+assert.deepEqual(s.must[0].counts, { Yes: 1, Planned: 1, No: 1, "Don't know yet": 0, Unanswered: 0 });
+assert.deepEqual(s.must[1].counts, { Yes: 0, Planned: 1, No: 0, "Don't know yet": 0, Unanswered: 2 });
 assert.equal(s.must.length, 10);
 assert.equal(s.step2.length, 5);
 

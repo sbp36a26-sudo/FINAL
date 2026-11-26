@@ -52,7 +52,7 @@ var MUST_HAVES = [
   ['m9', 'Rules for staff on AI tools'],
   ['m10', 'A way to work when the tool is down']
 ];
-var ANSWER_WORDS = ['Yes', 'Planned', 'No', 'Not sure'];
+var ANSWER_WORDS = ['Yes', 'Planned', 'No', "Don't know yet"]; // v2.8.2: "Not sure" (tool v2.8.1) is counted as Don't know yet
 var VERDICT_NAMES = {
   ready: 'Ready to start a pilot',
   almost: 'Almost ready',
@@ -237,8 +237,8 @@ function summarise(rows) {
   var bands = SCORE_BANDS.map(function () { return 0; });
   var verdicts = {}, useCases = {}, hotelType = {}, role = {}, country = {}, versions = {};
   var q = {}, m = {};
-  STEP2_QUESTIONS.forEach(function (x) { q[x[0]] = { Yes: 0, Planned: 0, No: 0, 'Not sure': 0, Unanswered: 0 }; });
-  MUST_HAVES.forEach(function (x) { m[x[0]] = { Yes: 0, Planned: 0, No: 0, 'Not sure': 0, Unanswered: 0 }; });
+  STEP2_QUESTIONS.forEach(function (x) { q[x[0]] = { Yes: 0, Planned: 0, No: 0, "Don't know yet": 0, Unanswered: 0 }; });
+  MUST_HAVES.forEach(function (x) { m[x[0]] = { Yes: 0, Planned: 0, No: 0, "Don't know yet": 0, Unanswered: 0 }; });
 
   order.forEach(function (id) {
     var c = checks[id];
@@ -277,6 +277,7 @@ function summarise(rows) {
   function tally(box, v) {
     var w = text(v);
     if (w.toLowerCase() === 'planned, not done yet') w = 'Planned';
+    if (w === 'Not sure' || w === 'Don’t know yet') w = "Don't know yet";
     if (ANSWER_WORDS.indexOf(w) >= 0) box[w]++;
     else box.Unanswered++;
   }
@@ -356,7 +357,7 @@ function summaryTable(s, now) {
     t.push([]);
   });
 
-  var head = ['Yes', 'Planned', 'No', 'Not sure', 'Unanswered'];
+  var head = ['Yes', 'Planned', 'No', "Don't know yet", 'Unanswered'];
   t.push(['# Step 2: the five questions (finished checks, n = ' + s.finished + ')'].concat(head));
   s.step2.forEach(function (x) {
     t.push([x.id + ' ' + x.name].concat(head.map(function (h) { return pct(x.counts[h], s.finished); })));

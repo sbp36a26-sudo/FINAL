@@ -351,7 +351,8 @@
     }
     var s = STEP_LINE[rec.step], pr = F.progress(rec.step);
     var bar = pr ? '<div class="steps3 steps5" aria-hidden="true">' + pr.map(function (c) { return '<span class="' + c + '"></span>'; }).join('') + '</div>' : '';
-    return '<div class="hdrtop"><p class="hdrline"><strong>' + esc(NAME) + '</strong> · ' + esc(s[0]) + (s[1] ? ' · ' + esc(s[1]) : '') + '</p>' +
+    var hn = rec.step === 'result' && rec.hotel && rec.hotel.name ? ' · <span id="hdr-hotel">' + esc(rec.hotel.name) + '</span>' : ''; // v2.8.2 (owner): the hotel name in the result header
+    return '<div class="hdrtop"><p class="hdrline"><strong>' + esc(NAME) + '</strong> · ' + esc(s[0]) + (s[1] ? ' · ' + esc(s[1]) : '') + hn + '</p>' +
       (rec.step === 'stop' || rec.step === 'result' ? '' : '<button type="button" class="linkbtn" data-act="new" id="new-top">Start a new check</button>') + '</div>' + bar + storeLine();
   }
   function fold(key, label, body) {
@@ -368,7 +369,7 @@
     return '<section class="sources">' + fold('src-' + step, 'Where this comes from', body) + '</section>';
   }
   /* v2.8.0: a citation of steps 1 to 3 ([text, url]) is a link that opens in a new tab, with "Copy address" */
-  function linkHtml(url) { return /^https:\/\//.test(url || '') ? ' <a class="citelink" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a> <span class="srcaddr"><button type="button" class="linkbtn copysrc" data-act="copy-src" data-url="' + esc(url) + '">Copy address</button><span class="srcurl" hidden>' + esc(url) + '</span></span>' : ''; }
+  function linkHtml(url) { return /^https:\/\//.test(url || '') ? ' <a class="citelink" href="' + esc(url) + '" target="_blank" rel="noopener" title="' + esc(url) + '">' + esc(L.shortLink(url)) + '</a>' : ''; } // v2.8.2: one short link label, the full address in the link
   function citeHtml(s) { return Array.isArray(s) ? esc(srcText(s[0])) + linkHtml(s[1]) : esc(srcText(s)); }
   function evidence(ev, share) {
     var h = '';
@@ -585,12 +586,12 @@
         '<p class="itemname" id="title-' + q.id + '">' + esc(q.title) + '</p>' +
         '<p class="qtext" id="t-' + q.id + '">' + esc(q.q) + '</p>' +
         (rec.Qnew && rec.Qnew.indexOf(q.id) >= 0 ? '<p class="oldans" id="qnew-' + q.id + '" role="note">' + esc(C.Q_NEW_LINE) + '</p>' : '') +
-        radios(q.id, C.Q_ANSWERS, rec.Q[q.id]) + (ui.missing === q.id ? '<p class="needline" role="alert">Answer this to continue (“Not sure” is fine).</p>' : '') +
+        radios(q.id, q.id === 'q1' ? C.Q1_ANSWERS : C.Q_ANSWERS, rec.Q[q.id]) + (ui.missing === q.id ? '<p class="needline" role="alert">Answer this to continue (“Don’t know yet” is fine).</p>' : '') +
         /* v2.6: the box colours follow what the answer means: for question 1 "Yes" (fixed rules) is the red box */
         fold('why-' + q.id, 'Why this matters', '<p class="whyshort" id="whyshort-' + q.id + '"><strong>' + esc(q.whyShort) + '</strong></p>' +
           '<div class="yn"><div class="yn-box ' + (q.stopOn === 'y' ? 'yn-no' : 'yn-yes') + '" id="yes-' + q.id + '"><p class="yn-head">Answer Yes if</p><p>' + esc(q.yesIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.yes) + '</p></div>' +
           '<div class="yn-box ' + (q.stopOn === 'y' ? 'yn-yes' : 'yn-no') + '" id="no-' + q.id + '"><p class="yn-head">Answer No if</p><p>' + esc(q.noIf) + '</p><p class="yn-ex"><b>Example:</b> ' + esc(q.no) + '</p></div></div>' +
-          (q.guard ? '<div class="yn-unsure"><p class="yn-head">Not sure?</p><p id="guard-' + q.id + '">' + esc(q.guard) + '</p></div>' : '') +
+          (q.guard ? '<div class="yn-unsure"><p class="yn-head">Don’t know yet?</p><p id="guard-' + q.id + '">' + esc(q.guard) + '</p></div>' : '') +
           '<p class="meta yn-more">' + esc(q.why) + '</p>') +
         '</div></div></fieldset>';
     }).join('') + '</section>';
@@ -692,7 +693,7 @@
   // ---------- result ----------
   function vResult() {
     var m = model(), ev = m.ev, u = USE[rec.use], h = '';
-    h += '<div class="printhead"><b>' + esc(NAME) + '</b>' + (m.hotel ? ' · ' + esc(m.hotel) : '') + ' · ' + esc(m.date) + '</div>';
+    h += '<p class="resulthead" id="result-hotel"><b>' + esc(m.hotel || 'Hotel not named') + '</b> · ' + esc(m.date) + '</p>'; // v2.8.2: shown on screen and on paper (no print-only text)
     /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser"; Copy summary and Print are gone. */
     var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' +

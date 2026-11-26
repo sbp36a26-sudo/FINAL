@@ -74,7 +74,7 @@ ok(lv.k === 'verdict' && lv.t === 'Not ready yet · Score: 69% of points from al
 ok(pdf.run.hotel === m.hotel && pdf.run.date === m.date && pdf.blocks.some(b => b.k === 'meta' && b.t === 'Use case: ' + m.useName), 'the use case and the date in the summary; the running header\'s hotel and date');
 ok(!/% ready/.test(t), 'the PDF never says "% ready" (v2.1)');
 ok(t.includes('Finish by 15 Jan 2027: Agree the KPI this tool must improve') && !/Partly|Doesn’t apply|does not apply/.test(t), 'planned dates are shown in the result; no Partly or Doesn\'t apply anywhere (v2.3)');
-{ const a = answersDoc(r, 'gx-2 planned'); ok(a.t.includes('Your answer: Planned (planned by 15 Jan 2027)') && a.t.includes('Your answer: No') && a.t.includes('Your answer: Not answered yet') && a.items.filter(b => b.val === 'Yes').length > 5, 'the answers document shows the planned date and every answer word'); }
+{ const a = answersDoc(r, 'gx-2 planned'); ok(a.t.includes('Your answer: Planned (planned by 15 Jan 2027)') && a.t.includes('Your answer: No') && a.t.includes('Your answer: Don’t know yet') && a.items.filter(b => b.val === 'Yes').length > 5, 'the answers document shows the planned date and every answer word'); } // v2.8.2 (owner): a stored "k" is Don’t know yet (was read as Not answered yet)
 ok(!/\b(m\d+|pe1|x-auto)\b/.test(t) && !/\b(P1|F1|T1|D5a|G2s)\b/.test(t), 'no internal ids or codes in the PDF');
 ok(!SRC_RE.test(t) && !t.includes('90 catalogue use cases coded') && !t.includes('{N}') && !C.SOURCES.q.some(x => t.includes(x[0])), 'no source line of any step in the result PDF');
 // ---------- the other two walks, and the special cases ----------
@@ -84,7 +84,7 @@ answersDoc(mk('fo-8', ['pl'], []), 'fo-8 draft');
 x = sameWords(mk('none', ['y', 'pl'], []), 'none'); ok(x.t.includes(C.MUST_ONLY) && x.t.includes('None of these fits') && !heads(x.pdf).includes('Questions for the vendor') && !heads(x.pdf).includes('EU AI Act: provisional label'), '"None of these fits": must-haves only, said so; no vendor or label section');
 { const a = answersDoc(mk('none', ['y', 'pl'], []), 'none'); ok(a.items.length === 15 && !a.pdf.blocks.some(b => b.k === 'label' && /^Step 5/.test(b.t)) && a.t.includes('Use case: None of these fits'), '"None of these fits": 5 + 10 answers, no step 5 group'); }
 x = sameWords(mk('lg-4', [], []), 'lg-4'); ok(!heads(x.pdf).includes('EU AI Act: provisional label'), 'lg-4: no label section');
-x = sameWords(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Not sure (To find out)', 'No (Not met)', 'No (Not met)', 'No (Not met)', 'No (Not met)']), 'the five step 2 answers as given, with the condition (v2.8.0 B5): Not sure, No x4'); }
+x = sameWords(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried conditions'); { const a = answersDoc(mk('fo-4', [], [], { Q: { q1: 'u', q2: 'n', q3: 'n', q4: 'n', q5: 'n' } }), 'carried'); ok(eq(a.items.slice(0, 5).map(b => b.val), ['Don’t know yet (To find out)', 'No (Not met)', 'No (Not met)', 'No (Not met)', 'No (Not met)']), 'the five step 2 answers as given, with the condition (v2.8.0 B5): Don’t know yet, No x4'); } // v2.8.2 (owner): Not sure renamed Don’t know yet
 { /* answers saved before v2.3 (Partly, Doesn't apply) are no longer offered: "Not answered" */
   const o = mk('fo-4', [], []); o.A.m2 = 'p'; o.T[TQ.uses['fo-4'].qs[0].id] = 'na'; const a = answersDoc(o, 'retired answers'), im = a.m.ev.items;
   ok(im.filter(i => i.old).length === 2 && a.items.filter(b => b.val === 'Not answered').length >= 2 && !/earlier answer/.test(a.t), 'retired answers (Partly, Doesn\'t apply) read "Not answered"'); }
@@ -100,8 +100,9 @@ ok(n === 220, '220 answer sets (every use case at least once, both documents) ch
 // ---------- the stop version ----------
 r = finished(F, D, '', { Q: { q1: 'y', q3: 'u' }, A: {}, step: 'stop' }); pdf = P.model(r, env); t = all(pdf); // v2.6: Q1 Yes stops
 ok(pdf.stop && eq(heads(pdf), ['This is not suitable for AI.']) && !SRC_RE.test(t) && pdf.blocks.every(b => b.k !== 'src') && eq(P.model(r, env, 'answers').blocks, pdf.blocks) && t.includes(C.STOP.why) && t.includes(C.STOP.instead) && t.includes(C.STOP.unsure) && t.includes('Because you answered Yes to: “' + C.QUESTIONS[0].q + '”') && C.QUESTIONS[0].q === 'Can each case be fixed with an “if this, then that” rule?', 'stop PDF (no sources; the same for either kind): the heading, why, instead, the "Not sure" line, the because line');
-ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Not sure', 'Your answer: Not answered', 'Your answer: Not answered']) && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Can AI solve your problems? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
-let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); ok(d.r.pages === 1 && d.r.footers[0] === C.DISCLAIMER + ' · page 1 of 1', 'stop PDF: one page, the disclaimer in the footer (v2.7.0)');
+ok(eq(pdf.blocks.filter(b => b.k === 'q').map(b => b.a), ['Your answer: Yes', 'Your answer: Not answered', 'Your answer: Don’t know yet', 'Your answer: Not answered', 'Your answer: Not answered']) /* v2.8.2 (owner): Not sure renamed */ && !/% ready|Must-haves|[Ss]core/.test(t) && pdf.blocks[0].t === 'Can AI solve your problems? Not suitable for AI', 'stop PDF: the five answers, no score, and a title without "score" (v2.1, audit L7)');
+let d = drawn(pdf); noOverflow(d.log, 'stop'); layout(pdf, d, 'stop'); // v2.8.2 (owner): the footer is "page n of m" only; the disclaimer is the last block
+ok(d.r.pages === 1 && d.r.footers[0] === 'page 1 of 1' && pdf.blocks[pdf.blocks.length - 1].t === C.DISCLAIMER, 'stop PDF: one page, footer "page 1 of 1", the disclaimer as the last block');
 
 // ---------- drawing ----------
 /* PDF redesign: margins 20 mm; the body between the running header (y < 16) and the footer (y > 297 - 16). */
@@ -111,8 +112,8 @@ function layout(mdl, d, tag) {
   const N = d.r.pages, byPage = p => d.log.filter(l => l.page === p);
   ok(d.log.filter(body).every(l => l.y <= PG.BOT + 0.5), tag + ': no body line below the bottom margin');
   let feet = 0, heads = 0;
-  for (let p = 1; p <= N; p++) { const ls = byPage(p).map(l => l.line); if (ls.includes(P.FOOT_L) && ls.includes('page ' + p + ' of ' + N)) feet++; if (p > 1 && ls.some(l => l.startsWith('Can AI solve your problems? · ') && byPage(p).find(x => x.line === l).y < 15)) heads++; }
-  ok(feet === N, tag + ': the footer (prototype line, "page n of N") on every page (' + feet + ' of ' + N + ')');
+  for (let p = 1; p <= N; p++) { const ls = byPage(p).map(l => l.line); if (P.FOOT_L === '' && ls.includes('page ' + p + ' of ' + N)) feet++; /* v2.8.2 (owner): no prototype/disclaimer line in the footer, the page number only */ if (p > 1 && ls.some(l => l.startsWith('Can AI solve your problems? · ') && byPage(p).find(x => x.line === l).y < 15)) heads++; }
+  ok(feet === N, tag + ': the footer ("page n of N" only, v2.8.2) on every page (' + feet + ' of ' + N + ')');
   ok(heads === N - 1, tag + ': the running header (tool, hotel, date) on every page after the first');
   /* no heading, sub-heading or table head as the last line of a page */
   const hd = mdl.blocks.filter(b => P.sticky(b)).map(b => P.safe(b.t)).concat(['Question']);
