@@ -185,9 +185,9 @@ ok(m.method.filter(t => /^(Must-haves|People|Skills|Financial investment|Technol
 // v2.5 (audit v3): Copy summary and summaryText are gone; the PDF carries the same words in the same order
 const pb = P.model(r, env).blocks, pi = pb.findIndex(b => b.t === m.levelName + ' · ' + m.scoreHead);
 ok(pi > 0 && pb[pi + 1].t === m.reason && pb[pi + 2].t === m.scoreSub && pb.some(b => b.k === 'h' && b.t === 'Action plan by person') && pb.some(b => /as of 25 Nov 2026/.test(b.t || '')), 'the PDF carries the verdict with the score beside it, the reason, the points, and the plan');
-ok(L.personText(m, m.people[0], '').startsWith('Do you need AI? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
+ok(L.personText(m, m.people[0], '').startsWith('Can AI solve your problems? (Hotel Test)\nFor: ' + m.people[0].name), 'copy-per-person text names the person');
 // v2.7.0: no draft marks (the questions-only data replaces the draft rows); the why-fold is the data's own "why", area and who answers
-ok(!Object.values(TQ.uses).some(u => 'draft' in u) && !L.resultModel(mk('fo-8', [], []), env).draft, 'no draft marks');
+ok(!Object.values(TQ.uses).some(u => 'draft' in u) && !('draft' in L.resultModel(mk('fo-8', [], []), env)), 'no draft marks (v2.8.1: the field is gone, inventory D4)');
 Object.keys(TQ.uses).forEach(id => TQ.uses[id].qs.forEach(q => {
   const w = L.tailWhy(TQ, id, q);
   ok(eq(w, [q.why, 'Area: ' + TQ.areas[q.a] + '.', 'Who answers: ' + q.whoLabel + '.']), q.id + ': why-fold is the data\'s why line, area and who answers');

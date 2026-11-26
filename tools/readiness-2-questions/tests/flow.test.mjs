@@ -127,12 +127,8 @@ ok(pr.step === 'where' && pr.use === 'hr-2' && F.flowNext('where', 'next', F.ctx
 // shared hotel profile
 r = F.reduce(F.blankStore(), 'profile', { name: 'Hotel Meridian', country: 'France', type: 'group' }, env); ok(r.ok && eq(F.cur(r.store).hotel, { name: 'Hotel Meridian', role: '', type: 'group', country: 'France' }), 'profile fills empty hotel fields');
 ok(!F.reduce(s, 'profile', { name: 'Other', country: 'France', type: 'group' }, env).ok, 'profile never overwrites what is there');
-// share fields
-r = F.reduce(s, 'share', { named: true }, env); ok(r.ok && F.cur(r.store).share.named === true, 'share: the name tick is kept');
-r = F.reduce(s, 'shared', { at: '2026-11-24T10:00:00Z', mode: 'shared', sig: F.shareSig(F.cur(s)) }, env); ok(F.shareSettled(F.cur(r.store)) === 'shared' && !F.shareStale(F.cur(r.store)), 'shared: settled, not stale');
-ok(F.shareStale(F.cur(drive(r.store, [['back'], ['answer', { id: tids[1], value: 'n' }]]).store)), 'an answer changed after sharing → the copy is out of date');
-ok(F.shareSettled(F.cur(F.reduce(r.store, 'unshared', null, env).store)) === 'idle', 'unshared → idle');
-ok(F.shareNext('idle', 'share') === 'sending' && F.shareNext('shared', 'withdraw') === 'withdrawing' && F.shareNext('idle', 'withdraw') === null && F.shareNext('sending', 'share') === null && F.shareNext('withdrawing', 'withdraw') === null, 'SHARE machine: one send or withdrawal at a time');
+// v2.8.1 (inventory D3): no share machine and no share events
+ok(['share', 'shared', 'unshared'].every(e => !F.reduce(s, e, { named: true, at: '2026-11-24T10:00:00Z' }, env).ok) && !('shareSig' in F) && !('SHARE' in F) && !('share' in F.cur(s)) && !('sharedAt' in F.cur(s)), 'no share events, fields or machine');
 
 // ---------- saved data: v2 round trip, junk, newer ----------
 const raw = JSON.parse(JSON.stringify(s)); let info = {};
@@ -178,13 +174,13 @@ ok(!F.reduce(s, 'import', { id: '!!' }, env).ok && !F.reduce(s, 'import', null, 
 r = F.reduce(s3, 'import', { ...fileRec, id: 'fromfile1' }, env); ok(r.ok && r.store.checks[idA] && r.store.checks.fromfile1 && r.store.cur === 'fromfile1', 'import with another id: added next to the saved checks');
 
 // ---------- page-only machines ----------
-let c = F.confirmNext(null, 'ask', 'remove', 'a1'); ok(eq(c.c, { kind: 'remove', id: 'a1' }) && !c.fire, 'confirm: ask');
+let c = F.confirmNext(null, 'ask', 'remove', 'a1'); ok(eq(c.c, { kind: 'remove', id: 'a1', from: '' }) && !c.fire, 'confirm: ask');
 ok(F.confirmNext(c.c, 'yes', 'remove', 'a1').fire && !F.confirmNext(c.c, 'yes', 'remove', 'b2').fire && !F.confirmNext(c.c, 'yes', 'file').fire && !F.confirmNext(null, 'yes', 'remove', 'a1').fire, 'confirm: yes fires once, only for what was asked');
 ok(F.confirmNext(c.c, 'no').c === null && F.confirmNext(c.c, 'nav').c === null && eq(F.confirmNext(c.c, 'other').c, c.c), 'confirm: no and navigation close it');
-ok(F.bridgeNext('pending', 'yes') === 'yes' && F.bridgeNext('pending', 'timeout') === 'no' && F.bridgeNext('none', 'yes') === 'none' && F.bridgeNext('yes', 'no') === 'yes', 'BRIDGE: only pending moves');
-ok(['making', 'waiting', 'saving'].every(s => F.dlNext(s, 'start', 'yes') === null) && F.dlNext('idle', 'start') === 'making' && F.dlNext('making', 'start') === null && F.dlNext('making', 'made', 'pending') === 'waiting' && F.dlNext('making', 'made', 'yes') === 'saving' && F.dlNext('waiting', 'bridge', 'pending') === null && F.dlNext('waiting', 'bridge', 'no') === 'saving' && F.dlNext('saving', 'done') === 'idle' && F.dlNext('saving', 'start') === null, 'DOWNLOAD: one at a time');
+ok(!('bridgeNext' in F) && !('BRIDGE' in F) && eq(Object.keys(F.DL), ['idle', 'making', 'saving']), 'v2.8.1 (inventory D2): no BRIDGE machine, no waiting state');
+ok(['making', 'saving'].every(s => F.dlNext(s, 'start') === null) && F.dlNext('idle', 'start') === 'making' && F.dlNext('making', 'made') === 'saving' && F.dlNext('making', 'fail') === 'idle' && F.dlNext('saving', 'done') === 'idle' && F.dlNext('saving', 'fail') === 'idle' && F.dlNext('saving', 'timeout') === 'idle' && F.dlNext('idle', 'timeout') === null && F.dlNext('saving', 'bridge') === null, 'DOWNLOAD: one at a time; timeout ends a save (inventory H1)');
 ok(F.histAction('next', { d: 0 }, 'q', 1) === 'push' && F.histAction('back', { d: 2, prev: 'q', len: 5 }, 'q', 5) === 'back' && F.histAction('back', { d: 2, prev: 'q', len: 5 }, 'q', 6) === 'replace' && F.histAction('back', { d: 0, prev: null, len: 5 }, 'q', 5) === 'replace', 'HISTORY: forward pushes; Back goes back only onto the step below');
 ['new', 'open', 'remove', 'import', 'preselect'].forEach(e => ok(F.histAction(e, { d: 3, prev: 'q', len: 2 }, 'start', 2) === 'replace', 'HISTORY: "' + e + '" replaces'));
-ok(eq(F.histEntry('push', { d: 1 }, 'must', 'q', 'a1'), { r2: 'must', d: 2, prev: 'q', id: 'a1' }) && eq(F.histRead({ r2: 'must', d: 2, prev: 'q', id: 'a1' }), { ours: true, step: 'must', d: 2, prev: 'q', id: 'a1' }) && !F.histRead(null).ours && !F.histRead({ hubTool: 'x' }).ours && !F.histRead({ r2: 'needs' }).ours, 'HISTORY entries; an old v1 entry ("needs") is not read as a step');
+ok(eq(F.histEntry('push', { d: 1 }, 'must', 'q', 'a1'), { r2: 'must', d: 2, prev: 'q', id: 'a1' }) && eq(F.histRead({ r2: 'must', d: 2, prev: 'q', id: 'a1' }), { ours: true, step: 'must', d: 2, prev: 'q', id: 'a1', print: false }) && !F.histRead(null).ours && !F.histRead({ hubTool: 'x' }).ours && !F.histRead({ r2: 'needs' }).ours, 'HISTORY entries; an old v1 entry ("needs") is not read as a step');
 ok(eq(F.progress('must'), ['done', 'done', 'now', '', '']) && eq(F.progress('result'), ['done', 'done', 'done', 'done', 'done']) && F.progress('start') === null && F.progress('stop') === null, 'progress bar: five steps');
 done();

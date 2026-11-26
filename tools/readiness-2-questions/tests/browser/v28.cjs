@@ -8,10 +8,11 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8891/';
-const URL0 = BASE + 'readiness-2-questions/index.html';
+const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html'); // v2.8.1: R2_PAGE=public/index.html runs the public build
 const ROOT = path.join(__dirname, '..', '..');
 const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens', 'v28');
-fs.mkdirSync(SHOTS, { recursive: true });
+const SHOOT = process.env.SHOTS === '1'; // v2.8.1 (inventory S4): screenshots only with SHOTS=1, so a test run changes no tracked file
+if (SHOOT) fs.mkdirSync(SHOTS, { recursive: true });
 const Q = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'usecase_questions_only.json'), 'utf8'));
 const QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u]));
 const DISCLAIMER = Q.fixed_texts.disclaimer, FLAG = Q.fixed_texts.sensitive_flag, HOLD = Q.fixed_texts.sensitive_hold_reason;
@@ -34,7 +35,7 @@ async function mk(b, vp, init) {
 }
 const st = p => p.evaluate(() => window.Readiness2.state());
 const noHScroll = p => p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
-const shot = async (p, name, full) => { await p.waitForTimeout(500); return p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: !!full }); };
+const shot = async (p, name, full) => { if (!SHOOT) return; await p.waitForTimeout(500); return p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: !!full }); };
 async function click(p, sel) { await p.locator(sel).first().scrollIntoViewIfNeeded(); await p.locator(sel).first().click(); }
 async function answer(p, id, v) { await click(p, 'label[for="a-' + id + '-' + v + '"]'); }
 /* the tool's own text on screen: open parts only, the source entries ([data-sources]) left out (owner decision 2) */
@@ -85,7 +86,7 @@ async function run(p, vp, use, o, tag) {
     {
       const { ctx, p } = await mk(b, vp); const tag = vn + ' hr-1';
       await scan(p, tag + ' cover');
-      ok((await p.textContent('#foot-version')).includes('Version v2.8 (rules unchanged since v2.6).'), tag + ': the footer shows the version');
+      ok((await p.textContent('#foot-version')).includes('Version v2.8.1 (rules unchanged since v2.6).'), tag + ': the footer shows the version');
       const s = await run(p, vp, 'hr-1', { name: 'Hotel Alpha' }, tag);
       ok(s.step === 'result' && s.level === 'almost' && s.pct === 100 && JSON.stringify(s.held) === '["sensitive"]', tag + ': all Yes → Almost ready at 100%, held (sensitive)');
       const t = await toolText(p, '#view');
@@ -156,7 +157,7 @@ async function run(p, vp, use, o, tag) {
       await scan(p, tag); await hscroll(p, vp, tag);
       await shot(p, 'stop-' + vn);
       await p.goto(URL0); await p.waitForSelector('#stopcard'); await p.evaluate(() => window.Readiness2.send('new', { same: false })); await p.waitForSelector('#mychecks');
-      ok((await p.textContent('#mychecks')).includes('Hotel Gamma · Stopped at step 2: not suitable for AI · '), tag + ': the saved check is named "Stopped at step 2: not suitable for AI"');
+      { const mc = await p.textContent('#mychecks'); ok(mc.includes('Hotel Gamma · Not suitable for AI · ') && (mc.match(/Stopped at step 2/g) || []).length === 1, tag + ': the saved check is named "Not suitable for AI", its status "Stopped at step 2" (v2.8.1, inventory L8)'); }
       await ctx.close();
     }
     // ---------- Copy and Print fallbacks; Start a new check (same hotel); 3 checks survive a reload ----------
@@ -168,7 +169,7 @@ async function run(p, vp, use, o, tag) {
       ok(plan.startsWith('Can AI solve your problems? · ') && plan.includes(DISCLAIMER) && !DONTKNOW.test(plan) && bannedHits(plan).length === 0, tag + ': Copy plan puts the plan text on the clipboard');
       await click(p, '#copy-saved'); await p.waitForFunction(() => window.__clip.length === 2);
       const saved = JSON.parse(await p.evaluate(() => window.__clip[1]));
-      ok(saved.kind === 'hftp-do-you-need-ai' && saved.version === '2.8.0' && saved.check.use === 'fo-4', tag + ': Copy saved check puts the check (JSON, version 2.8.0) on the clipboard');
+      ok(saved.kind === 'hftp-do-you-need-ai' && saved.version === '2.8.1' && saved.check.use === 'fo-4', tag + ': Copy saved check puts the check (JSON, version 2.8.0) on the clipboard');
       await click(p, '#print-open'); await p.waitForSelector('#printbar');
       ok(await p.evaluate(() => document.getElementById('app').classList.contains('printview')) && !(await p.locator('#actions').isVisible()) && await p.evaluate(() => document.querySelector('#answers').open && document.querySelector('#how').open), tag + ': Open printable page: the print view (actions hidden, every fold open)');
       ok((await p.textContent('#printbar')).includes('press Ctrl+P (Cmd+P on a Mac)'), tag + ': it tells the person to press Ctrl+P');

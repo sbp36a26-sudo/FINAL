@@ -1,28 +1,39 @@
-/* Do you need AI? v2.7.0 (questions-only, standalone; folder, tool id and storage key: readiness-2-questions, hftp-readiness2q-v1): the page.
-   State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content).
-   This file only draws the current state and turns clicks into send(event).
+/* "Can AI solve your problems?" v2.8.1 (standalone; folder, tool id and storage key: readiness-2-questions, hftp-readiness2q-v1): the page.
+   State machines and the store live in src/flow.js (R2Flow), rules in src/logic.js (R2Logic), words in src/content.js (R2Content),
+   the public build's data notice and sending in src/collect.js (R2Collect). This file only draws the current state and turns clicks
+   into send(event).
+   Two builds (build.mjs): index.html, the claude.ai artifact (window.storage and the downloads capability when the viewer offers
+   them; nothing is sent anywhere), and public/index.html (--public: window.R2_PUBLIC = { collectUrl, contact }; localStorage, else
+   this page's memory; ordinary browser downloads; the answers are sent to the project team unless the person ticks "Don't send
+   my answers").
    store = everything saved (localStorage['hftp-readiness2q-v1'], version 4): the checks of this browser and which one is open.
    rec   = the open check (F.cur(store)).
    ui    = what is on screen now, never saved:
-     confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id } | { kind: 'file' }
+     confirm  CONFIRM machine (F.confirmNext): null | { kind: 'remove', id, from } | { kind: 'file', from } | { kind: 'new', from }
+              (from: the control that opened it; focus goes back there on Cancel / Keep, inventory L4)
      missing  after a refused "Next": the id of the first unanswered question ('type' on step 1, 'where' on step 4), outlined; else null
-     copy     COPY BOX (clipboard fallback): null | { from: 'who:<role key>' | 'vendor' | 'dl' | 'file', text }; drawn next to the button
-              that opened it; cleared by the next copy or any step change
+     copy     COPY BOX (clipboard refused): null | { from: 'who:<role key>' | 'vendor' | 'plan' | 'saved', text }; drawn next to the
+              button that opened it; cleared by the next copy or any step change
      layer    DETAIL layer: null | { use, from (opener id), step, check }, drawn in this page's own dialog. Closed by Close, Esc, a click
               outside the drawer, and by any step or check change. #app[data-layer] holds the open use id.
      open     which folded explanations are open (kept across re-renders)
-     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'saving'; dlKind: 'pdf' | 'answers' | 'file' | null (which one)
-     file     a check read from a file that is waiting for the "replace?" answer; else null. fileInfo / fileOlder: what that file's
-              check lost or carried on the way in, said once it opens
+     dl       DOWNLOAD machine (F.dlNext): 'idle' | 'making' | 'saving'; dlKind: 'pdf' | 'answers' | 'file' | null (which one);
+              dlBlocked: the last download failed or was blocked (cleared when the next one starts, inventory L1)
+     print    the printable page (result or stop only); it has its own Back/forward entry (inventory L7)
+     file     a check read from a file that is waiting for the "replace?" answer; else null. fileInfo / fileOlder / fileGone: what
+              that file's check lost or carried on the way in, said once it opens
      notice   'useChanged' (shown on step 4) | 'questionsChanged' (shown on step 5) | null
-     older    { kept, fresh } after opening a check made with the older (v2.6.1) question list; said in the header until step 5 is left
+     older    { kept, fresh } after opening a check made with an older question list; said in the header until step 5 is left
+     gone     a check's use case was taken off the list (lg-2): said once
      elsewhere  TABS (F.mergeTabs): null | 'changed' | 'removed': another tab of this browser changed or removed the open check
      fileNote 'old' after a file from the earlier Readiness check was chosen; else null
      corrupt  true when the saved store could not be read (set aside under F.CORRUPT_KEY), until the line is read
-   storage    'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown, never written over)
+   storage    STORAGE machine (F.storageNext): 'ok' | 'blocked' (nothing can be kept) | 'newer' (saved by a newer version: shown,
+              never written over)
    hist       HISTORY machine (F.histAction): { d, prev, len } of the current Back/forward entry
-   Downloads: in the claude.ai viewer through the artifact downloads capability (claude.use('downloads').save); with no capability
-   a Copy fallback (plan text, or the saved check as JSON); in a plain browser tab a blob link. No hub, no sharing (v2.7.0). */
+   Downloads: on the claude.ai build, whenever window.claude exists, through the artifact downloads capability
+   (claude.use('downloads').save); when that gives nothing, fails or never answers (60 s), a line says so and Copy / Print sit right
+   there. In any other tab (and always on the public build) a plain blob link. */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -48,8 +59,11 @@
      localStorage (inside try/catch), then only this page's memory, with the "Use Save as file" line on every screen (storage 'blocked').
      window.storage is not promised by the viewer, so it is only used when present (async get/set); localStorage is read first because
      it answers at once, and window.storage fills in when localStorage holds nothing. A check is never removed automatically. */
-  var WS = (function () { try { var w = window.storage; return w && typeof w.get === 'function' && typeof w.set === 'function' ? w : null; } catch (e) { return null; } })();
-  var storage = 'ok', loadInfo = {}, corrupt = false;
+  /* v2.8.1 (council BUILD NOW 3): the public build never uses window.storage (answers are only in localStorage or this page's memory). */
+  var PUB = window.R2_PUBLIC && typeof window.R2_PUBLIC === 'object' ? window.R2_PUBLIC : null;
+  var WS = PUB ? null : (function () { try { var w = window.storage; return w && typeof w.get === 'function' && typeof w.set === 'function' ? w : null; } catch (e) { return null; } })();
+  var storage = 'ok', lsBlocked = false, loadInfo = {}, corrupt = false;
+  var wsBase = null, wsChain = Promise.resolve(); // M3: what this tab last read from or wrote to window.storage (F.mergeWS)
   /* TABS (audit M3): which check is open belongs to the tab (sessionStorage), not to the shared store, so two tabs can hold two checks. */
   function tabCur() { try { return sessionStorage.getItem(F.CUR_KEY) || ''; } catch (e) { return ''; } }
   function setTabCur() { try { sessionStorage.setItem(F.CUR_KEY, store.cur); } catch (e) { /* blocked */ } }
@@ -67,25 +81,46 @@
        written back there or removed. Its open check's step-5 answers are carried by carry_answer_from (R2Flow.cleanRec). */
     if (!x) { x = readStore(tabCur(), F.OLD_KEY); if (x && x.store) x.info.fromOldKey = true; }
     if (!x) return null;
-    if (x.blocked) { storage = 'blocked'; return null; }
+    if (x.blocked) { lsBlocked = true; return null; }
     if (x.corrupt != null && x.info && x.info.fromOldKey) return null; // an unreadable old store is left alone
     if (x.corrupt != null) { // audit L12: say so and set the unreadable text aside before the first save replaces it
       corrupt = true; try { localStorage.setItem(F.CORRUPT_KEY, x.corrupt); } catch (e) { /* blocked */ }
       return null;
     }
     loadInfo = x.info;
-    if (x.info.newer) storage = 'newer';
     return x.store; // v2.8.0 (B7): nothing is dropped on load
   }
+  /* STORAGE machine: every change of `storage` goes through here (inventory item 3). */
+  function storageEv(ev, draw) { var to = F.storageNext(storage, ev); if (to === storage) return; storage = to; if (draw) render(); }
+  /* v2.8.1 (inventory L6): the store is written as it is; reduce() dates a check when its answers change. */
   function save() {
     setTabCur();
     if (storage === 'newer') return;
-    var s = JSON.parse(JSON.stringify(store)); s.checks[s.cur].updated = new Date().toISOString(); store.checks[store.cur].updated = s.checks[s.cur].updated;
-    var json = JSON.stringify(s), lsOk = false;
-    try { localStorage.setItem(F.KEY, json); lsOk = true; } catch (e) { /* blocked */ }
-    if (WS) { try { Promise.resolve(WS.set(F.KEY, json)).then(null, function () { if (!lsOk && storage === 'ok') { storage = 'blocked'; render(); } }); } catch (e) { if (!lsOk) storage = 'blocked'; } }
-    storage = lsOk || WS ? 'ok' : 'blocked';
+    var lsOk = false;
+    if (!lsBlocked) { try { localStorage.setItem(F.KEY, JSON.stringify(store)); lsOk = true; } catch (e) { /* blocked or full */ } }
+    if (lsOk) storageEv('saved');
+    else if (!WS) storageEv('failed');
+    if (WS) wsSave(lsOk);
     writeProfile();
+  }
+  /* window.storage (claude.ai build): read, merge with what another tab wrote (F.mergeWS), then write; one at a time (inventory M3).
+     A newer store found there is never written over (M2). When localStorage did not take the save, the result of this write decides
+     'ok' or 'blocked' (L3: no flicker between the two). */
+  function wsRead(v) {
+    var t = v && typeof v === 'object' && 'value' in v ? v.value : v; if (typeof t !== 'string' || !t) return null;
+    var raw; try { raw = JSON.parse(t); } catch (e) { return null; }
+    var info = { keep: store.cur }, m = F.migrate(raw, ENV, info); return m ? { store: m, info: info } : null;
+  }
+  function wsSave(lsOk) {
+    wsChain = wsChain.then(function () {
+      return Promise.resolve(WS.get(F.KEY)).then(wsRead, function () { return null; }).then(function (x) {
+        if (storage === 'newer') return;
+        if (x && x.info.newer) { storageEv('newer', true); return; }
+        if (x) { var m = F.mergeWS(store, x.store, wsBase); if (m.changed) { store = m.store; rec = F.cur(store); render(); } }
+        var json = JSON.stringify(store), b = F.baseOf(store);
+        return Promise.resolve(WS.set(F.KEY, json)).then(function () { wsBase = b; if (!lsOk) storageEv('saved', true); }, function () { if (!lsOk) storageEv('failed', true); });
+      });
+    }).then(null, function () { if (!lsOk) storageEv('failed', true); });
   }
   /* Shared hotel profile (key hftp-hotel-profile-v1), read and written exactly as the readiness check does:
      empty fields of a check are filled from it; name, country (as a code) and type are written back. */
@@ -114,16 +149,19 @@
 
   var store = load() || F.blankStore();
   var rec = F.cur(store);
+  storage = F.storageStart(lsBlocked, !!WS, !!loadInfo.newer); // inventory L3: with window.storage, a blocked localStorage is not "nothing is kept"
   /* v2.8.0 (B7): localStorage held nothing (or is blocked): take what window.storage holds, once, if the person has not started yet. */
   function fromWindowStorage() {
     if (!WS || storage === 'newer' || F.listed(rec)) return;
     try {
       Promise.resolve(WS.get(F.KEY)).then(function (v) {
-        var t = v && typeof v === 'object' && 'value' in v ? v.value : v; if (typeof t !== 'string' || !t || F.listed(rec)) return;
+        if (F.listed(rec)) return;
+        var t = v && typeof v === 'object' && 'value' in v ? v.value : v; if (typeof t !== 'string' || !t) return;
         var raw; try { raw = JSON.parse(t); } catch (e) { return; }
         var info = { keep: tabCur() }, m = F.migrate(raw, ENV, info); if (!m) return;
-        store = m; rec = F.cur(store); loadInfo = info; ui.older = olderOf(info); ui.gone = !!info.removedUse; ui.notice = noticeOf(info); storage = 'ok';
-        histAssert(); render();
+        store = m; rec = F.cur(store); loadInfo = info; ui.older = olderOf(info); ui.gone = !!info.removedUse; ui.notice = noticeOf(info);
+        if (info.newer) storageEv('newer'); else { wsBase = F.baseOf(store); storageEv('saved'); } // inventory M2: never 'ok' over a newer store
+        histAssert(); takeSnap(); if (rec.step === 'result') save(); render();
       }, function () {});
     } catch (e) { /* not available */ }
   }
@@ -178,15 +216,28 @@
   function send(ev, arg, opt) {
     var prev = rec.step, prevId = rec.id, c, r;
     /* v2.8.0 (B6): "Start a new check" asks "same hotel or a different hotel?" when step 1 holds anything */
-    if (ev === 'new' && arg == null && (rec.hotel.name || rec.hotel.type)) { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'new').c; render(); var ns = $('new-same'); if (ns) { ns.scrollIntoView({ block: 'center' }); ns.focus(); } return true; }
+    if (ev === 'new' && arg == null && (rec.hotel.name || rec.hotel.type)) { ui.confirm = F.confirmNext(ui.confirm, 'ask', 'new', '', opener).c; render(); var ns = $('new-same'); if (ns) { ns.scrollIntoView({ block: 'center' }); ns.focus(); } return true; }
     if (ev === 'new-same' || ev === 'new-other') {
       c = F.confirmNext(ui.confirm, 'yes', 'new'); ui.confirm = c.c; if (!c.fire) { render(); return false; }
-      return send('new', { same: ev === 'new-same' }, { noProfile: ev === 'new-other' });
+      return send('new', { same: ev === 'new-same' }); // "A different hotel": the record carries noProfile (inventory M1)
     }
-    if (ev === 'print') { ui.print = true; render(); window.scrollTo(0, 0); return true; } // v2.8.0 (B1): the printable page
-    if (ev === 'print-off') { ui.print = false; render(); return true; }
-    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg); ui.confirm = c.c; render(); var y = $('rm-yes'); if (y) y.focus(); return true; }
-    if (ev === 'confirm-no') { ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; render(); return true; }
+    /* v2.8.0 (B1): the printable page. v2.8.1 (inventory L7): it has its own Back/forward entry, so browser Back closes it. */
+    if (ev === 'print') {
+      if (ui.print || (rec.step !== 'result' && rec.step !== 'stop')) return false;
+      ui.print = true; histWrite('push', { r2: rec.step, d: hist.d + 1, prev: rec.step, id: rec.id, print: 1 }); render(); window.scrollTo(0, 0); return true;
+    }
+    if (ev === 'print-off') {
+      if (!ui.print) return false;
+      var hs = F.histRead(history.state); ui.print = false;
+      if (hs.ours && hs.print) { try { history.back(); } catch (e) { /* sandboxed */ } } // the popstate that follows finds the view closed
+      render(); return true;
+    }
+    if (ev === 'remove') { c = F.confirmNext(ui.confirm, 'ask', 'remove', arg, 'rm-' + arg); ui.confirm = c.c; render(); var y = $('rm-yes'); if (y) y.focus(); return true; }
+    if (ev === 'confirm-no') {
+      var back = ui.confirm && ui.confirm.from; ui.confirm = F.confirmNext(ui.confirm, 'no').c; ui.file = null; ui.fileInfo = null; ui.fileOlder = null; render();
+      var bk = back && $(back); if (bk) bk.focus({ preventScroll: true }); // inventory L4: focus goes back to the control that asked
+      return true;
+    }
     if (ev === 'remove-yes') {
       c = F.confirmNext(ui.confirm, 'yes', 'remove', arg); ui.confirm = c.c;
       if (!c.fire) { render(); return false; }
@@ -221,7 +272,7 @@
     if (!r.ok) { if (r.full) toast(C.TOO_MANY); return false; }
     apply(r);
     if (STORE_EV[ev]) {
-      if (!(opt && opt.noProfile)) adoptProfile(); ui.open = {}; ui.print = false; ui.dlBlocked = false; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.gone = ev === 'import' && !!(opt && opt.gone); ui.elsewhere = null; ui.fileNote = null;
+      adoptProfile(); ui.open = {}; ui.print = false; ui.dlBlocked = false; ui.notice = ev === 'import' && opt && opt.notice ? opt.notice : null; ui.older = ev === 'import' && opt && opt.older ? opt.older : null; ui.olderShown = false; ui.gone = ev === 'import' && !!(opt && opt.gone); ui.elsewhere = null; ui.fileNote = null;
       if (ev === 'import') toast('Check opened from the file.');
       afterMove(prev, ev, true); return true;
     }
@@ -245,6 +296,11 @@
     if (ev && (rec.step !== prev || force)) histMove(ev, prev);
     takeSnap();
     save(); render();
+    /* public build: a step left with Next is done; arriving at the result or the stop screen is the result */
+    if (ev === 'next' && rec.step !== prev && F.STEPS.indexOf(prev) >= 0) {
+      if (prev !== 'start') collect('step_done', prev);
+      if (rec.step === 'result' || rec.step === 'stop') collect('result', rec.step);
+    }
     if (rec.step !== prev || force) { window.scrollTo(0, 0); $('view').focus({ preventScroll: true }); }
     if (rec.step !== prev) arrive();
   }
@@ -273,7 +329,9 @@
     where: ['Step 4 of 5', 'Where in the hotel?'], tailored: ['Step 5 of 5', 'Questions for this use case'], result: ['Result', ''] };
   function storeLine() {
     var h = '';
-    if (storage === 'blocked') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NOT_SAVED) + '</p>';
+    /* v2.8.1 (council BUILD NOW 2): the banner holds the Copy saved check button it names, on every screen */
+    if (storage === 'blocked') h += '<div class="savewarn notsaved" id="not-saved-box"><p id="not-saved" role="status">' + esc(PUB ? C.PUB.NOT_SAVED : C.NOT_SAVED) + '</p>' +
+      '<div class="btnrow"><button type="button" class="btn small" data-act="copy-saved" id="copy-saved">Copy saved check</button></div>' + copyBox('saved') + '</div>';
     if (storage === 'newer') h += '<p class="savewarn" id="not-saved" role="status">' + esc(C.NEWER) + '</p>';
     if (store.notice === 'v1') h += '<p class="savewarn" id="from-v1" role="status">' + esc(C.FROM_V1) + ' <button type="button" class="linkbtn" data-act="seen" id="seen">OK</button></p>';
     if (ui.confirm && ui.confirm.kind === 'new') h += '<div class="confirmline" data-confirm="new" role="group" aria-label="Start a new check"><p><strong>' + esc(C.NEW_ASK.replace('{name}', rec.hotel.name || 'no name given')) + '</strong></p>' +
@@ -363,17 +421,33 @@
   var LV_CLASS = { ready: 'v-go', almost: 'v-hold', notready: 'v-stop', noinfo: 'v-open' };
 
   // ---------- "Your checks in this browser" and files ----------
-  /* v2.8.0 (B7): "<hotel> · <use case> · <date>"; a step-2 stop "Stopped at step 2: not suitable for AI"; unfinished "Not finished: step N". */
+  /* v2.8.0 (B7): "<hotel> · <use case> · <date>"; unfinished "Not finished: step N".
+     v2.8.1: a Q1 Yes reads "Not suitable for AI" in the name, and "Stopped at step 2" only once the stop screen was reached
+     (inventory L8). Two listed checks with the same name get the time of their last change, then a number (inventory L9). */
   var STEP_NO = { start: 0, hotel: 1, q: 2, must: 3, where: 4, tailored: 5 };
   function checkLine(r) {
     var v = L.verdict(r.Q), u = USE[r.use], date = r.updated ? L.fmtDate(r.updated) : L.fmtDate(L.localIso());
-    var what = v.stop ? C.STOPPED : u ? uName(u) : r.use === 'none' ? 'None of these fits' : 'No use case chosen yet';
+    var what = v.stop ? C.NOT_SUITABLE : u ? uName(u) : r.use === 'none' ? 'None of these fits' : 'No use case chosen yet';
     var name = [r.hotel.name || 'Hotel not named', what, date].join(' · ');
     var status;
-    if (v.stop) status = C.STOPPED;
+    if (r.step === 'stop') status = C.STOPPED;
     else if (r.step === 'result') { var e = L.evaluate(r, TQ); status = C.LEVELS[e.level].name + ' · ' + L.scoreHead(e).replace(/\.$/, ''); }
     else status = STEP_NO[r.step] ? 'Not finished: step ' + STEP_NO[r.step] : 'Not finished: not started';
     return { name: name, status: status };
+  }
+  function hhmm(when) { var d = new Date(when); if (!when || isNaN(d.getTime())) return ''; var p = function (n) { return (n < 10 ? '0' : '') + n; }; return p(d.getHours()) + ':' + p(d.getMinutes()); }
+  /* the list's lines, with a twin name made unique (L9): first the time of the last change, then (2), (3) … in list order */
+  function checkLines(ids) {
+    var lines = {}, by = {};
+    function group(map, n, k) { (map[n] = map[n] || []).push(k); }
+    ids.forEach(function (k) { lines[k] = checkLine(store.checks[k]); group(by, lines[k].name, k); });
+    Object.keys(by).forEach(function (n) {
+      if (by[n].length < 2) return;
+      var t2 = {};
+      by[n].forEach(function (k) { var t = hhmm(store.checks[k].updated); lines[k].name = n + (t ? ' · ' + t : ''); group(t2, lines[k].name, k); });
+      Object.keys(t2).forEach(function (m) { t2[m].forEach(function (k, i) { if (i) lines[k].name = m + ' (' + (i + 1) + ')'; }); });
+    });
+    return lines;
   }
   function fileConfirm() {
     if (!ui.confirm || ui.confirm.kind !== 'file' || !ui.file) return '';
@@ -385,20 +459,79 @@
     var h = '<section class="panel" id="mychecks" data-count="' + ids.length + '"><h2>Your checks in this browser</h2>';
     if (storage !== 'ok') h += '<p class="meta" id="no-keep">' + esc(C.NO_KEEP) + '</p>'; // audit L6: never "kept here" while nothing is kept
     else if (!ids.length) h += '<p class="meta">None yet. Each check you start is kept here until you remove it.</p>';
+    var lines = checkLines(ids);
     if (ids.length) h += '<div class="mylist">' + ids.map(function (k) {
-      var r = store.checks[k], l = checkLine(r), isCur = k === store.cur, cRm = ui.confirm && ui.confirm.kind === 'remove' && ui.confirm.id === k;
+      var l = lines[k], isCur = k === store.cur, cRm = ui.confirm && ui.confirm.kind === 'remove' && ui.confirm.id === k;
       return '<div class="mycheck" data-check="' + esc(k) + '"><div class="g1"><strong class="checkname">' + esc(l.name) + '</strong><span class="meta checkstatus">' + esc(l.status) + (isCur ? ' · open now' : '') + '</span></div>' +
         '<div class="btnrow">' + (isCur ? '' : '<button type="button" class="btn" data-act="open" data-id="' + esc(k) + '">Open</button>') +
         (cRm ? '<button type="button" class="btn warn" data-act="remove-yes" data-id="' + esc(k) + '" id="rm-yes">Remove for good</button><button type="button" class="btn" data-act="confirm-no" id="rm-no">Keep</button>'
-          : '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '">Remove</button>') + '</div>' +
-        (cRm ? '<p class="meta" data-confirm="remove">Remove this check from this browser? Files you saved are not affected.</p>' : '') + '</div>';
+          : '<button type="button" class="linkbtn" data-act="remove" data-id="' + esc(k) + '" id="rm-' + esc(k) + '">Remove</button>') + '</div>' +
+        (cRm ? '<p class="meta" data-confirm="remove">' + esc(PUB ? C.PUB.REMOVE_NOTE : 'Remove this check from this browser? Files you saved are not affected.') + '</p>' : '') + '</div>';
     }).join('') + '</div>';
     h += fileConfirm() + (ui.fileNote === 'old' ? '<p class="savewarn" id="old-file" role="status">' + esc(C.OLD_FILE) + '</p>' : '') +
       '<div class="btnrow"><label class="btn filebtn" for="file-open">Open a saved file<input type="file" id="file-open" accept="application/json,.json" class="sr"></label>' +
       (rec.step === 'result' ? '<button type="button" class="btn" data-act="save-file" id="save-file"' + (ui.dl !== 'idle' ? ' disabled' : '') + '>Save as file</button>' : '') + // owner: Save as file sits here, not in the download row
-      (storage === 'ok' ? '<span class="meta">Checks stay in this browser only. Save a file to keep one elsewhere.</span>' : '') + '</div>' + copyBox('file') + '</section>';
+      (storage === 'ok' ? '<span class="meta">' + esc(PUB ? C.PUB.LIST_HERE : 'Checks stay in this browser only. Save a file to keep one elsewhere.') + '</span>' : '') + '</div></section>';
     return h;
   }
+
+  // ---------- v2.8.1: the public build's data notice and sending (owner, 26 Nov 2026) ----------
+  /* CO: R2Collect (src/collect.js, public build only). Events: 'step_done' when a step is left with Next (its number), 'result' on
+     arriving at the result or the stop screen. Nothing is sent when collectUrl is empty or the person ticked "Don't send my answers". */
+  var CO = PUB && window.R2Collect ? window.R2Collect.make({ url: PUB.collectUrl || '', fetch: typeof window.fetch === 'function' ? window.fetch.bind(window) : null,
+    beacon: navigator.sendBeacon ? navigator.sendBeacon.bind(navigator) : null, storage: (function () { try { return window.localStorage; } catch (e) { return null; } })() }) : null;
+  function collect(event, step) {
+    if (!CO) return false;
+    var ev = event === 'result' && rec.step === 'result' ? L.evaluate(rec, TQ) : null;
+    return CO.send(event, rec, { step: step, version: C.VERSION, verdict: event !== 'result' ? '' : rec.step === 'stop' ? 'stop' : ev.level, score: ev ? ev.pct : null,
+      qIds: F.QIDS, mustIds: F.MUST_IDS, tailIds: tailQs().map(function (q) { return q.id; }) });
+  }
+  function optedOut() { return !!(CO && CO.optedOut()); }
+  function optBox(id) {
+    return '<label class="optout" for="' + id + '"><input type="checkbox" id="' + id + '" data-nosend' + (optedOut() ? ' checked' : '') + '> ' + esc(C.PUB.OPT_OUT) + '</label>' +
+      (optedOut() ? '<p class="meta" id="' + id + '-on" role="status">' + esc(C.PUB.OPT_OUT_ON) + '</p>' : '');
+  }
+  function contactLine() { var c = (PUB && typeof PUB.contact === 'string' ? PUB.contact : '').trim(); return c ? C.PUB.CONTACT.replace('{contact}', c) : C.PUB.CONTACT_NONE; }
+  function dataNotice() {
+    if (!PUB) return '';
+    return '<div class="datanote" id="data-notice"><p><b>' + esc(C.PUB.COVER_HEAD) + '</b></p><p>' + esc(C.PUB.COVER) + '</p>' + optBox('no-send') +
+      '<p><button type="button" class="linkbtn" data-act="data" id="data-more">' + esc(C.PUB.MORE) + '</button></p></div>';
+  }
+  function dataHtml() {
+    var P2 = C.PUB;
+    return '<div class="dhead"><div><p class="kicker">' + esc(NAME) + '</p><h2 id="data-title">' + esc(P2.TITLE) + '</h2></div><button type="button" class="btn" data-act="data-close" id="data-close">' + esc(P2.CLOSE) + '</button></div>' +
+      '<div class="dbody"><p>' + esc(P2.COVER) + '</p>' +
+      '<h3>' + esc(P2.WHAT_HEAD) + '</h3><ul class="tight">' + P2.WHAT.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul><p>' + esc(P2.NOT) + '</p>' +
+      '<h3>' + esc(P2.WHO_HEAD) + '</h3><p>' + esc(P2.WHO) + '</p><h3>' + esc(P2.WHY_HEAD) + '</h3><p>' + esc(P2.WHY) + '</p><h3>' + esc(P2.LONG_HEAD) + '</h3><p>' + esc(P2.LONG) + '</p>' +
+      '<h3>' + esc(P2.STOP_HEAD) + '</h3><p>' + esc(P2.STOP) + '</p>' + optBox('no-send-2') + '<p>' + esc(P2.HERE) + '</p><p id="data-contact"><b>' + esc(contactLine()) + '</b></p></div>';
+  }
+  /* The full notice, in a dialog like the detail layer (opened from the cover and the footer's "Data"); focus goes back to the opener. */
+  var dataFrom = null;
+  function openData(from) {
+    var dlg = $('datanote'); if (!PUB || !dlg) return;
+    dataFrom = from || null; dlg.innerHTML = dataHtml(); $('app').setAttribute('data-data', 'open');
+    if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
+    var c = $('data-close'); if (c) c.focus();
+  }
+  function closeData() {
+    var dlg = $('datanote'); $('app').removeAttribute('data-data');
+    if (dlg && dlg.open) { if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open'); }
+    var b = dataFrom && $(dataFrom); dataFrom = null; if (b) b.focus({ preventScroll: true });
+  }
+  function setNoSend(on) {
+    if (!CO) return; CO.setOptOut(on);
+    var dlg = $('datanote'); if (dlg && dlg.open) { var keep = document.activeElement && document.activeElement.id; dlg.innerHTML = dataHtml(); if (keep && $(keep)) $(keep).focus(); }
+    render();
+  }
+  (function () {
+    if (!PUB) return;
+    var dlg = document.createElement('dialog'); dlg.id = 'datanote'; dlg.className = 'detail'; dlg.setAttribute('aria-labelledby', 'data-title'); document.body.appendChild(dlg);
+    dlg.addEventListener('close', function () { if ($('app').hasAttribute('data-data')) closeData(); });
+    dlg.addEventListener('click', function (e) { if (e.target !== dlg) return; var r = dlg.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeData(); });
+    var fk = $('foot-keep'); if (fk) fk.textContent = C.PUB.FOOT_KEEP;
+    var fv = $('foot-version');
+    if (fv && fv.parentNode) { var sp = document.createElement('span'); sp.id = 'foot-data'; sp.innerHTML = ' <button type="button" class="linkbtn" data-act="data" id="foot-data-btn">' + esc(C.PUB.FOOT) + '</button> · ' + esc(contactLine()); fv.parentNode.appendChild(sp); }
+  })();
 
   // ---------- screens ----------
   function vStart() {
@@ -410,25 +543,27 @@
       '<p>Hotels are offered more and more AI tools, often before anyone has checked whether AI is the right answer to the problem. This tool helps you check that first, before you spend time and money with vendors: does the job need AI at all, are the basics in place, and what does this particular use need?</p>' +
       '<p class="meta">Why it matters: among EU accommodation businesses with 10 or more staff that had considered AI but did not use it, the most common reasons were a lack of expertise (70%) and systems that do not fit together (46%). Source: Eurostat, ICT usage survey, early 2025 (dataset isoc_eb_ain2).' + linkHtml(C.EUROSTAT_URL) + '</p></section>' +
       '<section class="panel intro" id="intro-how"><h2>How to use it</h2>' +
-      '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p><ol class="journey">' +
+      '<p>Think of <b>one problem</b> in your hotel, for example “we answer the same guest emails all day”. Then go through five steps:</p>' +
+      /* v2.8.1 (council BUILD NOW 6): 5 + 10 + the fewest and the most step-5 questions, from the data */
+      '<p class="meta" id="cover-count" data-min="' + (F.QIDS.length + F.MUST_IDS.length + range[0]) + '" data-max="' + (F.QIDS.length + F.MUST_IDS.length + range[1]) + '">' + esc(C.COVER_COUNT.replace('{min}', F.QIDS.length + F.MUST_IDS.length + range[0]).replace('{max}', F.QIDS.length + F.MUST_IDS.length + range[1]) + (storage === 'blocked' ? '' : ' ' + C.COVER_BACK)) + '</p><ol class="journey">' +
       '<li><b>About your hotel</b><span>How it is run, and if you like its name, your role and the country.</span></li>' +
       '<li><b>' + esc(C.STEP2_HEAD) + '</b><span>Five short questions. If fixed rules can do the job, the tool says so and stops there.</span></li>' +
       '<li><b>Must-haves</b><span>' + esc(C.MUST_COVER) + '</span></li>' +
       '<li><b>Where in the hotel?</b><span>Pick the area, the department and the use case, among ' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments') + '.</span></li>' +
       '<li><b>Questions for this use case</b><span id="cover-range" data-min="' + range[0] + '" data-max="' + range[1] + '">' + esc(rangeText.charAt(0).toUpperCase() + rangeText.slice(1)) + ' questions on what this use needs: people, skills, money, technology, data and rules.</span></li></ol>' +
-      '<p class="sub">Answer honestly. A question you leave blank counts as not answered yet and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? ' You can stop and come back: your answers stay in this browser.' : '') + '</p></section>' +
+      '<p class="sub">Answer honestly. A question you leave blank counts as not answered yet and goes on your to-do list. Each question has a “Why this matters” link if you want more.' + (storage === 'ok' ? esc(PUB ? ' Your list of checks stays in this browser.' : ' Your answers stay in this browser.') : '') + '</p></section>' +
       '<section class="panel intro" id="intro-get"><h2>What you get</h2><ul class="tight">' +
       '<li><b>A clear answer:</b> is this a job for AI, for simple rules, or not yet?</li>' +
       '<li id="get-score"><b>' + esc(C.GET_SCORE[0]) + '</b> ' + esc(C.GET_SCORE[1]) + '</li>' +
       '<li><b>What is missing:</b> the three things to start with, and an action plan by person that you can copy and send.</li>' +
       '<li><b>Questions for the vendor</b> about the use case.</li>' +
       '<li><b>Two PDFs and a file:</b> the result, and your answers to every question, to share with your owner or team, and a file to come back to later.</li></ul>' +
-      '<p class="disclaimer" id="cover-disclaimer"><strong>' + esc(C.DISCLAIMER) + '</strong></p>' +
+      '<p class="disclaimer" id="cover-disclaimer"><strong>' + esc(C.DISCLAIMER) + '</strong></p>' + dataNotice() +
       '<div class="navrow"><button type="button" class="btn primary" data-act="begin" id="begin">Start</button></div></section>' + myChecks();
   }
   function vHotel() {
     var H = rec.hotel, need = ui.missing === 'type';
-    return '<div class="stephead"><p class="kicker">Step 1 of 5</p><h2>About your hotel</h2><p class="sub">Only “how the hotel is run” is needed. The rest is for your own report.</p></div>' +
+    return '<div class="stephead"><p class="kicker">Step 1 of 5</p><h1>About your hotel</h1><p class="sub">Only “how the hotel is run” is needed. The rest is for your own report.</p></div>' +
       '<section class="panel"><div class="formgrid">' +
       '<label class="fld' + (need ? ' missing' : '') + '" id="box-type"><span>How the hotel is run</span><select id="h-type" data-h="type">' + opt('', 'Choose', H.type) + C.TYPES.map(function (t) { return opt(t[0], t[1], H.type); }).join('') + '</select>' +
       (need ? '<p class="needline" role="alert">Choose one to continue</p>' : '') + '<span class="meta">In a managed or franchised hotel the owner approves spending.</span></label>' +
@@ -440,7 +575,7 @@
   }
   function vQ() {
     var v = L.verdict(rec.Q), h = '<div class="stephead"><p class="kicker">Step 2 of 5</p>' +
-      '<h2 id="q-head">' + esc(C.STEP2_HEAD) + '</h2>' +
+      '<h1 id="q-head">' + esc(C.STEP2_HEAD) + '</h1>' +
       '<p class="qnames" id="q-names">' + C.QUESTIONS.map(function (q) { return '<span>' + esc(q.title) + '</span>'; }).join(' · ') + '</p>' + // v2.8.0 (B10): the five plain names, no letters
       '<p class="sub">Think of one problem in your hotel. Five questions: a No to question 1 and a Yes to the others point towards AI. If you are not sure, say so: it becomes something to find out.</p></div>';
     if (rec.Qnew && rec.Qnew.length) h += '<p class="savewarn" id="q-changed" role="status">' + esc(C.Q_CHANGED) + '</p>'; // v2.6: a check saved before the questions changed
@@ -474,7 +609,7 @@
   }
   function vMust() {
     var sy = L.systemsFor(rec), cons = L.consistLines(rec); // v2.5, council BUILD NOW 7
-    var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h2>Must-haves</h2>' +
+    var h = '<div class="stephead"><p class="kicker">Step 3 of 5</p><h1>Must-haves</h1>' +
       '<p class="sub" id="must-intro">' + esc(srcText(C.MUST_INTRO)) + ' Answer each one you can. A blank one counts as not answered yet and goes on your to-do list.</p>' +
       '<p class="meta honest" id="honest">' + esc(C.HONEST) + '</p>' +
       '<p class="meta" id="cap-note">The top verdict is only possible when every must-have is Yes. You can go on either way.</p></div>';
@@ -497,7 +632,7 @@
     return '<button type="button" class="exbtn" data-act="detail" data-detail="' + esc(u.id) + '" data-x="row" id="dt-' + esc(u.id) + '">Details and sources</button>';
   }
   function vWhere() {
-    var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h2>Where in the hotel?</h2>' +
+    var h = '<div class="stephead"><p class="kicker">Step 4 of 5</p><h1>Where in the hotel?</h1>' +
       '<p class="sub">Pick the area, then the department. If one of its use cases matches your problem, choose it: the next step asks what that use needs. If none does, say so: the result then rests on the must-haves only.</p>' +
       '<p class="meta">' + esc(CAT.nUses + ' use cases in ' + CAT.nDepts + ' departments, from the project team’s Use-Case Catalogue.') + '</p></div>' +
       (ui.notice === 'useChanged' ? '<p class="savewarn" id="use-changed" role="status">' + esc(C.USE_CHANGED) + '</p>' : '');
@@ -533,7 +668,7 @@
   }
   function vTailored() {
     var u = USE[rec.use], tu = TQ.uses[rec.use], qs = tu.qs;
-    var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h2>Questions for this use case</h2>' +
+    var h = '<div class="stephead"><p class="kicker">Step 5 of 5</p><h1>Questions for this use case</h1>' +
       '<p class="sub"><b id="tail-use">' + nameHtml(uName(u)) + '</b>' + esc(plural(qs.length, 'question')) + ' on what this use needs. The must-haves are not asked again.</p>' +
       '<p class="sub" id="tail-today">' + esc(C.TAIL_TODAY) + '</p>' +
       (ui.notice === 'questionsChanged' ? '<p class="savewarn" id="questions-changed" role="status">' + esc(C.QUESTIONS_CHANGED) + '</p>' : '') + '</div>';
@@ -560,7 +695,7 @@
     /* Owner, 24 Nov 2026 (25 Nov: two PDFs): the top row holds "Download result (PDF)", "Download answers (PDF)" and "Start a new check" (commit 7e0530e). "Save as file" sits in
        "Your checks in this browser"; Copy summary and Print are gone. */
     var acts = '<div class="btnrow toprow noprint" id="actions">' + pdfButton('Download result (PDF)', 'result') + pdfButton('Download answers (PDF)', 'answers') + '<button type="button" class="btn" data-act="new" id="new-check">Start a new check</button></div>' +
-      fallbackRow() + copyBox('dl'); // owner 25 Nov 2026: two PDFs, then Start a new check; the Copy fallback box under them
+      fallbackRow(); // owner 25 Nov 2026: two PDFs, then Start a new check; the Copy and Print fallbacks under them
     if (m.since) h += '<section class="panel since" id="since"><h3>' + esc(m.since.head) + '</h3><ul class="tight">' + m.since.lines.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
       (m.since.earlier.length > 1 ? fold('earlier', 'Earlier results', '<ul>' + m.since.earlier.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>') : '') + '</section>';
     h += '<section class="verdict result ' + LV_CLASS[m.level] + '" id="result" data-level="' + m.level + '" data-pct="' + (ev.pct == null ? '' : ev.pct) + '">' +
@@ -580,10 +715,10 @@
     h += '<section class="panel first" id="first"><h2>' + esc(m.firstLabel) + '</h2>' +
       (m.reasonShown ? '<p id="reason"' + (m.held.length ? ' data-held="' + m.held.join(' ') + '"' : '') + '><strong>' + esc(m.reasonShown) + '</strong></p>' : '') +
       (m.flag ? '<p class="flagline" id="sensitive-flag" role="note"><strong>' + esc(m.flag) + '</strong></p>' : '') + (m.cap ? '<p class="meta" id="cap">' + esc(m.cap) + '</p>' : '') +
-      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.draft ? '<p id="draft">' + esc(m.draft) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') +
+      (m.mustOnly ? '<p id="must-only">' + esc(m.mustOnly) + '</p>' : '') + (m.first.length ? '<ol>' + m.first.map(function (f) { return '<li' + (f.hold ? ' data-hold="' + f.hold + '"' : '') + '>' + (f.who ? '<b>' + esc(f.who) + ':</b> ' : '') + esc(f.text) + '<span class="meta">' + esc(f.sub) + '</span></li>'; }).join('') + '</ol>' : '<p>Every question is answered Yes.</p>') +
       (m.nothingElse ? '<p id="nothing-else">' + esc(m.nothingElse) + '</p>' : '') + '</section>';
     h += '<div class="sumgrid"><section class="panel" id="sum-ai"><h3>' + esc(C.STEP2_HEAD) + '</h3>' + aiCard(m) + '</section>' +
-      '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' + (m.catName ? '<p class="meta" id="cat-name">' + esc(m.catName) + '</p>' : '') +
+      '<section class="panel" id="sum-where"><h3>Where it sits</h3><p><b id="path">' + esc(m.path) + '</b></p>' + (m.useTask ? '<p id="use-does">' + esc(m.useTask) + '</p>' + (m.useHow ? '<p id="use-how">' + esc(m.useHow) + '</p>' : '') + '<p class="meta">' + esc(m.useLevel) + '</p>' +
         '<p class="noprint"><button type="button" class="linkbtn" data-act="detail" data-detail="' + esc(rec.use) + '" data-x="result" id="dr-' + esc(rec.use) + '">More detail</button></p>' +
         fold('srcs-result', 'Examples and sources (' + detailData(rec.use).srcs.length + ')', L.sourcesBox(detailData(rec.use), rec.use)) : '') + (m.none ? '<p>' + esc(m.none) + '</p>' : '') + '</section></div>';
     h += '<section class="panel" id="areas"><h2>' + esc(m.areasHead) + '</h2><div class="bars">' + m.areas.map(function (a) {
@@ -611,9 +746,9 @@
   function fallbackRow() {
     return '<div class="btnrow fallback noprint" id="fallbacks"><span class="meta">No file arrived?</span>' +
       (rec.step === 'result' ? '<button type="button" class="btn small" data-act="copy-plan" id="copy-plan">Copy plan</button>' : '') +
-      '<button type="button" class="btn small" data-act="copy-saved" id="copy-saved">Copy saved check</button>' +
+      (storage === 'blocked' ? '' : '<button type="button" class="btn small" data-act="copy-saved" id="copy-saved">Copy saved check</button>') + // blocked: it sits in the banner
       '<button type="button" class="btn small" data-act="print" id="print-open">Open printable page</button></div>' +
-      (ui.dlBlocked ? '<p class="savewarn" id="dl-blocked" role="status">' + esc(C.DL_BLOCKED) + '</p>' : '') + copyBox('plan') + copyBox('saved');
+      (ui.dlBlocked ? '<p class="savewarn" id="dl-blocked" role="status">' + esc(C.DL_BLOCKED) + '</p>' : '') + copyBox('plan') + (storage === 'blocked' ? '' : copyBox('saved'));
   }
   function printBar() {
     return ui.print ? '<div class="printbar noprint" id="printbar" role="status"><p><strong>' + esc(C.PRINT_BAR) + '</strong></p><div class="btnrow"><button type="button" class="btn primary" data-act="print-now" id="print-now">Print</button><button type="button" class="btn" data-act="print-off" id="print-off">Back to the page</button></div></div>' : '';
@@ -637,7 +772,8 @@
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3800); }
 
   // ---------- downloads (PDF and file) ----------
-  var DL_LABEL = { making: 'Preparing the PDF…', waiting: 'Preparing the PDF…', saving: 'Saving the PDF…' };
+  var DL_LABEL = { making: 'Preparing the PDF…', saving: 'Saving the PDF…' };
+  var DL_TIMEOUT = 60000; // inventory H1: a viewer prompt left open ends as 'timeout' (an event), never as a stuck button
   /* v2.7 (owner, 25 Nov 2026): two PDFs on the result page, "Download result (PDF)" (#pdf, primary) and "Download answers (PDF)"
      (#pdf-answers); the stop screen keeps one "Download (PDF)" (#pdf). One download at a time: while one runs both are disabled and
      only the one that was pressed says it is working. */
@@ -645,41 +781,45 @@
     var busy = ui.dl !== 'idle', ans = kind === 'answers', mine = ui.dlKind === (ans ? 'answers' : 'pdf');
     return '<button type="button" class="btn' + (!ans && rec.step === 'result' ? ' primary' : '') + '" data-act="' + (ans ? 'pdf-answers' : 'pdf') + '" id="' + (ans ? 'pdf-answers' : 'pdf') + '"' + (busy ? ' disabled' + (mine ? ' aria-busy="true"' : '') : '') + '>' + esc(busy && mine ? DL_LABEL[ui.dl] : label) + '</button>';
   }
+  var dlTimer = null;
   function dlSend(ev) {
-    var to = F.dlNext(ui.dl, ev, 'none'); if (to === null) return false;
+    var to = F.dlNext(ui.dl, ev); if (to === null) return false;
+    if (ev === 'start') ui.dlBlocked = false; // inventory L1: the last download's "blocked" line goes when a new one starts
+    clearTimeout(dlTimer); dlTimer = null;
+    if (to === 'saving') dlTimer = setTimeout(function () { if (dlSend('timeout')) { ui.dlBlocked = true; render(); } }, DL_TIMEOUT);
     ui.dl = to; $('app').setAttribute('data-dl', to);
     var sf = $('save-file'); if (sf) sf.disabled = to !== 'idle';
     var bs = [['pdf', 'pdf'], ['pdf-answers', 'answers']].map(function (x) { return [$(x[0]), x[1]]; }).filter(function (x) { return x[0]; });
     bs.forEach(function (x) { x[0].disabled = to !== 'idle'; if (to !== 'idle' && ui.dlKind === x[1]) { x[0].setAttribute('aria-busy', 'true'); x[0].textContent = DL_LABEL[to]; } });
-    if (to === 'idle' && bs.length) render();
+    if ((to === 'idle' && bs.length) || ev === 'start') render();
     return true;
   }
   $('app').setAttribute('data-dl', ui.dl);
-  /* v2.7.0 (standalone artifact): where the file goes.
-     'capability'  the claude.ai viewer: window.claude.use exists; the downloads capability (claude.use('downloads')) saves the file,
-                   the viewer confirms. When it resolves null (not served or not granted) the Copy fallback is used instead.
-     'link'        any other browser tab (a local file, a test server): a plain blob link. */
-  function dlRoute() { return window.claude && typeof window.claude.use === 'function' ? 'capability' : 'link'; }
-  function saveFile(name, blob, fallback) {
-    function viaLink() {
-      try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); toast('Download started: ' + name); dlSend('done'); }
+  /* Where the file goes (DOWNLOAD ROUTE).
+     'capability'  the claude.ai build whenever window.claude exists (v2.8.1, inventory L2): the downloads capability
+                   (claude.use('downloads')) saves the file and the viewer confirms; no capability, a failure or no answer → the
+                   blocked line, with Copy and Print right there.
+     'link'        any other browser tab, and always the public build: a plain blob link. */
+  function dlRoute() { return !PUB && window.claude ? 'capability' : 'link'; }
+  function saveFile(name, blob) {
+    function blocked() { if (!dlSend('fail')) return; ui.dlBlocked = true; render(); toast(C.DL_BLOCKED); var bl = $('dl-blocked'); if (bl) bl.scrollIntoView({ block: 'nearest' }); }
+    if (dlRoute() === 'link') {
+      try { var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); dlSend('done'); toast(C.DL_STARTED.replace('{name}', name)); }
       catch (e) { blocked(); }
+      return;
     }
-    function blocked() { dlSend('fail'); ui.dlBlocked = true; render(); toast(C.DL_BLOCKED); var bl = $('dl-blocked'); if (bl) bl.scrollIntoView({ block: 'nearest' }); }
-    if (dlRoute() === 'link') { viaLink(); return; }
-    var copyInstead = function () { blocked(); }; // v2.8.0 (B1): say so; Copy and Print sit right there
-    Promise.resolve().then(function () { return window.claude.use('downloads'); }).then(function (dl) {
-      if (!dl || typeof dl.save !== 'function') { copyInstead('unavailable'); return; }
-      return dl.save({ filename: name, data: blob }).then(function () { toast('Saved ' + name); dlSend('done'); }, function (e) {
+    /* inventory H1: every path ends in 'done' or 'fail': a use() or save() that throws, gives no promise or rejects with anything */
+    Promise.resolve().then(function () { if (typeof window.claude.use !== 'function') return null; return window.claude.use('downloads'); }).then(function (dl) {
+      if (!dl || typeof dl.save !== 'function') { blocked(); return; }
+      return Promise.resolve().then(function () { var r = dl.save({ filename: name, data: blob }); if (!r || typeof r.then !== 'function') throw new Error('no answer'); return r; }).then(function () { if (dlSend('done')) toast('Saved ' + name); }, function (e) {
         var code = e && e.code;
-        if (code === 'declined') { toast('Download cancelled.'); dlSend('fail'); }
-        else if (code === 'rate_limited') { toast('Another download is waiting for your answer. Try again in a moment.'); dlSend('fail'); }
-        else copyInstead(code || 'unavailable');
+        if (code === 'declined') { if (dlSend('fail')) toast('Download cancelled.'); }
+        else if (code === 'rate_limited') { if (dlSend('fail')) toast('Another download is waiting for your answer. Try again in a moment.'); }
+        else blocked();
       });
-    }, function () { copyInstead('unavailable'); });
+    }).then(null, function () { blocked(); });
   }
-  /* The Copy fallback (no downloads here): the result PDF gives the action plan and the vendor questions as text, the answers PDF
-     every question with its answer, Save as file the saved check as JSON. */
+  /* The plan as text (Copy plan): the result, the action plan by person and the vendor questions. */
   function planText() {
     var m = model(), u = USE[rec.use], name = u ? uName(u) : '';
     var out = [NAME + (name ? ' · ' + name : '') + (m.hotel ? ' (' + m.hotel + ')' : ''), m.levelName + ' · ' + m.scoreHead, m.reason, C.DISCLAIMER, ''];
@@ -687,19 +827,6 @@
     m.people.forEach(function (p) { out.push(p.name + ':'); p.items.forEach(function (a, i) { out.push((i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : '')); }); out.push(''); });
     if (m.vendor.length) { out.push('Questions for the vendor:'); m.vendor.forEach(function (q, i) { out.push((i + 1) + '. ' + q); }); }
     return out.join('\n');
-  }
-  function answersText() {
-    var m = model(), out = [NAME + ': your answers' + (m.hotel ? ' (' + m.hotel + ')' : ''), m.levelName + ' · ' + m.scoreHead, C.DISCLAIMER, '', C.STEP2_HEAD];
-    m.answers.forEach(function (a) { out.push(a.n + '. ' + a.q + ' ' + a.a); });
-    var grp = ''; m.itemList.forEach(function (it) { var g = it.grp === 'must' ? 'Must-haves' : 'Questions for this use case'; if (g !== grp) { grp = g; out.push('', g); } out.push('- ' + it.q + ' ' + it.answer); });
-    return out.join('\n');
-  }
-  function copyFallback(kind) {
-    return function () {
-      var t = kind === 'file' ? JSON.stringify(fileDoc(), null, 1) : kind === 'answers' ? answersText() : planText();
-      toast('Downloads are not available here, so the text is ready to copy instead.');
-      copyText(t, kind === 'file' ? 'The saved check' : kind === 'answers' ? 'Your answers' : 'The action plan', kind === 'file' ? 'file' : 'dl');
-    };
   }
   var PDF_FONT = null;
   function pdfFont() { return PDF_FONT || (PDF_FONT = (function () { try { return JSON.parse($('r2-font').textContent); } catch (e) { return null; } })()); }
@@ -717,7 +844,7 @@
         if (!window.jspdf) throw new Error('jsPDF not bundled');
         blob = P.draw(mdl, window.jspdf, pdfFont()).doc.output('blob');
       } catch (e) { dlSend('fail'); toast('The PDF could not be made here. Use “Save as file” in “Your checks in this browser” instead.'); return; }
-      dlSend('made'); saveFile(name, blob, copyFallback(kind === 'answers' ? 'answers' : 'result'));
+      dlSend('made'); saveFile(name, blob);
     }, 30);
     return true;
   }
@@ -732,7 +859,7 @@
     if (!dlSend('start')) { toast('A download is still being prepared.'); return false; }
     var name = pdfName('file').replace(/\.pdf$/, '.json'), blob = new Blob([JSON.stringify(fileDoc(), null, 1)], { type: 'application/json' });
     /* Audit L1: 'made' in a later tick, as the PDF does, so the button stays disabled across a double-click. */
-    setTimeout(function () { dlSend('made'); saveFile(name, blob, copyFallback('file')); }, 30);
+    setTimeout(function () { dlSend('made'); saveFile(name, blob); }, 30);
     return true;
   }
   function loadRecord(file) {
@@ -792,9 +919,8 @@
   function detailData(id) { return L.detailData(D, USE[id], DEPT[(F.deptOfUse(ENV, id) || {}).id], TQ); }
   function detailHtml(id) {
     var x = detailData(id);
-    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + nameHtml(x.title) + '</h2>' + (x.catName ? '<p class="meta" id="detail-catname">' + esc(x.catName) + '</p>' : '') + '</div>' +
+    return '<div class="dhead"><div><p class="kicker">' + esc(x.kicker) + '</p><h2 id="detail-title">' + nameHtml(x.title) + '</h2>' + '</div>' +
       '<button type="button" class="btn" data-act="detail-close" id="detail-close">Close</button></div><div class="dbody">' +
-      (x.draft ? '<p class="savewarn" id="detail-draft"><strong>' + esc(x.draft) + '</strong> ' + esc(x.draftText) + '</p>' : '') +
       (x.does ? '<p><b>What it does:</b> ' + esc(x.does) + '</p>' : '') + (x.how ? '<p><b>How the AI works:</b> ' + esc(x.how) + '</p>' : '') +
       '<p id="detail-level"><b>' + esc(x.level) + '</b></p>' +
       /* v2.5 (council BUILD NOW 8): no research or fact-check notes; v2.7.0: no catalogue description either ("What it does" replaces it). */
@@ -831,11 +957,14 @@
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeDetail(); }); })();
 
   // ---------- events ----------
+  var opener = null; // the control whose click is being handled (CONFIRM 'from', inventory L4)
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-act]'); if (!t) return;
-    var act = t.getAttribute('data-act'), m;
+    var act = t.getAttribute('data-act'), m; opener = t.id || null;
     if (act === 'detail') { e.preventDefault(); openDetail(t.getAttribute('data-detail'), t.id); return; } // v2.4: never chooses the row, never leaves the tool
     if (act === 'detail-close') { e.preventDefault(); closeDetail(); return; }
+    if (act === 'data') { e.preventDefault(); openData(t.id); return; }
+    if (act === 'data-close') { e.preventDefault(); closeData(); return; }
     if (act === 'cat') send('cat', t.getAttribute('data-cat'));
     else if (act === 'dept') send('dept', t.getAttribute('data-dept'));
     else if (act === 'copy-src') { e.preventDefault(); var su = t.getAttribute('data-url'), sp = t.parentNode && t.parentNode.querySelector('.srcurl');
@@ -851,6 +980,7 @@
     else if (act === 'save-file') { if (!t.disabled) saveRecord(); }
     else if (act === 'open' || act === 'remove' || act === 'remove-yes') send(act, t.getAttribute('data-id'));
     else send(act);
+    opener = null;
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
@@ -859,6 +989,7 @@
     else if (t.matches('input[data-by]')) send('by', { id: t.getAttribute('data-by'), date: t.value || '' });
     else if (t.matches('select[data-h]')) send('hotel', { k: t.getAttribute('data-h'), v: t.value });
     else if (t.id === 'file-open') { if (t.files && t.files[0]) loadRecord(t.files[0]); t.value = ''; }
+    else if (t.matches('input[data-nosend]')) setNoSend(t.checked);
   });
   document.addEventListener('input', function (e) { var t = e.target; if (t.matches && t.matches('input[data-h="name"]')) send('hotel', { k: 'name', v: t.value }, { quiet: true }); });
   document.addEventListener('toggle', function (e) { var d = e.target; if (d && d.getAttribute && d.getAttribute('data-fold') && !d.hasAttribute('data-print-open')) { var k = d.getAttribute('data-fold'), was = !!ui.open[k]; ui.open[k] = d.open; if (d.open && !was) ease(d.querySelector(':scope > .morebody, :scope > .foldbody'), 4, 150); } }, true);
@@ -879,6 +1010,7 @@
     var dir = F.histSkip(h, { id: rec.id, d: hist.d, step: rec.step, placed: F.placeStep(h.step, ctx()), run: run });
     hist.d = h.d; hist.prev = dir ? null : h.prev; hist.len = history.length;
     if (dir) { skipRun = run + 1; try { history.go(dir); } catch (err) { skipRun = 0; } return; }
+    ui.print = !!h.print && h.step === rec.step && (rec.step === 'result' || rec.step === 'stop'); // inventory L7: the printable page's own entry
     send('pop', h.step);
   });
   /* TABS (audit M3): another tab of this browser saved the store. The open check stays this tab's own; the other checks are
@@ -886,9 +1018,11 @@
   function follow() {
     var x = readStore(store.cur); if (!x || !x.store) return;
     /* v2.6.1 (inventory v4 B3): a newer version saved the store in another tab: shown, never written over (as on load). */
-    if (x.info.newer) storage = 'newer';
+    if (x.info.newer) storageEv('newer');
     var m = F.mergeTabs(store, x.store, { older: !!x.info.older });
-    store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere; ui.confirm = null; ui.file = null; ui.fileInfo = null;
+    store = m.store; rec = F.cur(store); ui.elsewhere = m.elsewhere;
+    /* inventory L5: an open question stays unless what it is about is gone (a removal of a check another tab removed) */
+    if (ui.confirm && ui.confirm.kind === 'remove' && !store.checks[ui.confirm.id]) ui.confirm = null;
     if (m.elsewhere === 'removed' && ui.layer) closeDetail(true); // audit v3 M2
     render();
   }
@@ -918,7 +1052,7 @@
         confirm: ui.confirm, missing: ui.missing, print: !!ui.print, dlBlocked: !!ui.dlBlocked, version: C.VERSION, copyBox: !!ui.copy, copyFrom: ui.copy ? ui.copy.from : null, detail: ui.layer ? ui.layer.use : null, layer: ui.layer ? Object.assign({}, ui.layer) : null,
         questions: tailQs().map(function (q) { return { id: q.id, text: q.q, why: q.why, area: TQ.areas[q.a], who: q.whoLabel }; }),
         dlKind: ui.dlKind, fileInfo: ui.fileInfo, older: ui.older ? Object.assign({}, ui.older) : null, storage: storage, notice: ui.notice, storeNotice: store.notice || null, checks: listedIds(), snaps: rec.snaps.length,
-        download: ui.dl, downloadRoute: dlRoute(),
+        download: ui.dl, downloadRoute: dlRoute(), build: PUB ? 'public' : 'artifact', noSend: optedOut(), collectOn: !!(CO && CO.active()), dataOpen: $('app').hasAttribute('data-data'),
         history: { d: hist.d, prev: hist.prev } };
     },
     record: function () { return JSON.parse(JSON.stringify(rec)); },

@@ -1,33 +1,30 @@
-/* Do you need AI? v2 (folder, tool id and storage key keep the name readiness-2): the explicit state machines (pure, no DOM).
-   Runs in the page and in the Node tests. See CLEANUP.md for the inventory.
+/* "Can AI solve your problems?" v2.8.1 (folder tools/readiness-2-questions, storage key hftp-readiness2q-v1): the explicit state
+   machines (pure, no DOM). Runs in the page and in the Node tests. See CLEANUP.md for the inventory.
 
    1. FLOW (rec.step): where the person is in one check.
-      States: 'start' (cover) | 'hotel' (1 About your hotel) | 'q' (2 Is this an AI problem?) | 'stop' (Q1 = No: the end)
+      States: 'start' (cover) | 'hotel' (1 About your hotel) | 'q' (2 Should this problem be solved by AI?) | 'stop' (Q1 = Yes: the end)
               | 'must' (3 Must-haves) | 'where' (4 Where in the hotel?) | 'tailored' (5 Questions for this use case) | 'result'
       Events: begin, next, back, change (stop → q), edit (result → q), pop(step) (browser Back/forward or a restore)
       Guards (ctx from ctxOf(rec, env)):
         hotel --next--> q only when "how the hotel is run" is chosen.
-        q --next--> 'stop' when Q1 is Yes (v2.6; whatever the rest); else 'must' only when all five questions are answered.
-        'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes. (ctx.q1Stop; before v2.6 the
-        stop answer was No.)
-        must --next--> where with any must-have blank (v2.7.1: a blank is not answered yet and does not stop Next).
+        q --next--> 'stop' when Q1 is Yes (whatever the rest); else 'must' only when all five questions are answered.
+        'stop' only while Q1 is Yes; 'must', 'where', 'tailored', 'result' never while Q1 is Yes.
+        must --next--> where with any must-have blank (a blank is not answered yet and does not stop Next).
         where --next--> 'tailored' with a use case; straight to 'result' with "None of these fits" (no tailored questions).
-        tailored --next--> result (v2.7.1: a blank tailored question does not stop Next).
-   2. STORE (persisted in localStorage['hftp-readiness2q-v1']): { v: 3, cur: <check id>, checks: { <id>: rec }, notice }.
-      v2.6: store and file version 3, so a page of v2.5 or earlier (another open tab) treats the store as newer and never writes
-      it back without the records' qv. Each record carries qv (R2Logic.QV, the step 2 question set): a record without it is
-      read once through R2Logic.legacyQ (question 1 turned round; the old questions 3 and 4 dropped and listed in Qnew).
-      migrate() takes any saved value: a v2 store is validated; a v1 record (the build before 24 Nov 2026) becomes one check
-      that keeps the five answers and the chosen use case, drops the rest and sets notice 'v1' (shown once).
+        tailored --next--> result (a blank tailored question does not stop Next).
+   2. STORE (persisted in localStorage['hftp-readiness2q-v1'], and in window.storage on the claude.ai build): { v: 4, cur, checks, notice }.
+      migrate() takes any saved value: a v2 to v4 store is validated (records without qv are read once through R2Logic.legacyQ); a
+      v1 record becomes one check (notice 'v1', shown once); a newer version is shown, never written over (info.newer).
    3. reduce(store, ev, arg, env): the only function that changes the store. Returns { store, ok }.
       Record events: 'hotel' {k, v} | 'answer' {id, value} | 'by' {id, date} | 'cat' | 'dept' | 'use' | a FLOW event | 'pop' step
-      Store events: 'new' (a blank check; the hotel details carry over unless arg.same is false, v2.8.0 B6) | 'open' id | 'remove' id | 'import' rec (from a file)
-                    | 'preselect' useId (from #use=<id>: a new check with that use case chosen) | 'snap' snapshot | 'seen' (notice read) | 'profile' {name, country, type} (shared hotel profile)
-                    | 'share' {named} | 'shared' {id, at, mode, sig} | 'unshared' {id}  (id: the check the copy belongs to, open or not; v2.1)
-      v2.1 (24 Nov 2026, clean-up audit): a check carries from ('link' when it was started by #use=<id>) and tqSig (the signature of
-      the tailored questions it was answered against); snapshots carry their use case; the store is capped when a check is added.
-   4. CONFIRM (confirmNext), BRIDGE (bridgeNext), DOWNLOAD (dlNext), SHARE (shareNext): page-only machines, never saved.
-   5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list. */
+        v2.8.1 (inventory L6): the record events that change answers (hotel, answer, by, cat, dept, use) stamp rec.updated (env.now
+        or the clock); nothing else does, so opening or reloading a check keeps its date.
+      Store events: 'new' {same} (a blank check; the hotel carries over unless same is false: then rec.noProfile, inventory M1)
+                    | 'open' id | 'remove' id | 'import' rec (from a file) | 'preselect' useId (from #use=<id>) | 'snap' snapshot
+                    | 'seen' (notice read) | 'profile' {name, country, type} (shared hotel profile; refused while rec.noProfile)
+   4. Page-only machines, never saved: CONFIRM (confirmNext), DOWNLOAD (dlNext), STORAGE (storageNext, v2.8.1).
+   5. HISTORY (histAction / histEntry / histRead): how each step change is written into the browser's Back/forward list.
+   6. TABS: mergeTabs (localStorage 'storage' events) and mergeWS (v2.8.1, read-merge-write on window.storage, inventory M3). */
 (function (root) {
   'use strict';
   var V = 4, KEY = 'hftp-readiness2q-v1', OLD_KEY = 'hftp-readiness2-v1'; // v2.7.0: version 4 (new question ids), own key; v2.6.1's key is read once
@@ -69,16 +66,18 @@
 
   /* from: 'link' while the use case was preselected by #use=<id> and the person has not chosen one themselves (audit L3, L9).
      tqSig: the signature of the chosen use case's tailored questions when it was chosen ('' in records saved by v2.0) (audit M5). */
-  function blank(id) { return { id: id || newId(), step: 'start', qv: QV, Qnew: [], hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], share: { named: false }, sharedAt: null, sharedMode: null, sharedSig: null, updated: '' }; }
+  /* v2.8.1: no share fields (the hub-era sharing is gone, inventory D3, council BUILD NOW 9); records and files saved earlier that
+     carry them still open (cleanRec ignores them). noProfile (inventory M1): set by "A different hotel"; the shared hotel profile
+     never fills this check (a field typed only later would otherwise bring the old hotel's other fields back). */
+  function blank(id) { return { id: id || newId(), step: 'start', qv: QV, Qnew: [], hotel: { name: '', role: '', type: '', country: '' }, Q: {}, A: {}, By: {}, cat: '', dept: '', use: '', useName: '', from: '', tqSig: '', T: {}, TBy: {}, snaps: [], updated: '' }; }
   function copy(r) {
-    return { id: r.id, step: r.step, qv: QV, Qnew: (r.Qnew || []).slice(), hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
-      T: Object.assign({}, r.T), TBy: Object.assign({}, r.TBy), snaps: (r.snaps || []).slice(), share: { named: !!(r.share && r.share.named) }, sharedAt: r.sharedAt || null, sharedMode: r.sharedMode || null, sharedSig: r.sharedSig || null, updated: r.updated || '' };
+    var o = { id: r.id, step: r.step, qv: QV, Qnew: (r.Qnew || []).slice(), hotel: Object.assign({}, r.hotel), Q: Object.assign({}, r.Q), A: Object.assign({}, r.A), By: Object.assign({}, r.By), cat: r.cat, dept: r.dept, use: r.use, useName: r.useName || '', from: r.from === 'link' ? 'link' : '', tqSig: r.tqSig || '',
+      T: Object.assign({}, r.T), TBy: Object.assign({}, r.TBy), snaps: (r.snaps || []).slice(), updated: r.updated || '' };
+    if (r.noProfile) o.noProfile = true;
+    return o;
   }
-  /* The check as it goes into a file: whether a copy was shared belongs to this browser, not to the file (audit L11). */
-  function forFile(r) { var o = copy(r); o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; return o; }
-  /* Audit v3 H1, M4: one rule for every replacement of a check's answers (a file, another tab's version kept or not):
-     the share fields come from the browser's own record, never from what replaces it. */
-  function keepShare(to, had) { if (had) { to.sharedAt = had.sharedAt || null; to.sharedMode = had.sharedMode || null; to.sharedSig = had.sharedSig || null; } return to; }
+  /* The check as it goes into a file (council BUILD NOW 9: no hub-era fields). */
+  function forFile(r) { return copy(r); }
   function localToday() { var dt = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()); }
   function blankStore() { var r = blank(); var s = { v: V, cur: r.id, checks: {} }; s.checks[r.id] = r; return s; }
   function cur(store) { return store.checks[store.cur]; }
@@ -155,8 +154,8 @@
   /* One saved check → a clean record, or null.
      info.useChanged: the saved use case was renamed in the catalogue or is no longer in it (the person picks again, step 4).
      info.questionsChanged: its tailored questions changed since it was answered (the answers are dropped; step 5 is asked again).
-     opt.file: the record comes from a file, so its share fields are ignored (audit L11). */
-  function cleanRec(r, env, info, opt) {
+     (opt: unused since v2.8.1; kept so callers that pass { file: true } still work.) */
+  function cleanRec(r, env, info, opt) { // eslint-disable-line no-unused-vars
     r = obj(r); if (!okId(r.id)) return null;
     var o = blank(r.id), H = obj(r.hotel), Q = obj(r.Q), A = obj(r.A), By = obj(r.By), Tt = obj(r.T), TBy = obj(r.TBy);
     o.hotel.name = str(H.name, 120); o.hotel.type = TYPES.indexOf(H.type) >= 0 ? H.type : ''; o.hotel.role = ROLES.indexOf(H.role) >= 0 ? H.role : '';
@@ -202,9 +201,7 @@
       else tailIds(env, o.use).forEach(function (id) { if (T_OK[Tt[id]] || OLD_T[Tt[id]]) { o.T[id] = Tt[id]; if (Tt[id] === 'pl' && validDate(TBy[id])) o.TBy[id] = TBy[id]; } });
     }
     o.snaps = (Array.isArray(r.snaps) ? r.snaps : []).map(cleanSnap).filter(Boolean).slice(-MAX_SNAPS);
-    o.share = { named: !!obj(r.share).named };
-    o.sharedAt = typeof r.sharedAt === 'string' ? r.sharedAt.slice(0, 40) : null; o.sharedMode = r.sharedMode === 'shared' || r.sharedMode === 'local' ? r.sharedMode : null; o.sharedSig = typeof r.sharedSig === 'string' ? r.sharedSig.slice(0, 4000) : null;
-    if (!o.sharedAt || (opt && opt.file)) { o.sharedAt = null; o.sharedMode = null; o.sharedSig = null; }
+    if (r.noProfile === true) o.noProfile = true; // inventory M1 (old share fields are not read: inventory D3)
     o.updated = str(r.updated, 40);
     o.step = placeStep(typeof r.step === 'string' ? r.step : 'start', ctxOf(o, env));
     /* v2.7.1: blank answers no longer hold a check back. The two cases that still reopen a result on step 5 are kept: its tailored
@@ -239,8 +236,7 @@
     var cs = obj(raw.checks);
     /* v2.8.0 (B7): every saved check is kept, never dropped on load (MAX_CHECKS only refuses a new one, with a reason). */
     var open = own(cs, info.keep) ? info.keep : raw.cur;
-    var keys = Object.keys(cs);
-    Object.keys(cs).forEach(function (k) { if (keys.indexOf(k) < 0) return; var one = {}, c = cleanRec(cs[k], env, k === open ? info : one); if (c && c.id === k) s.checks[k] = c; });
+    Object.keys(cs).forEach(function (k) { var one = {}, c = cleanRec(cs[k], env, k === open ? info : one); if (c && c.id === k) s.checks[k] = c; });
     if (raw.notice === 'v1') s.notice = 'v1';
     if (s.checks[open]) s.cur = open;
     else if (s.checks[raw.cur]) s.cur = raw.cur;
@@ -257,10 +253,12 @@
   }
 
   /* ---------- the only writer ---------- */
+  /* The record events that change what the person answered: they date the check (inventory L6). */
+  var DATED = { hotel: 1, answer: 1, by: 1, cat: 1, dept: 1, use: 1 };
   function withRec(store, r) { var s = { v: V, cur: store.cur, checks: Object.assign({}, store.checks) }; if (store.notice) s.notice = store.notice; s.checks[r.id] = r; return s; }
   function reduce(store, ev, arg, env) {
     var no = { store: store, ok: false }, rec = cur(store), r, s, to;
-    function done(r2) { return { store: withRec(store, r2), ok: true }; }
+    function done(r2) { if (DATED[ev]) r2.updated = (env && env.now) || new Date().toISOString(); return { store: withRec(store, r2), ok: true }; }
     switch (ev) {
       case 'hotel': {
         if (rec.step !== 'hotel' || !arg || ['name', 'role', 'type', 'country'].indexOf(arg.k) < 0 || typeof arg.v !== 'string') return no;
@@ -315,12 +313,10 @@
         var sn = cleanSnap(arg); if (!sn) return no;
         r = copy(rec); r.snaps = r.snaps.concat([sn]).slice(-MAX_SNAPS); return done(r);
       }
-      case 'share': { if (rec.step !== 'result') return no; r = copy(rec); r.share = { named: !!(arg && arg.named) }; return done(r); }
-      /* A copy belongs to its check, not to the screen: arg.id names the check, open or not, on any step (audit H1, M2). */
-      case 'shared': { if (!arg || typeof arg.at !== 'string') return no; var cs1 = arg.id == null ? rec : (own(store.checks, arg.id) ? store.checks[arg.id] : null); if (!cs1) return no; r = copy(cs1); r.sharedAt = arg.at; r.sharedMode = arg.mode === 'shared' ? 'shared' : 'local'; r.sharedSig = str(arg.sig, 4000); return done(r); }
-      case 'unshared': { var cs2 = !arg || arg.id == null ? rec : (own(store.checks, arg.id) ? store.checks[arg.id] : null); if (!cs2) return no; r = copy(cs2); r.sharedAt = null; r.sharedMode = null; r.sharedSig = null; return done(r); }
       case 'profile': {
-        /* The shared hotel profile fills fields that are still empty (never overwrites), on any step. */
+        /* The shared hotel profile fills fields that are still empty (never overwrites), on any step; never a check started for
+           "A different hotel" (rec.noProfile, inventory M1). */
+        if (rec.noProfile) return no;
         var pf = obj(arg); r = copy(rec); var ch = false;
         if (!r.hotel.name && typeof pf.name === 'string' && pf.name) { r.hotel.name = pf.name.slice(0, 120); ch = true; }
         if (!r.hotel.country && typeof pf.country === 'string' && pf.country && (!env || !env.countries || env.countries.indexOf(pf.country) >= 0)) { r.hotel.country = pf.country; ch = true; }
@@ -331,7 +327,7 @@
       case 'new': {
         if (listed(rec) && full(store, rec)) return { store: store, ok: false, full: true }; // the cap (audit L4): said, never silently dropped
         /* v2.8.0 (B6): arg { same: false } starts with a blank hotel; otherwise (same hotel) step 1 carries over and steps 2 to 5 are new */
-        r = blank(); if (!(arg && arg.same === false)) r.hotel = Object.assign({}, rec.hotel);
+        r = blank(); if (!(arg && arg.same === false)) r.hotel = Object.assign({}, rec.hotel); else r.noProfile = true;
         s = withRec(store, r); s.cur = r.id;
         if (!listed(rec)) Reflect.deleteProperty(s.checks, rec.id); // an untouched check is not kept
         return { store: s, ok: true };
@@ -358,10 +354,7 @@
         return { store: s, ok: true };
       }
       case 'import': {
-        var ri = cleanRec(arg, env, {}, { file: true }); if (!ri) return no;
-        /* Audit v3 H1: the share fields of a check belong to this browser and survive any replacement of its answers. A file
-           replacing a check whose copy is shared keeps that copy known (shareStale() marks it out of date when the answers differ). */
-        keepShare(ri, own(store.checks, ri.id) ? store.checks[ri.id] : null);
+        var ri = cleanRec(arg, env, {}); if (!ri) return no;
         if (!own(store.checks, ri.id) && listed(rec) && full(store, rec)) return { store: store, ok: false, full: true };
         s = withRec(store, ri); s.cur = ri.id; if (rec.id !== ri.id && !listed(rec)) Reflect.deleteProperty(s.checks, rec.id);
         return { store: s, ok: true };
@@ -373,38 +366,30 @@
     }
   }
 
-  /* CONFIRM machine (page only, never saved): null | { kind: 'remove', id } | { kind: 'file' } (a file whose check is already here).
-     ask opens it; no / nav closes it; yes fires once, and only for the kind and id that were asked. */
-  function confirmNext(c, ev, kind, id) {
-    if (ev === 'ask') return { c: { kind: kind, id: id || '' }, fire: false };
+  /* CONFIRM machine (page only, never saved): null | { kind: 'remove', id } | { kind: 'file' } (a file whose check is already here)
+     | { kind: 'new' } ("same hotel or a different hotel?", v2.8.0 B6). from: the id of the control that opened it (focus goes back
+     there on 'no', inventory L4). ask opens it; no / nav closes it; yes fires once, and only for the kind and id that were asked. */
+  function confirmNext(c, ev, kind, id, from) {
+    if (ev === 'ask') return { c: { kind: kind, id: id || '', from: from || '' }, fire: false };
     if (ev === 'yes') return { c: null, fire: !!c && c.kind === kind && (c.id || '') === (id || '') };
     if (ev === 'no' || ev === 'nav') return { c: null, fire: false };
     return { c: c, fire: false };
   }
 
-  /* BRIDGE machine (page only), the readiness check's own: does the hub bar save files for us?
-     'none' (not in a frame) | 'pending' (asked the hub with ping) | 'yes' | 'no' (pong false, cannot post, or the 12 s 'timeout' event). */
-  var BRIDGE = { pending: { yes: 'yes', no: 'no', timeout: 'no', error: 'no' } };
-  function bridgeNext(s, ev) { var row = BRIDGE[s]; return row && row[ev] ? row[ev] : s; }
-
   /* DOWNLOAD machine (page only): one file at a time; the buttons are disabled in every state but 'idle'.
-     idle --start--> making --made--> waiting (BRIDGE still pending) | saving --done|fail--> idle; waiting --bridge--> saving. */
-  var DL = { idle: { start: 'making' }, making: { made: '@made', fail: 'idle' }, waiting: { bridge: 'saving', fail: 'idle' }, saving: { done: 'idle', fail: 'idle' } };
-  function dlNext(s, ev, bridge) {
-    var row = DL[s]; if (!row || !own(row, ev)) return null;
-    var to = row[ev];
-    if (to === '@made') to = bridge === 'pending' ? 'waiting' : 'saving';
-    if (s === 'waiting' && ev === 'bridge' && bridge === 'pending') return null;
-    return to;
-  }
+     idle --start--> making --made--> saving --done|fail|timeout--> idle; making --fail--> idle. (v2.8.1: the hub's 'waiting' state and
+     its 'bridge' event are gone, inventory D2; 'timeout' is the page's 60 s event while a viewer prompt is left open, inventory H1.) */
+  var DL = { idle: { start: 'making' }, making: { made: 'saving', fail: 'idle' }, saving: { done: 'idle', fail: 'idle', timeout: 'idle' } };
+  function dlNext(s, ev) { var row = DL[s]; return row && own(row, ev) ? row[ev] : null; }
 
-  /* SHARE machine (page only; the readiness check's): 'idle' | 'shared' (settled, from the record) | 'sending' | 'withdrawing'. */
-  var SHARE = { idle: { share: 'sending' }, shared: { share: 'sending', withdraw: 'withdrawing' }, sending: {}, withdrawing: {} };
-  function shareSettled(rec) { return rec && rec.sharedAt ? 'shared' : 'idle'; }
-  function shareNext(phase, ev) { var row = SHARE[phase]; return row && row[ev] ? row[ev] : null; }
-  /* What a shared copy was made from: when it differs from the record now, the copy is out of date. */
-  function shareSig(rec) { return JSON.stringify([rec.Q, rec.A, rec.By, rec.use, rec.T, rec.TBy, rec.hotel.type, rec.hotel.role, rec.hotel.country, rec.share.named, rec.share.named ? rec.hotel.name : '']); }
-  function shareStale(rec) { return !!(rec && rec.sharedAt && rec.sharedSig && rec.sharedSig !== shareSig(rec)); }
+  /* STORAGE machine (page only, v2.8.1, inventory item 3: M2, M3, L3): can this page keep the checks?
+     'ok' (a write works: localStorage, or window.storage on the claude.ai build) | 'blocked' (nothing can be kept: this page's
+     memory only) | 'newer' (the store was saved by a newer version: shown, never written over; nothing leaves it).
+     Events: 'saved' (a write succeeded), 'failed' (no write could succeed), 'newer' (a newer store was read, from either backend).
+     Start: storageStart(localStorage blocked?, window.storage present?, newer?). Never 'ok' over 'newer'. */
+  var STORAGE = { ok: { saved: 'ok', failed: 'blocked', newer: 'newer' }, blocked: { saved: 'ok', failed: 'blocked', newer: 'newer' }, newer: {} };
+  function storageNext(s, ev) { var row = STORAGE[s]; return row && own(row, ev) ? row[ev] : s; }
+  function storageStart(lsBlocked, hasWS, newer) { return newer ? 'newer' : lsBlocked && !hasWS ? 'blocked' : 'ok'; }
 
   /* HISTORY machine. h = what the page knows of the current entry: { d, prev, len }.
        'push'    begin, next, change, edit (forward: a new Back/forward entry)
@@ -436,7 +421,7 @@
      The open check stays this tab's own; the other checks are taken from the other tab. elsewhere: 'changed' when the other
      tab holds different answers for the open check (this tab keeps its own until the person loads the other version),
      'removed' when the other tab removed it; null otherwise. */
-  function answersOf(r) { return JSON.stringify([r.hotel, r.Q, r.A, r.By, r.cat, r.dept, r.use, r.T, r.TBy, !!(r.share && r.share.named)]); }
+  function answersOf(r) { return JSON.stringify([r.hotel, r.Q, r.A, r.By, r.cat, r.dept, r.use, r.T, r.TBy]); }
   /* opt.older (v2.6.1, inventory v4 B4): theirs was written by an older page still open in another tab (store version below V).
      Such a page drops the fields it does not know (qv), so a check this tab holds would come back in what looks like the old
      meaning and be turned round a second time. Then every check this tab already holds stays this tab's own; only checks this
@@ -452,13 +437,37 @@
     Object.keys(theirs.checks).forEach(function (k) { if (k !== mine.cur && listed(theirs.checks[k])) s.checks[k] = theirs.checks[k]; });
     var other = theirs.checks[mine.cur];
     if (!other) { s.checks[rec.id] = rec; if (listed(rec)) elsewhere = 'removed'; }
-    else if (answersOf(other) === answersOf(rec)) { var keep = copy(other); keep.step = rec.step; s.checks[rec.id] = keep; } // same answers: take the other tab's share state and history
-    else { s.checks[rec.id] = keepShare(copy(rec), other); elsewhere = 'changed'; } // audit v3 M4: this tab's answers, the store's share fields
+    else if (answersOf(other) === answersOf(rec)) { var keep = copy(other); keep.step = rec.step; s.checks[rec.id] = keep; } // same answers: take the other tab's history
+    else { s.checks[rec.id] = copy(rec); elsewhere = 'changed'; } // this tab's answers
     return { store: s, elsewhere: elsewhere };
   }
+  /* v2.8.1 (inventory M3): window.storage has no 'storage' event, so before each write the page reads what is there and merges.
+     mine: this tab's store; theirs: what window.storage holds now (through migrate); base: { <id>: JSON of the check } as this tab
+     last read or wrote it (null before the first). The open check is always this tab's own. Another check: taken from theirs when
+     this tab does not hold it and did not hold it at base (another tab added it), or when theirs changed it since base; dropped when
+     this tab holds it unchanged since base and theirs no longer has it (another tab removed it). A check this tab removed (at base,
+     not in mine) is not taken back. Returns { store, changed }. */
+  function baseOf(store) { var b = {}; Object.keys(store.checks).forEach(function (k) { b[k] = JSON.stringify(store.checks[k]); }); return b; }
+  function mergeWS(mine, theirs, base) {
+    var s = { v: V, cur: mine.cur, checks: {} }, changed = false, B = base || {};
+    if (mine.notice) s.notice = mine.notice;
+    Object.keys(mine.checks).forEach(function (k) {
+      if (k === mine.cur) { s.checks[k] = mine.checks[k]; return; }
+      var t = theirs.checks[k], mj = JSON.stringify(mine.checks[k]);
+      if (!t) { if (own(B, k) && B[k] === mj) { changed = true; return; } s.checks[k] = mine.checks[k]; return; } // removed in another tab
+      var tj = JSON.stringify(t);
+      if (tj !== mj && (!own(B, k) || B[k] !== tj)) { s.checks[k] = t; changed = true; } else s.checks[k] = mine.checks[k];
+    });
+    Object.keys(theirs.checks).forEach(function (k) {
+      if (own(mine.checks, k) || own(B, k) || !listed(theirs.checks[k])) return;
+      s.checks[k] = theirs.checks[k]; changed = true; // added in another tab
+    });
+    return { store: s, changed: changed };
+  }
+  /* print: the entry of the printable page (v2.8.1, inventory L7: Back from it returns to the page it was opened on). */
   function histRead(st) {
     if (!st || typeof st !== 'object' || STEPS.indexOf(st.r2) < 0) return { ours: false };
-    return { ours: true, step: st.r2, d: typeof st.d === 'number' && st.d >= 0 ? st.d : 0, prev: STEPS.indexOf(st.prev) >= 0 ? st.prev : null, id: typeof st.id === 'string' ? st.id : '' };
+    return { ours: true, step: st.r2, d: typeof st.d === 'number' && st.d >= 0 ? st.d : 0, prev: STEPS.indexOf(st.prev) >= 0 ? st.prev : null, id: typeof st.id === 'string' ? st.id : '', print: st.print === 1 };
   }
   /* Progress bar: five segments for steps 1 to 5; the current one is 'now'; all done on the result; none on the cover and the stop screen. */
   function progress(step) {
@@ -466,11 +475,10 @@
     return [1, 2, 3, 4, 5].map(function (i) { return i < n ? 'done' : i === n ? 'now' : ''; });
   }
 
-  var api = { OLD_KEY: OLD_KEY, QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, keepShare: keepShare, tailSig: tailSig, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2q-cur', CORRUPT_KEY: 'hftp-readiness2q-v1-corrupt',
+  var api = { OLD_KEY: OLD_KEY, QV: QV, MAX_CHECKS: MAX_CHECKS, forFile: forFile, tailSig: tailSig, mergeWS: mergeWS, baseOf: baseOf, STORAGE: STORAGE, storageNext: storageNext, storageStart: storageStart, full: full, histSkip: histSkip, mergeTabs: mergeTabs, answersOf: answersOf, CUR_KEY: 'hftp-readiness2q-cur', CORRUPT_KEY: 'hftp-readiness2q-v1-corrupt',
     V: V, KEY: KEY, STEPS: STEPS, ORDER: ORDER, FLOW: FLOW, QIDS: QIDS, MUST_IDS: MUST_IDS, CATS: CATS, TYPES: TYPES, ROLES: ROLES, MAX_SNAPS: MAX_SNAPS,
     validDate: validDate, newId: newId, blank: blank, blankStore: blankStore, cur: cur, ctxOf: ctxOf, reachable: reachable, placeStep: placeStep, flowNext: flowNext, events: events,
-    cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, BRIDGE: BRIDGE, bridgeNext: bridgeNext, DL: DL, dlNext: dlNext,
-    SHARE: SHARE, shareSettled: shareSettled, shareNext: shareNext, shareSig: shareSig, shareStale: shareStale,
+    cleanRec: cleanRec, migrate: migrate, listed: listed, reduce: reduce, confirmNext: confirmNext, DL: DL, dlNext: dlNext,
     nameHash: nameHash, nameOk: nameOk, histAction: histAction, histEntry: histEntry, histRead: histRead, progress: progress, deptOfUse: deptOfUse, tailIds: tailIds };
   root.R2Flow = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

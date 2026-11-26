@@ -38,7 +38,7 @@ const NOT_IN_RESULT = m => [m.useTask, m.useLevel, m.areasHead].concat(m.areas.m
 /* Every word of the Result document must be as the result page says it; nothing of the other sections is in it. */
 function sameWords(rec, tag) {
   const m = L.resultModel(rec, env), pdf = P.model(rec, env), t = all(pdf);
-  const need = [m.levelName + ' · ' + m.scoreHead, m.boxLine, m.alsoLine, m.reasonShown, m.nothingElse, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.draft, m.firstLabel]
+  const need = [m.levelName + ' · ' + m.scoreHead, m.boxLine, m.alsoLine, m.reasonShown, m.nothingElse, m.law, m.scoreSub, m.levelLine, m.mustLine, m.cap, m.mustOnly, m.firstLabel]
     .concat(m.first.map(f => (f.who ? f.who + ': ' : '') + f.text), m.first.map(f => f.sub), m.people.map(p => p.name), m.people.flatMap(p => p.items.map(a => a.text)), m.people.flatMap(p => p.items.map(a => a.tag)),
       m.vendor, m.legal ? [m.legalNote, m.legal.why, m.legal.country, m.legal.labour].concat(m.legal.could, m.legal.items.map(i => i.text), m.legal.items.map(i => i.sub)) : [], m.since ? [m.since.head].concat(m.since.lines) : []).filter(Boolean);
   const missing = need.filter(x => !t.includes(x));
@@ -141,6 +141,6 @@ ok(Math.min(...pc) >= 1 && Math.max(...pc) <= 4 && Math.min(...pa) >= 2 && Math.
 d = drawn(P.model(finished(F, D, '', { Q: { q1: 'y', q2: 'n', q3: 'n', q4: 'n', q5: 'n' }, A: {}, step: 'stop' }), env)); ok(d.r.pages === 1, 'stop PDF with Q1 Yes and four No answers (v2.6: was five No): still one page');
 ok(P.safe('é ł ø € › “x” → ✓ 汉') === 'é ł ø € › “x” → ? ?', 'characters the font lacks print as "?"');
 // ---------- file names ----------
-ok(P.fileName('Hôtel de la Paix', '2026-11-24', 'result') === 'Do-you-need-AI_Hotel-de-la-Paix_2026-11-24_result.pdf' && P.fileName('Hôtel de la Paix', '2026-11-24', 'answers') === 'Do-you-need-AI_Hotel-de-la-Paix_2026-11-24_answers.pdf' && P.fileName('', '2026-11-24') === 'Do-you-need-AI_assessment_2026-11-24_result.pdf' && P.fileName('../../x<y>|z', '2026-11-24', 'answers') === 'Do-you-need-AI_x-y-z_2026-11-24_answers.pdf' && P.fileName('Hôtel', '2026-11-24', 'file') === 'Do-you-need-AI_Hotel_2026-11-24.pdf', 'file names: safe ASCII, _result.pdf / _answers.pdf, no suffix for the saved file\'s base name');
-ok(/^Do-you-need-AI_assessment_\d{4}-\d{2}-\d{2}_answers\.pdf$/.test(P.fileName('', 'not a date', 'answers')) && P.fileName('x'.repeat(200), '2026-11-24', 'answers').length <= 15 + 60 + 16 + 8, 'file names: a bad date falls back to today; long names are cut');
+ok(P.fileName('Hôtel de la Paix', '2026-11-24', 'result') === 'Can-AI-solve-your-problems_Hotel-de-la-Paix_2026-11-24_result.pdf' && P.fileName('Hôtel de la Paix', '2026-11-24', 'answers') === 'Can-AI-solve-your-problems_Hotel-de-la-Paix_2026-11-24_answers.pdf' && P.fileName('', '2026-11-24') === 'Can-AI-solve-your-problems_assessment_2026-11-24_result.pdf' && P.fileName('../../x<y>|z', '2026-11-24', 'answers') === 'Can-AI-solve-your-problems_x-y-z_2026-11-24_answers.pdf' && P.fileName('Hôtel', '2026-11-24', 'file') === 'Can-AI-solve-your-problems_Hotel_2026-11-24.pdf', 'file names: safe ASCII, _result.pdf / _answers.pdf, no suffix for the saved file\'s base name');
+ok(/^Can-AI-solve-your-problems_assessment_\d{4}-\d{2}-\d{2}_answers\.pdf$/.test(P.fileName('', 'not a date', 'answers')) && P.fileName('x'.repeat(200), '2026-11-24', 'answers').length <= 27 + 60 + 16 + 8, 'file names: a bad date falls back to today; long names are cut');
 done();

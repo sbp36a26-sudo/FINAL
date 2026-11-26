@@ -69,10 +69,10 @@ const strs = f => (rd(f).match(/'(?:[^'\\\n]|\\.)*'/g) || []).join('\n');
 ok(!['src/app.js', 'src/content.js', 'src/logic.js', 'src/pdf.js'].some(f => /\b(90|99)\b/.test(strs(f))) && !/\b(90|99) use cases\b/.test(rd('src/page.html')), 'B9: no string in the code types "90" or "99"');
 ok(L.shareLines(L.MUST.m1, TQ)[0].includes('needed for 90 of the 90 use cases analysed (of 98)'), 'B9: "needed for n of the 90 use cases analysed (of 98)"');
 ok(!/C-R-I-S-P|C R I S P|CRISP/.test(html) && /id="q-head">' \+ esc\(C\.STEP2_HEAD\)/.test(app) && C.STEP2_HEAD === 'Should this problem be solved by AI?' && eq(C.QUESTIONS.map(q => q.title), ['Needs judgement', 'Return', 'Information to learn from', 'Safety net', 'Proof']), 'B10: no C-R-I-S-P; the heading and the five plain names');
-ok(C.VERSION === '2.8.0' && C.VERSION_LINE === 'v2.8 (rules unchanged since v2.6)', 'version 2.8.0, shown as "v2.8 (rules unchanged since v2.6)"');
+ok(C.VERSION === '2.8.1' && C.VERSION_LINE === 'v2.8.1 (rules unchanged since v2.6)', 'version 2.8.1, shown as "v2.8.1 (rules unchanged since v2.6)"');
 { const meth = L.method(L.evaluate(finished(F, D, 'gx-2'), TQ)).join('\n');
-  ok(!/rules v2\.5|Rules v2\.6/i.test(meth) && meth.includes('Version v2.8 (rules unchanged since v2.6).'), 'the method shows one version string; no "rules v2.5"'); }
-ok(html.includes('<title>Can AI solve your problems? (use-case questions v2.8)</title>') && html.includes('data-version="2.8.0"') && P.LINE.includes('Version v2.8 (rules unchanged since v2.6).'), 'page title, footer and PDF line carry the version');
+  ok(!/rules v2\.5|Rules v2\.6/i.test(meth) && meth.includes('Version v2.8.1 (rules unchanged since v2.6).'), 'the method shows one version string; no "rules v2.5"'); }
+ok(html.includes('<title>Can AI solve your problems?</title>') && html.includes('data-version="2.8.1"') && P.LINE.includes('Version v2.8.1 (rules unchanged since v2.6).'), 'page title, footer and PDF line carry the version');
 // ---------- commit 4: B1 (downloads), B6 (new check), B7 (saved checks) ----------
 { const env2 = (await import('./load.mjs')).envOf(D, F);
   let s = F.blankStore(); const id0 = s.cur;
@@ -97,8 +97,8 @@ ok(/data-act="copy-plan" id="copy-plan">Copy plan/.test(app) && /data-act="copy-
 ok(C.DL_BLOCKED === 'Your browser blocked the download. Use Copy or Print instead.' && /id="dl-blocked"/.test(app), 'B1: the blocked line');
 ok(/window\.claude\.use\('downloads'\)/.test(app), 'B1: the downloads capability is used when the viewer serves it');
 ok(C.NEW_ASK === 'Start a new check: same hotel ({name}) or a different hotel?' && /id="new-same"/.test(app) && /id="new-other"/.test(app), 'B6: the question and its two answers');
-ok(C.STOPPED === 'Stopped at step 2: not suitable for AI' && /'Not finished: step ' \+ STEP_NO\[r\.step\]/.test(app) && /\[r\.hotel\.name \|\| 'Hotel not named', what, date\]\.join\(' · '\)/.test(app), 'B7: names "<hotel> · <use case> · <date>", stops and unfinished checks');
-ok(/var WS = \(function \(\) \{ try \{ var w = window\.storage;/.test(app) && /try \{ localStorage\.setItem\(F\.KEY, json\); lsOk = true; \} catch/.test(app) && /storage = lsOk \|\| WS \? 'ok' : 'blocked'/.test(app) && /Use Save as file/.test(C.NOT_SAVED), 'B7: window.storage, then localStorage in try/catch, then memory with the "Use Save as file" line');
+ok(C.STOPPED === 'Stopped at step 2' && C.NOT_SUITABLE === 'Not suitable for AI' && /'Not finished: step ' \+ STEP_NO\[r\.step\]/.test(app) && /\[r\.hotel\.name \|\| 'Hotel not named', what, date\]\.join\(' · '\)/.test(app), 'B7: names "<hotel> · <use case> · <date>", stops and unfinished checks');
+ok(/var WS = PUB \? null : \(function \(\) \{ try \{ var w = window\.storage;/.test(app) && /try \{ localStorage\.setItem\(F\.KEY, JSON\.stringify\(store\)\); lsOk = true; \} catch/.test(app) && /F\.storageNext\(storage, ev\)/.test(app) && /Save as file/.test(C.NOT_SAVED), 'B7: window.storage (not on the public build), then localStorage in try/catch, then memory with the "Save as file" line (v2.8.1: through the STORAGE machine)');
 ok(/version: C\.VERSION, rules: L\.RULES/.test(app), 'the saved file carries version 2.8.0');
 // ---------- owner decision 1: no "Don't know" in the tool's text (page, PDFs, exports); the vendored jsPDF error text excepted ----------
 { const DK = /don[’']t know/i, LIB = rd('../assessment/lib/jspdf.umd.min.js').replace(/<\/script/gi, '<\\/script');

@@ -42,7 +42,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 // ---------- B3 / B1 / B4 in the page (the browser test drives them; here: the code paths exist) ----------
 {
   const app = rd('src/app.js');
-  ok(/if \(x\.info\.newer\) storage = 'newer';/.test(app.slice(app.indexOf('function follow'))), 'B3: follow() stops writing once another tab saved a newer store');
+  ok(/if \(x\.info\.newer\) storageEv\('newer'\);/.test(app.slice(app.indexOf('function follow'))), 'B3: follow() stops writing once another tab saved a newer store');
   ok(/F\.mergeTabs\(store, x\.store, \{ older: !!x\.info\.older \}\)/.test(app), 'B4: follow() passes "older" to the merge');
   ok(!/hubPost/.test(app), 'B1 (v2.7.0): no hub to tell');
   ok(/function closeDetail\(moved, noFocus\)/.test(app), 'B1 (v2.7.0): the page closes its own layer');

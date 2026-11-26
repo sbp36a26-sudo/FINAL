@@ -16,10 +16,11 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8891/';
-const URL0 = BASE + 'readiness-2-questions/index.html';
+const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html'); // v2.8.1: R2_PAGE=public/index.html runs the public build
 const ROOT = path.join(__dirname, '..', '..');
 const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens', 'v28'); // v2.8.0: this run's screenshots, prefix q-
-fs.mkdirSync(SHOTS, { recursive: true });
+const SHOOT = process.env.SHOTS === '1'; // v2.8.1 (inventory S4): screenshots only with SHOTS=1, so a test run changes no tracked file
+if (SHOOT) fs.mkdirSync(SHOTS, { recursive: true });
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'r2q-'));
 const Q = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'usecase_questions_only.json'), 'utf8'));
 const QU = Object.fromEntries(Q.use_cases.map(u => [u.id, u])), LQ = Q.use_cases.filter(u => !u.removed);
@@ -44,7 +45,7 @@ async function mk(b, vp, init) {
 }
 const st = p => p.evaluate(() => window.Readiness2.state());
 const noHScroll = p => p.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
-const shot = async (p, name) => { await p.waitForTimeout(600); return p.screenshot({ path: path.join(SHOTS, 'q-' + name + '.png'), fullPage: false }); };
+const shot = async (p, name) => { if (!SHOOT) return; await p.waitForTimeout(600); return p.screenshot({ path: path.join(SHOTS, 'q-' + name + '.png'), fullPage: false }); };
 const pdftext = f => execFileSync('pdftotext', ['-layout', f, '-']).toString();
 async function click(p, sel) { await p.locator(sel).first().scrollIntoViewIfNeeded(); await p.locator(sel).first().click(); }
 async function answer(p, id, v) { await click(p, 'label[for="a-' + id + '-' + v + '"]'); }
@@ -142,7 +143,7 @@ async function run(p, use, tailFn, tag) {
       const [dlf] = await Promise.all([p.waitForEvent('download'), click(p, '#save-file')]);
       const ff = path.join(TMP, vpName + '-' + use + '.json'); await dlf.saveAs(ff);
       const doc = JSON.parse(fs.readFileSync(ff, 'utf8'));
-      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.version === '2.8.0' && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
+      ok(doc.kind === 'hftp-do-you-need-ai' && doc.v === 4 && doc.version === '2.8.1' && doc.check.use === use && bannedHits(JSON.stringify(doc)).length === 0, tag + ': Save as file: a v4 file of this check, 0 banned terms');
       const before = await st(p);
       await click(p, '#new-check'); await click(p, '#new-same'); await p.locator('#file-open').setInputFiles(ff);
       await p.waitForSelector('#import-yes'); await click(p, '#import-yes');
@@ -213,7 +214,7 @@ async function run(p, use, tailFn, tag) {
     ok(/Head of the department using it:|General manager:|Finance:|IT:/.test(t) && t.includes('Questions for the vendor:') && t.includes(DISCLAIMER) && bannedHits(t).length === 0, 'clipboard refused: Copy plan opens the copy box with the plan text');
     await click(p, '#copy-saved'); await p.waitForSelector('#copybox[data-from="saved"]');
     const j = JSON.parse(await p.inputValue('#copytext'));
-    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1' && j.version === '2.8.0', 'clipboard refused: Copy saved check opens the copy box with the check as JSON');
+    ok(j.kind === 'hftp-do-you-need-ai' && j.check.use === 'rm-1' && j.version === '2.8.1', 'clipboard refused: Copy saved check opens the copy box with the check as JSON');
     count('copy fallback', true);
     ok(!p._errs.length, 'copy fallback: no page errors: ' + p._errs.join(' | '));
     await ctx.close();

@@ -1,7 +1,7 @@
-/* Do you need AI? v2 (folder tools/readiness-2): every word a hotel reads about the five questions and the must-haves.
+/* "Can AI solve your problems?" v2.8.1 (folder tools/readiness-2-questions): every word the tool itself writes.
    Sources: research_notes/AI starting point/research.md (23 Nov 2026) for the five questions and the sourced figures;
-   the owner's workbook "AI Use Cases: Resources Needed per Use Case (D4 x D6)" for which must-haves and for the tailored
-   questions (those are generated: data/usecase-questions.json).
+   the owner's workbook "AI Use Cases: Resources Needed per Use Case (D4 x D6)" for the must-haves; the step-5 questions are the
+   owner's data file (data/usecase_questions_only.json, verbatim). PUB: the public build's data notice (v2.8.1).
    Rules kept (CLAUDE.md): no source the project bans; every figure carries its source and base; only sources the research
    marks [opened] are listed or quoted. Internal codes (P1, F1 ...) stay in this file and never reach the screen. */
 (function (root) {
@@ -261,7 +261,7 @@
   var NOTHING_ELSE = 'Nothing else to fix.';
   /* B3: the score's label. B10: the five plain names (no letters). Version: one string on the page, the PDF and the files. */
   var SCORE_OF = 'of points from all questions';
-  var VERSION = '2.8.0', VERSION_LINE = 'v2.8 (rules unchanged since v2.6)';
+  var VERSION = '2.8.1', VERSION_LINE = 'v2.8.1 (rules unchanged since v2.6)';
   /* BUILD NOW 11: under the top verdict. No source gives a pilot length for hotels, so the weeks are marked as the team's suggestion. */
   var PILOT_GLOSS = 'A pilot: a trial with one team or one outlet, for a set time (for example 8 to 12 weeks, the team’s suggestion), measured against the number from must-have 3.';
   /* BUILD NOW 7: under must-haves 3 and 7 when step 2 says otherwise (no blocking). */
@@ -269,8 +269,6 @@
     m3: 'In step 2 you said you do not yet know the number to improve. If that has changed, go back and change it there too.'
     /* v2.6: the must-have 7 line is gone: the new question 3 asks about past examples, not whether the data is digital and current */
   };
-  /* Audit v3 H1: the replace question, when the check in this browser has a shared copy. */
-  var FILE_KEEPS_SHARE = 'The project team’s copy of this check stays shared; you can still withdraw it.';
   var AREAS_HEAD = 'What is in place, by area'; // v2.1, council item 6: counts, not percentages
   var AREA_WORD = { strong: 'Strong', gaps: 'Gaps to close', weak: 'Weak', thin: 'Too little to say' };
   var SCORE_NOTE = 'Your own answers; nobody checked them. The cut-offs are the team’s judgement, not tested with hotels.'; // v2.1, council item 1
@@ -280,7 +278,6 @@
   var TAIL_TODAY = 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.';
   var GET_SCORE = ['A verdict and a score:', 'one of four verdicts, and the share of points from your own answers, with how both were worked out.']; // cover bullet, council item 1
   var MUST_ONLY = 'No use case was chosen (“None of these fits”), so this result rests on the must-haves only.';
-  var DRAFT = 'Draft questions: team to review';
   /* v2.7.0: vendor questions, four of the register's list left out (who the maker is, the data agreement, the marking and
      registration question, the AI notice question). The readiness check's own list and order: a demo, the register's general questions, cost, data back,
      then one question per open item (systems, a person who checks, personal data, card payments). */
@@ -343,23 +340,58 @@
   var TOO_MANY = 'This browser keeps at most 50 checks. Remove one you no longer need first.'; // v2.1 (audit L4)
   var OLD_FILE = 'This file is from the earlier Readiness check. It cannot be opened here.'; // v2.1 (audit L8)
   var ELSEWHERE = { changed: 'This check was changed in another tab.', removed: 'This check was removed in another tab. It is kept here while you work on it.' }; // v2.1 (audit M3)
-  var NOT_SAVED = 'This browser is not keeping your answers: they are only in this page until you close it. Use Save as file (or Copy saved check) before you close the page.'; // v2.8.0 (B7): memory only
+  /* v2.8.1 (council BUILD NOW 2): the banner names buttons that are there: Copy saved check sits in it on every screen */
+  var NOT_SAVED = 'This browser is not keeping your answers: they are only on this page until you close it. Before you close it, use Copy saved check below, or Save as file on the result page.';
   /* v2.8.0 (B1, B6, B7) */
   var DL_BLOCKED = 'Your browser blocked the download. Use Copy or Print instead.';
+  var DL_STARTED = 'Download started: {name}. If no file appears, use Copy plan or Open printable page below.'; // v2.8.1 (council BUILD NOW 4)
+  /* v2.8.1 (council BUILD NOW 6): how much there is to answer, from the data: 5 + 10 + the fewest and the most step-5 questions */
+  var COVER_COUNT = 'In all, {min} to {max} questions, depending on the use case.', COVER_BACK = 'You can stop and come back.';
+  /* v2.8.1: the public build's data notice (owner, 26 Nov 2026). Plain words; passes the banned-word scan of the tests. */
+  var PUB = {
+    COVER_HEAD: 'Your answers help our research',
+    COVER: 'When you use this check, your answers and the result are sent to EHL SBP Group 36, a student project for HFTP, to improve this tool and for our research on AI in hotels. Nobody else sees them.',
+    OPT_OUT: 'Don’t send my answers',
+    OPT_OUT_ON: 'Your answers are not sent. Everything stays on this device.',
+    MORE: 'What is sent, and why',
+    FOOT: 'Data',
+    TITLE: 'Your data',
+    WHAT_HEAD: 'What is sent',
+    WHAT: ['Your answers to every question, and the result (the verdict and the score).', 'How the hotel is run, your role and the country, if you chose them.', 'The hotel name, only if you typed one.', 'Which step you reached, so we can see where people stop.', 'The date, and a random number for each check, so the steps of one check can be put together.'],
+    NOT: 'We do not store your IP address or which browser you use, and this page sets no cookies.',
+    WHO_HEAD: 'Who receives it',
+    WHO: 'EHL SBP Group 36, a student project for HFTP. Nobody else sees anyone’s answers.',
+    WHY_HEAD: 'Why',
+    WHY: 'To improve this tool and for our research on AI in hotels.',
+    LONG_HEAD: 'How long',
+    LONG: 'Kept until 31 January 2027, then removed.',
+    STOP_HEAD: 'If you would rather not send them',
+    STOP: 'Tick “Don’t send my answers” below or on the first page. From then on nothing is sent from this browser. Your checks are still kept in this browser, and you can still download them.',
+    HERE: 'Your list of checks is also kept in this browser, so you can come back to it. Remove a check from the list to take it off this browser.',
+    CONTACT: 'Contact: {contact}',
+    CONTACT_NONE: 'Contact: to be added',
+    CLOSE: 'Close',
+    LIST_HERE: 'This list is kept in this browser only. Save a file to keep a check elsewhere.',
+    FOOT_KEEP: ' Your answers are sent to the project team unless you tick “Don’t send my answers”; your list of checks stays in this browser.',
+    COVER_KEEP: ' You can stop and come back: your list of checks stays in this browser.',
+    NOT_SAVED: 'This browser is not keeping your answers: when you close this page, they are gone from this browser. Before you close it, use Copy saved check below, or Save as file on the result page.',
+    REMOVE_NOTE: 'Remove this check from this browser? Files you saved, and answers already sent to the project team, are not affected.'
+  };
   var NEW_ASK = 'Start a new check: same hotel ({name}) or a different hotel?';
   var PRINT_BAR = 'Printable page: press Ctrl+P (Cmd+P on a Mac) to print it or save it as a PDF.';
-  var STOPPED = 'Stopped at step 2: not suitable for AI';
+  var STOPPED = 'Stopped at step 2', NOT_SUITABLE = 'Not suitable for AI'; // v2.8.1 (inventory L8): said once, each in its place
   var NEWER = 'This was saved by a newer version of this page. Changes here are not kept.';
   var FROM_V1 = 'This tool has changed. Your use case and your answers to questions 1, 2 and 5 of step 2 were kept (question 1 is now asked the other way round, and your answer with it). The other answers were not: the questions are new.'; // v2.6
 
   root.R2Content = { QUESTIONS: QUESTIONS, Q_ANSWERS: Q_ANSWERS, STOP: STOP, VERDICT: VERDICT, ANSWERS: ANSWERS, OLD_ANSWER: OLD_ANSWER, OLD_LINE: OLD_LINE, ANSWER_WORD: ANSWER_WORD, MUSTS: MUSTS,
     WHO: WHO, WHO_ORDER: WHO_ORDER, TYPES: TYPES, ROLES: ROLES, COUNTRIES: COUNTRIES, COUNTRY_LABEL: COUNTRY_LABEL, CC: CC,
-    LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, DRAFT: DRAFT, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
+    LEVELS: LEVELS, AREA_WORD: AREA_WORD, SCORE_NOTE: SCORE_NOTE, MUST_ONLY: MUST_ONLY, VENDOR: VENDOR, DISCLAIMER: DISCLAIMER, SENSITIVE_FLAG: SENSITIVE_FLAG, SENSITIVE_HOLD: SENSITIVE_HOLD,
     ALMOST_HELD: ALMOST_HELD, AREAS_HEAD: AREAS_HEAD, MUST_INTRO: MUST_INTRO, MUST_COVER: MUST_COVER, TAIL_TODAY: TAIL_TODAY, GET_SCORE: GET_SCORE,
     QUESTIONS_CHANGED: QUESTIONS_CHANGED, OLDER_LIST: OLDER_LIST, STEP2_HEAD: STEP2_HEAD, EUROSTAT_URL: EUROSTAT_URL, CORRUPT: CORRUPT, NO_KEEP: NO_KEEP, TOO_MANY: TOO_MANY, OLD_FILE: OLD_FILE, ELSEWHERE: ELSEWHERE,
-    SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, DL_BLOCKED: DL_BLOCKED, NEW_ASK: NEW_ASK, PRINT_BAR: PRINT_BAR, STOPPED: STOPPED, NEWER: NEWER, FROM_V1: FROM_V1,
+    SOURCES: SOURCES, HONEST: HONEST, AS_OF: AS_OF, USE_CHANGED: USE_CHANGED, USE_REMOVED: USE_REMOVED, NOT_SAVED: NOT_SAVED, DL_BLOCKED: DL_BLOCKED, NEW_ASK: NEW_ASK, PRINT_BAR: PRINT_BAR, STOPPED: STOPPED, NOT_SUITABLE: NOT_SUITABLE, NEWER: NEWER, FROM_V1: FROM_V1,
     SYSTEMS: SYSTEMS, SYSTEMS_FALLBACK: SYSTEMS_FALLBACK,
     ALSO_STEP2: ALSO_STEP2, SENS_BOX: SENS_BOX, SENS_BOX_MORE: SENS_BOX_MORE, ADVISER: ADVISER, NOTHING_ELSE: NOTHING_ELSE, SCORE_OF: SCORE_OF, VERSION: VERSION, VERSION_LINE: VERSION_LINE,
-    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST, FILE_KEEPS_SHARE: FILE_KEEPS_SHARE };
+    ALMOST_FEW_MUST: ALMOST_FEW_MUST, READY_FEW_TAIL: READY_FEW_TAIL, NONE_ALMOST: NONE_ALMOST, HOLD: HOLD, BOX: BOX, PILOT_GLOSS: PILOT_GLOSS, Q_CHANGED: Q_CHANGED, Q_NEW_LINE: Q_NEW_LINE, CONSIST: CONSIST,
+    DL_STARTED: DL_STARTED, COVER_COUNT: COVER_COUNT, COVER_BACK: COVER_BACK, PUB: PUB };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.R2Content;
 })(typeof self !== 'undefined' ? self : globalThis);

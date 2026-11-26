@@ -26,7 +26,7 @@ ok(c1.use === 'rm-1' && !info.useChanged && c1.useName === D.cat.depts[0].uses[0
 // ---------- 1c. the plain name is what a person reads ----------
 const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
 const rm = L.resultModel(finished(F, D, 'rm-1'), env);
-ok(rm.path.endsWith(NAME['rm-1']) && rm.useName === NAME['rm-1'] && rm.catName === '', 'result: the data file\'s name in "Where it sits"; v2.7.0: no catalogue-name line (the catalogue name is no longer shipped)');
+ok(rm.path.endsWith(NAME['rm-1']) && rm.useName === NAME['rm-1'] && !('catName' in rm), 'result: the data file\'s name in "Where it sits"; v2.7.0: no catalogue-name line (the catalogue name is no longer shipped)');
 ok(rm.useTask === 'What it does: ' + E['rm-1'].does && rm.useHow === 'How the AI works: ' + E['rm-1'].how && rm.useLevel === L.useLevelLine(D.cat.depts[0].uses[0]), 'result: what it does and how the AI works replace the catalogue task text');
 ok(P.model(finished(F, D, 'rm-1'), env).blocks.some(b => b.k === 'meta' && b.t === 'Use case: ' + rm.useName) && !P.model(finished(F, D, 'rm-1'), env).blocks.some(b => b.t === rm.path), 'PDF: the plain name as "Use case:" (v2.7: no "Where it sits" section)');
 const pt = P.model(finished(F, D, 'rm-1'), env).blocks.map(b => b.t).join('\n');

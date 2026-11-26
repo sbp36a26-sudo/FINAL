@@ -76,7 +76,7 @@ ok(C.LEVELS.ready.name === 'Ready to start a pilot', 'O5: the top verdict keeps 
 // method lists the team judgement (O1 to O4)
 const meth = L.method(L.evaluate(PAT.C[0], TQ)).join('\n');
 ok(/at least half the must-haves at Yes/.test(meth) && /at least half the questions for this use case that you answered at Yes/.test(meth) && /“Not sure” in step 2 holds the top verdict back/.test(meth) && /“None of these fits”/.test(meth) && /question 2, 3, 4 or 5/.test(meth), 'method names the v2.5 (and v2.6) team judgement');
-ok(!/v2\.5/.test(meth) && meth.includes('Version v2.8 (rules unchanged since v2.6).'), 'v2.8.0: the method shows one version string and no "rules v2.5"');
+ok(!/v2\.5/.test(meth) && meth.includes('Version v2.8.1 (rules unchanged since v2.6).'), 'v2.8.0: the method shows one version string and no "rules v2.5"');
 
 // ---------- BUILD NOW 5 / O6: tailored tasks read as the team-worded question ----------
 const r5 = finished(F, D, 'fo-4'); r5.T[GX[0].id] = 'n'; r5.T[GX[1].id] = 'pl'; r5.TBy[GX[1].id] = '2027-02-01'; r5.T[GX[2].id] = 'k'; r5.T[GX[7].id] = 'pl';
@@ -112,22 +112,13 @@ ok(/\b70%/.test(app) && /\b46%/.test(app) && !/69\.89|45\.91/.test(app), 'BUILD 
 // ---------- O7: sharing off ----------
 ok(!/SHARING_DEFAULT|SHARING_ON/.test(app), 'O7 (v2.7.0): sharing is gone, not only switched off');
 
-// ---------- cleanup inventory v3: H1 (U3) ----------
+// ---------- cleanup inventory v3: H1 (U3), M4: share fields (v2.8.1: sharing is gone, inventory D3) ----------
 {
-  const r = finished(F, D, 'gx-2'); r.sharedAt = '2026-11-24T10:00:00Z'; r.sharedMode = 'shared'; r.sharedSig = F.shareSig(r);
-  const s = { v: 2, cur: r.id, checks: { [r.id]: r } }, x = F.reduce(s, 'import', F.forFile(r), ENV);
-  ok(x.ok && x.store.checks[r.id].sharedAt === r.sharedAt && x.store.checks[r.id].sharedMode === 'shared' && x.store.checks[r.id].sharedSig === r.sharedSig, 'H1: replacing a shared check with its file keeps sharedAt, sharedMode, sharedSig');
-  const f2 = F.forFile(r); f2.T.pe1 = 'n'; const x2 = F.reduce(s, 'import', f2, ENV);
-  ok(x2.ok && F.shareStale(x2.store.checks[r.id]), 'H1: a file with other answers marks the copy out of date');
-  const other = F.blankStore(), x3 = F.reduce(other, 'import', F.forFile(r), ENV);
-  ok(x3.ok && x3.store.checks[r.id].sharedAt === null, 'H1: a file of a check not in this browser still opens unshared (v2.1 L11)');
-}
-// M4: two tabs
-{
-  const r = finished(F, D, 'gx-2'), mine = { v: 2, cur: r.id, checks: { [r.id]: r } };
-  const t = clone(r); t.Q.q4 = 'n'; t.sharedAt = '2026-11-24T11:00:00Z'; t.sharedMode = 'local'; t.sharedSig = 'sig';
-  const m = F.mergeTabs(mine, { v: 2, cur: r.id, checks: { [r.id]: t } });
-  ok(m.elsewhere === 'changed' && m.store.checks[r.id].Q.q4 === 'y' && m.store.checks[r.id].sharedAt === t.sharedAt && m.store.checks[r.id].sharedMode === 'local' && m.store.checks[r.id].sharedSig === 'sig', 'M4: this tab keeps its answers and takes the other tab\'s share fields');
+  const r = finished(F, D, 'gx-2'), s = { v: 2, cur: r.id, checks: { [r.id]: r } }, x = F.reduce(s, 'import', F.forFile(r), ENV);
+  ok(x.ok && !('sharedAt' in x.store.checks[r.id]), 'H1 (v2.8.1): a check replaced by its file has no share fields');
+  const t = clone(r); t.Q.q4 = 'n'; t.sharedAt = '2026-11-24T11:00:00Z';
+  const m = F.mergeTabs(s, { v: 2, cur: r.id, checks: { [r.id]: t } });
+  ok(m.elsewhere === 'changed' && m.store.checks[r.id].Q.q4 === 'y' && !('sharedAt' in m.store.checks[r.id]), 'M4: this tab keeps its answers (no share fields)');
 }
 // L1 (U1): an old Partly in the action plan
 {
@@ -136,7 +127,7 @@ ok(!/SHARING_DEFAULT|SHARING_ON/.test(app), 'O7 (v2.7.0): sharing is gone, not o
   ok(f && /your answer: Not answered \(earlier answer: Partly, no longer offered\)/.test(f.sub), 'L1: first sub names the old answer: ' + (f && f.sub));
   ok(/^Answer again: “/.test(o[0]?.text) && /\(the earlier answer “Partly” is no longer offered\)$/.test(o[0]?.text), 'L1: the task reads "Answer again": ' + o[0]?.text);
   ok(m.people.some(p => p.items.some(a => /Not answered \(earlier answer: Partly/.test(a.tag))), 'L1: the action plan tag names it too');
-  ok(L.answerState && L.answerState('p') === 'old' && L.answerState('na') === 'old' && L.answerState('y') === 'yes' && L.answerState('pl') === 'planned' && L.answerState('n') === 'no' && L.answerState('k') === 'blank' && L.answerState(undefined) === 'blank', 'L1: one helper answerState');
+  ok(!('answerState' in L) && !('byPerson' in L) && L.answerWord({ old: 'p' }) === 'Not answered (earlier answer: Partly, no longer offered)', 'L1 (v2.8.1, inventory D7): answerState and byPerson are gone (unused by the page); answerWord names an old answer');
 }
 // L2: Team tab, copy of a gone use case
 ok(/DL\.answerWord\(/.test(team.slice(team.indexOf('function goneWord'), team.indexOf('function detailDyn'))) && !/DC\.ANSWER_WORD/.test(team), 'L2: detailGone words an old answer with answerWord');
@@ -164,7 +155,7 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   const FX = JSON.parse(rd('tests/fixtures/v2.4-saved.json'));
   const info = {}, st = F.migrate(clone(FX.store), ENV, info), c1 = st && st.checks[FX.seen.check1.id], c2 = st && st.checks[FX.seen.check2.id];
   ok(st && c1 && c2 && !info.newer && !info.questionsChanged && !info.useChanged, 'v2.4 store opens with both checks and no notice');
-  ok(c1.step === 'q' && c2.step === 'q' && c1.sharedAt && c1.sharedMode === 'local' && eq(c1.Qnew, ['q3', 'q4']), 'v2.4 store: both wait on step 2 (v2.6: questions 3 and 4 are new; was: on their result); check 1 still knows its copy');
+  ok(c1.step === 'q' && c2.step === 'q' && !('sharedAt' in c1) && eq(c1.Qnew, ['q3', 'q4']), 'v2.4 store: both wait on step 2 (v2.6: questions 3 and 4 are new; was: on their result); v2.8.1: its share state is dropped');
   const m1 = L.resultModel(c1, env), m2 = L.resultModel(c2, env);
   ok(FX.seen.check1.levelName === 'Almost ready' && m1.level === 'almost' && m1.ev.pct === 56 && eq(Object.keys(c1.T).length, 7), 'v2.4 check 1 (6 of 10 must-haves Yes) is still Almost ready; v2.7.0: its gx-2 answers carry to the new questions (pe1 to pe1a and pe1b, x-auto to both limits questions); v2.7.1: its one stored "k" is not an answer, so 7 carry and 5 new ones start unanswered; 25 of 44 points = 56% (was 69%)');
   ok(FX.seen.check2.levelName === 'Ready to start a pilot' && m2.level === 'almost' && m2.held.join() === 'none', 'v2.4 check 2 (None of these fits) was Ready, is Almost ready under rules v2.5 (O4)');
@@ -173,7 +164,7 @@ ok(!/What does this do|very bottom/.test(app), 'L4: app.js comments describe the
   const sn = L.since(withNew.snaps);
   ok(sn && sn.compared === false && /worked out with earlier rules/.test(sn.lines.join(' ')), 'v2.4 result is shown as worked out with earlier rules: ' + (sn && sn.lines[0]));
   const fr = F.cleanRec(FX.file.check, ENV, {}, { file: true });
-  ok(fr && fr.step === 'q' && fr.use === 'gx-2' && fr.sharedAt === null && FX.file.rules === 'v2.3 (24 Nov 2026)', 'v2.4 file opens on step 2 (v2.6: was its result), unshared');
+  ok(fr && fr.step === 'q' && fr.use === 'gx-2' && !('sharedAt' in fr) && FX.file.rules === 'v2.3 (24 Nov 2026)', 'v2.4 file opens on step 2 (v2.6: was its result), unshared');
 }
 
 console.log('Headlines (rules v2.6):'); Object.entries(heads).forEach(([k, h]) => console.log('  ' + k + ': ' + h));

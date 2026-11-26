@@ -1,5 +1,5 @@
-/* Do you need AI? v2: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
-   Words come from src/content.js (R2Content); the tailored questions from data/usecase-questions.json (TQ below).
+/* "Can AI solve your problems?" v2.8.1: the rules (pure, no DOM). Runs in the page and in the Node tests (tests/logic.test.mjs).
+   Words come from src/content.js (R2Content); the step-5 questions from data/usecase_questions_only.json (TQ below, built by build.mjs).
    1. verdict(Q): the five questions (unchanged from v1; research_notes/AI starting point/research.md, part A).
    2. evaluate(rec, TQ): the score in % and the verdict (owner, 24 Nov 2026: "percentage plus verdict").
       Every cut-off sits in T, one block, and is the team's judgement, not tested with hotels.
@@ -10,8 +10,7 @@
       holds, each a named constant in JUDGEMENT; points unchanged.
       Rules v2.6 (24 Nov 2026, owner): question 1 is asked the other way round (Yes = fixed rules can do it = stop); questions 3
       and 4 are new, and a No on either holds the top verdict like a No on 2 or 5 (the "assistant only" condition is gone).
-   3. resultModel(rec, env): every word of the result page. The screen and the PDF read it, so they agree. The Team tab reads
-      evaluate(), method(), open() and answerWord(). */
+   3. resultModel(rec, env): every word of the result page. The screen and the PDF read it, so they agree. */
 (function (root) {
   'use strict';
   var C = root.R2Content;
@@ -150,12 +149,11 @@
     if (!o.url && HTTP.test(o.name.trim())) { o.url = o.name.trim(); o.name = 'Source'; } // a bare link: the link, never the URL as text
     return o;
   }
-  /* v2.6: the detail layer's content as plain JSON (title, kicker, catName, draft, draftText, does, how, level, srcs, foot),
-     one source for the page's own dialog and the hub's layer on the main page ({ hub: 'detail' }, tools/hub/CONTRACTS.md).
+  /* v2.6: the detail layer's content as plain JSON (title, kicker, does, how, level, srcs, foot) for the page's own dialog.
      D: the page's data block (ex, detail); u: the catalogue use; d: its department. Strings only, except srcs. */
   function detailData(D, u, d, TQ) {
     var id = u.id, dt = (D.detail || {})[id] || { srcs: [] }, tu = TQ.uses[id], x = explain(D.ex, id); d = d || {};
-    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), catName: catalogueName(TQ, u), draft: '', draftText: '',
+    return { title: useLabel(TQ, u), kicker: [d.name, d.cat].filter(Boolean).join(' · '), 
       does: x ? D.ex[id].does : '', how: x ? D.ex[id].how : '', level: useLevelLine(u),
       srcs: srcList(dt), thin: !!dt.thin, srcNote: dt.note || '', nV2: dt.nV2 || 0,
       foot: 'From the project team’s Use-Case Catalogue and the source audit of ' + C.AS_OF + '. A source link opens in a new browser tab.' };
@@ -190,6 +188,7 @@
   function escH(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   /* The list item the detail layer shows (v2.6, owner: plain hyperlinks): the source's name is itself the link, opened by the browser
      (no frame interception); a "Hotel" tag for 'h'; the note; then the address, selectable, with "Copy address". */
+  /* test-only (inventory D7): sourceItem then sourceRowItem, as the page does inside sourcesBox */
   function sourceRow(s, refs) { return sourceRowItem(sourceItem(s, refs)); }
   /* x: { type, name, note, url } (sourceItem, or the layer's plain JSON). */
   function sourceRowItem(x0) {
@@ -342,6 +341,12 @@
   /* “Needs judgement” and “Proof”: the titles of the questions answered Not sure in step 2. */
   function notSureTitles(v) { return v.find.map(function (x) { return '“' + QBY[x.id].title + '”'; }).join(' and '); }
   function n_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  /* v2.8.1 (council BUILD NOW 7): "The top verdict needs every must-have at Yes: 7 are not Yes yet (4 No, 3 planned)." The same
+     counts as the must-haves line; the brackets only when the open ones are of more than one kind. */
+  function capLine(m) {
+    var parts = [m.no ? m.no + ' No' : '', m.planned ? m.planned + ' planned' : '', m.unknown ? m.unknown + ' not answered yet' : ''].filter(Boolean);
+    return 'The top verdict needs every must-have at Yes: ' + n_(m.n - m.yes, 'is', 'are') + ' not Yes yet' + (parts.length > 1 ? ' (' + parts.join(', ') + ')' : '') + '.';
+  }
 
   /* ---------- to-do: one plain task per open item ---------- */
   var RANK = { no: 0, unknown: 2, planned: 3 };
@@ -370,17 +375,9 @@
   /* "planned by 15 Jan 2027", or "was planned by 1 Jan 2001, overdue" once the date has passed (it.overdue is set by resultModel). */
   function plannedBy(it) { var d = fmtDate(it.by); return !d ? '' : it.overdue ? 'was planned by ' + d + ', overdue' : 'planned by ' + d; }
   function firstLabel(n) { return n === 1 ? 'Start with this one' : 'Start with these ' + (n === 3 ? 'three' : 'two'); }
-  /* The action plan by person, in the readiness check's order of roles. */
-  function byPerson(ev) {
-    var by = {}; open(ev).forEach(function (a) { (by[a.who] = by[a.who] || []).push(a); });
-    return C.WHO_ORDER.filter(function (w) { return by[w]; }).map(function (w) { return { who: w, name: C.WHO[w], items: by[w] }; });
-  }
   var STATE_WORD = { yes: 'Yes', planned: 'Planned', no: 'No', unknown: 'Not answered yet' };
-  /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such (Team tab). */
+  /* An item's answer in words; an answer saved before v2.3 that is no longer offered is named as such. */
   function answerWord(it) { return it.old ? 'Not answered (earlier answer: ' + OLD[it.old] + ', no longer offered)' : STATE_WORD[it.state]; }
-  /* Audit v3 L1: one name for every saved answer of steps 3 and 5, used by the page and the Team tab.
-     'yes' | 'planned' | 'no' | 'old' (Partly or Doesn't apply, no longer offered) | 'blank' (not answered yet; a stored 'k' too). */
-  function answerState(raw) { return oldOf(raw) ? 'old' : { y: 'yes', pl: 'planned', n: 'no' }[raw] || 'blank'; }
   /* v2.5 (council BUILD NOW 7): step 3 lines where an answer there and one in step 2 disagree. No blocking. { m3? } (v2.6: the must-have 7 line is gone) */
   function consistLines(rec) {
     var Q = (rec && rec.Q) || {}, A = (rec && rec.A) || {}, o = {};
@@ -396,7 +393,6 @@
   function nameParts(name) { name = String(name || ''); var i = name.indexOf(': '); return i > 0 ? { main: name.slice(0, i), sub: name.charAt(i + 2).toUpperCase() + name.slice(i + 3) } : { main: name, sub: '' }; }
   function useLabel(TQ, u) { var t = u && TQ && TQ.uses && TQ.uses[u.id]; return (t && t.name) || (u ? u.n : ''); }
   /* "Catalogue name: …" in small text where the plain name differs (result, PDF, the explainer), so the catalogue entry is easy to find. */
-  function catalogueName(TQ, u) { return u && useLabel(TQ, u) !== u.n ? 'Catalogue name: ' + u.n : ''; }
   function useLevelLine(u) { return 'How common in hotels: ' + useLevel(u) + ' (Use-Case Catalogue rating).'; }
   /* The use-case explainer (data/explain.json): "What it does" and "How the AI works", or null when the page carries none. */
   function explain(ex, id) { var x = ex && id && ex[id]; return x ? { does: 'What it does: ' + x.does, how: 'How the AI works: ' + x.how } : null; }
@@ -521,13 +517,14 @@
   }
   /* "Settle this first: ..." for each hold that needs its own line (BUILD NOW 3; O2, O4). A 'tail' hold needs none: its
      planned and missing questions are already the open items. */
-  function holdItems(ev, v) {
+  function holdItems(ev, v, useName) {
     /* v2.8.0: the step-2 and hold items that come first in "Start with" and in the plan (whoKey: the person who does it).
        B2: every No on questions 2 to 5, whatever the verdict. B4: the sensitive hold reads "Ask an adviser before a pilot" (GM).
        Owner (25 Nov 2026): each "Not sure" in step 2 becomes "Find out: …" for the person its question names. "None of these fits". */
     var out = [], h = ev.held;
     ev.carried.forEach(function (id) { var q = QBY[id]; out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.HOLD.carried.replace('{title}', q.title).replace('{outcome}', q.outcome + (q.add ? ' ' + q.add : '')), sub: 'Step 2: ' + C.STEP2_HEAD, hold: 'carried' }); });
-    if (h.indexOf('sensitive') >= 0) out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.ADVISER, sub: 'Step 4: Where in the hotel?', hold: 'sensitive' });
+    /* v2.8.1 (council BUILD NOW 8): the sub-line names the use case that holds it */
+    if (h.indexOf('sensitive') >= 0) out.push({ who: C.WHO.gm, whoKey: 'gm', text: C.ADVISER, sub: useName ? 'Because of the use case you chose: ' + useName : 'Because of the use case you chose', hold: 'sensitive' });
     v.find.forEach(function (f) { var q = QBY[f.id]; out.push({ who: C.WHO[q.whoKey], whoKey: q.whoKey, text: q.find, sub: 'Step 2: ' + q.title + ' · your answer: Not sure', hold: 'notsure' }); });
     if (h.indexOf('none') >= 0) out.push({ who: '', text: C.HOLD.none, sub: 'Step 4: Where in the hotel?', hold: 'none' });
     return out;
@@ -553,7 +550,7 @@
     ev.items.forEach(function (it) { it.overdue = !!(it.by && realDate(it.by) && it.by < today); }); // a "by when" date that has passed
     var type = (C.TYPES.filter(function (t) { return t[0] === H.type; })[0] || [])[1] || '', role = (C.ROLES.filter(function (t) { return t[0] === H.role; })[0] || [])[1] || '';
     var o = { rules: RULES, level: ev.level, ev: ev,
-      title: 'Do you need AI? Result',
+      title: 'Can AI solve your problems? Result',
       hotel: [H.name, type, H.country === 'Other' ? C.COUNTRY_LABEL.Other : H.country].filter(Boolean).join(' · '),
       filledBy: role, date: fmtDate(env.today || localIso()),
       ai: verdictText(v, true),
@@ -562,20 +559,20 @@
       path: pathParts(rec, cat, TQ).join(' › ') || 'Nothing chosen.',
       /* v2.2: "What it does" and "How the AI works" from the explainer replace the catalogue's task text where the page carries them. */
       useTask: u && explain(env.ex, u.id) ? explain(env.ex, u.id).does : '', useHow: u && explain(env.ex, u.id) ? explain(env.ex, u.id).how : '',
-      useLevel: u ? useLevelLine(u) : '', catName: catalogueName(TQ, u), useName: u ? useLabel(TQ, u) : '',
+      useLevel: u ? useLevelLine(u) : '', useName: u ? useLabel(TQ, u) : '',
       none: rec.use === 'none' ? noneLine(cat.nUses) : '',
       levelName: C.LEVELS[ev.level].name,
       levelLine: levelLine(ev),
       reason: ev.reason, held: ev.held.slice(), flag: ev.sensitive ? C.SENSITIVE_FLAG : '', disclaimer: C.DISCLAIMER,
       boxLine: ev.box, pilot: ev.level === 'ready' ? C.PILOT_GLOSS : '',
       scoreHead: scoreHead(ev), scoreSub: scoreSub(ev), mustLine: mustLine(ev),
-      cap: ev.cap ? 'The top verdict needs every must-have at Yes: ' + n_(ev.must.n - ev.must.yes, 'is', 'are') + ' still open.' : '',
-      mustOnly: ev.mustOnly ? C.MUST_ONLY : '', draft: '',
+      cap: ev.cap ? capLine(ev.must) : '',
+      mustOnly: ev.mustOnly ? C.MUST_ONLY : '',
       areasHead: C.AREAS_HEAD,
       areas: ev.areas.map(function (g) { return { k: g.k, name: g.name, yes: g.yes, n: g.n, unknown: g.unknown, count: g.yes + ' of ' + g.n, share: g.n ? Math.round(100 * g.yes / g.n) : 0, word: g.word ? C.AREA_WORD[g.word] : '', cls: g.word || 'none', line: areaLine(g) }; }),
       method: method(ev), since: since(rec.snaps) };
     /* BUILD NOW 3: a held verdict lists what holds it as item 1 (who: '': the line names the step it comes from). */
-    var holds = holdItems(ev, v), all = open(ev);
+    var holds = holdItems(ev, v, u ? useLabel(TQ, u) : ''), all = open(ev);
     o.first = holds.concat(all.map(function (a) { return { who: C.WHO[a.who], text: a.text, sub: (a.must ? 'Must-have: ' : '') + a.name + ' · your answer: ' + a.word }; })).slice(0, 3);
     o.firstLabel = o.first.length ? firstLabel(o.first.length) : 'Nothing open';
     o.nothingElse = holds.length && !all.length ? C.NOTHING_ELSE : ''; // B4: the hold (or step 2) is all that is open
@@ -590,16 +587,16 @@
   }
   /* One person's list as plain text (the "Copy for …" buttons). v2.5: Copy summary's summaryText was removed (audit v3, dead code). */
   function personText(m, p, useName) {
-    return 'Do you need AI?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
+    return 'Can AI solve your problems?' + (useName ? ' ' + useName : '') + (m.hotel ? ' (' + m.hotel.split(' · ')[0] + ')' : '') + '\nFor: ' + p.name + '\nCould you help with these?\n\n' +
       p.items.map(function (a, i) { return (i + 1) + '. ' + a.text + (a.must ? ' (must-have)' : ''); }).join('\n');
   }
   var api = { QV: QV, legacyQ: legacyQ, badAns: badAns, RULES: RULES, JUDGEMENT: JUDGEMENT, AREA_WORD_MIN: AREA_WORD_MIN, EARLIER_RULES: EARLIER_RULES, sensitiveOf: sensitiveOf, vendorQs: vendorQs, tailRange: tailRange, areaLine: areaLine, plannedBy: plannedBy, snapsOf: snapsOf,
     T: T, POINTS: POINTS, QIDS: QIDS, MUST_IDS: MUST_IDS, MUST: MUST, QBY: QBY, AK: AK, Q_OK: Q_OK, A_OK: A_OK, STATE_WORD: STATE_WORD, OLD: OLD, oldOf: oldOf, oldLine: oldLine, answerWord: answerWord,
     verdict: verdict, verdictText: verdictText, aiMeaning: aiMeaning, aiMeaningText: aiMeaningText, sourceItem: sourceItem, sourceRow: sourceRow, sourceRowItem: sourceRowItem, detailData: detailData, srcList: srcList, srcBadges: srcBadges, sourcesBox: sourcesBox, sourceLines: sourceLines, THIN: THIN, NO_SOURCE: NO_SOURCE, realDate: realDate, fmtDate: fmtDate, localIso: localIso, systemsFor: systemsFor,
-    useQs: useQs, questions: questions, evaluate: evaluate, open: open, byPerson: byPerson, task: task, actText: actText, firstLabel: firstLabel,
-    pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, catalogueName: catalogueName, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
+    useQs: useQs, questions: questions, evaluate: evaluate, open: open, task: task, actText: actText, firstLabel: firstLabel,
+    pathParts: pathParts, nameParts: nameParts, useOf: useOf, useLevel: useLevel, useLabel: useLabel, useLevelLine: useLevelLine, explain: explain, noneLine: noneLine, shareLines: shareLines, tailWhy: tailWhy,
     snapshot: snapshot, sameSnap: sameSnap, since: since, method: method, mustLine: mustLine, scoreHead: scoreHead, scoreSub: scoreSub,
-    resultModel: resultModel, personText: personText, answerState: answerState, consistLines: consistLines, levelLine: levelLine, holdItems: holdItems, OTHER_QS: OTHER_QS };
+    resultModel: resultModel, personText: personText, consistLines: consistLines, levelLine: levelLine, holdItems: holdItems, capLine: capLine, OTHER_QS: OTHER_QS };
   root.R2Logic = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof self !== 'undefined' ? self : globalThis);

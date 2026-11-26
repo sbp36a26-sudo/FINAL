@@ -29,7 +29,7 @@ ok(['res-4', 'it-4', 'lg-4'].every(id => D.detail[id].srcs.some(e => BANNED.test
 ok(eq(D.ex, explainModel(JSON.parse(rd('data/explain.json')), D.cat.depts.flatMap(d => d.uses.map(u => u.id)))), 'the explainer data is data/explain.json');
 ok(!('rc' in D), 'no readiness-check or register data block');
 // the page
-ok(/<title>Can AI solve your problems\? \(use-case questions v2\.8\)<\/title>/.test(html) && /data-version="2\.8\.0">Version v2\.8 \(rules unchanged since v2\.6\)\./.test(html) && html.includes('id="app" data-state="start"'), 'title and the data-state root');
+ok(/<title>Can AI solve your problems\?<\/title>/.test(html) && /data-version="2\.8\.1">Version v2\.8\.1 \(rules unchanged since v2\.6\)\./.test(html) && html.includes('id="app" data-state="start"'), 'title and the data-state root');
 ok(html.includes(C.DISCLAIMER) && html.includes('as of 25 Nov 2026'), 'footer with the disclaimer and the content date');
 ok(!html.includes('root.RCLogic = api') && !html.includes('root.RCStore = api') && html.includes('window.Readiness2 = {') && html.includes('id="r2-font"') && /jsPDF/.test(html), 'jsPDF and the PDF font are inlined; the readiness check\'s rules and store are not');
 ok(!/AIHA|AI Hospitality Alliance|wikipedia/i.test(html.replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')), 'no banned source named anywhere in the page');

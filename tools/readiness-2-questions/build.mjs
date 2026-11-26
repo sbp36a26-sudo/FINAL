@@ -1,10 +1,14 @@
-// Builds "Do you need AI?" v2.7.0 (questions-only, standalone): index.html, one self-contained file, from src/, the owner's
+// Builds "Can AI solve your problems?" v2.8.1 (questions-only, standalone), one self-contained file per build, from src/, the owner's
 // questions-only data (data/usecase_questions_only.json, verbatim), data/must-meta.json, data/explain.json and the Use-Case
 // Catalogue's data (read at build time from ../use-case-catalogue/index.html, never copied by hand).
 // It also inlines jsPDF (tools/assessment/lib) and the "Register Sans" PDF font (tools/register/fonts, SIL OFL 1.1).
 // No CDN, no external font or script. No legal content (owner, 25 Nov 2026): see BANNED below and tests/no-legal.test.mjs.
-// Run after editing anything in src/ or data/, or after the catalogue changes:   node tools/readiness-2-questions/build.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+// Two builds (v2.8.1, owner 26 Nov 2026):
+//   node tools/readiness-2-questions/build.mjs            → index.html, the claude.ai artifact (sends nothing)
+//   node tools/readiness-2-questions/build.mjs --public   → public/index.html, the page GitHub Pages serves: window.R2_PUBLIC from
+//        hosting.config.json ({ collectUrl, contact }), src/collect.js, no window.storage, no window.claude (see README "Hosting")
+// Run after editing anything in src/ or data/, or after the catalogue changes. Build both before a commit.
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -169,7 +173,9 @@ export function explainModel(E, ids) {
   return Object.fromEntries(ids.map(id => [id, { does: E[id].does, how: E[id].how }]));
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+/* The page as text. opt: { pub: false | true, config: { collectUrl, contact } (public only) }. Pure apart from reading files. */
+export function buildPage(opt) {
+  opt = opt || {};
   const catHtml = read('../use-case-catalogue/index.html');
   const Q = JSON.parse(read('data/usecase_questions_only.json')), meta = JSON.parse(read('data/must-meta.json'));
   const cat = catalogueModel(catHtml, Q);
@@ -178,20 +184,47 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const missing = ids.filter(id => !qIds.includes(id)), extra = qIds.filter(id => !ids.includes(id));
   if (missing.length || extra.length) throw new Error('data/usecase_questions_only.json is out of step with the catalogue (missing: ' + missing.join(' ') + '; left over: ' + extra.join(' ') + ')');
   const TQ = tqModel(Q, meta, JSON.parse(read('data/v27-sigs.json')).sigs, JSON.parse(read('data/actions_questions_only.json')).actions), ex = explainModel(JSON.parse(read('data/explain.json')), ids);
-  const data = { cat, tq: TQ, ex, detail, builtOn: new Date().toISOString().slice(0, 10) };
+  const data = { cat, tq: TQ, ex, detail, builtOn: opt.builtOn || new Date().toISOString().slice(0, 10) };
   const block = `<script type="application/json" id="r2-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
   const font = { regular: readFileSync(join(here, '../register/fonts/rs-regular.ttf')).toString('base64'), bold: readFileSync(join(here, '../register/fonts/rs-bold.ttf')).toString('base64') };
   const fontBlock = `<script type="application/json" id="r2-font">${JSON.stringify(font)}</script>`;
-  const safe = s => s.replace(/<\/script/gi, '<\\/script');
+  const safe = x => x.replace(/<\/script/gi, '<\\/script');
+  let pub = '', collect = '';
+  if (opt.pub) {
+    const c = publicConfig(opt.config);
+    pub = 'window.R2_PUBLIC = ' + JSON.stringify(c).replace(/</g, '\\u003c') + '; // the public build (build.mjs --public, hosting.config.json)';
+    collect = safe(read('src/collect.js'));
+  }
   let html = read('src/page.html');
-  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))],
-    ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__APP__*/', safe(read('src/app.js'))]]) {
+  for (const [mark, text] of [['/*__STYLE__*/', read('src/style.css')], ['<!--__DATA__-->', block + '\n' + fontBlock], ['/*__JSPDF__*/', safe(read('../assessment/lib/jspdf.umd.min.js'))], ['/*__PUBLIC__*/', pub],
+    ['/*__CONTENT__*/', safe(read('src/content.js'))], ['/*__LOGIC__*/', safe(read('src/logic.js'))], ['/*__FLOW__*/', safe(read('src/flow.js'))], ['/*__PDF__*/', safe(read('src/pdf.js'))], ['/*__COLLECT__*/', collect], ['/*__APP__*/', safe(read('src/app.js'))]]) {
     if (!html.includes(mark)) throw new Error('src/page.html: missing ' + mark);
     html = html.replace(mark, () => text);
   }
-  writeFileSync(join(here, 'index.html'), html);
-  console.log('wrote tools/readiness-2-questions/index.html', Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(TQ.uses).reduce((a, u) => a + u.qs.length, 0), 'questions for the use cases');
+  return { html, cat, TQ, detail };
+}
+/* hosting.config.json → { collectUrl, contact }: strings only; collectUrl must be empty or an https address. */
+export function publicConfig(c) {
+  c = c && typeof c === 'object' ? c : {};
+  const collectUrl = typeof c.collectUrl === 'string' ? c.collectUrl.trim() : '', contact = typeof c.contact === 'string' ? c.contact.trim().slice(0, 200) : '';
+  if (collectUrl && !/^https:\/\/[^\s"'<>]+$/.test(collectUrl)) throw new Error('hosting.config.json: collectUrl must be empty or an https:// address');
+  return { collectUrl, contact };
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const isPub = process.argv.includes('--public');
+  const config = isPub ? JSON.parse(read('hosting.config.json')) : null;
+  const { html, cat, TQ, detail } = buildPage({ pub: isPub, config });
+  const out = isPub ? 'public/index.html' : 'index.html';
+  if (isPub) mkdirSync(join(here, 'public'), { recursive: true });
+  writeFileSync(join(here, out), html);
+  console.log('wrote tools/readiness-2-questions/' + out, Math.round(html.length / 1024) + ' KB', '·', cat.nUses, 'use cases in', cat.nDepts, 'departments ·', Object.values(TQ.uses).reduce((a, u) => a + u.qs.length, 0), 'questions for the use cases');
   const all = Object.values(detail).flatMap(d => d.srcs), hitW = []; Object.entries(detail).forEach(([id, d]) => d.srcs.forEach(e => { const h = [e.n, e.o, e.x, e.u].join(' ').match(BANNED_SRC); if (h) hitW.push(id + ' [' + h[0] + '] ' + (e.n || e.x).slice(0, 70)); }));
   console.log('sources:', all.length, 'entries (' + all.filter(e => e.k === 'v2').length + ' from sources_v2),', Object.values(detail).filter(d => d.thin).length, 'use cases marked thin,', Object.values(detail).filter(d => !d.srcs.length).length, 'with no source');
+  if (isPub) {
+    const c = publicConfig(config);
+    if (!c.collectUrl) console.warn('WARNING: hosting.config.json collectUrl is empty: the public page sends nothing (see hosting/README.md).');
+    if (!c.contact) console.warn('WARNING: hosting.config.json contact is empty: the data notice shows "Contact: to be added".');
+  }
   if (process.env.SHOW_SOURCES) { console.log(detail.log.join('\n')); console.log('sources carrying a banned word (shown, for owner review):\n' + hitW.join('\n')); }
 }

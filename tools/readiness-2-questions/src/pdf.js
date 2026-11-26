@@ -1,4 +1,4 @@
-/* Do you need AI? v2: the two PDFs of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
+/* "Can AI solve your problems?" v2.8.1: the two PDFs of the result (pure; runs in the page and in the Node tests, tests/pdf.test.mjs).
    v2.7 (owner, 25 Nov 2026): TWO documents. v2.8.0 (owner decision 4): the Result PDF ends with the use case's examples and sources. kind 'result': Result, Start with these three, Action plan by
    person, Questions for the vendor. kind 'answers': a short summary, then every question with the answer given
    (step 2, step 3, step 5). The stop screen keeps its one-page PDF (kind 'result').
@@ -7,7 +7,8 @@
       result page draws, so the PDF and the screen use the same words. env = { cat, TQ, RC, M, today }.
         blocks: { k: 'title' | 'meta' | 'h' | 'verdict' | 'lead' | 'label' | 'p' | 'q' | 'li' | 'todo' | 'area' | 'item' | 'num', ... }
       Q1 Yes (v2.6; No before) → the one-page stop version (why, the instead line, the five answers).
-   2. fileName(hotel, today, kind) → "Do-you-need-AI_<hotel or assessment>_<YYYY-MM-DD>_result.pdf" / "_answers.pdf" in safe ASCII
+   2. fileName(hotel, today, kind) → "Can-AI-solve-your-problems_<hotel or assessment>_<YYYY-MM-DD>_result.pdf" / "_answers.pdf" in
+      safe ASCII (v2.8.1, council BUILD NOW 1: the tool's one name)
       (kind 'file': no suffix, for the JSON file's base name).
    3. draw(model, jsPDF, font) → { doc, pages, footers }: A4 for print. PDF redesign (24 Nov 2026): page 1 is the summary
       (hotel, use case, the verdict box in the verdict's colour, "Start with"); then the five questions, where it sits, the
@@ -70,7 +71,6 @@
     b.push({ k: 'h', t: m.firstLabel });
     if (m.cap) b.push({ k: 'p', t: m.cap, id: 'cap' });
     if (m.mustOnly) b.push({ k: 'p', t: m.mustOnly, id: 'must-only' });
-    if (m.draft) b.push({ k: 'p', t: m.draft, id: 'draft' });
     if (!m.first.length) b.push({ k: 'p', t: 'Every question is answered Yes.' });
     m.first.forEach(function (f, i) { b.push({ k: 'num', n: i + 1, t: (f.who ? f.who + ': ' : '') + f.text, who: f.who || '', body: f.text, sub: f.sub }); }); // v2.5: a hold (BUILD NOW 3) has no person
     if (m.nothingElse) b.push({ k: 'p', t: m.nothingElse, id: 'nothing-else' }); // v2.8.0 (B4)
@@ -120,7 +120,7 @@
   }
   function fileName(hotel, today, kind) {
     var d = /^\d{4}-\d{2}-\d{2}$/.test(today || '') ? today : L.localIso(); // v1.2: local day
-    return 'Do-you-need-AI_' + (slug(hotel) || 'assessment') + '_' + d + (kind === 'file' ? '' : kind === 'answers' ? '_answers' : '_result') + '.pdf';
+    return 'Can-AI-solve-your-problems_' + (slug(hotel) || 'assessment') + '_' + d + (kind === 'file' ? '' : kind === 'answers' ? '_answers' : '_result') + '.pdf';
   }
   function footer(i, n) { return FOOT + i + ' of ' + n; }
   /* Characters the embedded font can print (Latin, Latin-1, Extended-A/-B, general punctuation, euro, arrows); others → '?'. */

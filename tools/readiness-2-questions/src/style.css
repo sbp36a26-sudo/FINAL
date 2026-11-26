@@ -85,7 +85,7 @@ button{font:inherit;color:inherit}
 
 /* questions */
 .stephead{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
-.stephead h2{font-size:1.75rem;line-height:1.15}
+.stephead h1,.stephead h2{font-size:1.75rem;line-height:1.15;font-weight:600} /* v2.8.1 (council BUILD NOW 5): the step heading is the page's h1, same look */
 .kicker{font-size:0.8125rem;font-weight:600;color:var(--ink3)}
 .qa{border:0;border-top:1px solid var(--line2);padding:24px 0 10px;margin:0;min-width:0;display:flex;flex-direction:column;gap:8px}
 .qa:first-of-type{border-top:0;padding-top:0}
@@ -342,7 +342,16 @@ ol.tight,ul.tight{padding-left:22px;display:flex;flex-direction:column;gap:6px;m
 .toprow .btn:not(.primary){border-color:transparent;background:none;text-decoration:underline;font-weight:500;padding-inline:10px}
 details.panel.fold{background:none;border-width:1px 0 0;border-radius:0;padding:6px 0}
 details.panel.fold:not(:has(+ details.panel.fold)){border-bottom-width:1px}
-@media (max-width:760px){ .stephead h2{font-size:1.5rem} }
+@media (max-width:760px){ .stephead h1,.stephead h2{font-size:1.5rem} }
+/* v2.8.1: the storage-blocked banner with its Copy saved check button (council BUILD NOW 2); the public build's data notice */
+.savewarn.notsaved p{margin:0}
+.savewarn.notsaved .btnrow{margin-top:8px}
+.datanote{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:14px 0 4px;background:var(--panel);max-width:68ch}
+.datanote p{margin:0 0 8px}
+.datanote p:last-child{margin-bottom:0}
+.optout{display:flex;gap:10px;align-items:center;min-height:44px;font-weight:600;cursor:pointer;margin:4px 0}
+.optout input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--accent)}
+#foot-data .linkbtn{font-size:inherit}
 @media print{ details.panel.fold{border-width:1px;border-radius:8px;padding:12px} }
 
 /* ===== The "Details and sources" button on each use case of step 4 (v2.4; the v2.2 explainer button is gone). ===== */

@@ -196,22 +196,12 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 // H1 + M2: a shared copy belongs to its check, on any step
 // ====================================================================================================================
 {
-  const a = mk('fo-4', [], [], { id: 'chkA' }), b = mk('rm-1', [], [], { id: 'chkB' });
-  let s = storeWith(a, b); s.cur = 'chkB';
-  let r = F.reduce(s, 'shared', { id: 'chkA', at: '2026-11-24T10:00:00.000Z', mode: 'shared', sig: 'x' }, ENV);
-  ok(r.ok && r.store.checks.chkA.sharedAt === '2026-11-24T10:00:00.000Z' && r.store.checks.chkB.sharedAt === null && r.store.cur === 'chkB', 'M2: a share that finishes while another check is open is recorded against its own check');
-  ok(!F.reduce(s, 'shared', { id: 'nope', at: 'x', mode: 'shared' }, ENV).ok && !F.reduce(s, 'unshared', { id: 'nope' }, ENV).ok, 'M2: an id that is not in the store is refused');
-  r = F.reduce(r.store, 'unshared', { id: 'chkA' }, ENV);
-  ok(r.ok && r.store.checks.chkA.sharedAt === null && r.store.checks.chkA.sharedMode === null && r.store.cur === 'chkB', 'H1: withdrawn while another check is open');
-  // from every step, the stop screen included
-  ['start', 'hotel', 'q', 'must', 'where', 'tailored', 'result'].forEach(step => {
-    const c = mk('fo-4', [], [], { id: 'chkC', step, sharedAt: '2026-11-24T10:00:00.000Z', sharedMode: 'local', sharedSig: 'x' });
-    const u = F.reduce(storeWith(c), 'unshared', { id: 'chkC' }, ENV);
-    ok(u.ok && u.store.checks.chkC.sharedAt === null && u.store.checks.chkC.step === step, 'H1: withdraw on step "' + step + '"');
-  });
-  const st = mk('fo-4', [], [], { id: 'chkS', step: 'stop', sharedAt: '2026-11-24T10:00:00.000Z', sharedMode: 'local', sharedSig: 'x' }); st.Q.q1 = 'n';
-  ok(F.reduce(storeWith(st), 'unshared', { id: 'chkS' }, ENV).store.checks.chkS.sharedAt === null && F.shareNext(F.shareSettled(st), 'withdraw') === 'withdrawing', 'H1: withdraw on the stop screen (SHARE: shared --withdraw--> withdrawing, whatever the step)');
-  ok(F.reduce(storeWith(mk('fo-4', [], [], { id: 'chkD' })), 'shared', { at: '2026-11-24T10:00:00.000Z', mode: 'local', sig: 'x' }, ENV).store.checks.chkD.sharedAt, 'without an id the open check is meant (as before)');
+  /* v2.8.1 (inventory D3): sharing is gone; old share fields in a store are read harmlessly and dropped */
+  const a = mk('fo-4', [], [], { id: 'chkA', sharedAt: '2026-11-24T10:00:00.000Z', sharedMode: 'shared', sharedSig: 'x', share: { named: true } }), b = mk('rm-1', [], [], { id: 'chkB' });
+  const s = storeWith(a, b); s.cur = 'chkB';
+  ok(['shared', 'unshared', 'share'].every(e => !F.reduce(s, e, { id: 'chkA', at: 'x' }, ENV).ok), 'D3: no share events');
+  const back = F.migrate(JSON.parse(JSON.stringify(s)), ENV, {});
+  ok(back && !('sharedAt' in back.checks.chkA) && !('share' in back.checks.chkA) && back.checks.chkA.use === 'fo-4', 'D3: a record with old share fields opens, without them');
   const app = rd('src/app.js');
   ok(!/withdraw that copy first from its result page/.test(app) && !/rm-withdraw|data-act="unshare"/.test(app), 'H1 (v2.7.0): no sharing, so no withdraw buttons and no dead-end sentence');
 }
@@ -260,9 +250,9 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   const changed = JSON.parse(JSON.stringify(a)); changed.A.m1 = 'n';
   m = F.mergeTabs(mine, { v: 2, cur: 'tabA', checks: { tabA: changed } });
   ok(m.elsewhere === 'changed' && F.cur(m.store).A.m1 === 'y', 'M3: the open check changed in another tab → said, and this tab keeps its own answers until the person loads the other version');
-  const moved = JSON.parse(JSON.stringify(a)); moved.step = 'must'; moved.sharedAt = '2026-11-24T10:00:00.000Z'; moved.sharedMode = 'local';
+  const moved = JSON.parse(JSON.stringify(a)); moved.step = 'must'; moved.snaps = [{ at: '2026-11-24T10:00:00.000Z', level: 'ready' }];
   m = F.mergeTabs(mine, { v: 2, cur: 'tabA', checks: { tabA: moved } });
-  ok(m.elsewhere === null && F.cur(m.store).step === 'tailored' && F.cur(m.store).sharedAt === moved.sharedAt, 'M3: the same answers on another step are no change; the other tab\'s share state is taken over');
+  ok(m.elsewhere === null && F.cur(m.store).step === 'tailored' && F.cur(m.store).snaps.length === 1, 'M3: the same answers on another step are no change; the other tab\'s history is taken over (v2.8.1: no share state)');
   m = F.mergeTabs(mine, { v: 2, cur: 'tabB', checks: { tabB: bRec } });
   ok(m.elsewhere === 'removed' && m.store.checks.tabA && m.store.cur === 'tabA', 'M3: removed in another tab → said, kept here');
   ok(F.mergeTabs(storeWith(F.blank('tabC')), { v: 2, cur: 'tabB', checks: { tabB: bRec } }).elsewhere === null, 'M3: a blank open check that another tab dropped is no news');
@@ -318,7 +308,7 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 {
   const app = rd('src/app.js');
   // L1
-  ok(/setTimeout\(function \(\) \{ dlSend\('made'\); saveFile\(name, blob, copyFallback\('file'\)\); \}, 30\);/.test(app) && F.dlNext('making', 'start', 'none') === null, 'L1: "Save as file" goes through the same later tick as the PDF, so the second click meets a busy machine');
+  ok(/setTimeout\(function \(\) \{ dlSend\('made'\); saveFile\(name, blob\); \}, 30\);/.test(app) && F.dlNext('making', 'start') === null, 'L1: "Save as file" goes through the same later tick as the PDF, so the second click meets a busy machine');
   // L2
   ok(/function clearProfile\(k\)/.test(app) && /if \(ev === 'hotel' && arg\.v === '' && arg\.k !== 'role'\) clearProfile\(arg\.k\);/.test(app), 'L2: an emptied field is taken out of the shared profile (browser test: clear, reload, still empty)');
   let s = storeWith(F.blank('h1')); s = F.reduce(s, 'begin', null, ENV).store; s = F.reduce(s, 'hotel', { k: 'name', v: 'Hotel Secret' }, ENV).store; s = F.reduce(s, 'hotel', { k: 'name', v: '' }, ENV).store;
@@ -358,17 +348,17 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(/if \(storage !== 'ok'\) h \+= '<p class="meta" id="no-keep">'/.test(app) && C.NO_KEEP === 'This browser is not keeping checks. Save a file to keep one.' && !/test copy in this browser/.test(app), 'L6: with storage not ok, no "kept here until you remove it" (v2.7.0: no test copies at all)');
   // L7
   const stopRec = finished(F, D, '', { Q: { q1: 'y' }, A: {}, step: 'stop' }); // v2.6: Q1 Yes stops
-  ok(P.model(stopRec, env).blocks[0].t === 'Can AI solve your problems? Not suitable for AI' && !/score/i.test(P.model(stopRec, env).blocks[0].t) && P.model(mk('fo-4', [], []), env).blocks[0].t === 'Can AI solve your problems? Result' && L.resultModel(mk('fo-4', [], []), env).title === 'Do you need AI? Result', 'L7: one title on the screen and in the PDF; the stop PDF has no "score" in its title');
+  ok(P.model(stopRec, env).blocks[0].t === 'Can AI solve your problems? Not suitable for AI' && !/score/i.test(P.model(stopRec, env).blocks[0].t) && P.model(mk('fo-4', [], []), env).blocks[0].t === 'Can AI solve your problems? Result' && L.resultModel(mk('fo-4', [], []), env).title === 'Can AI solve your problems? Result', 'L7: one title on the screen and in the PDF; the stop PDF has no "score" in its title');
   // L8
   ok(C.OLD_FILE === 'This file is from the earlier Readiness check. It cannot be opened here.' && /o\.kind === OLD_KIND\) old = true/.test(app) && /var OLD_KIND = 'hftp-readiness-check'/.test(app) && !/readiness-check\/index\.html/.test(app), 'L8: a file of the earlier Readiness check gets its own message (v2.7.0: no link to another tool)');
   ok(/kind: 'hftp-readiness-check'/.test(rd('../readiness-check/src/check.js')) && /This check was replaced by “Do you need AI\?” on 24 Nov 2026/.test(rd('../readiness-check/src/check.js')) && rd('../readiness-check/index.html').includes('This check was replaced by “Do you need AI?” on 24 Nov 2026'), 'L8: the old page says it was replaced, and still saves files of that kind');
   ok(C.SOURCES.mustNote.includes('The wording follows the team’s earlier readiness check.') && !/the hub’s earlier readiness check/.test(rd('src/content.js')), 'L8: the sources note says "the team\'s earlier readiness check"');
   // L11
-  const sh = mk('fo-4', [], [], { sharedAt: '2026-11-01T10:00:00.000Z', sharedMode: 'shared', sharedSig: 'abc' });
+  const sh = mk('fo-4', [], [], { sharedAt: '2026-11-01T10:00:00.000Z', sharedMode: 'shared', sharedSig: 'abc', share: { named: true } });
   const ff = F.forFile(sh);
-  ok(ff.sharedAt === null && ff.sharedMode === null && ff.sharedSig === null && sh.sharedAt && eq(ff.T, sh.T), 'L11: the file carries no share fields (the record keeps them)');
-  ok(F.cleanRec(JSON.parse(JSON.stringify(sh)), ENV, {}, { file: true }).sharedAt === null && F.cleanRec(JSON.parse(JSON.stringify(sh)), ENV, {}).sharedAt === sh.sharedAt, 'L11: share fields in a file (a v2.0 file has them) are ignored on opening; from storage they are kept');
-  ok(F.cur(F.reduce(F.blankStore(), 'import', JSON.parse(JSON.stringify(sh)), ENV).store).sharedAt === null, 'L11: an imported check is "not shared"');
+  ok(!['sharedAt', 'sharedMode', 'sharedSig', 'share'].some(k => k in ff) && eq(ff.T, sh.T), 'L11 / BUILD NOW 9 (v2.8.1): the file carries no share fields');
+  ok(!('sharedAt' in F.cleanRec(JSON.parse(JSON.stringify(sh)), ENV, {}, { file: true })) && !('sharedAt' in F.cleanRec(JSON.parse(JSON.stringify(sh)), ENV, {})), 'L11: share fields in a file or a store (v2.0 had them) are ignored on opening (v2.8.1: from storage too)');
+  ok(!('sharedAt' in F.cur(F.reduce(F.blankStore(), 'import', JSON.parse(JSON.stringify(sh)), ENV).store)), 'L11: an imported check has no share fields');
   // L12
   ok(F.CORRUPT_KEY === 'hftp-readiness2q-v1-corrupt' && /localStorage\.setItem\(F\.CORRUPT_KEY, x\.corrupt\)/.test(app) && /id="corrupt"/.test(app) && C.CORRUPT.startsWith('The checks saved in this browser could not be read'), 'L12: unreadable saved data is set aside under its own key and said once');
   ok(F.migrate(5, ENV, {}) === null && F.migrate({ v: 0 }, ENV, {}) === null, 'L12: junk that parses is unreadable too');
@@ -393,11 +383,11 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
     // v2.6: step 2 is read in its old meaning: Q1 turned round, the old Q3/Q4 dropped, so a check past step 2 waits on step 2 again
     const conv = L.legacyQ(a.Q).Q, qDone = F.QIDS.every(q => conv[q]);
     const want = ['start', 'hotel'].includes(a.step) ? a.step : conv.q1 === 'y' ? (a.step === 'q' ? 'q' : 'stop') : a.step === 'q' || !qDone ? 'q' : a.step; // v2.7.1: blank and old answers do not hold a check (the step it was saved on)
-    ok(b.step === want && eq(b.Q, conv) && b.qv === L.QV && eq(b.A, noK(a.A)) && eq(b.By, a.By) && eq(b.T, carryT(a.use, a.T)) && eq(b.TBy, carryT(a.use, a.TBy)) && b.use === a.use && eq(b.hotel, a.hotel) && b.sharedAt === a.sharedAt && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel, share state and history are kept');
+    ok(b.step === want && eq(b.Q, conv) && b.qv === L.QV && eq(b.A, noK(a.A)) && eq(b.By, a.By) && eq(b.T, carryT(a.use, a.T)) && eq(b.TBy, carryT(a.use, a.TBy)) && b.use === a.use && eq(b.hotel, a.hotel) && !('sharedAt' in b) && b.snaps.length === a.snaps.length, 'v2.0 check ' + a.step + ' / ' + (a.use || 'no use') + ': step, answers, dates, hotel and history are kept (v2.8.1: the share state is dropped)');
     if (a.step === 'result') { const m = L.resultModel(b, env); /* v2.3: worked out even where the check now waits on step 3 or 5 */ ok(/^(Score: \d+%|No score yet: )/.test(m.scoreHead) && m.reason && m.method.length > 8, 'v2.0 check ' + a.use + ': the result is worked out with rules v2.1 (' + m.levelName + ', ' + m.scoreHead + ')'); }
   });
   const rm1 = Object.values(st.checks).find(c => c.use === 'rm-1');
-  ok(rm1.sharedAt && rm1.snaps.length === 1 && rm1.snaps[0].rules === 'v2 (24 Nov 2026)' && rm1.snaps[0].use === '', 'v2.0 check rm-1: shared, one snapshot under rules v2');
+  ok(!('sharedAt' in rm1) && rm1.snaps.length === 1 && rm1.snaps[0].rules === 'v2 (24 Nov 2026)' && rm1.snaps[0].use === '', 'v2.0 check rm-1: one snapshot under rules v2 (v2.8.1: no share state)');
   // v2.3: rm-1 holds old answers (m5 Partly, sk1 Partly, te1 Doesn't apply), so it opens on step 3; the person picks again first
   let s3 = Object.assign({}, st, { cur: rm1.id }); const go3 = (ev, arg) => { const x = F.reduce(s3, ev, arg, ENV); s3 = x.store; return x.ok; };
   ok(F.cur(s3).step === 'q' && go3('answer', { id: 'q3', value: 'y' }) && go3('answer', { id: 'q4', value: 'y' }) && go3('next') && F.cur(s3).step === 'must' && go3('answer', { id: 'm5', value: 'pl' }) && go3('next') && go3('next') && go3('answer', { id: 'rm-1.sk1', value: 'pl' }) && go3('answer', { id: 'rm-1.te1', value: 'y' }) && go3('answer', { id: 'rm-1.n1', value: 'y' }) && go3('next') && F.cur(s3).step === 'result', 'v2.0 check rm-1 (v2.3, v2.6): answers the new questions 3 and 4, picks again on steps 3 and 5, then its result');
@@ -405,11 +395,10 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
   ok(!L.sameSnap(rm1.snaps[0], sn) && after.snaps.length === 2, 'v2.0 check rm-1: on its first v2.1 visit a new snapshot is kept beside the old one');
   const sc = L.since(after.snaps);
   ok(sc && !sc.compared && sc.lines[0].includes('worked out with earlier rules') && sc.earlier[0].endsWith('(worked out with earlier rules)'), 'v2.0 history is marked "worked out with earlier rules", not compared line by line');
-  ok(F.shareStale(rm1) === true && F.shareSettled(rm1) === 'shared', 'v2.0 share state reads as shared; v2.6: out of date, because step 2 was converted (was: up to date)');
   // the file
   ok(file.kind === 'hftp-do-you-need-ai' && file.v === 2 && file.rules === 'v2 (24 Nov 2026)' && file.check.sharedAt, 'fixture: a v2.0 file (it still carried share fields)');
   const fi = {}, fr = F.cleanRec(JSON.parse(JSON.stringify(file.check)), ENV, fi, { file: true });
-  ok(fr && fr.step === 'q' && eq(fr.Q, L.legacyQ(file.check.Q).Q) && eq(fr.A, noK(file.check.A)) && eq(fr.T, carryT(file.check.use, file.check.T)) && fr.By.m3 === '2027-03-01' && fr.sharedAt === null && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every other answer kept, on step 2 (v2.6: Q1 turned round, the new questions 3 and 4 to answer; was step 3); its share fields are ignored');
+  ok(fr && fr.step === 'q' && eq(fr.Q, L.legacyQ(file.check.Q).Q) && eq(fr.A, noK(file.check.A)) && eq(fr.T, carryT(file.check.use, file.check.T)) && fr.By.m3 === '2027-03-01' && !('sharedAt' in fr) && !fi.questionsChanged && !fi.useChanged, 'v2.0 file: opens with every other answer kept, on step 2 (v2.6: Q1 turned round, the new questions 3 and 4 to answer; was step 3); its share fields are ignored');
   const imp = F.reduce(F.blankStore(), 'import', fr, ENV);
   ok(imp.ok && F.cur(imp.store).step === 'q' && F.cur(imp.store).id === file.check.id && F.cur(imp.store).Q.q1 === fr.Q.q1, 'v2.0 file: imported (v2.6: on step 2, not turned twice)');
   // the copy v2.0 shared with the team still reads
