@@ -130,7 +130,7 @@ async function run(p, vp, use, o, tag) {
       await click(p, '#dt-gx-2'); await p.waitForSelector('dialog#detail[open]');
       const D = await p.evaluate(() => JSON.parse(document.getElementById('r2-data').textContent).detail['gx-2']);
       const rows = await p.$$eval('#detail [data-sources] li', ls => ls.map(l => ({ badges: [...l.querySelectorAll('.badge')].map(x => x.textContent), href: (l.querySelector('a') || {}).href || '', t: l.target })));
-      ok(rows.length === D.srcs.length && rows.every(r => /^https:\/\//.test(r.href) && r.badges.length >= 1 && /^(Credible \(7\+\)|Below 7|Not scored)$/.test(r.badges[0])), tag + ': detail layer: ' + rows.length + ' sources, each labelled, each an https link');
+      ok(rows.length === D.srcs.length && rows.every(r => /^https:\/\//.test(r.href) && r.badges.length === 0), tag + ': detail layer: ' + rows.length + ' sources, no credibility labels (owner 26 Nov 2026), each an https link');
       ok((await p.textContent('#detail h3')).trim() === 'Examples and sources (' + D.srcs.length + ')' && (await p.locator('#detail .thin').count()) === (D.thin ? 1 : 0), tag + ': the count and the thin line match the data');
       await shot(p, 'detail-layer-sources-' + vn);
       await click(p, '#detail-close');

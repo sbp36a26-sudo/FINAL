@@ -235,7 +235,7 @@
           y = Math.max(y, y1, top + rowH - 2.6) + 1.3; rule(M, W - M, 'line2', 0.25); y += g(1.3); break;
         }
         case 'src': { /* v2.8.0: one source: its labels, its text, its address */
-          para(b.badges, M, TW, SZ.small, 'bold', 'ink3'); y += 0.4;
+          if (b.badges) { para(b.badges, M, TW, SZ.small, 'bold', 'ink3'); y += 0.4; }
           para(b.t, M, TW, SZ.small, 'normal', 'ink');
           if (b.url) { y += 0.3; para(b.url, M, TW, SZ.small, 'normal', 'accent'); }
           y += g(2.2); break;

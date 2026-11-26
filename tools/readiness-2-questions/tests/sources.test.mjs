@@ -72,13 +72,13 @@ ok(!bad.length, 'counts in the UI equal the JSON; sorted 7+ direct, 7+ partial, 
 ok(Object.values(D.detail).every(d => d.srcs.filter(e => /ec\.europa\.eu\/eurostat/.test(e.u)).every(e => e.f === 'partial')), 'every Eurostat row is "Partial"');
 ok(!D.detail['fo-5'].srcs.some(e => /oracle\.com\/customers\/barcelo/.test(e.u)) && !D.detail['fa-7'].srcs.some(e => e.u === 'https://justt.ai/hospitality') && !D.detail['it-5'].srcs.some(e => /juniper\.net/.test(e.u)), 'replaced: Oracle Barceló (fo-5), justt.ai/hospitality (fa-7), the Juniper citizenM link (it-5)');
 { const x = { kind: 'v2', type: 'v', text: 'Org: a (b)', url: 'https://a.example/', score: 6, fit: 'partial' }, h = L.sourceRowItem(x);
-  ok(h.includes('>Below 7<') && h.includes('>Partial<') && L.sourceRowItem(Object.assign({}, x, { score: 8, fit: 'direct' })).includes('>Credible (7+)<') && !L.sourceRowItem(Object.assign({}, x, { score: 8, fit: 'direct' })).includes('>Partial<'), 'labels: "Credible (7+)" / "Below 7", and "Partial" only for a partial fit'); }
+  ok(!/Credible|Below 7|Not scored|>Partial<|class="badge/.test(h + L.sourceRowItem(Object.assign({}, x, { score: 8, fit: 'direct' }))), 'owner 26 Nov 2026: no credibility labels on sources'); }
 const thinN = Object.values(D.detail).filter(d => d.thin).length;
 ok(thinN > 50 && thinN < 98, 'the thin line shows for ' + thinN + ' of 98 use cases');
 // shown inside each use case: detail layer, step 5, result page, Result PDF
 ok(/L\.sourcesBox\(x, id\)/.test(app) && /id="tail-sources">' \+ fold\('srcs-tail', 'Examples and sources \(' \+ dx\.srcs\.length \+ '\)'/.test(app) && /fold\('srcs-result', 'Examples and sources \('/.test(app), 'owner decision 4: the box sits in the detail layer, on step 5 and on the result page');
 { const env = { cat: D.cat, TQ, ex: D.ex, detail: D.detail, today: '2026-11-25' }, r = finished(F, D, 'fa-6'), m = P.model(r, env, 'result');
   const src = m.blocks.filter(b => b.k === 'src'), head = m.blocks.find(b => b.srcHead);
-  ok(head && head.t === 'Examples and sources (' + D.detail['fa-6'].srcs.length + ')' && src.length === D.detail['fa-6'].srcs.length && src.every(b => /^(Credible \(7\+\)|Below 7|Not scored)( · Partial)?$/.test(b.badges) && /^https:/.test(b.url)), 'the Result PDF ends with the use case\'s sources, labelled, with addresses');
+  ok(head && head.t === 'Examples and sources (' + D.detail['fa-6'].srcs.length + ')' && src.length === D.detail['fa-6'].srcs.length && src.every(b => !b.badges && /^https:/.test(b.url)), 'the Result PDF ends with the use case\'s sources, without credibility labels (owner 26 Nov 2026), with addresses');
   ok(!P.model(r, env, 'answers').blocks.some(b => b.k === 'src'), 'the Answers PDF stays answers only'); }
 done();

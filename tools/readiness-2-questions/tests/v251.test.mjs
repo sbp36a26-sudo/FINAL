@@ -35,8 +35,7 @@ const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-24' };
       const text = unesc(strip(li.replace(/<span class="srcaddr">[\s\S]*?<\/span><\/span>/, '').replace(/<span class="srcaddr">[\s\S]*?<\/button><\/span>/, '')));
       if (x.kind === 'v2') { if (!unesc(strip(li)).includes(x.text)) fail('the audited text is not shown word for word'); }
       else { if (/https?:\/\/(?!\S*\s*$)/.test(text.replace(/\s+/g, ' ').trim()) && /https?:\/\//.test(text)) fail('a URL printed as text'); if (!x.name.trim()) fail('no name'); if (x.note && !text.includes(x.note)) fail('the note is missing'); if (x.type === 'h' && !/<span class="tag">Hotel<\/span>/.test(li)) fail('no Hotel tag'); }
-      const want = x.score == null ? 'Not scored' : x.score >= 7 ? 'Credible (7+)' : 'Below 7';
-      if (!li.includes('>' + want + '<') || li.includes('>Partial<') !== (x.fit === 'partial')) fail('labels');
+      if (/Credible \(7\+\)|Below 7|Not scored|>Partial<|class="badge/.test(li)) fail('a credibility label is shown (owner 26 Nov 2026: none)');
     });
   });
   // Edge cases the renderer must survive (nothing in today's catalogue, but a later edit must not print a URL or a key).
