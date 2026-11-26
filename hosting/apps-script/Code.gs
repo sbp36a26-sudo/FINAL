@@ -20,6 +20,7 @@ function doPost(e) {
     var lock = LockService.getScriptLock();
     lock.waitLock(10000);
     try { sheet_().appendRow(row); } finally { lock.releaseLock(); }
+    if (p.event === 'result') mailResult_(p);
     return reply_(true, 'ok');
   } catch (err) {
     return reply_(false, 'could not read the event');
@@ -54,6 +55,41 @@ function toRow_(p) {
     txt(p.use_case, 20), txt(p.verdict, 40), typeof p.score === 'number' && isFinite(p.score) ? p.score : '',
     obj(p.step2), obj(p.must), obj(p.answers)
   ];
+}
+
+/* Sends one plain-text email to the owner of this script for each finished check. A failed email never stops the row
+   being stored. Gmail allows about 100 of these a day on a free account. */
+var VERDICTS = { ready: 'Ready', almost: 'Almost ready', notready: 'Not ready yet', noinfo: 'Not enough information yet',
+  stop: 'Stopped: not suitable for AI' };
+function mailResult_(p) {
+  try {
+    var to = Session.getEffectiveUser().getEmail();
+    if (!to) return;
+    function line(label, v) { return label + ': ' + (v == null || v === '' ? '-' : String(v).slice(0, 120)); }
+    function pairs(v) {
+      if (!v || typeof v !== 'object') return '-';
+      var out = [];
+      for (var k in v) if (Object.prototype.hasOwnProperty.call(v, k) && typeof v[k] === 'string') out.push(String(k).slice(0, 40) + ' = ' + v[k].slice(0, 20));
+      return out.length ? out.join('\n') : '-';
+    }
+    var verdict = VERDICTS[p.verdict] || p.verdict;
+    var body = [
+      'A check was finished in "Can AI solve your problems?".', '',
+      line('Verdict', verdict), line('Score', typeof p.score === 'number' ? p.score + '%' : ''),
+      line('Use case', p.use_case), line('Hotel type', p.hotel_type), line('Role', p.role),
+      line('Country', p.country), line('Hotel name', p.hotel_name), line('Check id', p.check_id),
+      line('Tool version', p.version), '',
+      'Step 2 answers:', pairs(p.step2), '', 'Must-haves:', pairs(p.must), '', 'Tailored questions:', pairs(p.answers), '',
+      'All rows are in the Sheet, tab "events".'
+    ].join('\n');
+    MailApp.sendEmail(to, 'Tool result: ' + verdict + (p.use_case ? ' (' + String(p.use_case).slice(0, 20) + ')' : ''), body);
+  } catch (err) { /* the row is already stored */ }
+}
+
+/* Run this once from the editor to give the script permission to send email, and to see a sample. */
+function testEmail() {
+  mailResult_({ event: 'result', check_id: 'test', verdict: 'almost', score: 60, use_case: 'test', hotel_type: 'test',
+    role: 'test', country: 'test', hotel_name: 'Test email, no real check', version: 'test', step2: {}, must: {}, answers: {} });
 }
 
 function sheet_() {
