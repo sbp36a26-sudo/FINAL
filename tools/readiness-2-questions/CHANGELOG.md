@@ -1,4 +1,43 @@
-# Changelog: Do you need AI? (questions-only, readiness-2-questions)
+# Changelog: Can AI solve your problems? (formerly "Do you need AI?"; questions-only, readiness-2-questions)
+
+## v2.8.1 (26 Nov 2026): clean-up inventory v28, council BUILD NOW, and a public build with transparent data collection. Committed; the artifact is not published here.
+
+Sources: `reports/audit-readiness-2-questions/cleanup_inventory_v28.md`, `reports/Council - Do you need AI v2.8.md` section (a), the
+owner's hosting decisions of 26 Nov 2026. Scoring, cut-offs, answer options and the owner's data are unchanged.
+
+**Bugs (inventory v28), each with a test that failed before** (`tests/v281.test.mjs`, `tests/browser/v281.cjs`):
+H1 a download could stay "Saving the PDF…" for good (every save path now ends in done or fail; a 60 s timeout event);
+M1 "A different hotel" came back on reload or Open (`rec.noProfile`: the shared profile never fills that check);
+M2 a newer store in window.storage was written over; M3 two tabs on window.storage lost each other's checks (read-merge-write,
+`R2Flow.mergeWS`, which also keeps removals removed); L1 the "blocked" line stayed after a later download worked; L2 window.claude
+without `use()` took the blob link; L3 the cover said nothing is kept, then flipped (the STORAGE machine: `ok` / `blocked` / `newer`,
+one writer); L4 focus lost after Cancel / Keep (back to the opener); L5 another tab's save closed this tab's open question; L6 opening
+or reloading a check re-dated it (only answer changes date a check); L7 browser Back from the printable page left the result (its own
+history entry); L8 "Stopped at step 2" said twice and too early ("Not suitable for AI" in the name, "Stopped at step 2" only on the
+stop screen); L9 two checks with the same name (the time, then (2)).
+**Dead code** removed: D1, D2, D3 (sharing: events, fields, machine; old fields are read harmlessly and dropped), D4, D6, D7 (except
+`sourceRow`, marked test-only), D8. Docs: S1 headers, S2 `NOTES.md` rewritten, S3 `CLEANUP.md` replaced, S4 screenshots only with
+`SHOTS=1`, S5 tests for the removed parts dropped, S6 counts below. D5 (the "Also:" wording) left for the owner.
+**Council BUILD NOW 1 to 9:** one name (tab title "Can AI solve your problems?", files `Can-AI-solve-your-problems_<hotel>_<date>_result.pdf`,
+`…_answers.pdf`, `….json`; the file kind is unchanged); the storage-blocked banner carries Copy saved check on every screen; the public
+build never uses window.storage; the blob-link toast says what to do if nothing arrives; the step heading is the `h1` on every step;
+the cover says "In all, 21 to 27 questions, depending on the use case. You can stop and come back." (from the data; the second sentence
+only when the browser keeps checks); "7 are not Yes yet (4 No, 3 planned)" on the page and in the Result PDF; the adviser line reads
+"Because of the use case you chose: <name>"; the saved file has no hub-era fields.
+Council (d), where it is code: the hosted file is the public build; the PDFs-untagged limit is in `NOTES.md`. The council's proposed
+data line "Nothing you type is sent anywhere" is replaced by the owner's hosting decision (the data notice below).
+**Public build** (`node build.mjs --public` → `public/index.html`; GitHub Pages via `.github/workflows/pages.yml`): no window.claude,
+no window.storage; `src/collect.js` sends `step_done` (steps 1 to 5) and `result` events to the Apps Script in `hosting.config.json`
+(`hosting/apps-script/Code.gs`, sheet `events`); the notice and "Don't send my answers" on the cover, the full notice from the footer's
+"Data" link, "Contact: to be added" until `contact` is filled; the claims that answers stay in the browser are reworded there. The
+claude.ai build keeps its wording and sends nothing. See `README.md` "Hosting" and `hosting/README.md`.
+
+**Tests** (both builds: `R2_HTML=public/index.html` for Node, `R2_PAGE=public/index.html` for the browser): Node 19,178 pass per build
+(actions 9, build 124, collect 35, flow 6,071, logic 7,559, migration 48, no-legal 410 (0 banned words), pdf 2,350, questions 316,
+scoring 185, sources 28, v21 1,267, v22 113, v23 256, v25 112, v251 83, v26 79, v261 26, v28 64, v281 43). Browser: v281 26
+(artifact) / 18 (public; the window.claude and window.storage cases are artifact-only), public.cjs 26, v28 102 / 101, questions 442 / 439.
+Flow, v21 and v25 lost the checks of the removed sharing and BRIDGE parts (they tested dead code).
+
 
 ## v2.8.0 (25 Nov 2026): live review fixes and sources inside each use case. Shown as "v2.8 (rules unchanged since v2.6)". Committed; not published (the main session updates the existing artifact).
 

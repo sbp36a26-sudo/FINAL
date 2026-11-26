@@ -1,26 +1,55 @@
-# Do you need AI? (questions-only, v2.8.0, standalone)
+# Can AI solve your problems? (questions-only, v2.8.1, standalone)
 
-**This folder (`tools/readiness-2-questions/`) is the standalone "Do you need AI?" artifact with use-case-specific questions and no legal
-content.** It started as a copy of `tools/readiness-2/` (see `NOTES.md` and `CHANGELOG.md`); everything below the line is the base
-tool's README and is kept for history: where it mentions the hub, sharing, the Team tab, the AI Register, the AI Act label or the
-generator, that no longer applies here.
+**This folder (`tools/readiness-2-questions/`) is the standalone "Can AI solve your problems?" tool (formerly "Do you need AI?") with
+use-case-specific questions and no legal content.** It started as a copy of `tools/readiness-2/` (see `NOTES.md` and `CHANGELOG.md`);
+everything below the line is the base tool's README and is kept for history: where it mentions the hub, sharing, the Team tab, the AI
+Register, the AI Act label or the generator, that no longer applies here.
 
-**v2.8.0 (25 Nov 2026, live review):** questions from `spec/review/usecase_questions_fixed.json` (98 use cases, 743 questions; lg-2
-removed), one action per question (`data/actions_questions_only.json`), result fixes B2 to B7 and B9 to B12 (B8 skipped by the owner:
-no "Don't know yet"; step 2 keeps Yes / No / Not sure), sources inside each use case (`data/sources_fixes.json`, `data/sources_edits.json`,
-`data/use_case_sources_v2.json`, `data/source_scores_v27.json`, built by `build.mjs` `sourcesModel`). Shown version: "v2.8 (rules
-unchanged since v2.6)". The artifact must be published with the `downloads` capability (`{downloads: true}`) for the PDF and file
-buttons; Copy plan, Copy saved check and Open printable page work without it. See `CHANGELOG.md`.
+**v2.8.1 (26 Nov 2026):** every bug of `reports/audit-readiness-2-questions/cleanup_inventory_v28.md` fixed, its dead code removed;
+the council's BUILD NOW items 1 to 9 (`reports/Council - Do you need AI v2.8.md`); a **public build** for GitHub Pages with a data
+notice, an opt-out and sending to the owner's Google Sheet (see "Hosting"). Two builds:
 
-Build and test (from the repo root; browser tests from `tools/` with `python3 -m http.server 8891 --bind 127.0.0.1` running):
+| Build | File | Storage | Downloads | Sends data |
+|---|---|---|---|---|
+| claude.ai artifact | `index.html` (`node build.mjs`) | window.storage (if the viewer has it), localStorage, else memory | downloads capability (publish with `{downloads: true}`), Copy / Print fallbacks | never |
+| public (GitHub Pages) | `public/index.html` (`node build.mjs --public`) | localStorage, else memory | ordinary browser download, Copy / Print fallbacks | yes, unless "Don't send my answers" is ticked or `collectUrl` is empty |
+
+Shown version: "v2.8.1 (rules unchanged since v2.6)". Scoring, cut-offs, answer options and the owner's data are unchanged.
+`spec/review/usecase_questions_fixed.json` is the shipped question data (= `data/usecase_questions_only.json`); `spec/usecase_questions_only.json`
+and `spec/review/sources_fixes.json` are review records, not read by the build.
+
+## Hosting
+
+The public page is published by GitHub Pages from this repository; each finished step and the result go to a Google Apps Script that
+appends a row to a private Google Sheet. Owner steps, the sheet's columns and the script: **`hosting/README.md`** (script:
+`hosting/apps-script/Code.gs`; workflow: `.github/workflows/pages.yml`, which uploads `public/` on every push to `main` that changes it).
+
+- `hosting.config.json`: `collectUrl` (the Apps Script web app address, set 26 Nov 2026) and `contact` (empty: the notice shows
+  "Contact: to be added", and `build.mjs --public` warns).
+- What is sent (`src/collect.js`): `check_id` (a random id per check), `event` (`step_done` for steps 1 to 5, `result` at the result or
+  the stop screen), `step`, `version`, `at`, `hotel_type`, `role`, `country`, `hotel_name` (only if typed), `use_case`, `verdict`, `score`,
+  `step2`, `must`, `answers` (answers in words). No IP address or browser name is put in, no cookie is set. `fetch` (POST, no-cors,
+  text/plain, no credentials), else `navigator.sendBeacon`; failures are silent and never stop the tool.
+- The notice: on the cover (with the "Don't send my answers" box, remembered in this browser, respected at once) and in full from the
+  footer's "Data" link (with the same box). Its words are `PUB` in `src/content.js` and pass the banned-word scan.
+- The page URL: https://sbp36a26-sudo.github.io/FINAL/ (GitHub shows the exact address under Settings → Pages).
+
+## Build and test
+
+From the repo root; browser tests from `tools/` with `python3 -m http.server <port> --bind 127.0.0.1` running and
+`R2_BASE=http://127.0.0.1:<port>/`. Browser tests never reach the Apps Script: every request to `script.google.com` is answered by the test.
 
 ```
-node tools/readiness-2-questions/build.mjs
+node tools/readiness-2-questions/build.mjs && node tools/readiness-2-questions/build.mjs --public
 node tools/readiness-2-questions/data/check-questions.mjs
-for t in tools/readiness-2-questions/tests/*.test.mjs; do node $t; done
-node readiness-2-questions/tests/browser/questions.cjs     # from tools/; screenshots to reports/readiness-2-questions-screens/v28/ (q-*)
-node readiness-2-questions/tests/browser/v28.cjs           # from tools/; v2.8.0 §6.7 runs at 1280×800 and 360×740; screenshots to v28/
+for t in tools/readiness-2-questions/tests/*.test.mjs; do node $t; done                              # the claude.ai build
+for t in tools/readiness-2-questions/tests/*.test.mjs; do R2_HTML=public/index.html node $t; done    # the public build
+node readiness-2-questions/tests/browser/v281.cjs        # from tools/; inventory v28 bugs and BUILD NOW (R2_PAGE=public/index.html for the public build)
+node readiness-2-questions/tests/browser/public.cjs      # from tools/; data notice, events per step, opt-out (fake collect endpoint)
+node readiness-2-questions/tests/browser/questions.cjs   # from tools/ (R2_PAGE as above)
+node readiness-2-questions/tests/browser/v28.cjs         # from tools/ (R2_PAGE as above)
 ```
+Screenshots are written only with `SHOTS=1` (inventory S4), to `reports/readiness-2-questions-screens/v28/`.
 
 ---
 
