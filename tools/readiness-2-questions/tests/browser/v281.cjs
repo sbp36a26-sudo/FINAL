@@ -282,6 +282,8 @@ const CASES = {
 (async () => {
   await fixtures();
   const b = await chromium.launch();
+  /* v2.8.1: never let a test reach the owner's collect address (public build): every request to Apps Script is answered here */
+  { const nc = b.newContext.bind(b); b.newContext = async o => { const c = await nc(o); await c.route(/^https:\/\/script\.google(usercontent)?\.com\//, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })); return c; }; }
   const pg = await b.newPage(); await pg.goto(URL0); await pg.waitForSelector('#app[data-state]');
   const isPublic = await pg.evaluate(() => !!window.R2_PUBLIC); await pg.close();
   const only = process.argv[2];

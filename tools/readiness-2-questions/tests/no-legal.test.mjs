@@ -12,7 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { root, load, data, tester, finished } from './load.mjs';
+import { root, load, data, tester, finished, PAGE } from './load.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('no-legal');
@@ -43,7 +43,7 @@ ok(L.MUST.m5.name === FX.must_have_5.title && L.MUST.m5.q === FX.must_have_5.tex
 ok(hits(JSON.stringify(L.MUST.m5)).length === 0, 'must-have 5 carries no banned term in any of its help texts');
 
 // ---------- 1. the built page ----------
-const html = rd('index.html');
+const html = rd(PAGE);
 const LIB = rd('../assessment/lib/jspdf.umd.min.js').replace(/<\/script/gi, '<\\/script');
 ok(html.split(JSPDF_SPAN).length - 1 === 2 && rd('../assessment/lib/jspdf.umd.min.js').split(JSPDF_SPAN).length - 1 === 2 && html.includes(LIB), 'the vendored jsPDF library is inlined unchanged (it is left out of the scan whole)');
 /* the page without jsPDF and without the source entries (the data block's detail field) */

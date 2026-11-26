@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 export const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+/* v2.8.1: the built page the tests read: index.html (claude.ai build), or R2_HTML=public/index.html (the public build) */
+export const PAGE = process.env.R2_HTML || 'index.html';
 export function load() {
   const ctx = { self: {} }; ctx.globalThis = ctx.self;
   for (const f of ['content.js', 'logic.js', 'flow.js', 'pdf.js']) vm.runInNewContext(readFileSync(join(root, 'src', f), 'utf8'), ctx, { filename: f });
@@ -11,7 +13,7 @@ export function load() {
 }
 /* The data block the built page carries: { cat, tq, ex, detail, builtOn }. */
 export function data() {
-  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const html = readFileSync(join(root, PAGE), 'utf8');
   return JSON.parse(html.match(/<script type="application\/json" id="r2-data">([\s\S]*?)<\/script>/)[1]);
 }
 export function envOf(D, F) {

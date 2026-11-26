@@ -351,7 +351,9 @@ details.panel.fold:not(:has(+ details.panel.fold)){border-bottom-width:1px}
 .datanote p:last-child{margin-bottom:0}
 .optout{display:flex;gap:10px;align-items:center;min-height:44px;font-weight:600;cursor:pointer;margin:4px 0}
 .optout input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--accent)}
+#foot-data{margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 #foot-data .linkbtn{font-size:inherit}
+dialog.detail .dbody ul{margin:0 0 10px}
 @media print{ details.panel.fold{border-width:1px;border-radius:8px;padding:12px} }
 
 /* ===== The "Details and sources" button on each use case of step 4 (v2.4; the v2.2 explainer button is gone). ===== */

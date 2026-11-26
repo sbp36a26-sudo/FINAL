@@ -3,13 +3,13 @@
 // Run: node tools/readiness-2-questions/tests/build.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { root, load, data, tester } from './load.mjs';
+import { root, load, data, tester, PAGE } from './load.mjs';
 import { catalogueModel, detailModel, sourcesModel, tqModel, explainModel, nameHash, BANNED } from '../build.mjs';
 const { C, L, F } = load();
 const { ok, done } = tester('build');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const rd = p => readFileSync(join(root, p), 'utf8');
-const html = rd('index.html'), D = data();
+const html = rd(PAGE), D = data();
 const catHtml = rd('../use-case-catalogue/index.html'), Q = JSON.parse(rd('data/usecase_questions_only.json'));
 const X = JSON.parse(catHtml.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
 

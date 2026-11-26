@@ -70,7 +70,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
   ok(/detail-close/.test(contracts.slice(contracts.indexOf('| postMessage bridge'), contracts.indexOf('| Hub tabs'))), 'D2: CONTRACTS: the bridge row lists the detail messages');
   ok(/localStorage\['hftp-readiness2q-v1'\], version 4\)/.test(app) && !/only then do links become hub messages/.test(app) && !/Q1 No always goes on to the stop screen/.test(app), 'D3: app.js comments: store version 4 (v2.7.0), no link bridge, Q1 Yes stops');
   ok(!/\{ m3\?, m7\? \}/.test(logic), 'D4: logic.js: consistLines returns m3 only');
-  ok(/## v2\.6\.1/.test(cleanup) && /`\{ v: 3, cur, checks, notice \}`/.test(cleanup), 'D5: CLEANUP.md: v2.6.1 section, store version 3');
+  ok(/v2\.8\.1: state machines/.test(cleanup) && /`\{v:4, cur, checks, notice\}`/.test(cleanup) && !/BRIDGE \||SHARE \|/.test(cleanup), 'D5 (v2.8.1, inventory S3): CLEANUP.md is this tool\'s inventory, store version 4');
   const reg = readFileSync(join(root, '../register/src/app.js'), 'utf8');
   ok(!/host\.hub\b|hub: false, waiters/.test(reg), 'D6: register: no dead "hub answered the ping" flag left from the link bridge');
   ok(!/the link goes through the hub \(\{ hub: 'link', url \}\)/.test(rd('tests/v251.test.mjs')), 'D6: v251 test header no longer describes the link bridge');

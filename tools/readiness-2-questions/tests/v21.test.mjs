@@ -6,7 +6,7 @@
 // Run: node tools/readiness-2/tests/v21.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { load, data, envOf, tester, finished, root } from './load.mjs';
+import { load, data, envOf, tester, finished, root, PAGE } from './load.mjs';
 import { tqSig, tqModel } from '../build.mjs';
 const Q = JSON.parse(readFileSync(join(root, 'data/usecase_questions_only.json'), 'utf8')), QBY = Object.fromEntries(Q.use_cases.map(u => [u.id, u])); // v2.7.0: the questions-only data (the generator is gone)
 const { C, L, F, P, RC } = load();
@@ -108,7 +108,7 @@ ok(C.MUST_INTRO === 'Ten things to have in place before an AI project starts. Th
   ok(n === 743, 'M8: all 743 folds checked (v2.8.0; v2.7.0: 723)');
   ok(!L.evidenceLine, 'item 8 (v2.7.0): the evidence line is gone with the generator; the fold shows the data\'s own why line');
   // v2.7.0: M8's evidence ids lived in the generator's file, which is gone; the page still carries none (next line)
-  const html = rd('index.html'), noData = html.replace(/<script type="application\/json" id="r2-data">[\s\S]*?<\/script>/, '');
+  const html = rd(PAGE), noData = html.replace(/<script type="application\/json" id="r2-data">[\s\S]*?<\/script>/, '');
   ok(!/[A-Z]{3}-\d{3}-\d{2}/.test(noData), 'M8: no evidence id in the page outside its data block');
 }
 ok(C.TAIL_TODAY === 'Answer for today. If something can only exist once the tool is running (for example its conversation logs), choose “Planned, not done yet”.' && rd('src/app.js').includes('C.TAIL_TODAY'), 'item 9: the step 5 intro (final copy), on the page');
@@ -408,5 +408,5 @@ ok(eq(L.JUDGEMENT, { UNKNOWN_SCORES_ZERO: true, SENSITIVE_HOLDS_TOP: true, CARRI
 }
 // storage keys and hub messages unchanged
 ok(F.KEY === 'hftp-readiness2q-v1' && F.V === 4 && /var PROFILE = 'hftp-hotel-profile-v1'/.test(rd('src/app.js')) && !/hub: '|postMessage/.test(rd('src/app.js')) && /window\.claude\.use\('downloads'\)/.test(rd('src/app.js')), 'v2.7.0: own storage key, store version 4; no hub messages at all; downloads through the artifact capability');
-ok(!/AIHA|AI Hospitality Alliance/i.test(rd('index.html').replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
+ok(!/AIHA|AI Hospitality Alliance/i.test(rd(PAGE).replace(/<script type="application\/json" id="r2-font">[\s\S]*?<\/script>/, '').replace(/<script>\s*\/\*\* @license[\s\S]*?<\/script>/, '')) , 'the banned source is named nowhere in the page');
 done();

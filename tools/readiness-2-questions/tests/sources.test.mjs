@@ -5,13 +5,13 @@
 // Run: node tools/readiness-2-questions/tests/sources.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { root, load, data, tester, finished } from './load.mjs';
+import { root, load, data, tester, finished, PAGE } from './load.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('sources');
 const rd = p => readFileSync(join(root, p), 'utf8');
 const FIX = JSON.parse(rd('data/sources_fixes.json')), V2 = JSON.parse(rd('data/use_case_sources_v2.json')).use_cases, EDITS = JSON.parse(rd('data/sources_edits.json'));
-const html = rd('index.html'), app = rd('src/app.js');
+const html = rd(PAGE), app = rd('src/app.js');
 ok(rd('data/sources_fixes.json') === rd('spec/review/sources_fixes.json') && rd('data/use_case_sources_v2.json') === rd('spec/review/use_case_sources_corrected.json'), 'the inputs are the review files, unchanged (copied next to the tool\'s data)');
 const USES = D.cat.depts.flatMap(d => d.uses), ids = USES.map(u => u.id);
 const dd = id => L.detailData(D, USES.find(u => u.id === id), null, TQ);

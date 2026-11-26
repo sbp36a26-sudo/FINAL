@@ -8,7 +8,8 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8891/';
-const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html'); // v2.8.1: R2_PAGE=public/index.html runs the public build
+const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html');
+const PUBLIC = /^public\//.test(process.env.R2_PAGE || ''); // the public build never uses window.claude // v2.8.1: R2_PAGE=public/index.html runs the public build
 const ROOT = path.join(__dirname, '..', '..');
 const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens', 'v28');
 const SHOOT = process.env.SHOTS === '1'; // v2.8.1 (inventory S4): screenshots only with SHOTS=1, so a test run changes no tracked file
@@ -81,6 +82,8 @@ async function run(p, vp, use, o, tag) {
 
 (async () => {
   const b = await chromium.launch();
+  /* v2.8.1: never let a test reach the owner's collect address (public build): every request to Apps Script is answered here */
+  { const nc = b.newContext.bind(b); b.newContext = async o => { const c = await nc(o); await c.route(/^https:\/\/script\.google(usercontent)?\.com\//, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })); return c; }; }
   for (const [vn, vp] of [['1280', { width: 1280, height: 800 }], ['360', { width: 360, height: 740 }]]) {
     // ---------- hr-1 all Yes: the hold shown once (B4), B3, B5 ----------
     {
@@ -202,8 +205,8 @@ async function run(p, vp, use, o, tag) {
       await ctx.close();
     }
   }
-  // ---------- downloads blocked (capability null): the line ----------
-  {
+  // ---------- downloads blocked (capability null): the line (claude.ai build only) ----------
+  if (!PUBLIC) {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: () => { window.claude = { use: () => Promise.resolve(null) }; } });
     await run(p, { width: 1280, height: 800 }, 'rm-1', { name: 'Hotel Delta' }, 'blocked');
     await click(p, '#pdf'); await p.waitForSelector('#dl-blocked');

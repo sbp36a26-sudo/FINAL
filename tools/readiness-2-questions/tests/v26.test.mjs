@@ -10,7 +10,7 @@
 // Run: node tools/readiness-2/tests/v26.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { load, data, envOf, tester, finished, root } from './load.mjs';
+import { load, data, envOf, tester, finished, root, PAGE } from './load.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq, ENV = envOf(D, F);
 const { ok, done } = tester('v26');
@@ -121,7 +121,7 @@ ok(q3.title === 'Information to learn from' && q3.q === 'Are there past examples
 ok(q3.yesIf === 'You have hundreds of past cases stored digitally.' && q3.noIf === 'It happens rarely, or nothing was ever recorded.' && q3.whyShort === 'AI learns from examples; without many past cases it has nothing to learn from.', 'B: Q3 Yes-if, No-if, why');
 ok(q4.title === 'Safety net' && q4.q === 'If the tool makes an occasional mistake, can it be caught or fixed before it causes harm?', 'B: Q4 title and question');
 ok(q4.yesIf === 'A wrong answer now and then can be caught or does little harm.' && q4.noIf === 'Every single result must be exactly right, for example a safety decision.' && q4.whyShort === 'AI is never right every time; if no mistake is acceptable, a rule-based tool or a person is the better choice.', 'B: Q4 Yes-if, No-if, why (v2.7.0: "legal or" removed from No-if)');
-ok(!/C-R-I-S-P/.test(readFileSync(join(root, 'index.html'), 'utf8')), 'B (v2.8.0 B10): no C-R-I-S-P anywhere in the page');
+ok(!/C-R-I-S-P/.test(readFileSync(join(root, PAGE), 'utf8')), 'B (v2.8.0 B10): no C-R-I-S-P anywhere in the page');
 // v2.7.0: the wording.json core checks are retired with the file
 const BM = 'Brynjolfsson, E. & Mitchell, T. (2017), “What can machine learning do? Workforce implications”, Science 358(6370), 1530–1534';
 ok(C.SOURCES.q.some(s => s[0].startsWith(BM) && s[1] === 'https://doi.org/10.1126/science.aap8062'), 'B: the source stands with the other questions\' sources, with its DOI link (v2.8.0)');

@@ -3,14 +3,14 @@
 // Run: node tools/readiness-2-questions/tests/v28.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { root, load, data, tester, finished } from './load.mjs';
+import { root, load, data, tester, finished, PAGE } from './load.mjs';
 const { C, L, F, P } = load();
 const D = data(), TQ = D.tq;
 const { ok, done } = tester('v28');
 const rd = p => readFileSync(join(root, p), 'utf8');
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const env = { cat: D.cat, TQ, ex: D.ex, today: '2026-11-25' };
-const app = rd('src/app.js'), html = rd('index.html');
+const app = rd('src/app.js'), html = rd(PAGE);
 const pdfText = (r, kind) => P.model(r, env, kind || 'result').blocks.map(b => [b.t, b.sub, b.box, b.also, b.m, b.val].filter(Boolean).join(' | ')).join('\n');
 
 // ---------- B2: a No in step 2 is said in the verdict box and is the first action ----------

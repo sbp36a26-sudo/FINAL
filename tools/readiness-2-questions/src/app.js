@@ -3,7 +3,7 @@
    the public build's data notice and sending in src/collect.js (R2Collect). This file only draws the current state and turns clicks
    into send(event).
    Two builds (build.mjs): index.html, the claude.ai artifact (window.storage and the downloads capability when the viewer offers
-   them; nothing is sent anywhere), and public/index.html (--public: window.R2_PUBLIC = { collectUrl, contact }; localStorage, else
+   them; nothing is sent anywhere), and public/index.html (--public: window.R2_PUBLIC holds { collectUrl, contact }; localStorage, else
    this page's memory; ordinary browser downloads; the answers are sent to the project team unless the person ticks "Don't send
    my answers").
    store = everything saved (localStorage['hftp-readiness2q-v1'], version 4): the checks of this browser and which one is open.
@@ -530,7 +530,8 @@
     dlg.addEventListener('click', function (e) { if (e.target !== dlg) return; var r = dlg.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeData(); });
     var fk = $('foot-keep'); if (fk) fk.textContent = C.PUB.FOOT_KEEP;
     var fv = $('foot-version');
-    if (fv && fv.parentNode) { var sp = document.createElement('span'); sp.id = 'foot-data'; sp.innerHTML = ' <button type="button" class="linkbtn" data-act="data" id="foot-data-btn">' + esc(C.PUB.FOOT) + '</button> · ' + esc(contactLine()); fv.parentNode.appendChild(sp); }
+    var foot = fv && fv.parentNode && fv.parentNode.parentNode; // its own line under the footer text (the 44 px button would stretch a text line)
+    if (foot) { var sp = document.createElement('p'); sp.id = 'foot-data'; sp.className = 'meta'; sp.innerHTML = '<button type="button" class="linkbtn" data-act="data" id="foot-data-btn">' + esc(C.PUB.FOOT) + '</button> · ' + esc(contactLine()); foot.appendChild(sp); }
   })();
 
   // ---------- screens ----------

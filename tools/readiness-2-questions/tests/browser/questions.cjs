@@ -16,7 +16,8 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
 const BASE = process.env.R2_BASE || 'http://127.0.0.1:8891/';
-const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html'); // v2.8.1: R2_PAGE=public/index.html runs the public build
+const URL0 = BASE + 'readiness-2-questions/' + (process.env.R2_PAGE || 'index.html');
+const PUBLIC = /^public\//.test(process.env.R2_PAGE || ''); // the public build never uses window.claude: the capability cases check the link route instead // v2.8.1: R2_PAGE=public/index.html runs the public build
 const ROOT = path.join(__dirname, '..', '..');
 const SHOTS = path.join(ROOT, '..', '..', 'reports', 'readiness-2-questions-screens', 'v28'); // v2.8.0: this run's screenshots, prefix q-
 const SHOOT = process.env.SHOTS === '1'; // v2.8.1 (inventory S4): screenshots only with SHOTS=1, so a test run changes no tracked file
@@ -69,6 +70,8 @@ async function run(p, use, tailFn, tag) {
 
 (async () => {
   const b = await chromium.launch();
+  /* v2.8.1: never let a test reach the owner's collect address (public build): every request to Apps Script is answered here */
+  { const nc = b.newContext.bind(b); b.newContext = async o => { const c = await nc(o); await c.route(/^https:\/\/script\.google(usercontent)?\.com\//, r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })); return c; }; }
   // ===================== 1. exact questions for all 99 (state and DOM) =====================
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 });
@@ -191,6 +194,8 @@ async function run(p, use, tailFn, tag) {
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: () => { window.__saved = []; window.claude = { use: name => Promise.resolve(name === 'downloads' ? { save: req => { window.__saved.push({ filename: req.filename, size: req.data && req.data.size, type: Object.prototype.toString.call(req.data) }); return Promise.resolve({ status: 'saved' }); } } : null) }; } });
     await toResult(p);
+    if (PUBLIC) { ok((await st(p)).downloadRoute === 'link' && !p._errs.length, 'public build: window.claude is ignored, ordinary downloads'); count('capability', true); await ctx.close(); }
+    else {
     ok((await st(p)).downloadRoute === 'capability', 'capability: the viewer route is taken when window.claude.use exists');
     await click(p, '#pdf'); await p.waitForFunction(() => window.__saved.length === 1);
     await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
@@ -202,13 +207,15 @@ async function run(p, use, tailFn, tag) {
     count('capability', saved.length === 3);
     ok(!p._errs.length, 'capability: no page errors');
     await ctx.close();
+    }
   }
   {
     const { ctx, p } = await mk(b, { width: 1280, height: 800 }, { fn: () => { window.claude = { use: () => Promise.resolve(null) }; try { Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('blocked')) } }); } catch (e) {} } });
     await toResult(p);
+    if (!PUBLIC) { // the public build has no capability route: the Copy fallback is checked on its own
     await click(p, '#pdf'); await p.waitForSelector('#dl-blocked');
     ok((await p.textContent('#dl-blocked')).trim() === 'Your browser blocked the download. Use Copy or Print instead.', 'null capability: the blocked line (v2.8.0 B1)');
-    await p.waitForFunction(() => window.Readiness2.state().download === 'idle');
+    await p.waitForFunction(() => window.Readiness2.state().download === 'idle'); }
     await click(p, '#copy-plan'); await p.waitForSelector('#copybox[data-from="plan"]');
     const t = await p.inputValue('#copytext');
     ok(/Head of the department using it:|General manager:|Finance:|IT:/.test(t) && t.includes('Questions for the vendor:') && t.includes(DISCLAIMER) && bannedHits(t).length === 0, 'clipboard refused: Copy plan opens the copy box with the plan text');

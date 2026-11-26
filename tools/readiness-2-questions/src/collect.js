@@ -52,7 +52,7 @@
       return beacon(body);
     }
     function send(event, rec, x) { try { return sendRaw(payload(event, rec, x || {})); } catch (e) { return false; } }
-    return { send: send, sendRaw: sendRaw, optedOut: optedOut, setOptOut: setOptOut, active: function () { return !!url; } };
+    return { send: send, sendRaw: sendRaw, optedOut: optedOut, setOptOut: setOptOut, active: function () { return !!url && /^https?:\/\//i.test(url); } };
   }
   var api = { OPT_KEY: OPT_KEY, MAX_BYTES: MAX_BYTES, STEP_NO: STEP_NO, payload: payload, make: make };
   root.R2Collect = api;

@@ -3,7 +3,7 @@
 // Run: node tools/readiness-2-questions/tests/questions.test.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { root, data, tester } from './load.mjs';
+import { root, data, tester, PAGE } from './load.mjs';
 import { check, words, WHO } from '../data/check-questions.mjs';
 import { tqModel, AREA_KEY } from '../build.mjs';
 const { ok, done } = tester('questions');
@@ -50,10 +50,10 @@ LQ.forEach(u => {
 });
 ok(exact === 98, 'exact questions ' + exact + '/98');
 ok(!D.tq.uses['lg-2'] && D.tq.uses['lg-3'].name === 'Generative AI for reviewing contracts', 'lg-2 is not shipped; lg-3 shows its name');
-ok(LQ.every(u => D.tq.uses[u.id].qs.every(q => !!q.k27 === (u.questions.find(x => x.id === q.id).review !== 'Rewrite' && u.questions.find(x => x.id === q.id).review !== 'Add'))) && !/"review":/.test(rd('index.html')), 'v2.8.0: k27 marks the questions whose v2.7 answer carries (not Rewrite, not Add); the review field is not shipped');
+ok(LQ.every(u => D.tq.uses[u.id].qs.every(q => !!q.k27 === (u.questions.find(x => x.id === q.id).review !== 'Rewrite' && u.questions.find(x => x.id === q.id).review !== 'Add'))) && !/"review":/.test(rd(PAGE)), 'v2.8.0: k27 marks the questions whose v2.7 answer carries (not Rewrite, not Add); the review field is not shipped');
 ok(Object.keys(D.tq.uses).filter(k => D.tq.uses[k].sensitive).sort().join() === 'fo-3,fo-6,gx-4,hk-6,hr-1,hr-2,hr-4,hr-5,hr-6,it-4,res-8,sm-3', '12 sensitive use cases');
 // review records are not shipped
-const html = rd('index.html');
+const html = rd(PAGE);
 ok(!/original_questions|old_wording|"old_name"|"counts"|"origin"|"review"/.test(html), 'review records (original_questions, old_name, counts) are not inlined');
 ok(Object.keys(AREA_KEY).length === 6, 'six areas');
 done();
